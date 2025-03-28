@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+<footer id="footer" class="footer" th:fragment="footer(record)">
+    <div class="footer-inner">
+        <div class="copyright">
+            © 2023 - <span>2025</span> <span class="with-love">
+                <i class="fa fa-heart"></i></span> <span class="author">Kitty</span>
+        </div>
+
+        <div class="powered-by">
+            由 - <a class="theme-link" target="_blank" href="https://hexo.io/">hexo</a> 强力驱动
+        </div>
+
+        <div class="theme-info">
+            源码 - <a class="theme-link" target="_blank" href="https://github.com/caozongpeng/SpringBootBlog"> Kyrie's Blog </a>
+        </div>
+        <div>
+            <th:block th:if="${record != null and record != ''}">
+                <a th:text="${record}" target="_blank" th:href="@{https://tsm.miit.gov.cn/}"></a>
+            </th:block>
+        </div>
+    </div>
+</footer>
+</body>
+</html>

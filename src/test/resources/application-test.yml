@@ -1,0 +1,19 @@
+spring:
+  profiles:
+    active: test
+
+# Dropbox配置
+dropbox:
+  access-token: sl.u.AFn0sTtOoZdl1xtWTxC6sj5iNf9b8WMce36-IO1fwWFv2kHCL_DbWXNe8e8N-z503a5KjDVj6bj8ueOnx0gCJKCs-EhhFubbqtaItrIsVuL
+  root-path: /blog
+  image-path: /images
+  file-path: /files
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.kitty.blog: DEBUG
+    com.dropbox.core: DEBUG
+    org.apache.http: DEBUG
+    org.apache.http.wire: DEBUG 
