@@ -1,0 +1,86 @@
+import request from '@/utils/request'
+import { postPrefix } from '@/constants/api-constants.js'
+
+// 更新文章
+export const update = (data) => request.put(`${postPrefix}/public/update`, data)
+
+// 点赞文章
+export const likePost = ({ postId, count }) =>
+  request.post(`${postPrefix}/public/like`, { postId, count })
+
+// 收藏文章
+export const collectPost = ({ postId, count }) =>
+  request.post(`${postPrefix}/public/collect`, { postId, count })
+
+// 上传文件
+export const uploadAttachment = (file, postId) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('postId', postId)
+
+  return request.post(`${postPrefix}/public/upload/attachment`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+
+// 创建文章
+export const create = (data) => request.post(`${postPrefix}/public/create`, data)
+
+// 添加文章版本
+export const addVersion = (data) => request.post(`${postPrefix}/public/add/version`, data)
+
+// 添加文章标签
+export const addTag = (data) => request.post(`${postPrefix}/public/add/tag`, data)
+
+// 添加文章分类
+export const addCategory = (data) => request.post(`${postPrefix}/public/add/category`, data)
+
+// 根据标签查询文章列表
+export const findByTag = (tag) => request.get(`${postPrefix}/public/find/tag/${tag}`)
+
+// 根据分类查询文章列表
+export const findByCategory = (category) =>
+  request.get(`${postPrefix}/public/find/category/${category}`)
+
+// 根据用户名和发布状态查询文章列表
+export const findByUserAndStatus = ({ username, isPublished }) =>
+  request.get(`${postPrefix}/admin/find/user/${username}/${isPublished}/published`)
+
+// 根据用户名查找文章列表
+export const findByUsername = (username) => request.get(`${postPrefix}/public/find/user/${username}`)
+
+// 根据标题关键字查询文章列表
+export const findByKeysInTitle = (keyword) => request.get(`${postPrefix}/public/find/title/${keyword}`)
+
+// 根据内容关键字查询文章列表
+export const findByKeysInContent = (keyword) => request.get(`${postPrefix}/public/find/content/${keyword}`)
+
+// 获取文章最新版本号
+export const getLatestVersion = (postId) => request.get(`${postPrefix}/admin/getLatestVersion/${postId}`)
+
+// 根据文章id查询文章详情
+export const findById = (postId) => request.get(`${postPrefix}/admin/find/id/${postId}`)
+
+// 查询所有文章
+export const findAll = () => request.get(`${postPrefix}/admin/find/all`)
+
+// 根据id查询文章是否存在
+export const existById = (postId) => request.get(`${postPrefix}/admin/exists/id/${postId}`)
+
+// 查询文章总数
+export const count = () => request.get(`${postPrefix}/admin/count`)
+
+// 删除文章版本
+export const deleteVersion = (data) => request.delete(`${postPrefix}/public/delete/version`, data)
+
+// 删除文章标签
+export const deleteTag = (data) => request.delete(`${postPrefix}/public/delete/tag`, data)
+
+// 删除文章分类
+export const deleteCategory = (data) => request.delete(`${postPrefix}/public/delete/category`, data)
+
+// 根据id删除文章
+export const deleteById = (data) => request.delete(`${postPrefix}/admin/delete/id`, data)

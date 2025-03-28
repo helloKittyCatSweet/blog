@@ -1,0 +1,64 @@
+import request from '@/utils/request'
+import { userPrefix } from '@/constants/api-constants.js'
+
+// 更新用户信息
+export const update = (data) => request.put(`${userPrefix}/public/update`, data)
+
+// 重置密码
+export const resetPassword = ({ userId, password }) =>
+  request.put(`${userPrefix}/public/reset`, { userId, password })
+
+// 激活账户
+export const activate = ({ userId, isActive }) =>
+  request.put(`${userPrefix}/admin/activate`, { userId, isActive })
+
+// 验证token
+export const verifyToken = (token) => request.post(`${userPrefix}/public/validate`, { token })
+
+// 上传头像
+export const uploadAvatar = (file, userId) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('userId', userId);
+
+  return request.post(`${userPrefix}/public/upload/avatar`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+// 注册
+export const register = (data) => request.post(`${userPrefix}/auth/register`, data)
+
+// 登录
+export const login = (data) => request.post(`${userPrefix}/auth/login`, data)
+
+// 查询激活用户
+export const findActivateUser = (isActive) => request.post(`${userPrefix}/admin/find/${isActive}`)
+
+// 根据用户名查询用户
+export const findUserByUsername = (username) =>
+  request.get(`${userPrefix}/public/find/username/${username}`)
+
+// 根据邮箱（模糊搜索）查询用户
+export const findUserByEmail = (email) => request.get(`${userPrefix}/public/find/email/${email}`)
+
+// 根据邮箱后缀查询用户
+export const findUserByEmailSuffix = (emailSuffix) =>
+  request.get(`${userPrefix}/public/find/email/suffix/${emailSuffix}`)
+
+// 根据用户id查询用户
+export const findUserById = (userId) => request.get(`${userPrefix}/admin/find/id/${userId}`)
+
+// 查询所有用户
+export const findAllUser = () => request.get(`${userPrefix}/admin/find/all`)
+
+// 判断用户是否存在
+export const existsById = (userId) => request.get(`${userPrefix}/admin/exist/${userId}`)
+
+// 查询用户数量
+export const count = () => request.get(`${userPrefix}/admin/count`)
+
+// 删除用户
+export const deleteById = (userId) => request.delete(`${userPrefix}/admin/delete/${userId}`)

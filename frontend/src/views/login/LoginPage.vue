@@ -1,0 +1,624 @@
+<script setup>
+import { User, Lock } from "@element-plus/icons-vue";
+import { ref, watch, nextTick, onMounted, onUnmounted } from "vue";
+import { ElMessage } from "element-plus";
+import { useUserStore } from "@/stores";
+import { useRouter, useRoute } from "vue-router";
+import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+
+// api
+import {
+  getCaptcha,
+  checkCaptcha,
+  getCurrentSessionId,
+} from "@/api/user/security/captcha.js";
+import { login, register } from "@/api/user/user";
+import { verify, send } from "@/api/user/security/emailVerification";
+import { CONTROL_PANEL_PATH } from "@/constants/routes-constants";
+
+var isRegister = ref(true);
+
+const form = ref();
+
+// 注册用于提交的form数据对象
+const formModel = ref({
+  username: "",
+  password: "",
+  repassword: "",
+  captcha: "", // 验证码
+  email: "", // 邮箱
+});
+// 整个表单的校验规则
+// 1.非空校验 required:true message消息提示，trigger触发校验的时机 blur change
+// 2.长度校验 min:xx, max:xx
+// 3.正则校验 pattern：正则规则 \S 非空字符
+// 4.自定义校验 => 自己写逻辑校验（校验函数）
+//   validator:(rule, value, callback)
+//   (1) rule  当前校验规则相关的信息
+//   (2) value 所校验的表单元素目前的表单值
+//   (3) callback 无论成功还是失败都需要callback回调
+//       - callback() 校验成功
+//       - callback(new Error(错误信息)) 校验失败
+
+const rules = {
+  username: [
+    { required: true, messgae: "请输入用户名", trigger: "blur" },
+    { min: 5, max: 10, message: "用户名必须是5-10位的字符", trigger: "blur" },
+  ], // 失焦的时候检验
+  password: [
+    { required: true, messgae: "请输入密码", trigger: "blur" },
+    { pattern: /^\S{6,15}$/, message: "密码必须是6-15位的非空字符", trigger: "blur" },
+  ],
+  repassword: [
+    { required: true, messgae: "请输入密码", trigger: "blur" },
+    { pattern: /^\S{6,15}$/, message: "密码必须是6-15位的非空字符", trigger: "blur" },
+    {
+      validator: (rule, value, callback) => {
+        // 判断 value 和当前 form 中收集的password是否一致
+        if (value !== formModel.value.password) {
+          callback(new Error("两次输入密码不一致"));
+        } else {
+          callback(); // 就算校验成功，也需要callback
+        }
+      },
+      trigger: "blur",
+    },
+  ],
+  captcha: [{ required: true, message: "请输入验证码（不忽略大小写）", trigger: "blur" }],
+  email: [
+    { required: true, message: "请输入邮箱地址", trigger: "blur" },
+    {
+      validator: (rule, value, callback) => {
+        const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+        if (value === "") {
+          callback(new Error("请输入邮箱地址"));
+        } else if (!emailRegex.test(value)) {
+          callback(new Error("请输入有效的邮箱地址"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur",
+    },
+  ],
+  emailCheck: [{ required: true, message: "请输入验证码", trigger: "blur" }],
+};
+
+/**
+ * 验证码逻辑
+ */
+
+// 生成验证码逻辑
+const captchaUrl = ref("");
+
+const generateCaptcha = async () => {
+  try {
+    const response = await getCaptcha();
+    if (captchaUrl.value) {
+      window.URL.revokeObjectURL(captchaUrl.value);
+    }
+
+    const blob = new Blob([response.data], { type: response.headers["content-type"] });
+    const url = window.URL.createObjectURL(blob);
+    captchaUrl.value = url;
+  } catch (error) {
+    ElMessage.error("验证码加载失败");
+    console.error("Error:", error);
+  }
+};
+
+// 校验验证码
+const verifyCaptcha = async () => {
+  // console.log("开始校验验证码");
+  try {
+    // console.log("发送验证码校验请求，验证码:", formModel.value.captcha);
+    // console.log("当前sessionId:", getCurrentSessionId()); // 添加这行
+    const response = await checkCaptcha(formModel.value.captcha);
+    // console.log("验证码校验响应:", response);
+    return response.data.status === 200;
+  } catch (error) {
+    console.error("验证码校验错误:", error);
+    if (error.message === "Session ID not found") {
+      ElMessage({
+        message: "验证码已失效，请刷新验证码",
+        type: "error",
+        offset: 80,
+      });
+      await generateCaptcha(); // 自动刷新验证码
+    } else if (error.response?.data?.message) {
+      ElMessage({
+        message: error.response.data.message,
+        type: "error",
+        offset: 80,
+      });
+    } else {
+      ElMessage({
+        message: "验证码校验失败",
+        type: "error",
+        offset: 80,
+      });
+    }
+    return false;
+  }
+};
+
+// 设置自动刷新验证码
+let captchaTimer;
+
+onMounted(() => {
+  // 初始生成验证码
+  generateCaptcha();
+
+  // 设置定时器，每四分三十秒刷新一次验证码
+  captchaTimer = setInterval(() => {
+    generateCaptcha();
+  }, 270000); // 四分三十秒 = 270000毫秒;
+});
+
+// 组件卸载时清除定时器
+onUnmounted(() => {
+  if (captchaTimer) {
+    clearInterval(captchaTimer);
+  }
+  // 清理最后一个验证码
+  if (captchaUrl.value) {
+    window.URL.revokeObjectURL(captchaUrl.value);
+  }
+});
+
+/**
+ * 页面切换，重置表单
+ */
+
+// 切换的时候，重置表单内容
+watch(isRegister, () => {
+  formModel.value = {
+    username: "",
+    password: "",
+    repassword: "",
+    captcha: "",
+    email: "",
+    emailCheck: "", // 发到邮箱的验证码
+  };
+  // 切换时重新生成验证码
+  generateCaptcha();
+});
+
+/**
+ * 登录逻辑
+ */
+const route = useRoute();
+const userStore = useUserStore();
+const router = useRouter();
+const loginUser = async () => {
+  try {
+    await form.value.validate();
+
+    const captchaResult = await verifyCaptcha(formModel.value.captcha);
+    if (!captchaResult) return;
+
+    const res = await login({
+      username: formModel.value.username,
+      password: formModel.value.password,
+    });
+
+    if (res.data.status !== 200) {
+      handleLoginError(res.data.status);
+      return;
+    }
+
+    // 1. 先同步更新用户状态
+    const userData = res.data.data;
+    // console.log("userData:", userData.token);
+    userStore.setToken(userData.token);
+    userStore.setUser({
+      // 推荐使用setUser批量更新
+      id: userData.id,
+      username: userData.username,
+      avatar: userData.avatar,
+      roles: userData.roles,
+      authorities: userData.authorities,
+    });
+
+    // 2. 确保Pinia状态更新完成
+    await nextTick();
+
+    // 3. 显示成功提示（短暂延迟确保UI更新）
+    await new Promise((resolve) => {
+      ElMessage({
+        message: "登录成功",
+        type: "success",
+        offset: 80,
+        onClose: resolve,
+      });
+    });
+
+    // 4. 执行跳转
+    const redirect = route.query.redirect;
+    if (redirect && typeof redirect === 'string') {
+      await router.replace(redirect); // 使用 replace 避免历史记录
+    } else {
+      await router.replace(CONTROL_PANEL_PATH);
+    }
+  } catch (error) {
+    console.error("登录错误:", error);
+    ElMessage({
+      message: error.response?.data?.message || "登录失败",
+      type: "error",
+      offset: 80,
+    });
+  }
+};
+
+const handleLoginError = (status) => {
+  const messages = {
+    401: "用户名或密码错误",
+    403: "用户已被禁用",
+    429: "尝试次数过多，请稍后再试",
+  };
+  ElMessage({
+    message: messages[status] || "登录失败，请稍后重试",
+    type: "error",
+    offset: 80,
+  });
+};
+
+/**
+ * 邮箱检验：给邮箱发验证码
+ */
+const countdown = ref(0); // 倒计时时间
+const buttonStatus = ref("发送验证码"); // 按钮状态
+const buttonDisabled = ref(false); // 按钮是否禁用
+
+/**
+ * 改变发送验证码button状态
+ */
+const startCountdown = () => {
+  countdown.value = 60; // 设置倒计时为60秒
+  buttonDisabled.value = true; // 禁用按钮
+  buttonStatus.value = `剩余 ${countdown.value} 秒`; // 更新按钮状态
+
+  const intervalId = setInterval(() => {
+    if (countdown.value > 0) {
+      countdown.value--; // 每秒递减
+      buttonStatus.value = `剩余 ${countdown.value} 秒`; // 更新按钮状态
+    } else {
+      clearInterval(intervalId); // 停止计时器
+      buttonDisabled.value = false; // 启用按钮
+      buttonStatus.value = "发送验证码"; // 恢复按钮状态
+    }
+  }, 1000);
+};
+
+const sendCodeToEmail = async () => {
+  if (formModel.value.email.trim() === "") {
+    ElMessage.error("请输入邮箱地址");
+    return;
+  }
+  try {
+    const response = await send(formModel.value.email);
+    if (response.data.status === 200) {
+      ElMessage.success("验证码已发送至邮箱，请注意查收");
+      startCountdown(); // 开始倒计时
+    } else {
+      ElMessage.error("验证码发送失败，请稍后再试");
+    }
+  } catch (error) {
+    console.error("Error:", error);
+    ElMessage.error("验证码发送失败");
+  }
+};
+
+/**
+ * 检验输入的邮箱验证码是否正确
+ */
+const verifyEmailCode = async () => {
+  if (formModel.value.emailCheck.trim() === "" || formModel.value.email.trim() === "") {
+    ElMessage.error("请输入邮箱或邮箱验证码");
+    return;
+  }
+  const response = await verify({
+    email: formModel.value.email,
+    code: formModel.value.emailCheck,
+  });
+  if (response.data == false) {
+    ElMessage.error("验证码错误，请重新输入");
+    return;
+  } else {
+    ElMessage.success("邮箱验证成功");
+    return;
+  }
+};
+
+/**
+ * 注册逻辑
+ */
+
+// 注册成功之前，先进行校验，校验成功->请求，校验失败->自动提示
+const registerUser = async () => {
+  await form.value.validate();
+  // console.log("开始注册请求");
+
+  // 检验邮箱验证码是否正确
+  if (!verifyEmailCode()) {
+    ElMessage.error("邮箱验证码错误，请重新输入");
+    return;
+  }
+
+  // 检验图片验证码是否正确
+  if (!verifyCaptcha()) {
+    ElMessage.error("验证码错误，请重新输入");
+    return;
+  }
+
+  const response = await register({
+    username: formModel.value.username,
+    password: formModel.value.password,
+    email: formModel.value.email,
+  });
+
+  if (response.data.status === 200) {
+    ElMessage.success("注册成功");
+    isRegister = false; // 切换到登录
+  } else {
+    ElMessage.error(response.data.message);
+  }
+};
+</script>
+
+<template>
+  <!--
+      1.结构相关
+       el-row表示一行，一行分成24份
+       el-col表示一列
+       （1）:span="12" 代表在一行中，占12份（50%）
+       （2）:span="6" 代表在一行中，占6份（25%）
+       （1）:offset="3" 代表在一行中，左侧margin份数
+
+       el-form 整个表单组件
+       el-form-item 表单的一行（一个表单域）
+       el-input 表单元素（输入框）
+
+      2.校验相关
+      （1）el-form => :model="ruleForm" 绑定的整个form的数据对象
+      （2）el-form => :rules="rules"    绑定的整个rules规则对象
+      （3）表单元素 =>  v-model="ruleForm.xxx" 给表单元素绑定form的子属性
+       (4) el-form-item => prop配置生效的是哪个校验规则（和rules中的字段对应）
+  -->
+  <el-row class="login-page">
+    <el-col :span="12" class="bg"></el-col>
+    <el-col :span="7" :offset="2" class="form">
+      <!-- 注册相关表单 -->
+      <el-form
+        :model="formModel"
+        :rules="rules"
+        ref="form"
+        size="large"
+        autocomplete="off"
+        v-if="isRegister"
+      >
+        <el-form-item>
+          <h1>注册</h1>
+        </el-form-item>
+        <!-- 用户名 -->
+        <el-form-item prop="username">
+          <el-input
+            v-model="formModel.username"
+            :prefix-icon="User"
+            placeholder="请输入用户名"
+          ></el-input>
+        </el-form-item>
+        <!-- 密码 -->
+        <el-form-item prop="password">
+          <el-input
+            v-model="formModel.password"
+            :prefix-icon="Lock"
+            type="password"
+            show-password
+            placeholder="请输入密码"
+          ></el-input>
+        </el-form-item>
+        <!-- 再次输入密码 -->
+        <el-form-item prop="repassword">
+          <el-input
+            v-model="formModel.repassword"
+            :prefix-icon="Lock"
+            type="password"
+            show-password
+            placeholder="请输入再次密码"
+          ></el-input>
+        </el-form-item>
+        <!-- 邮箱 -->
+        <el-form-item prop="email">
+          <div class="flex-input-button">
+            <!--添加类以使用flex增长-->
+            <el-input
+              v-model="formModel.email"
+              placeholder="请输入邮箱地址"
+              type="email"
+              class="flex-grow"
+            >
+              <!-- 使用 Font Awesome 图标 -->
+              <template #prefix>
+                <font-awesome-icon :icon="['fas', 'envelope']" />
+              </template>
+            </el-input>
+            <!--添加类以使用flex缩小-->
+            <el-button
+              :disabled="buttonDisabled"
+              @click="sendCodeToEmail"
+              class="button flex-shrink"
+              type="primary"
+              auto-insert-space
+            >
+              {{ buttonStatus }}
+            </el-button>
+          </div>
+        </el-form-item>
+        <!-- 邮箱验证码 -->
+        <el-form-item prop="emailCheck">
+          <el-input
+            v-model="formModel.emailCheck"
+            placeholder="请输入邮箱验证码"
+          ></el-input>
+        </el-form-item>
+        <!-- 验证码 -->
+        <el-form-item prop="captcha">
+          <div style="display: flex; align-items: center">
+            <el-input
+              v-model="formModel.captcha"
+              placeholder="请输入图片验证码"
+              style="width: 60%"
+            ></el-input>
+            <img
+              :src="captchaUrl"
+              alt="验证码"
+              @click="generateCaptcha"
+              style="cursor: pointer; width: 40%; margin-left: 10px"
+            />
+          </div>
+        </el-form-item>
+        <!-- 注册按钮 -->
+        <el-form-item>
+          <el-button
+            @click="registerUser"
+            class="button"
+            type="primary"
+            auto-insert-space
+          >
+            注册
+          </el-button>
+        </el-form-item>
+        <!-- 返回登录按钮 -->
+        <el-form-item class="flex">
+          <el-link type="info" :underline="false" @click="isRegister = false">
+            ← 返回
+          </el-link>
+        </el-form-item>
+      </el-form>
+
+      <!-- 登录相关表单 -->
+      <el-form
+        :model="formModel"
+        :rules="rules"
+        ref="form"
+        size="large"
+        autocomplete="off"
+        v-else
+      >
+        <el-form-item class="centered-title">
+          <h1>登录</h1>
+        </el-form-item>
+        <!-- 用户名 -->
+        <el-form-item prop="username">
+          <el-input
+            v-model="formModel.username"
+            :prefix-icon="User"
+            placeholder="请输入用户名"
+          ></el-input>
+        </el-form-item>
+        <!-- 密码 -->
+        <el-form-item prop="password">
+          <el-input
+            v-model="formModel.password"
+            name="password"
+            :prefix-icon="Lock"
+            type="password"
+            show-password
+            placeholder="请输入密码"
+          ></el-input>
+        </el-form-item>
+        <!-- 验证码 -->
+        <el-form-item prop="captcha">
+          <div style="display: flex; align-items: center">
+            <el-input
+              v-model="formModel.captcha"
+              placeholder="请输入验证码"
+              style="width: 60%"
+            ></el-input>
+            <img
+              :src="captchaUrl"
+              alt="验证码"
+              @click="generateCaptcha"
+              style="cursor: pointer; width: 40%; margin-left: 10px"
+            />
+          </div>
+        </el-form-item>
+        <!-- 记住我 -->
+        <el-form-item class="flex">
+          <div class="flex">
+            <el-checkbox>记住我</el-checkbox>
+            <el-link type="primary" :underline="false">忘记密码？</el-link>
+          </div>
+        </el-form-item>
+        <!-- 登录 -->
+        <el-form-item>
+          <el-button @click="loginUser" class="button" type="primary" auto-insert-space
+            >登录</el-button
+          >
+        </el-form-item>
+        <!-- 返回注册 -->
+        <el-form-item class="flex">
+          <el-link type="info" :underline="false" @click="isRegister = true">
+            注册 →
+          </el-link>
+        </el-form-item>
+      </el-form>
+    </el-col>
+  </el-row>
+</template>
+
+<style lang="scss" scoped>
+.login-page {
+  height: 100vh;
+  background-color: #fff;
+
+  .bg {
+    background: url("@/assets/login_bg.png") no-repeat center / cover;
+    border-radius: 0 20px 20px 0;
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    user-select: none;
+
+    .title {
+      margin: 0 auto;
+    }
+
+    .button {
+      width: 100%;
+    }
+
+    .flex {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .centered-title {
+      display: flex;
+      justify-content: center; /* 水平居中 */
+      align-items: center; /* 垂直居中 */
+      text-align: center; /* 文字居中 */
+    }
+
+    .flex-input-button {
+      display: flex;
+      align-items: center;
+
+      .flex-grow {
+        flex-grow: 20; /* 输入框占据剩余空间 */
+        width: 180%; /* 输入框宽度增加 */
+      }
+
+      .flex-shrink {
+        flex-shrink: 1; /* 按钮不缩小 */
+        margin-left: 20px; /* *按钮距离输入框的距离*/
+      }
+    }
+  }
+}
+</style>
