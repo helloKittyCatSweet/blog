@@ -1,6 +1,7 @@
 <script setup>
 import { RouterView } from "vue-router";
-import zh from "element-plus/es/locale/lang/zh-cn.mjs";
+import { ElConfigProvider } from "element-plus";
+import zhCn from "element-plus/es/locale/lang/zh-cn";
 import { useUserStore, useSettingsStore } from "./stores";
 import { computed, onMounted, ref } from "vue";
 
@@ -12,7 +13,11 @@ onMounted(async () => {
   try {
     // 如果有token，尝试获取用户信息
     if (userStore.getToken()) {
-      await userStore.getUser();
+      userStore.getUser();
+    }
+    const savedTheme = localStorage.getItem("userTheme");
+    if (savedTheme) {
+      settingsStore.setTheme(savedTheme);
     }
   } catch (error) {
     console.error("获取用户信息失败:", error);
@@ -28,12 +33,15 @@ const currentTheme = computed(() => `theme-${settingsStore.getTheme()}`);
 </script>
 
 <template>
-  <el-config-provider :locale="zh">
+  <el-config-provider :locale="zhCn">
     <div id="app" :class="currentTheme">
       <router-view v-if="!isLoading" />
-      <div v-else class="loading-container">
-        <el-loading :fullscreen="true" />
-      </div>
+      <div
+        v-else
+        class="loading-container"
+        v-loading="true"
+        element-loading-fullscreen
+      ></div>
     </div>
   </el-config-provider>
 </template>

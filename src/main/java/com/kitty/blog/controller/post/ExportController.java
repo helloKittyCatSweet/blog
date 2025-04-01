@@ -21,7 +21,7 @@ public class ExportController {
     @Autowired
     private ExportService exportService;
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "导出为PDF", description = "将指定博客导出为PDF格式")
     @GetMapping("/public/pdf/{postId}")
     @ApiResponses(value = {
@@ -39,7 +39,7 @@ public class ExportController {
         }
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "导出为Markdown", description = "将指定博客导出为Markdown格式")
     @GetMapping("/public/markdown/{postId}")
     @ApiResponses(value = {
@@ -57,7 +57,7 @@ public class ExportController {
         }
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "获取Markdown格式内容", description = "将博客内容转换为Markdown格式并返回")
     @GetMapping(value = "public/markdown/text/{postId}", produces = MediaType.TEXT_PLAIN_VALUE)
     @ApiResponses(value = {

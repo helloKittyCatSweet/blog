@@ -163,12 +163,6 @@ export const userMenus = [
         roles: [ROLES.USER]
       },
       {
-        icon: Avatar,
-        title: '修改头像',
-        index: USER_AVATAR_PATH,
-        roles: [ROLES.USER]
-      },
-      {
         icon: Key,
         title: '修改密码',
         index: USER_PASSWORD_PATH,

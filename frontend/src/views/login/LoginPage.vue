@@ -2,10 +2,11 @@
 import { User, Lock } from "@element-plus/icons-vue";
 import { ref, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { ElMessage } from "element-plus";
-import { useUserStore } from "@/stores";
+import { useUserStore, useSettingsStore } from "@/stores";
 import { useRouter, useRoute } from "vue-router";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import ResetPasswordDialog from "@/components/ResetPasswordDialog.vue";
+import { findByUserId } from "@/api/user/userSetting.js";
 
 // api
 import {
@@ -286,6 +287,33 @@ const autoLogin = async () => {
 };
 
 /**
+ * 获取主题设置
+ */
+const loadUserTheme = async (userId) => {
+  const settingsStore = useSettingsStore();
+
+  // 1. 先尝试从 localStorage 获取
+  const savedTheme = localStorage.getItem("userTheme");
+  if (savedTheme) {
+    settingsStore.setTheme(savedTheme);
+    return;
+  }
+
+  // 2. 如果没有，从 API 获取
+  try {
+    const { data } = await findByUserId(userId);
+    const theme = data.theme || "light";
+    settingsStore.setTheme(theme);
+    localStorage.setItem("userTheme", theme);
+  } catch (error) {
+    console.error("加载主题设置失败:", error);
+    // 使用默认主题
+    settingsStore.setTheme("light");
+    localStorage.setItem("userTheme", "light");
+  }
+};
+
+/**
  * 登录逻辑
  */
 const route = useRoute();
@@ -336,6 +364,9 @@ const loginUser = async (isAutoLogin = false) => {
       roles: userData.roles,
       authorities: userData.authorities,
     });
+
+    // 2. 设置并持久化主题
+    loadUserTheme(userData.id);
 
     // 2. 确保Pinia状态更新完成
     await nextTick();

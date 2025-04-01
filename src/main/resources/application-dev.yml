@@ -145,3 +145,7 @@ jwt:
 frontend:
   url:
     http://localhost:5173
+
+encryption:
+  key:
+    pf46F20xY/x+owVHLxbSeA==

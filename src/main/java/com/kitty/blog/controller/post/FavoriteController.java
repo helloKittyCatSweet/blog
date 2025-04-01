@@ -28,7 +28,7 @@ public class FavoriteController {
     @Autowired
     private FavoriteService favoriteService;
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "创建收藏", description = "创建收藏")
     @PostMapping("/public/create")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "创建成功"),
@@ -43,7 +43,7 @@ public class FavoriteController {
                 HttpStatus.BAD_REQUEST,  "参数错误");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "更新收藏", description = "更新收藏")
     @PutMapping("/public/update")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "更新成功"),
@@ -58,7 +58,7 @@ public class FavoriteController {
                 HttpStatus.BAD_REQUEST,  "参数错误");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER) " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER) " +
             " and @favoriteService.IsUser(#userId, #user.id)")
     @Operation(summary = "根据用户id查询所有收藏", description = "根据用户id查询所有收藏")
     @GetMapping("/public/find/{userId}/list")
@@ -74,7 +74,7 @@ public class FavoriteController {
                 HttpStatus.NOT_FOUND,  "用户不存在");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER) " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER) " +
             " and @favoriteService.IsUser(#userId, #user.id)")
     @Operation(summary = "查询用户收藏数量", description = "查询用户收藏数量")
     @GetMapping("/public/find/{userId}/count")
@@ -106,7 +106,7 @@ public class FavoriteController {
 //        }
 //    }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "查询文章收藏数量", description = "查询文章收藏数量")
     @GetMapping("/public/find/{postId}/count")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
@@ -120,7 +120,7 @@ public class FavoriteController {
                 HttpStatus.NOT_FOUND,  "帖子不存在");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "查询收藏", description = "查询收藏")
     @GetMapping("/public/find/{userId}/{postId}")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
@@ -136,7 +136,7 @@ public class FavoriteController {
                 HttpStatus.NOT_FOUND,  "收藏不存在");
     }
 
-//    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+//    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
 //    @Operation(summary = "保存收藏", description = "保存收藏")
 //    @PostMapping("/public/save")
 //    @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "保存成功"),
@@ -149,7 +149,7 @@ public class FavoriteController {
 //                HttpStatus.INTERNAL_SERVER_ERROR,  "服务器繁忙");
 //    }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询收藏", description = "查询收藏")
     @GetMapping("/admin/find/id/{id}")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
@@ -162,7 +162,7 @@ public class FavoriteController {
                 HttpStatus.NOT_FOUND,  "收藏不存在");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询所有收藏", description = "查询所有收藏")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功") ,
@@ -174,7 +174,7 @@ public class FavoriteController {
                 HttpStatus.NOT_FOUND,  "收藏不存在");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "删除收藏", description = "删除收藏")
     @DeleteMapping("/admin/delete/id/{id}")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "删除成功"),
@@ -187,7 +187,7 @@ public class FavoriteController {
                 HttpStatus.NOT_FOUND,  "收藏不存在");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询收藏数量", description = "查询收藏数量")
     @GetMapping("/admin/count")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功") ,
@@ -199,7 +199,7 @@ public class FavoriteController {
                 HttpStatus.NOT_FOUND,  "收藏不存在");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询收藏是否存在", description = "查询收藏是否存在")
     @GetMapping("/admin/exists/id/{id}")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),

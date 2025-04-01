@@ -33,7 +33,7 @@ public class CategoryController {
      * @param category
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "创建分类")
     @PostMapping("/public/create")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "创建成功"),
@@ -52,7 +52,7 @@ public class CategoryController {
      * @param category
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "更新分类")
     @PutMapping("/public/update")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "更新成功"),
@@ -71,8 +71,8 @@ public class CategoryController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_CATEGORY_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_CATEGORY_MANAGER) " +
+            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "删除分类及其子分类")
     @DeleteMapping("/admin/delete/sub/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
@@ -91,8 +91,8 @@ public class CategoryController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_CATEGORY_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_CATEGORY_MANAGER) " +
+            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "删除叶子分类")
     @DeleteMapping("/admin/delete/leaf/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
@@ -111,7 +111,7 @@ public class CategoryController {
      * @param name
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "根据名称查询分类")
     @GetMapping("/public/find/name/{name}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -130,7 +130,7 @@ public class CategoryController {
      * @param name
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "根据父分类名查询子分类")
     @GetMapping("/public/find/parent/{name}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -149,7 +149,7 @@ public class CategoryController {
      * @param name
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "根据父分类名查询所有子分类（包含子孙）")
     @GetMapping("/public/find/descendants/{name}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -168,7 +168,7 @@ public class CategoryController {
      * @param category
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "保存分类")
     @PostMapping("/public/save")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "保存成功"),
@@ -187,8 +187,8 @@ public class CategoryController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_CATEGORY_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_CATEGORY_MANAGER) " +
+            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID查询分类")
     @GetMapping("/admin/find/id/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -206,7 +206,7 @@ public class CategoryController {
      * 查询所有分类
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "查询所有分类")
     @GetMapping("/public/find/all")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -224,8 +224,8 @@ public class CategoryController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_CATEGORY_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_CATEGORY_MANAGER) " +
+            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID删除分类")
     @DeleteMapping("/admin/delete/id/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
@@ -243,7 +243,7 @@ public class CategoryController {
      * 查询分类数量
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "查询分类数量")
     @GetMapping("/public/count")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -261,7 +261,7 @@ public class CategoryController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "检查分类是否存在")
     @GetMapping("/public/exists/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),

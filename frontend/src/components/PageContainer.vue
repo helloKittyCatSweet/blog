@@ -1,10 +1,11 @@
 <script setup>
 import { ArrowLeft, RefreshRight, More } from "@element-plus/icons-vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { computed } from "vue";
 import BreadCrumb from "@/components/BreadCrumb.vue";
 
 const route = useRoute();
+const router = useRouter();
 
 defineProps({
   showBack: {
@@ -26,6 +27,15 @@ defineProps({
 });
 
 const emit = defineEmits(["back", "refresh"]);
+
+// 默认刷新方法
+const handleRefresh = () => {
+  // 触发自定义刷新事件，如果父组件没有监听，则执行默认刷新
+  if (!emit("refresh")) {
+    // 刷新当前页面
+    window.location.reload();
+  }
+};
 
 // 自动生成更友好的面包屑
 const breadcrumbs = computed(() => {
@@ -54,7 +64,7 @@ const breadcrumbs = computed(() => {
       <div class="header-actions">
         <!-- 刷新按钮 -->
         <el-tooltip v-if="showRefresh" content="刷新" placement="top">
-          <el-button circle plain @click="emit('refresh')">
+          <el-button circle plain @click="handleRefresh">
             <el-icon><RefreshRight /></el-icon>
           </el-button>
         </el-tooltip>

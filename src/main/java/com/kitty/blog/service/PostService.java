@@ -1,18 +1,17 @@
 package com.kitty.blog.service;
 
-import com.kitty.blog.controller.constant.Visibility;
+import com.kitty.blog.constant.Visibility;
 import com.kitty.blog.dto.common.FileDto;
 import com.kitty.blog.model.*;
 import com.kitty.blog.model.category.Category;
 import com.kitty.blog.model.tag.Tag;
-import com.kitty.blog.model.userActivity.ActivityType;
-import com.kitty.blog.model.userActivity.UserActivity;
+import com.kitty.blog.constant.ActivityType;
+import com.kitty.blog.model.UserActivity;
 import com.kitty.blog.repository.*;
 import com.kitty.blog.repository.CategoryRepository;
 import com.kitty.blog.repository.tag.TagRepository;
 import com.kitty.blog.service.contentReview.BaiduContentService;
 import com.kitty.blog.utils.AliyunOSSUploader;
-import com.kitty.blog.utils.Response;
 import com.kitty.blog.utils.UpdateUtil;
 import org.apache.tika.Tika;
 import org.springframework.beans.factory.annotation.Autowired;

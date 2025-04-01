@@ -1,6 +1,6 @@
 package com.kitty.blog.service;
 
-import com.kitty.blog.model.tag.Compare;
+import com.kitty.blog.constant.Compare;
 import com.kitty.blog.model.tag.Tag;
 import com.kitty.blog.repository.tag.TagSpecification;
 import com.kitty.blog.repository.tag.TagRepository;

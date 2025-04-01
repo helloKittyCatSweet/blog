@@ -162,15 +162,6 @@ export default [
             }
           },
           {
-            path: USER_AVATAR_PATH,
-            component: () => import('@/views/user/UserAvatar.vue'),
-            meta: {
-              title: '修改头像',
-              breadcrumb: true,
-              roles: [ROLES.USER],
-            }
-          },
-          {
             path: USER_PASSWORD_PATH,
             component: () => import('@/views/user/UserPassword.vue'),
             meta: {

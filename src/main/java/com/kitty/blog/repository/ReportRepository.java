@@ -1,6 +1,6 @@
 package com.kitty.blog.repository;
 
-import com.kitty.blog.model.report.Report;
+import com.kitty.blog.model.Report;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

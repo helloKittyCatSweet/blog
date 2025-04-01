@@ -1,6 +1,6 @@
 package com.kitty.blog.service;
 
-import com.kitty.blog.model.userActivity.UserActivity;
+import com.kitty.blog.model.UserActivity;
 import com.kitty.blog.repository.PostRepository;
 import com.kitty.blog.repository.UserActivityRepository;
 import com.kitty.blog.repository.UserRepository;

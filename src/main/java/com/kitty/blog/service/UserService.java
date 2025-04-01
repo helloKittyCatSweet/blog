@@ -24,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -68,7 +69,7 @@ public class UserService {
         // 密码加密
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setIsActive(true);
-        user.setGender(true); // 默认为男
+        user.setGender(2); // 默认保密
 
         save(user); // 先保存以获取用户id
         user = userRepository.findByUsername(user.getUsername()).get();
@@ -165,6 +166,7 @@ public class UserService {
         response.setId(user.get().getUserId());
 
         user.get().setToken(token);
+        user.get().setLastLoginTime(LocalDate.now());
         save(user.get());
 
         return new ResponseEntity<>(response, HttpStatus.OK);

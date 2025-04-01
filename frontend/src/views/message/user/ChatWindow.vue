@@ -9,6 +9,8 @@ import {
   disconnectWebSocket,
   sendMessageWs,
   findContactedUserNames,
+  deleteById,
+  update,
 } from "@/api/user/message";
 import { useUserStore } from "@/stores/modules/user";
 import { useMessageStore } from "@/stores/modules/message";
@@ -16,6 +18,7 @@ import { findUserById } from "@/api/user/user";
 import { ArrowDown, ArrowLeft } from "@element-plus/icons-vue";
 import { useSettingsStore } from "@/stores/modules/setting";
 import { USER_MESSAGE_DETAIL_PATH } from "@/constants/routes/user";
+import MessageItem from "@/views/message/user/MessageItem.vue";
 
 // WebSocket 状态
 const wsConnected = ref(false);
@@ -31,7 +34,7 @@ const loading = ref(false);
 const currentUser = userStore.user;
 // 直接从路由获取参数
 const receiverId = computed(
-  () => route.params.receiverId || messageStore.currentReceiver?.receiverId
+  () => route.query.receiverId || messageStore.currentReceiver?.receiverId
 );
 
 const receiverInfo = ref({});
@@ -66,6 +69,7 @@ const loadReceiverInfo = async () => {
 // 加载聊天记录
 const loadConversation = async () => {
   if (!receiverId.value || !currentUser.id) {
+    messages.value = [];
     return;
   }
 
@@ -75,10 +79,16 @@ const loadConversation = async () => {
       userId: currentUser.id,
       receiverId: receiverId.value,
     });
-    messages.value = response.data.data;
-    nextTick(() => scrollToBottom());
+
+    if (response.data && response.data.data) {
+      messages.value = response.data.data;
+      nextTick(() => scrollToBottom());
+    } else {
+      messages.value = []; // 如果没有聊天记录，清空消息列表
+    }
   } catch (error) {
     ElMessage.error("加载聊天记录失败");
+    messages.value = [];
   } finally {
     loading.value = false;
   }
@@ -101,7 +111,7 @@ const sendMessage = async () => {
 
     const messageData = {
       senderId: currentUser.id,
-      receiverId: receiverId,
+      receiverId: receiverId.value,
       content: newMessage.value,
       parentId: lastMessageId,
     };
@@ -114,11 +124,11 @@ const sendMessage = async () => {
         ...response.data.data,
         createdAt: new Date().toLocaleString(), // 临时显示当前时间
         senderId: currentUser.id,
-        receiverId: receiverId,
+        receiverId: receiverId.value,
         content: newMessage.value,
       });
 
-      messageStore.updateContactMessage(receiverId, newMessage.value);
+      messageStore.updateContactMessage(receiverId.value, newMessage.value);
       nextTick(() => scrollToBottom());
     }
 
@@ -355,8 +365,8 @@ const loadContactList = async () => {
 };
 
 // 添加切换联系人的方法
-const switchContact = (contact) => {
-  if (contact.receiverId === receiverId) return;
+const switchContact = async (contact) => {
+  if (contact.receiverId === receiverId.value) return;
 
   messageStore.setCurrentReceiver({
     receiverId: contact.receiverId,
@@ -367,9 +377,16 @@ const switchContact = (contact) => {
   // 清除未读消息计数
   messageStore.clearUnreadCount(contact.receiverId);
 
-  router.push({
-    path: USER_MESSAGE_DETAIL_PATH.replace(":receiverId", contact.receiverId),
+  // 先切换路由
+  await router.push({
+    path: USER_MESSAGE_DETAIL_PATH,
+    query: {
+      receiverId: contact.receiverId,
+    },
   });
+
+  // 然后重新加载聊天记录和用户信息
+  await Promise.all([loadReceiverInfo(), loadConversation()]);
 };
 
 /**
@@ -380,10 +397,65 @@ const backgroundColor = computed(() => {
   // 根据主题返回对应的背景色
   return settingStore.theme === "dark" ? "#1a1a1a" : "#f5f5f5";
 });
+
+/**
+ * 操作消息
+ */
+const handleDeleteMessage = async (messageId) => {
+  try {
+    console.log("Deleting message:", messageId); // 添加日志
+    const response = await deleteById(messageId);
+    if (response.status === 200) {
+      messages.value = messages.value.filter((msg) => msg.messageId !== messageId);
+      ElMessage.success("删除成功");
+    } else {
+      ElMessage.error("删除失败");
+    }
+  } catch (error) {
+    ElMessage.error("出现未知错误，删除失败");
+  }
+};
+
+const handleEditMessage = async (updateMessage) => {
+  try {
+    const response = await update(updateMessage);
+    if (response.status === 200) {
+      const message = messages.value.find(
+        (msg) => msg.messageId === updateMessage.messageId
+      );
+      if (message) {
+        message.content = updateMessage.content;
+      }
+      ElMessage.success("修改成功");
+    } else {
+      ElMessage.error("修改失败");
+    }
+  } catch (error) {
+    ElMessage.error("出现未知错误，修改失败");
+  }
+};
+
+/**
+ * 返回按钮
+ */
+const handleBack = () => {
+  router.push({
+    path: USER_MESSAGE_DETAIL_PATH,
+    query: {}, // 清除 receiverId 参数
+  });
+  // 清除当前接收者信息
+  messageStore.setCurrentReceiver({});
+  // 清空消息列表
+  messages.value = [];
+};
+
+/**
+ * 搜索
+ */
 </script>
 
 <template>
-  <PageContainer :breadcrumbs="breadcrumbs">
+  <PageContainer>
     <div class="chat-layout">
       <!-- 联系人列表面板 -->
       <div class="contacts-panel" :style="{ backgroundColor }">
@@ -423,7 +495,7 @@ const backgroundColor = computed(() => {
       <div class="chat-window">
         <!-- 添加导航栏 -->
         <div class="chat-header">
-          <el-button type="text" @click="router.back()" class="back-button">
+          <el-button link @click="handleBack" class="back-button">
             <el-icon><ArrowLeft /></el-icon>
             返回
           </el-button>
@@ -440,113 +512,97 @@ const backgroundColor = computed(() => {
         <!-- 有选中用户时显示聊天内容 -->
         <template v-else>
           <div ref="messagesContainer" class="chat-messages" v-loading="loading">
-            <div
+            <MessageItem
               v-for="message in messages"
               :key="message.messageId"
-              :class="[
-                'message-item',
-                message.senderId === currentUser.id ? 'sent' : 'received',
-              ]"
-            >
-              <!-- 头像 -->
-              <el-avatar
-                :size="40"
-                :src="
-                  message.senderId === currentUser.id
-                    ? currentUser.avatar
-                    : receiverAvatar
-                "
-              >
-                {{
-                  message.senderId === currentUser.id
-                    ? currentUser.username?.charAt(0)
-                    : receiverName?.charAt(0)
-                }}
-              </el-avatar>
+              :message="message"
+              :is-sender="message.senderId === currentUser.id"
+              :sender-avatar="
+                message.senderId === currentUser.id ? currentUser.avatar : receiverAvatar
+              "
+              :sender-name="
+                message.senderId === currentUser.id
+                  ? currentUser.username
+                  : receiverName || '未知用户'
+              "
+              @delete="handleDeleteMessage"
+              @edit="handleEditMessage"
+            />
+          </div>
+          <!-- 添加滚动到底部按钮 -->
+          <div
+            v-show="showScrollButton"
+            class="scroll-bottom-button"
+            @click="scrollToBottomWithReset"
+          >
+            <el-badge :value="unreadCount" :hidden="!unreadCount">
+              <el-button circle>
+                <el-icon><ArrowDown /></el-icon>
+              </el-button>
+            </el-badge>
+          </div>
 
-              <!-- 消息内容 -->
-              <div class="message-content">
-                <div class="message-info">
-                  <span class="sender-name">
-                    {{ message.senderId === currentUser.id ? "我" : receiverName }}
-                  </span>
-                  <span class="message-time">{{ message.createdAt }}</span>
-                </div>
-                <div class="message-text">{{ message.content }}</div>
+          <!-- 发送消息区域 -->
+          <div class="message-input-wrapper">
+            <div class="message-toolbar">
+              <el-button
+                ref="emojiButtonRef"
+                type="primary"
+                text
+                @click="handleEmojiButtonClick"
+                @mouseenter="handleMouseEnter"
+                class="emoji-btn"
+              >
+                <el-icon>
+                  <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                      fill="currentColor"
+                      d="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896zm0 64a384 384 0 1 0 0 768 384 384 0 0 0 0-768zm176.111 259.889a48 48 0 1 1 0 96 48 48 0 0 1 0-96zm-352.222 0a48 48 0 1 1 0 96 48 48 0 0 1 0-96zM512 512a144 144 0 0 1 144 144h-48a96 96 0 0 0-192 0h-48a144 144 0 0 1 144-144z"
+                    />
+                  </svg>
+                </el-icon>
+              </el-button>
+            </div>
+
+            <div class="input-area">
+              <el-input
+                v-model="newMessage"
+                type="textarea"
+                :rows="3"
+                placeholder="请输入消息..."
+                @keyup.enter.ctrl="sendMessage"
+                resize="none"
+              />
+              <el-button
+                type="primary"
+                @click="sendMessage"
+                :disabled="!newMessage.trim()"
+              >
+                发送
+              </el-button>
+            </div>
+
+            <!-- emoji选择器 -->
+            <div
+              v-if="showEmoji"
+              ref="emojiPickRef"
+              class="emoji-picker"
+              @mouseenter="handleMouseEnter"
+              @mouseleave="handleMouseLeave"
+            >
+              <div class="emoji-list">
+                <span
+                  v-for="emoji in emojis"
+                  :key="emoji"
+                  class="emoji-item"
+                  @click="onSelectEmoji(emoji)"
+                >
+                  {{ emoji }}
+                </span>
               </div>
             </div>
           </div>
         </template>
-
-        <!-- 添加滚动到底部按钮 -->
-        <div
-          v-show="showScrollButton"
-          class="scroll-bottom-button"
-          @click="scrollToBottomWithReset"
-        >
-          <el-badge :value="unreadCount" :hidden="!unreadCount">
-            <el-button circle>
-              <el-icon><ArrowDown /></el-icon>
-            </el-button>
-          </el-badge>
-        </div>
-
-        <!-- 发送消息区域 -->
-        <div class="message-input-wrapper">
-          <div class="message-toolbar">
-            <el-button
-              ref="emojiButtonRef"
-              type="primary"
-              text
-              @click="handleEmojiButtonClick"
-              @mouseenter="handleMouseEnter"
-              class="emoji-btn"
-            >
-              <el-icon>
-                <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    fill="currentColor"
-                    d="M512 64a448 448 0 1 1 0 896 448 448 0 0 1 0-896zm0 64a384 384 0 1 0 0 768 384 384 0 0 0 0-768zm176.111 259.889a48 48 0 1 1 0 96 48 48 0 0 1 0-96zm-352.222 0a48 48 0 1 1 0 96 48 48 0 0 1 0-96zM512 512a144 144 0 0 1 144 144h-48a96 96 0 0 0-192 0h-48a144 144 0 0 1 144-144z"
-                  />
-                </svg>
-              </el-icon>
-            </el-button>
-          </div>
-
-          <div class="input-area">
-            <el-input
-              v-model="newMessage"
-              type="textarea"
-              :rows="3"
-              placeholder="请输入消息..."
-              @keyup.enter.ctrl="sendMessage"
-              resize="none"
-            />
-            <el-button type="primary" @click="sendMessage" :disabled="!newMessage.trim()">
-              发送
-            </el-button>
-          </div>
-
-          <!-- emoji选择器 -->
-          <div
-            v-if="showEmoji"
-            ref="emojiPickRef"
-            class="emoji-picker"
-            @mouseenter="handleMouseEnter"
-            @mouseleave="handleMouseLeave"
-          >
-            <div class="emoji-list">
-              <span
-                v-for="emoji in emojis"
-                :key="emoji"
-                class="emoji-item"
-                @click="onSelectEmoji(emoji)"
-              >
-                {{ emoji }}
-              </span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </PageContainer>

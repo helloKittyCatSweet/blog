@@ -1,29 +1,35 @@
 package com.kitty.blog.service;
 
 import com.kitty.blog.dto.message.MessageStatusUpdate;
-import com.kitty.blog.dto.message.MessageInfo;
-import com.kitty.blog.model.message.Message;
+import com.kitty.blog.dto.message.MessageUserInfo;
+import com.kitty.blog.model.Message;
 import com.kitty.blog.model.User;
-import com.kitty.blog.model.message.MessageStatus;
+import com.kitty.blog.constant.MessageStatus;
 import com.kitty.blog.repository.MessageRepository;
 import com.kitty.blog.repository.UserRepository;
 import com.kitty.blog.service.contentReview.BaiduContentService;
 import com.kitty.blog.utils.UpdateUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 @CacheConfig(cacheNames = "message")
+@Slf4j
 public class MessageService {
 
     @Autowired
@@ -113,11 +119,20 @@ public class MessageService {
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public ResponseEntity<Boolean> readMessage(boolean isRead, Integer messageId) {
-        if (!messageRepository.existsById(messageId)) {
+    public ResponseEntity<Boolean> readMessage(Integer senderId,Integer receiverId) {
+        if (!messageRepository.existsById(receiverId) || !userRepository.existsById(senderId)) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
-        messageRepository.readMessage(isRead, messageId);
+        messageRepository.readMessage(senderId, receiverId);
+        return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
+    @Transactional
+    public ResponseEntity<Boolean> unReadMessage(Integer senderId, Integer receiverId) {
+        if (!messageRepository.existsById(receiverId) || !userRepository.existsById(senderId)){
+            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+        }
+        messageRepository.unReadMessage(senderId, receiverId);
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
@@ -171,7 +186,7 @@ public class MessageService {
 
     @Transactional
     @Cacheable(key = "#userId")
-    public ResponseEntity<List<MessageInfo>> findContactedUserNames(Integer userId) {
+    public ResponseEntity<List<MessageUserInfo>> findContactedUserNames(Integer userId) {
         if (!userRepository.existsById(userId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         } else {
@@ -180,11 +195,11 @@ public class MessageService {
             if (contactedUserIds.isEmpty()) {
                 return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
             }
-            List<MessageInfo> contactedUserNames = new ArrayList<>();
+            List<MessageUserInfo> contactedUserNames = new ArrayList<>();
             for (Integer contactedUserId : contactedUserIds) {
                 User user = (User) userRepository.findById(contactedUserId).get();
                 Message message = messageRepository.findLastMessage(userId, contactedUserId).orElse(null);
-                MessageInfo messageInfo = new MessageInfo.Builder()
+                MessageUserInfo messageInfo = new MessageUserInfo.Builder()
                         .userId(user.getUserId())
                         .username(user.getUsername())
                         .avatar(user.getAvatar())
@@ -336,5 +351,49 @@ public class MessageService {
     @Transactional
     public ResponseEntity<Boolean> existsById(Integer id) {
         return new ResponseEntity<>(messageRepository.existsById(id), HttpStatus.OK);
+    }
+
+    /**
+     * 分页查询消息列表
+     */
+    public ResponseEntity<Page<Message>> findMessagePage(
+            String receiverName, String content,
+            LocalDate startDate, LocalDate endDate,
+            Integer userId, Pageable pageable) {
+        try {
+            // 转换日期范围
+            LocalDateTime startTime = startDate != null ?
+                    startDate.atStartOfDay() : null;
+            LocalDateTime endTime = endDate != null ?
+                    endDate.plusDays(1).atStartOfDay() : null;
+
+            Page<Message> messages = messageRepository.findMessagePage(
+                    receiverName, content, startTime, endTime, userId, pageable);
+            return ResponseEntity.ok(messages);
+        } catch (Exception e) {
+            log.error("查询消息列表失败: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * 批量删除消息
+     */
+    public ResponseEntity<Void> batchDelete(List<Integer> messageIds, Integer userId) {
+        try {
+            // 验证权限
+            List<Message> messages = messageRepository.findAllById(messageIds);
+            for (Message message : messages) {
+                if (!hasDeletePermission(userId, message.getMessageId())) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            }
+
+            messageRepository.deleteAllById(messageIds);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            log.error("批量删除消息失败: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

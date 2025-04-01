@@ -28,8 +28,8 @@ public class UserRoleController {
     @Autowired
     private UserRoleService userRoleService;
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "删除角色")
     @DeleteMapping("/admin/delete/{userId}/{roleId}")
     @ApiResponses(value = {
@@ -50,8 +50,8 @@ public class UserRoleController {
      * @param ur
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "保存角色")
     @PostMapping("/admin/save")
     @ApiResponses(value = {
@@ -71,8 +71,8 @@ public class UserRoleController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR) " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR) " +
             " or #userId == authentication.principal.id")
     @Operation(summary = "查找一个用户都有什么角色")
     @GetMapping("/admin/find/user/{userId}")
@@ -93,8 +93,8 @@ public class UserRoleController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据角色ID查询角色")
     @GetMapping("/admin/find/role/{roleId}")
     @ApiResponses(value = {
@@ -113,8 +113,8 @@ public class UserRoleController {
      * 查询所有角色
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询所有角色")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {
@@ -132,8 +132,8 @@ public class UserRoleController {
      * 查询用户角色关系数量
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询用户角色关系数量")
     @GetMapping("/admin/count")
     @ApiResponses(value = {
@@ -153,8 +153,8 @@ public class UserRoleController {
      * @param roleId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "判断角色是否存在")
     @GetMapping("/admin/exist/id/{userId}/{roleId}")
     @ApiResponses(value = {

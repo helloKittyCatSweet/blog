@@ -31,7 +31,7 @@ public class CommentController {
      * @param comment
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "新增评论", description = "新增评论")
     @PostMapping("/public/create")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "新增成功"),
@@ -55,8 +55,8 @@ public class CommentController {
      * @param comment
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_COMMENT_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_COMMENT_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or #comment.userId == principal.id)")
     @Operation(summary = "修改评论")
     @PutMapping("/admin/update")
@@ -77,7 +77,7 @@ public class CommentController {
      * @param count
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "点赞", description = "点赞评论")
     @PutMapping("/public/add/{commentId}/like")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "点赞成功"),
@@ -97,7 +97,7 @@ public class CommentController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "获取评论列表")
     @GetMapping("/public/find/{postId}/list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "获取成功"),
@@ -116,7 +116,7 @@ public class CommentController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "获取评论总数")
     @GetMapping("/public/count/{postId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "获取成功"),
@@ -135,7 +135,7 @@ public class CommentController {
      * @param comment
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "新增评论", description = "新增评论")
     @PostMapping("/public/save")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "新增成功"),
@@ -154,7 +154,7 @@ public class CommentController {
      * @param commentId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "获取评论详情", description = "根据评论ID获取评论详情")
     @GetMapping("/public/find/{commentId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "获取成功"),
@@ -172,8 +172,8 @@ public class CommentController {
      *
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_COMMENT_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_COMMENT_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "获取评论列表", description = "获取评论列表")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "获取成功"),
@@ -191,8 +191,8 @@ public class CommentController {
      * @param commentId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_COMMENT_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_COMMENT_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or #comment.userId == principal.id " +
             " or @commentService.isUnderAuthorPost(commentId, principal.id)")
     @Operation(summary = "删除评论", description = "根据评论ID删除评论")
@@ -212,8 +212,8 @@ public class CommentController {
      *
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_COMMENT_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_COMMENT_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "获取评论总数", description = "获取评论总数")
     @GetMapping("/admin/count")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "获取成功"),
@@ -231,8 +231,8 @@ public class CommentController {
      * @param commentId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_COMMENT_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_COMMENT_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "判断评论是否存在", description = "根据评论ID判断评论是否存在")
     @GetMapping("/admin/exists/{commentId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "判断成功"),

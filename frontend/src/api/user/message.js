@@ -7,11 +7,19 @@ import { Client } from '@stomp/stompjs'
 import { useUserStore } from '@/stores'
 
 // 更新消息
-export const update = (data) => request.put(`${userPrefix}${messagePrefix}/public/update`, data)
+export const update = (data) => request.put(`${userPrefix}${messagePrefix}/public/update`, data, {
+  headers: {
+    'Content-Type': 'application/json'
+  }
+})
 
-// 阅读消息
-export const readMessage = (messageId, isRead) =>
-  request.put(`${userPrefix}${messagePrefix}/public/read/${messageId}/${isRead}`)
+// 已读消息
+export const readMessage = (receiverId) =>
+  request.put(`${userPrefix}${messagePrefix}/public/read/${receiverId}`)
+
+// 未读消息
+export const unReadMessage = (receiverId) =>
+  request.put(`${userPrefix}${messagePrefix}/public/unread/${receiverId}`)
 
 // 创建消息，支持实时消息
 export const create = async (data) => {
@@ -55,8 +63,7 @@ export const findById = (id) => request.get(`${userPrefix}${messagePrefix}/admin
 
 // 查询对话
 export const findConversation = (data) =>
-  request.get(`${userPrefix}${messagePrefix}/public/find/conversation/
-    ${data.userId}/${data.receiverId}`)
+  request.get(`${userPrefix}${messagePrefix}/public/find/conversation/${data.userId}/${data.receiverId}`)
 
 // 查询所有消息
 export const findAll = () => request.get(`${userPrefix}${messagePrefix}/admin/find/all`)
@@ -68,8 +75,14 @@ export const existsById = (id) => request.get(`${userPrefix}${messagePrefix}/adm
 export const count = () => request.get(`${userPrefix}${messagePrefix}/admin/count`)
 
 // 删除消息
-export const deleteById = (id) => request.delete(`${userPrefix}${messagePrefix}
-  /admin/delete/id/${id}`)
+export const deleteById = (id) => {
+  const url = `${userPrefix}${messagePrefix}/admin/delete/id/${id}`;
+  console.log('Delete url:', url)
+  return request.delete(url);
+}
+
+// 搜索
+export const findMessagePage = (params) => request.get(`${userPrefix}${messagePrefix}/public/page`, { params })
 
 // Websocket相关
 let stompClient = null

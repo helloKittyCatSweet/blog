@@ -1,7 +1,7 @@
 package com.kitty.blog.controller.user;
 
 import com.kitty.blog.dto.user.LoginResponseDto;
-import com.kitty.blog.model.userActivity.UserActivity;
+import com.kitty.blog.model.UserActivity;
 import com.kitty.blog.service.PostService;
 import com.kitty.blog.service.UserActivityService;
 import com.kitty.blog.utils.Response;
@@ -35,7 +35,7 @@ public class UserActivityController {
      * @param userActivity
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "创建用户动态")
     @PostMapping("/public/create")
     @ApiResponses(value = {
@@ -55,8 +55,8 @@ public class UserActivityController {
      * @param updatedActivity
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "更新用户动态")
     @PutMapping("/admin/update")
     @ApiResponses(value = {
@@ -77,8 +77,8 @@ public class UserActivityController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR) or " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER) " +
+            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR) or " +
             "@postService.isAuthorOfOpenPost(#postId, #user.id)")
     @Operation(summary = "根据文章ID获取用户动态列表")
     @GetMapping("/admin/find/post/{postId}")
@@ -100,8 +100,8 @@ public class UserActivityController {
      * @param userId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据用户ID获取用户动态列表")
     @GetMapping("/admin/find/user/{userId}")
     @ApiResponses(value = {
@@ -121,8 +121,8 @@ public class UserActivityController {
      * @param activityType
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据互动类型获取用户动态列表")
     @GetMapping("/admin/find/type/{activityType}")
     @ApiResponses(value = {
@@ -145,8 +145,8 @@ public class UserActivityController {
      * @param activityType
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据用户ID、文章ID、互动类型获取用户动态")
     @GetMapping("/public/find/explicit/{userId}/{postId}/{activityType}")
     @ApiResponses(value = {
@@ -169,8 +169,8 @@ public class UserActivityController {
      * @param userActivity
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "保存用户动态")
     @PostMapping("/admin/save")
     @ApiResponses(value = {
@@ -190,8 +190,8 @@ public class UserActivityController {
      * @param activityId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "获取用户动态详情")
     @GetMapping("/admin/find/id/{activityId}")
     @ApiResponses(value = {
@@ -210,8 +210,8 @@ public class UserActivityController {
      * 获取用户动态列表
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "获取用户动态列表")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {
@@ -230,8 +230,8 @@ public class UserActivityController {
      * @param activityId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "删除用户动态")
     @DeleteMapping("/admin/delete/id/{activityId}")
     @ApiResponses(value = {
@@ -250,8 +250,8 @@ public class UserActivityController {
      * 获取用户动态数量
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "获取用户动态数量")
     @GetMapping("/admin/count")
     @ApiResponses(value = {
@@ -270,8 +270,8 @@ public class UserActivityController {
      * @param activityId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "判断用户动态是否存在")
     @GetMapping("/admin/exists/{activityId}")
     @ApiResponses(value = {

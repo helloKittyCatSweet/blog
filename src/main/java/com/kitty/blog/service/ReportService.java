@@ -1,8 +1,8 @@
 package com.kitty.blog.service;
 
 import com.kitty.blog.model.User;
-import com.kitty.blog.model.report.Report;
-import com.kitty.blog.model.report.StatusType;
+import com.kitty.blog.model.Report;
+import com.kitty.blog.constant.ReportStatus;
 import com.kitty.blog.repository.PostRepository;
 import com.kitty.blog.repository.ReportRepository;
 import com.kitty.blog.repository.UserRepository;
@@ -36,7 +36,7 @@ public class ReportService {
                 !postRepository.existsById(report.getPostId())) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
-        report.setStatus(StatusType.PENDING.name());
+        report.setStatus(ReportStatus.PENDING.name());
         reportRepository.save(report);
         return new ResponseEntity<>(true, HttpStatus.CREATED);
     }
@@ -56,7 +56,7 @@ public class ReportService {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-        existingReport.setStatus(StatusType.PENDING.name());
+        existingReport.setStatus(ReportStatus.PENDING.name());
         reportRepository.save(existingReport);
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
@@ -127,7 +127,7 @@ public class ReportService {
     private boolean isStatusValid(String status) {
         try {
             // 尝试将字符串转为枚举类型，如果成功，则说明是有效的枚举值
-            StatusType.valueOf(status);
+            ReportStatus.valueOf(status);
             return true;
         } catch (IllegalArgumentException e) {
             // 如果抛出 IllegalArgumentException，则说明不是合法的枚举值

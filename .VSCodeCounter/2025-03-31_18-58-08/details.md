@@ -52,7 +52,7 @@ Total : 596 files,  100781 codes, 10018 comments, 16692 blanks, all 127491 lines
 | [src/main/java/com/kitty/blog/dto/comment/CommentTreeBuilder.java](/src/main/java/com/kitty/blog/dto/comment/CommentTreeBuilder.java) | Java | 29 | 2 | 8 | 39 |
 | [src/main/java/com/kitty/blog/dto/comment/TreeDto.java](/src/main/java/com/kitty/blog/dto/comment/TreeDto.java) | Java | 19 | 0 | 5 | 24 |
 | [src/main/java/com/kitty/blog/dto/common/FileDto.java](/src/main/java/com/kitty/blog/dto/common/FileDto.java) | Java | 17 | 0 | 8 | 25 |
-| [src/main/java/com/kitty/blog/dto/message/MessageInfo.java](/src/main/java/com/kitty/blog/dto/message/MessageInfo.java) | Java | 55 | 3 | 16 | 74 |
+| [src/main/java/com/kitty/blog/dto/message/MessageInfo.java](/src/main/java/com/kitty/blog/dto/message/MessageUserInfo.java) | Java | 55 | 3 | 16 | 74 |
 | [src/main/java/com/kitty/blog/dto/message/MessageStatusUpdate.java](/src/main/java/com/kitty/blog/dto/message/MessageStatusUpdate.java) | Java | 19 | 0 | 3 | 22 |
 | [src/main/java/com/kitty/blog/dto/userRole/FindDto.java](/src/main/java/com/kitty/blog/dto/userRole/FindDto.java) | Java | 14 | 0 | 8 | 22 |
 | [src/main/java/com/kitty/blog/dto/user/EmailVerificationDto.java](/src/main/java/com/kitty/blog/dto/user/EmailVerificationDto.java) | Java | 11 | 0 | 7 | 18 |

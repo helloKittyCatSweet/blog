@@ -35,7 +35,7 @@ public class UserSettingController {
      * @param user
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)" +
             " and #userId == #user.id")
     @Operation(summary = "根据用户ID查询用户设置")
     @GetMapping("/public/find/user/{userId}")
@@ -60,7 +60,7 @@ public class UserSettingController {
      * @param userSetting
      * @return
      */
-    @PreAuthorize("(hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER) " +
+    @PreAuthorize("(hasRole(T(com.kitty.blog.constant.Role).ROLE_USER) " +
             "and (#userSetting.userId == #user.id))")
     @Operation(summary = "保存用户设置")
     @PostMapping("/public/save")
@@ -83,7 +83,7 @@ public class UserSettingController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID查询用户设置")
     @GetMapping("/admin/find/id/{id}")
     @ApiResponses(value = {
@@ -101,7 +101,7 @@ public class UserSettingController {
      * 查询所有用户设置
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询所有用户设置")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {
@@ -120,7 +120,7 @@ public class UserSettingController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID删除用户设置")
     @DeleteMapping("/admin/delete/id/{id}")
     @ApiResponses(value = {
@@ -138,7 +138,7 @@ public class UserSettingController {
      * 查询用户设置数量
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询用户设置数量")
     @GetMapping("/admin/count")
     @ApiResponses(value = {
@@ -157,7 +157,7 @@ public class UserSettingController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID判断用户设置是否存在")
     @GetMapping("/admin/exist/id/{id}")
     @ApiResponses(value = {

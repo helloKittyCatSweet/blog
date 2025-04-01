@@ -2,7 +2,7 @@ package com.kitty.blog.controller.user;
 
 import com.kitty.blog.dto.message.MessageStatusUpdate;
 import com.kitty.blog.dto.user.LoginResponseDto;
-import com.kitty.blog.model.message.Message;
+import com.kitty.blog.model.Message;
 import com.kitty.blog.service.MessageService;
 import com.kitty.blog.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,7 +49,7 @@ public class WebSocketController {
             @ApiResponse(responseCode = "200", description = "成功获取WebSocket信息")
     })
     @GetMapping("/info")
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     public ResponseEntity<Response<Map<String, Object>>> getWebSocketInfo
             (@AuthenticationPrincipal LoginResponseDto user) {
         if (user == null){
@@ -70,7 +70,7 @@ public class WebSocketController {
     })
     @MessageMapping("/chat")
     @SendToUser("/queue/messages")
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     public ResponseEntity<Response<Message>> handleChatMessage(@Payload Message message) {
         Message savedMessage = messageService.save(message).getBody();
         return Response.ok(savedMessage);
@@ -81,7 +81,7 @@ public class WebSocketController {
             @ApiResponse(responseCode = "200", description = "成功更新WebSocket消息状态")
     })
     @MessageMapping("/message-status")
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     public void handleMessageStatus(@Payload MessageStatusUpdate statusUpdate) {
         messageService.updateMessageStatus(statusUpdate.getMessageId(), statusUpdate.getStatus());
     }
@@ -92,7 +92,7 @@ public class WebSocketController {
     })
     @MessageMapping("/chat/topic")
     @SendTo("/topic/chat/{userId}")
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     public ResponseEntity<Response<Message>> handleTopicMessage(
             @Payload Message message,
             @AuthenticationPrincipal LoginResponseDto user) {
@@ -107,7 +107,7 @@ public class WebSocketController {
     })
     @MessageMapping("/chat/private")
     @SendToUser("/queue/messages")
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     public Message handlePrivateMessage(
             @Payload Message message,
             @AuthenticationPrincipal LoginResponseDto user) {
@@ -121,7 +121,7 @@ public class WebSocketController {
             @ApiResponse(responseCode = "200", description = "成功获取WebSocket未读消息数量")
     })
     @MessageMapping("/message/read")
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     public void handleMessageRead(
             @Payload Integer messageId,
             @AuthenticationPrincipal LoginResponseDto user) {
@@ -134,7 +134,7 @@ public class WebSocketController {
     })
     @MessageMapping("/message-status/update")
     @SendTo("/user/{userId}/queue/message-status")
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     public MessageStatusUpdate handleMessageStatusUpdate(
             @Payload MessageStatusUpdate statusUpdate,
             @AuthenticationPrincipal LoginResponseDto user) {
@@ -147,7 +147,7 @@ public class WebSocketController {
             @ApiResponse(responseCode = "200", description = "成功获取WebSocket未读消息数量")
     })
     @SubscribeMapping("/user/{userId}/queue/messages")
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     public void subscribeToPrivateMessages(@AuthenticationPrincipal LoginResponseDto user) {
         // 当用户订阅私人消息时，发送未读消息数量
         Long count = messageService.countByReceiverIdAndIsReadFalse(user.getId()).getBody();
@@ -163,7 +163,7 @@ public class WebSocketController {
             @ApiResponse(responseCode = "200", description = "成功获取WebSocket未读消息数量")
     })
     @SubscribeMapping("/topic/chat/{userId}")
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     public void subscribeToTopicMessages(@AuthenticationPrincipal LoginResponseDto user) {
         // 可以在这里记录用户订阅的主题，或者进行其他初始化操作
         log.info("User {} subscribed to topic chat/{}", user.getUsername(), user.getId());

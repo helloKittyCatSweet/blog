@@ -2,8 +2,8 @@ package com.kitty.blog.service.postAnalysis.reader;
 
 import com.kitty.blog.model.Post;
 
-import com.kitty.blog.model.userActivity.ActivityType;
-import com.kitty.blog.model.userActivity.UserActivity;
+import com.kitty.blog.constant.ActivityType;
+import com.kitty.blog.model.UserActivity;
 import com.kitty.blog.repository.CategoryRepository;
 import com.kitty.blog.repository.PostRepository;
 import com.kitty.blog.repository.UserActivityRepository;

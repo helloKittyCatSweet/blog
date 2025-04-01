@@ -1,6 +1,7 @@
 package com.kitty.blog.model;
 
 import com.fasterxml.jackson.annotation.*;
+import com.kitty.blog.converter.EncryptedAttributeConverter;
 import com.kitty.blog.model.userRole.UserRole;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import org.hibernate.annotations.DynamicUpdate;
 import jakarta.persistence.*;
 import java.io.Serial;
 import java.io.Serializable;
+import java.security.Timestamp;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -32,6 +34,8 @@ public class User implements Serializable {
 
     @Column(nullable = false, unique = true)
     private String username;
+
+    private String nickname;
 
     @Column(nullable = false)
     private String password;
@@ -55,14 +59,24 @@ public class User implements Serializable {
     @Column(name = "is_active")
     private Boolean isActive;
 
-    private boolean gender;
+    private Integer gender;
 
+    private LocalDate birthday;
+
+    @Convert(converter = EncryptedAttributeConverter.class)
     private String phone;
 
+    @Convert(converter = EncryptedAttributeConverter.class)
     private String address;
 
     @Column(columnDefinition = "TEXT")
     private String introduction;
+
+    @Column(name = "last_login_time")
+    private LocalDate lastLoginTime;
+
+    @Column
+    private List<String> tags;
 
     /**
      * Transient区域，用于存放一些不希望被序列化的字段
@@ -109,15 +123,23 @@ public class User implements Serializable {
 
     @Override
     public String toString() {
-        return "User{" +
+        return  "User{" +
                 "userId=" + userId +
                 ", username='" + username + '\'' +
+                ", nickname='" + nickname + '\'' +
+                ", password='" + password + '\'' +
                 ", email='" + email + '\'' +
                 ", avatar='" + avatar + '\'' +
                 ", token='" + token + '\'' +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 ", isActive=" + isActive +
+                ", gender=" + gender +
+                ", birthday=" + birthday +
+                ", phone='" + phone + '\'' +
+                ", address='" + address + '\'' +
+                ", introduction='" + introduction + '\'' +
+                ", lastLoginTime=" + lastLoginTime +
                 '}';
     }
 }

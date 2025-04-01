@@ -2,11 +2,18 @@
 import { ref, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import PageContainer from "@/components/PageContainer.vue";
-import { Search, Message, ChatDotRound } from "@element-plus/icons-vue";
-import { findContactedUserNames } from "@/api/user/message";
+import { Search, Message, ChatDotRound, Check, Remove } from "@element-plus/icons-vue";
+import {
+  findContactedUserNames,
+  findMessagePage,
+  readMessage,
+  unReadMessage,
+} from "@/api/user/message";
 import { useRouter } from "vue-router";
 import { USER_MESSAGE_DETAIL_PATH } from "@/constants/routes-constants";
 import { useMessageStore } from "@/stores/modules/message";
+import { findUserById } from "@/api/user/user.js";
+import { useUserStore } from "@/stores/modules/user";
 
 // 消息列表数据
 const chatList = ref([]);
@@ -54,25 +61,80 @@ const columns = [
   },
 ];
 
-// 加载消息列表
+// 添加一个标记来区分是否处于搜索模式
+const isSearchMode = ref(false);
+
+// 修改加载消息列表函数
 const loadMessages = async () => {
   loading.value = true;
   try {
-    const { data } = await findContactedUserNames();
-    console.log(data);
-    // 将用户数据转为换聊天列表格式
-    chatList.value = data.data.map((item) => ({
-      receiverId: item.userId,
-      receiverName: item.username,
-      receiverAvatar: item.avatar,
-      lastMessage: item.message,
-      unreadCount: item.unreadCount,
-      lastMessageTime: item.lastMessageTime == null ? "-" : item.lastMessageTime,
-    }));
+    // 判断是否有搜索条件
+    isSearchMode.value = !!(
+      searchForm.value.receiverName ||
+      searchForm.value.content ||
+      searchForm.value.startDate ||
+      searchForm.value.endDate
+    );
 
-    messageStore.setContactList(chatList.value);
+    if (isSearchMode.value) {
+      const { data } = await findMessagePage({
+        receiverName: searchForm.value.receiverName,
+        content: searchForm.value.content,
+        startDate: searchForm.value.startDate,
+        endDate: searchForm.value.endDate,
+        page: pagination.value.currentPage - 1,
+        size: pagination.value.pageSize,
+      });
+
+      // 处理搜索结果，对于未知用户进行额外查询
+      chatList.value = await Promise.all(
+        data.data.content.map(async (message) => {
+          let receiverName = message.receiver?.username;
+          let receiverAvatar = message.receiver?.avatar;
+
+          // 如果用户信息不完整，尝试获取完整信息
+          if (!receiverName || !receiverAvatar) {
+            try {
+              const userResponse = await findUserById(message.receiverId);
+              if (userResponse.data.status === 200) {
+                receiverName = userResponse.data.data.username;
+                receiverAvatar = userResponse.data.data.avatar;
+              }
+            } catch (error) {
+              console.error("获取用户信息失败:", error);
+            }
+          }
+
+          return {
+            messageId: message.messageId,
+            receiverId: message.receiverId,
+            senderId: message.senderId,
+            content: message.content,
+            createdAt: message.createdAt,
+            isRead: message.isRead,
+            receiverName: receiverName || "未知用户",
+            receiverAvatar: receiverAvatar,
+          };
+        })
+      );
+
+      pagination.value.total = data.data.totalElements;
+    } else {
+      // 原有的联系人列表逻辑保持不变
+      const { data } = await findContactedUserNames();
+      chatList.value = data.data.map((item) => ({
+        receiverId: item.userId,
+        receiverName: item.username,
+        receiverAvatar: item.avatar,
+        lastMessage: item.message,
+        unreadCount: item.unreadCount,
+        lastMessageTime: item.lastMessageTime == null ? "-" : item.lastMessageTime,
+      }));
+      // 设置联系人列表的总数
+      pagination.value.total = chatList.value.length;
+    }
   } catch (error) {
-    ElMessage.error("加载消息列表失败");
+    ElMessage.error("加载失败");
   } finally {
     loading.value = false;
   }
@@ -92,6 +154,9 @@ const handleReset = () => {
     startDate: "",
     endDate: "",
   };
+  isSearchMode.value = false; // 确保切换回聊天记录模式
+  pagination.value.currentPage = 1; // 重置页码
+  pagination.value.total = 0; // 重置总数
   handleSearch();
 };
 
@@ -106,27 +171,14 @@ const handleSizeChange = (size) => {
   pagination.value.pageSize = size;
   pagination.value.currentPage = 1;
   loadMessages();
-};
-
-// 删除消息
-const handleDelete = async (row) => {
-  try {
-    await ElMessageBox.confirm("确定要删除这条消息吗？", "提示", {
-      type: "warning",
-    });
-    // TODO: 调用删除API
-    // await deleteMessage(row.messageId);
-    ElMessage.success("删除成功");
-    loadMessages();
-  } catch (error) {
-    if (error !== "cancel") {
-      ElMessage.error("删除失败");
-    }
-  }
+  // 添加键盘事件监听
+  window.addEventListener("keydown", handleKeydown);
 };
 
 onMounted(() => {
   loadMessages();
+  // 移除键盘事件监听
+  window.removeEventListener("keydown", handleKeydown);
 });
 
 const router = useRouter();
@@ -142,6 +194,42 @@ const handleChat = (row) => {
     path: USER_MESSAGE_DETAIL_PATH.replace(":receiverId", row.receiverId),
   });
 };
+
+/**
+ * 搜索状态监听回车
+ */
+const handleKeydown = (event) => {
+  if (event.key === "Enter") {
+    handleSearch();
+  }
+};
+
+// 获取当前用户信息
+const userStore = useUserStore();
+const currentUserId = userStore.user.id;
+
+/**
+ * 标为已读
+ */
+const handleMarkAsRead = async (row) => {
+  try {
+    await readMessage(row.receiverId);
+    ElMessage.success("标为已读成功");
+    loadMessages();
+  } catch (error) {
+    ElMessage.error("标为已读失败");
+  }
+};
+
+const handleMarkAsUnread = async (row) => {
+  try {
+    row.unreadCount = 1; // 直接设置标记未读数量为1
+    await unReadMessage(row.receiverId);
+    ElMessage.success("标记未读成功");
+  } catch (error) {
+    ElMessage.error("操作失败");
+  }
+};
 </script>
 
 <template>
@@ -154,22 +242,30 @@ const handleChat = (row) => {
             v-model="searchForm.receiverName"
             placeholder="请输入联系人姓名"
             clearable
+            @keydown.enter="handleSearch"
           />
         </el-form-item>
         <el-form-item label="消息内容">
-          <el-input v-model="searchForm.content" placeholder="搜索消息内容" clearable />
+          <el-input
+            v-model="searchForm.content"
+            placeholder="搜索消息内容"
+            clearable
+            @keydown.enter="handleSearch"
+          />
         </el-form-item>
         <el-form-item label="时间范围">
           <el-date-picker
             v-model="searchForm.startDate"
             type="date"
             placeholder="开始日期"
+            @keydown.enter="handleSearch"
           />
           <span class="date-separator">-</span>
           <el-date-picker
             v-model="searchForm.endDate"
             type="date"
             placeholder="结束日期"
+            @keydown.enter="handleSearch"
           />
         </el-form-item>
         <el-form-item>
@@ -201,18 +297,29 @@ const handleChat = (row) => {
         </el-table-column>
 
         <!-- 最新消息列 -->
-        <el-table-column prop="lastMessage" label="最新消息" min-width="300">
+        <el-table-column :label="isSearchMode ? '消息内容' : '最新消息'" min-width="300">
           <template #default="{ row }">
             <div class="message-preview">
-              <el-text class="message-content" truncated>
-                {{ row.lastMessage }}
+              <el-text class="message-content" :truncated="!isSearchMode">
+                {{ isSearchMode ? row.content : row.lastMessage }}
               </el-text>
+              <div v-if="isSearchMode" class="message-meta">
+                <span class="message-time">{{ row.createdAt }}</span>
+                <el-tag v-if="row.isRead" size="small" type="info">已读</el-tag>
+                <el-tag v-else size="small" type="danger">未读</el-tag>
+              </div>
             </div>
           </template>
         </el-table-column>
 
         <!-- 未读消息数 -->
-        <el-table-column prop="unreadCount" label="未读消息" width="100" align="center">
+        <el-table-column
+          v-if="!isSearchMode"
+          prop="unreadCount"
+          label="未读消息"
+          width="100"
+          align="center"
+        >
           <template #default="{ row }">
             <el-badge
               :value="row.unreadCount"
@@ -225,13 +332,41 @@ const handleChat = (row) => {
         </el-table-column>
 
         <!-- 最后联系时间 -->
-        <el-table-column prop="lastMessageTime" label="最后联系时间" width="180" />
+        <el-table-column
+          :prop="isSearchMode ? 'createdAt' : 'lastMessageTime'"
+          :label="isSearchMode ? '发送时间' : '最后联系时间'"
+          width="180"
+        />
 
         <!-- 操作列 -->
-        <el-table-column label="操作" width="120" fixed="right">
+        <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" :icon="ChatDotRound" link @click="handleChat(row)">
+            <el-button
+              v-if="row.receiverId !== currentUserId"
+              type="primary"
+              :icon="ChatDotRound"
+              link
+              @click="handleChat(row)"
+            >
               聊天
+            </el-button>
+            <el-button
+              v-if="!isSearchMode && row.unreadCount"
+              type="info"
+              :icon="Check"
+              link
+              @click="handleMarkAsRead(row)"
+            >
+              已读
+            </el-button>
+            <el-button
+              v-if="!isSearchMode && (!row.unreadCount || row.unreadCount === 0)"
+              type="warning"
+              :icon="Remove"
+              link
+              @click="handleMarkAsUnread(row)"
+            >
+              未读
             </el-button>
           </template>
         </el-table-column>
@@ -331,6 +466,25 @@ const handleChat = (row) => {
     margin-top: 20px;
     display: flex;
     justify-content: flex-end;
+  }
+}
+
+.message-preview {
+  .message-content {
+    color: var(--el-text-color-regular);
+    font-size: 14px;
+  }
+
+  .message-meta {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .message-time {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+    }
   }
 }
 </style>

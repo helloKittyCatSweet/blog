@@ -1,6 +1,6 @@
 package com.kitty.blog.repository;
 
-import com.kitty.blog.model.userActivity.UserActivity;
+import com.kitty.blog.model.UserActivity;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 

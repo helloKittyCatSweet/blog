@@ -30,7 +30,7 @@ public class PostVersionController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "根据文章ID查询版本列表")
     @GetMapping("/public/find/post/{postId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -47,7 +47,7 @@ public class PostVersionController {
      * @param postVersion
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "保存版本")
     @PostMapping("/public/save")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "保存成功"),
@@ -64,7 +64,7 @@ public class PostVersionController {
      * @param versionId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据版本ID查询版本")
     @GetMapping("/admin/find/id/{versionId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -80,7 +80,7 @@ public class PostVersionController {
      * 查询所有版本
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询所有版本")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -97,7 +97,7 @@ public class PostVersionController {
      * @param versionId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "删除版本")
     @DeleteMapping("/public/delete/id/{versionId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
@@ -113,7 +113,7 @@ public class PostVersionController {
      * 统计版本数量
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "统计版本数量")
     @GetMapping("/admin/count")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "统计成功"),
@@ -130,7 +130,7 @@ public class PostVersionController {
      * @param versionId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "判断版本是否存在")
     @GetMapping("/admin/exist/id/{versionId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "判断成功"),

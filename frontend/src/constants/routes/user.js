@@ -18,7 +18,7 @@ export const USER_FAVORITE_MANAGE_PATH = `${USER_CONTENT}/favorite/manage`
 export const USER_MESSAGE = `${USER}/message`
 export const USER_MESSAGE_MANAGE_PATH = `${USER_MESSAGE}/manage`
 // 修改为可选
-export const USER_MESSAGE_DETAIL_PATH = `${USER_MESSAGE}/chat/:receiverId?`
+export const USER_MESSAGE_DETAIL_PATH = `${USER_MESSAGE}/chat`
 export const USER_REPORT_MANAGE_PATH = `${USER_MESSAGE}/report/manage`
 
 // 个人中心

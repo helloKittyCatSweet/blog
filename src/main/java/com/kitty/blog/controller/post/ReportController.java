@@ -1,7 +1,7 @@
 package com.kitty.blog.controller.post;
 
 import com.kitty.blog.dto.user.LoginResponseDto;
-import com.kitty.blog.model.report.Report;
+import com.kitty.blog.model.Report;
 import com.kitty.blog.service.ReportService;
 import com.kitty.blog.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,7 +31,7 @@ public class ReportController {
      * @param report
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "创建报告", description = "创建报告")
     @PostMapping("/public/create")
     @ApiResponses(value = {
@@ -52,7 +52,7 @@ public class ReportController {
      * @param updatedReport
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "更新报告", description = "更新报告")
     @PutMapping("/public/update")
     @ApiResponses(value = {
@@ -73,8 +73,8 @@ public class ReportController {
      * @param username
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_REPORT_MANAGER) " +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_REPORT_MANAGER) " +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or @reportService.hasReportedPost(#userId, #user.username)")
     @Operation(summary = "根据用户ID查询报告列表", description = "根据用户ID查询报告列表")
     @GetMapping("/admin/find/user/{username}")
@@ -96,8 +96,8 @@ public class ReportController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or @reportService.hasReportedPost(#postId, #user.id)")
     @Operation(summary = "根据文章ID查询报告列表", description = "根据文章ID查询报告列表")
     @GetMapping("/admin/find/article/{postId}")
@@ -119,8 +119,8 @@ public class ReportController {
      * @param reason
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据原因查询报告列表", description = "根据原因查询报告列表")
     @GetMapping("/admin/find/reason/{reason}")
     @ApiResponses(value = {
@@ -135,8 +135,8 @@ public class ReportController {
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
 
-//    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role)ROLE_MESSAGE_MANAGER)" +
-//            " or hasRole(T(com.kitty.blog.controller.constant.Role)ROLE_SYSTEM_ADMINISTRATOR)" +
+//    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role)ROLE_MESSAGE_MANAGER)" +
+//            " or hasRole(T(com.kitty.blog.constant.Role)ROLE_SYSTEM_ADMINISTRATOR)" +
 //            " ")
 //    @Operation(summary = "根据原因和文章ID查询报告列表", description = "根据原因和文章ID查询报告列表")
 //    @GetMapping("/public/find/reason/post/{reason}/{postId}")
@@ -152,8 +152,8 @@ public class ReportController {
 //                HttpStatus.OK, "查询成功",
 //                HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
 //    }
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_MESSAGE_MANAGER)" +
-        " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+        " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "修改报告状态")
     @PutMapping("/admin/change/status/{id}/{status}")
     @ApiResponses(value = {
@@ -171,8 +171,8 @@ public class ReportController {
                 HttpStatus.BAD_REQUEST, "请求参数错误");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据状态查询报告列表")
     @GetMapping("/admin/find/status/{status}")
     @ApiResponses(value = {
@@ -193,7 +193,7 @@ public class ReportController {
      * @param report
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "保存报告", description = "保存报告")
     @PostMapping("/public/save")
     @ApiResponses(value = {
@@ -213,8 +213,8 @@ public class ReportController {
      * @param reportId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据报告ID查询报告", description = "根据报告ID查询报告")
     @GetMapping("/admin/find/id/{id}")
     @ApiResponses(value = {
@@ -233,8 +233,8 @@ public class ReportController {
      * 查询所有报告列表
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询所有报告列表", description = "查询所有报告列表")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {
@@ -253,8 +253,8 @@ public class ReportController {
      * @param reportId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or @reportService.hasReportedPost(#postId, #user.id)")
     @Operation(summary = "根据报告ID删除报告", description = "根据报告ID删除报告")
     @DeleteMapping("/delete/{id}")
@@ -275,8 +275,8 @@ public class ReportController {
      * 统计报告数量
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "统计报告数量", description = "统计报告数量")
     @GetMapping("/admin/count")
     @ApiResponses(value = {
@@ -295,8 +295,8 @@ public class ReportController {
      * @param reportId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "判断报告是否存在", description = "判断报告是否存在")
     @GetMapping("/admin/exist/id/{id}")
     @ApiResponses(value = {

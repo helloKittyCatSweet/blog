@@ -20,11 +20,7 @@ export const activate = ({ userId, isActive }) =>
 export const verifyToken = (token) => request.post(`${userPrefix}/public/validate`, { token })
 
 // 上传头像
-export const uploadAvatar = (file, userId) => {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('userId', userId);
-
+export const uploadAvatar = (formData) => {
   return request.post(`${userPrefix}/public/upload/avatar`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
