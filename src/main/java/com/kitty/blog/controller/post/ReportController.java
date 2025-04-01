@@ -70,20 +70,22 @@ public class ReportController {
 
     /**
      * 根据用户ID查询报告列表
-     * @param userId
+     * @param username
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_MESSAGE_MANAGER) " +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_REPORT_MANAGER) " +
+            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+            " or @reportService.hasReportedPost(#userId, #user.username)")
     @Operation(summary = "根据用户ID查询报告列表", description = "根据用户ID查询报告列表")
-    @GetMapping("/admin/find/user/{userId}")
+    @GetMapping("/admin/find/user/{username}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "用户不存在")
     })
-    public ResponseEntity<Response<List<Report>>> findByUserId
-            (@PathVariable(value = "userId") Integer userId) {
-        ResponseEntity<List<Report>> response = reportService.findByUserId(userId);
+    public ResponseEntity<Response<List<Report>>> findByUsername
+            (@PathVariable(value = "username") String username,
+             @AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<List<Report>> response = reportService.findByUsername(username);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND, "用户不存在");

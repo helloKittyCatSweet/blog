@@ -1,8 +1,10 @@
 package com.kitty.blog.service;
 
-import com.kitty.blog.dto.user.MessageInfo;
-import com.kitty.blog.model.Message;
+import com.kitty.blog.dto.message.MessageStatusUpdate;
+import com.kitty.blog.dto.message.MessageInfo;
+import com.kitty.blog.model.message.Message;
 import com.kitty.blog.model.User;
+import com.kitty.blog.model.message.MessageStatus;
 import com.kitty.blog.repository.MessageRepository;
 import com.kitty.blog.repository.UserRepository;
 import com.kitty.blog.service.contentReview.BaiduContentService;
@@ -13,6 +15,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +35,9 @@ public class MessageService {
     @Autowired
     private BaiduContentService baiduContentService;
 
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
+
     @Transactional
     public ResponseEntity<Boolean> create(Message message) {
         if (!userRepository.existsById(message.getSenderId())
@@ -40,13 +46,42 @@ public class MessageService {
         }
 
         String s = baiduContentService.checkText(message.getContent());
-        if (!s.equals("合规")){
+        if (!s.equals("合规")) {
             return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
         }
 
         message.setIsRead(false);
-        save(message);
+        message.setStatus(MessageStatus.SENT.name());
+        Message savedMessage = save(message).getBody();
+
+        // 发送WebSocket消息
+        assert savedMessage != null;
+        simpMessagingTemplate.convertAndSendToUser(message.getReceiverId().toString(),
+                "/queue/message", savedMessage);
         return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
+    /**
+     * 更新消息状态
+     * @param messageId
+     * @param messageStatus
+     */
+    @Transactional
+    @CacheEvict(allEntries = true)
+    public void updateMessageStatus(Integer messageId, String messageStatus) {
+        Message message = findById(messageId).getBody();
+        if(message != null){
+            message.setStatus(messageStatus);
+            if (messageStatus.equals(MessageStatus.READ.name())){
+                message.setIsRead(true);
+            }
+            save(message);
+
+            // 通知发送者消息状态更新
+            simpMessagingTemplate.convertAndSendToUser(message.getSenderId().toString(),
+                    "/queue/message-status",
+                    new MessageStatusUpdate(messageId, messageStatus));
+        }
     }
 
     @Transactional
@@ -61,7 +96,7 @@ public class MessageService {
         }
 
         String s = baiduContentService.checkText(message.getContent());
-        if (!s.equals("合规")){
+        if (!s.equals("合规")) {
             return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
         }
 
@@ -79,19 +114,19 @@ public class MessageService {
     @Transactional
     @CacheEvict(allEntries = true)
     public ResponseEntity<Boolean> readMessage(boolean isRead, Integer messageId) {
-        if (!messageRepository.existsById(messageId)){
+        if (!messageRepository.existsById(messageId)) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
-        messageRepository.readMessage(isRead,messageId);
+        messageRepository.readMessage(isRead, messageId);
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
     @Transactional
     @Cacheable(key = "#userId")
     public ResponseEntity<List<Message>> findBySenderId(Integer senderId) {
-        if (!userRepository.existsById(senderId)){
+        if (!userRepository.existsById(senderId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        }else {
+        } else {
             return new ResponseEntity<>(
                     messageRepository.findBySenderId(senderId).orElse(new ArrayList<>()),
                     HttpStatus.OK);
@@ -101,9 +136,9 @@ public class MessageService {
     @Transactional
     @Cacheable(key = "#userId")
     public ResponseEntity<List<Message>> findByReceiverId(Integer receiverId) {
-        if (!userRepository.existsById(receiverId)){
+        if (!userRepository.existsById(receiverId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        }else {
+        } else {
             return new ResponseEntity(
                     messageRepository.findByReceiverId(receiverId).orElse(new ArrayList<>()),
                     HttpStatus.OK);
@@ -113,9 +148,9 @@ public class MessageService {
     @Transactional
     @Cacheable(key = "#senderId + #receiverId")
     public ResponseEntity<List<Message>> findByContentForSender(String content, Integer senderId) {
-        if (!userRepository.existsById(senderId)){
+        if (!userRepository.existsById(senderId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        }else {
+        } else {
             return new ResponseEntity<>(messageRepository.
                     findByContentForSender(content, senderId).orElse(new ArrayList<>()),
                     HttpStatus.OK);
@@ -125,9 +160,9 @@ public class MessageService {
     @Transactional
     @Cacheable(key = "#receiverId + #senderId")
     public ResponseEntity<List<Message>> findByContentForReceiver(String content, Integer receiverId) {
-        if (!userRepository.existsById(receiverId)){
+        if (!userRepository.existsById(receiverId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        }else {
+        } else {
             return new ResponseEntity<>(messageRepository.
                     findByContentForReceiver(content, receiverId).orElse(new ArrayList<>()),
                     HttpStatus.OK);
@@ -137,20 +172,27 @@ public class MessageService {
     @Transactional
     @Cacheable(key = "#userId")
     public ResponseEntity<List<MessageInfo>> findContactedUserNames(Integer userId) {
-        if (!userRepository.existsById(userId)){
+        if (!userRepository.existsById(userId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        }else {
+        } else {
             List<Integer> contactedUserIds =
                     messageRepository.findContactedUserIds(userId).orElse(new ArrayList<>());
-            if (contactedUserIds.isEmpty()){
+            if (contactedUserIds.isEmpty()) {
                 return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
             }
             List<MessageInfo> contactedUserNames = new ArrayList<>();
             for (Integer contactedUserId : contactedUserIds) {
                 User user = (User) userRepository.findById(contactedUserId).get();
-                contactedUserNames.add(
-                        new MessageInfo(user.getUserId(), user.getUsername())
-                );
+                Message message = messageRepository.findLastMessage(userId, contactedUserId).orElse(null);
+                MessageInfo messageInfo = new MessageInfo.Builder()
+                        .userId(user.getUserId())
+                        .username(user.getUsername())
+                        .avatar(user.getAvatar())
+                        .lastMessage(message == null ? "暂无消息" : message.getContent())
+                        .unreadCount(messageRepository.findUnreadCount(userId, contactedUserId))
+                        .lastMessageTime(message == null ? null : message.getCreatedAt())
+                        .build();
+                contactedUserNames.add(messageInfo);
             }
             return new ResponseEntity<>(contactedUserNames, HttpStatus.OK);
         }
@@ -159,12 +201,87 @@ public class MessageService {
     @Transactional
     @Cacheable(key = "#senderId + #receiverId")
     public ResponseEntity<List<Message>> findConversation(Integer senderId, Integer receiverId) {
-        if (!userRepository.existsById(senderId) || !userRepository.existsById(receiverId)){
+        if (!userRepository.existsById(senderId) || !userRepository.existsById(receiverId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        }else {
+        } else {
             return new ResponseEntity<>(
                     messageRepository.findConversation(senderId, receiverId).orElse(new ArrayList<>()),
                     HttpStatus.OK);
+        }
+    }
+
+    /**
+     * 发送私人消息
+     * @param message
+     * @return
+     */
+    @Transactional
+    public ResponseEntity<Message> sendPrivateMessage(Message message){
+        Message savedMessage = save(message).getBody();
+        if (savedMessage != null){
+            // 发送给接收者
+            simpMessagingTemplate.convertAndSendToUser(
+                    savedMessage.getReceiverId().toString(),
+                    "/queue/message",
+                    savedMessage
+            );
+            // 发送状态更新给发送者
+            simpMessagingTemplate.convertAndSendToUser(
+                    savedMessage.getSenderId().toString(),
+                    "/queue/message-status",
+                    new MessageStatusUpdate(savedMessage.getMessageId(), MessageStatus.SENT.name())
+            );
+            return new ResponseEntity<>(savedMessage, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * 发送群组消息
+     * @param message
+     * @return
+     */
+    @Transactional
+    public ResponseEntity<Message> sendTopicMessage(Message message){
+        Message savedMessage = save(message).getBody();
+        if (savedMessage != null){
+            simpMessagingTemplate.convertAndSend(
+                    "/topic/chat",
+                    savedMessage
+            );
+            return new ResponseEntity<>(savedMessage, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * 获取用户未读消息数量
+     * @param receiverId
+     * @return
+     */
+    @Transactional
+    public ResponseEntity<Long> countByReceiverIdAndIsReadFalse(Integer receiverId) {
+        return new ResponseEntity<>
+                (messageRepository.countByReceiverIdAndIsReadFalse(receiverId), HttpStatus.OK);
+    }
+
+    /**
+     * 标记消息为已读并通知发送者
+     * @param messageId
+     * @param receiverId
+     */
+    @Transactional
+    public void markMessageAsRead(Integer messageId, Integer receiverId) {
+        Message message = findById(messageId).getBody();
+        if (message != null && message.getReceiverId().equals(receiverId) && !message.getIsRead()){
+            message.setIsRead(true);
+            message.setStatus(MessageStatus.READ.name());
+            save(message);
+
+            // 通知发送者消息已读
+            simpMessagingTemplate.convertAndSendToUser(message.getSenderId().toString(),
+                    "/queue/message-status",
+                    new MessageStatusUpdate(messageId, MessageStatus.READ.name()));
         }
     }
 
@@ -186,7 +303,7 @@ public class MessageService {
 
     @Transactional
     public ResponseEntity<List<Message>> findAll() {
-        if (messageRepository.count() == 0){
+        if (messageRepository.count() == 0) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(messageRepository.findAll(), HttpStatus.OK);
@@ -195,7 +312,7 @@ public class MessageService {
     @Transactional
     @CacheEvict(allEntries = true)
     public ResponseEntity<Boolean> deleteById(Integer id) {
-        if (!existsById(id).getBody()){
+        if (!existsById(id).getBody()) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         messageRepository.deleteById(id);
@@ -205,7 +322,7 @@ public class MessageService {
     @Transactional
     public boolean hasDeletePermission(Integer userId, Integer messageId) {
         Message message = findById(messageId).getBody();
-        if (message == null){
+        if (message == null) {
             return false;
         }
         return message.getSenderId().equals(userId) || message.getReceiverId().equals(userId);

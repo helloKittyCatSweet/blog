@@ -1,8 +1,9 @@
 package com.kitty.blog.controller.user;
 
+import com.kitty.blog.dto.message.MessageStatusUpdate;
 import com.kitty.blog.dto.user.LoginResponseDto;
-import com.kitty.blog.dto.user.MessageInfo;
-import com.kitty.blog.model.Message;
+import com.kitty.blog.dto.message.MessageInfo;
+import com.kitty.blog.model.message.Message;
 import com.kitty.blog.service.MessageService;
 import com.kitty.blog.utils.Response;
 
@@ -14,6 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -64,6 +68,8 @@ public class MessageController {
                 HttpStatus.OK, "更新成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
     }
+
+
 
     /**
      * 读取消息
@@ -125,19 +131,18 @@ public class MessageController {
     /**
      * 根据消息内容和发送者ID，查询消息
      * @param content
-     * @param senderId
      * @return
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
     @Operation(summary = "根据消息内容和发送者ID，查询消息", description = "根据消息内容和发送者ID，查询消息")
-    @GetMapping("/public/find/sender/{senderId}/{content}")
+    @GetMapping("/public/find/sender/{content}")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
     public ResponseEntity<Response<List<Message>>> findByContentForSender(
             @PathVariable @Param("content") String content,
-            @PathVariable @Param("senderId") Integer senderId) {
+            @AuthenticationPrincipal LoginResponseDto user) {
         ResponseEntity<List<Message>> response = messageService.
-                findByContentForSender(content, senderId);
+                findByContentForSender(content, user.getId());
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
@@ -146,19 +151,18 @@ public class MessageController {
     /**
      * 根据消息内容和接收者ID，查询消息
      * @param content
-     * @param receiverId
      * @return
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
     @Operation(summary = "查询消息", description = "根据消息内容和接收者ID，查询消息")
-    @GetMapping("/public/find/receiver/{receiverId}/{content}")
+    @GetMapping("/public/find/receiver/{content}")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙") })
     public ResponseEntity<Response<List<Message>>> findByContentForReceiver(
             @PathVariable @Param("content") String content,
-            @PathVariable @Param("receiverId") Integer receiverId) {
+            @AuthenticationPrincipal LoginResponseDto user) {
         ResponseEntity<List<Message>> response = messageService.
-                findByContentForReceiver(content, receiverId);
+                findByContentForReceiver(content, user.getId());
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
@@ -166,17 +170,16 @@ public class MessageController {
 
     /**
      * 查询联系人
-     * @param userId
      * @return
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
     @Operation(summary = "查询联系人", description = "查询联系人")
-    @GetMapping("/public/find/contacted/{userId}")
+    @GetMapping("/public/find/contacted")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙") })
     public ResponseEntity<Response<List<MessageInfo>>> findContactedUserNames(
-            @PathVariable @Param("userId") Integer userId) {
-        ResponseEntity<List<MessageInfo>> response = messageService.findContactedUserNames(userId);
+            @AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<List<MessageInfo>> response = messageService.findContactedUserNames(user.getId());
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");

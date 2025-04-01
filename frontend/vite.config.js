@@ -19,11 +19,30 @@ export default defineConfig({
       resolvers: [ElementPlusResolver()],
     })
   ],
+  optimizeDeps: {
+    include: [
+      'element-plus',
+      '@element-plus/icons-vue'
+    ]
+  },
+  build: {
+    chunkSizeWarningLimit: 2000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'element-plus': ['element-plus']
+        }
+      }
+    }
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-  base: '/',  // 如果有自己的域名前缀，请配置在这里
+  base: '/',  // 如果有自己的域名前缀，请配置在这里,
+  define: {
+    global: 'window'
+  }
 
 })

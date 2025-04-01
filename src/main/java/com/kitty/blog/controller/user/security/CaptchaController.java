@@ -2,6 +2,9 @@ package com.kitty.blog.controller.user.security;
 
 import com.kitty.blog.service.CaptchaService;
 import com.kitty.blog.utils.Response;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,7 +31,13 @@ public class CaptchaController {
     @Autowired
     private CaptchaService captchaService;
 
+    @Operation(summary = "获取验证码图片")
     @GetMapping("/auth/captcha")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "验证码图片"),
+            @ApiResponse(responseCode = "400", description = "请求参数错误"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
     public ResponseEntity<byte[]> getCaptcha(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
@@ -57,6 +66,12 @@ public class CaptchaController {
         return new ResponseEntity<>(imageBytes, headers, HttpStatus.OK);
     }
 
+    @Operation(summary = "验证验证码")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "验证码验证成功"),
+            @ApiResponse(responseCode = "400", description = "请求参数错误"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
     @GetMapping("/auth/verify")
     public ResponseEntity<Response<String>> verifyCaptcha(HttpServletRequest request,
             @RequestParam String code,

@@ -6,7 +6,6 @@ export const useUserStore = defineStore("free-share-user", () => {
     id: "",
     username: "",
     avatar: "",
-    settings: {},
     token: "",
     roles: [],
     authorities: [],
@@ -16,26 +15,31 @@ export const useUserStore = defineStore("free-share-user", () => {
   const getId = () => user.value.id;
   const getUsername = () => user.value.username;
   const getAvatar = () => user.value.avatar;
-  const getSettings = () => user.value.settings;
   const getToken = () => user.value.token;
   const getRoles = () => user.value.roles;
   const getAuthorities = () => user.value.authorities;
   const getUser = () => user.value;
 
   // 权限检查
-  const hasRole = (role) => user.value.roles.includes(role);
-  const hasAnyRoles = (roles) => user.value.roles.some(role => roles.includes(role));
+  // 权限检查
+  const hasRole = (role) => user.value.roles.some(r => r.authority === role);
+  const hasAnyRoles = (roles) => user.value.roles.some(r => roles.includes(r.authority));
 
   // Setter 方法
   const setId = (newId) => { user.value.id = newId };
   const setUsername = (newUsername) => { user.value.username = newUsername };
   const setAvatar = (newAvatar) => { user.value.avatar = newAvatar };
-  const setSettings = (newSettings) => { user.value.settings = newSettings };
   const setToken = (newToken) => { user.value.token = newToken };
   // 设置其他用户信息
   const setUser = (userData) => {
-    user.value = { ...user.value, ...userData }
-    localStorage.setItem('user', JSON.stringify(user.value))
+    // 确保保留现有token
+    const currentToken = user.value.token;
+    user.value = {
+      ...user.value,
+      ...userData,
+      token: userData.token || currentToken // 保留现有token或使用新token
+    };
+    localStorage.setItem('user', JSON.stringify(user.value));
   };
   const removeToken = () => { user.value.token = "" };
   const setRoles = (newRoles) => { user.value.roles = newRoles };
@@ -47,7 +51,6 @@ export const useUserStore = defineStore("free-share-user", () => {
       id: "",
       username: "",
       avatar: "",
-      settings: {},
       token: "",
       roles: [],
       authorities: [],
@@ -67,8 +70,6 @@ export const useUserStore = defineStore("free-share-user", () => {
     setUsername,
     getAvatar,
     setAvatar,
-    getSettings,
-    setSettings,
     getToken,
     setToken,
     removeToken,

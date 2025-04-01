@@ -5,6 +5,7 @@ import { ElMessage } from "element-plus";
 import { useUserStore } from "@/stores";
 import { useRouter, useRoute } from "vue-router";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
+import ResetPasswordDialog from "@/components/ResetPasswordDialog.vue";
 
 // api
 import {
@@ -14,9 +15,9 @@ import {
 } from "@/api/user/security/captcha.js";
 import { login, register } from "@/api/user/user";
 import { verify, send } from "@/api/user/security/emailVerification";
-import { CONTROL_PANEL_PATH } from "@/constants/routes-constants";
+import { CONTROL_PANEL_PATH } from "@/constants/routes/base";
 
-var isRegister = ref(true);
+const isRegister = ref(false);
 
 const form = ref();
 
@@ -64,7 +65,7 @@ const rules = {
       trigger: "blur",
     },
   ],
-  captcha: [{ required: true, message: "请输入验证码（不忽略大小写）", trigger: "blur" }],
+  captcha: [{ required: true, message: "请输入验证码", trigger: "blur" }],
   email: [
     { required: true, message: "请输入邮箱地址", trigger: "blur" },
     {
@@ -144,8 +145,10 @@ const verifyCaptcha = async () => {
 
 // 设置自动刷新验证码
 let captchaTimer;
+// 添加记住登录状态的响应式变量
+const rememberMe = ref(false);
 
-onMounted(() => {
+onMounted(async () => {
   // 初始生成验证码
   generateCaptcha();
 
@@ -153,6 +156,17 @@ onMounted(() => {
   captchaTimer = setInterval(() => {
     generateCaptcha();
   }, 270000); // 四分三十秒 = 270000毫秒;
+
+  // 添加键盘事件监听
+  window.addEventListener("keydown", handleKeydown);
+
+  // 使用 requestIdleCallback 处理自动登录
+  if (window.requestIdleCallback) {
+    window.requestIdleCallback(autoLogin);
+  } else {
+    // 降级处理
+    setTimeout(autoLogin, 0);
+  }
 });
 
 // 组件卸载时清除定时器
@@ -164,8 +178,22 @@ onUnmounted(() => {
   if (captchaUrl.value) {
     window.URL.revokeObjectURL(captchaUrl.value);
   }
+  // 移除键盘事件监听
+  window.removeEventListener("keydown", handleKeydown);
 });
 
+/**
+ * 监听回车按键
+ */
+const handleKeydown = (event) => {
+  if (event.key === "Enter") {
+    if (isRegister.value) {
+      registerUser();
+    } else {
+      loginUser();
+    }
+  }
+};
 /**
  * 页面切换，重置表单
  */
@@ -185,17 +213,98 @@ watch(isRegister, () => {
 });
 
 /**
+ * 为自动登录添加 加密解密工具函数
+ */
+const encryptPassword = (password) => {
+  return window.btoa(encodeURIComponent(password)); // 使用 base64 加密
+};
+
+const decryptPassword = (encrypted) => {
+  return decodeURIComponent(window.atob(encrypted)); // 解密 base64
+};
+
+// 添加防抖函数
+const debounce = (fn, delay) => {
+  let timer = null;
+  return function (...args) {
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+};
+
+// 添加防抖函数和异步存储函数
+const saveLoginInfo = debounce(async (username, password, remember) => {
+  if (remember) {
+    // 提前准备数据
+    const loginData = JSON.stringify({
+      username,
+      password: encryptPassword(password),
+      remember: true,
+    });
+
+    // 使用 requestIdleCallback 在浏览器空闲时执行
+    if (window.requestIdleCallback) {
+      window.requestIdleCallback(() => {
+        localStorage.setItem("loginInfo", loginData);
+      });
+    } else {
+      // 降级处理
+      setTimeout(() => {
+        localStorage.setItem("loginInfo", loginData);
+      }, 50);
+    }
+  } else {
+    localStorage.removeItem("loginInfo");
+  }
+}, 100);
+
+// 添加自动登录函数
+const autoLogin = async () => {
+  try {
+    // 提前获取数据
+    const savedLoginInfo = localStorage.getItem("loginInfo");
+    if (!savedLoginInfo) return;
+
+    const { username, password, remember } = JSON.parse(savedLoginInfo);
+    if (!remember) return;
+
+    // 使用 Promise.all 并行处理
+    await Promise.all([
+      (async () => {
+        formModel.value.username = username;
+        formModel.value.password = decryptPassword(password);
+        rememberMe.value = true;
+      })(),
+      form.value?.validate(),
+    ]);
+
+    await loginUser(true);
+  } catch (error) {
+    console.error("自动登录失败:", error);
+    clearLoginInfo();
+  }
+};
+
+/**
  * 登录逻辑
  */
 const route = useRoute();
 const userStore = useUserStore();
 const router = useRouter();
-const loginUser = async () => {
+const loginUser = async (isAutoLogin = false) => {
   try {
+    // 确保表单实例存在
+    if (!form.value) {
+      throw new Error("表单实例不存在");
+    }
+
     await form.value.validate();
 
-    const captchaResult = await verifyCaptcha(formModel.value.captcha);
-    if (!captchaResult) return;
+    // 如果不是自动登录，需要验证验证码
+    if (!isAutoLogin) {
+      const captchaResult = await verifyCaptcha(formModel.value.captcha);
+      if (!captchaResult) return;
+    }
 
     const res = await login({
       username: formModel.value.username,
@@ -205,6 +314,14 @@ const loginUser = async () => {
     if (res.data.status !== 200) {
       handleLoginError(res.data.status);
       return;
+    }
+
+    // 如果选择了记住我，保存登录信息
+    if (rememberMe.value) {
+      saveLoginInfo(formModel.value.username, formModel.value.password, true);
+    } else {
+      // 如果没有选择记住我，清除之前可能存储的信息
+      localStorage.removeItem("loginInfo");
     }
 
     // 1. 先同步更新用户状态
@@ -233,21 +350,46 @@ const loginUser = async () => {
       });
     });
 
+    // 3. 添加调试信息
+    console.log("登录状态:", {
+      token: userStore.user.token,
+      user: userStore.user,
+      roles: userStore.user?.roles,
+      targetPath: CONTROL_PANEL_PATH,
+    });
+
     // 4. 执行跳转
     const redirect = route.query.redirect;
-    if (redirect && typeof redirect === 'string') {
-      await router.replace(redirect); // 使用 replace 避免历史记录
+    if (redirect && typeof redirect === "string") {
+      // 检查是否存在循环重定向
+      if (redirect.includes("/login")) {
+        // 如果重定向到登录页，直接跳转到控制面板
+        await router.replace(CONTROL_PANEL_PATH);
+      } else {
+        await router.replace(redirect);
+      }
     } else {
       await router.replace(CONTROL_PANEL_PATH);
     }
   } catch (error) {
     console.error("登录错误:", error);
+    if (isAutoLogin) {
+      clearLoginInfo(); // 自动登录失败，清除登录信息
+    }
     ElMessage({
       message: error.response?.data?.message || "登录失败",
       type: "error",
       offset: 80,
     });
   }
+};
+
+// 添加退出登录时清除记住登录状态的方法
+const clearLoginInfo = () => {
+  localStorage.removeItem("loginInfo");
+  rememberMe.value = false;
+  formModel.value.username = "";
+  formModel.value.password = "";
 };
 
 const handleLoginError = (status) => {
@@ -359,11 +501,14 @@ const registerUser = async () => {
 
   if (response.data.status === 200) {
     ElMessage.success("注册成功");
-    isRegister = false; // 切换到登录
+    isRegister.value = false; // 切换到登录
   } else {
     ElMessage.error(response.data.message);
   }
 };
+
+// 添加重置密码的响应式变量
+const resetDialogVisible = ref(false);
 </script>
 
 <template>
@@ -396,6 +541,7 @@ const registerUser = async () => {
         size="large"
         autocomplete="off"
         v-if="isRegister"
+        @keyup.enter="isRegister ? registerUser() : loginUser()"
       >
         <el-form-item>
           <h1>注册</h1>
@@ -547,8 +693,14 @@ const registerUser = async () => {
         <!-- 记住我 -->
         <el-form-item class="flex">
           <div class="flex">
-            <el-checkbox>记住我</el-checkbox>
-            <el-link type="primary" :underline="false">忘记密码？</el-link>
+            <el-checkbox v-model="rememberMe">记住我</el-checkbox>
+            <el-link type="primary" :underline="false" @click="resetDialogVisible = true"
+              >忘记密码？</el-link
+            >
+            <ResetPasswordDialog
+              v-model="resetDialogVisible"
+              @success="resetDialogVisible = false"
+            />
           </div>
         </el-form-item>
         <!-- 登录 -->

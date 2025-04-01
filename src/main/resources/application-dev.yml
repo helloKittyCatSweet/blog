@@ -142,3 +142,6 @@ jwt:
   secret: "gZYAaBzjFS6R6aLU9uTlIZb2vzsnxKv4KE38H2H6X3c="
   expiration: 3600 # 1小时过期
 
+frontend:
+  url:
+    http://localhost:5173

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @Tag(name = "用户设置模块")
 @RestController
 @RequestMapping("/api/user/setting")
@@ -33,7 +35,8 @@ public class UserSettingController {
      * @param user
      * @return
      */
-    @PreAuthorize("#userId == #user.id")
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)" +
+            " and #userId == #user.id")
     @Operation(summary = "根据用户ID查询用户设置")
     @GetMapping("/public/find/user/{userId}")
     @ApiResponses(value = {
@@ -43,8 +46,11 @@ public class UserSettingController {
     public ResponseEntity<Response<UserSetting>> findByUserId
             (@PathVariable(name = "userId") Integer userId,
              @AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<UserSetting> response = userSettingService.findByUserId(userId);
-        return Response.createResponse(response,
+        log.info("Current user roles: {}", user.getAuthorities());
+        log.info("Requested userId: {}, Authenticated user id: {}", userId, user.getId());
+
+        UserSetting response = userSettingService.findByUserId(userId);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND,"用户设置不存在");
     }
@@ -54,7 +60,8 @@ public class UserSettingController {
      * @param userSetting
      * @return
      */
-    @PreAuthorize("#userSetting.userId == #user.id")
+    @PreAuthorize("(hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER) " +
+            "and (#userSetting.userId == #user.id))")
     @Operation(summary = "保存用户设置")
     @PostMapping("/public/save")
     @ApiResponses(value = {
@@ -65,8 +72,8 @@ public class UserSettingController {
             @RequestBody UserSetting userSetting,
             @AuthenticationPrincipal LoginResponseDto user
     ) {
-        ResponseEntity<UserSetting> response = userSettingService.save(userSetting);
-        return Response.createResponse(response,
+        UserSetting response = userSettingService.save(userSetting);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "保存成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "保存失败");
     }
@@ -84,8 +91,8 @@ public class UserSettingController {
             @ApiResponse(responseCode = "404", description = "用户设置不存在")
     })
     public ResponseEntity<Response<UserSetting>> findById(@PathVariable(name = "id") Integer id) {
-        ResponseEntity<UserSetting> response = userSettingService.findById(id);
-        return Response.createResponse(response,
+        UserSetting response = userSettingService.findById(id);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND, "用户设置不存在");
     }
@@ -102,8 +109,8 @@ public class UserSettingController {
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
     public ResponseEntity<Response<List<UserSetting>>> findAll() {
-        ResponseEntity<List<UserSetting>> response = userSettingService.findAll();
-        return Response.createResponse(response,
+        List<UserSetting> response = userSettingService.findAll();
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
     }
@@ -121,8 +128,8 @@ public class UserSettingController {
             @ApiResponse(responseCode = "404", description = "用户设置不存在")
     })
     public ResponseEntity<Response<Boolean>> deleteById(@PathVariable(name = "id") Integer id) {
-        ResponseEntity<Boolean> response = userSettingService.deleteById(id);
-        return Response.createResponse(response,
+        Boolean response = userSettingService.deleteById(id);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "删除成功",
                 HttpStatus.NOT_FOUND, "用户设置不存在");
     }
@@ -139,8 +146,8 @@ public class UserSettingController {
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
     public ResponseEntity<Response<Long>> count() {
-        ResponseEntity<Long> response = userSettingService.count();
-        return Response.createResponse(response,
+        Long response = userSettingService.count();
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
     }
@@ -158,8 +165,8 @@ public class UserSettingController {
             @ApiResponse(responseCode = "404", description = "用户设置不存在")
     })
     public ResponseEntity<Response<Boolean>> existsById(@PathVariable(name = "id") Integer id) {
-        ResponseEntity<Boolean> response = userSettingService.existsById(id);
-        return Response.createResponse(response,
+        boolean response = userSettingService.existsById(id);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "判断成功",
                 HttpStatus.NOT_FOUND, "用户设置不存在");
     }

@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -90,7 +91,7 @@ public class PostController {
     })
     public ResponseEntity<Response<Boolean>> uploadAttachment(
             @Parameter(description = "文件", required = true)
-            @RequestPart(value = "file") MultipartFile file,
+            @RequestPart(value = "file") @NotNull MultipartFile file,
             @Parameter(description = "博客ID", required = true)
             @RequestParam Integer postId,
             @AuthenticationPrincipal LoginResponseDto user) {
@@ -151,7 +152,7 @@ public class PostController {
     }
 
     /**
-     * 根据文章ID查询文章详情
+     * 添加文章分类
      * @param postCategory
      * @return
      */
@@ -257,7 +258,7 @@ public class PostController {
     }
 
     /**
-     * 根据文章ID查询文章详情
+     * 删除文章标签
      * @param postTag
      * @return
      */
@@ -366,7 +367,7 @@ public class PostController {
      * @return
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role)." +
-            "ROLE_USER_ACTIVITY_MANAGER)" +
+            "ROLE_POST_MANAGER)" +
             " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or @postService.isAuthorOfOpenPost(#username, #user.id)")
     @Operation(summary = "根据用户名和发布状态查询文章列表")
@@ -429,7 +430,7 @@ public class PostController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_POST_MANAGER)" +
             " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据文章ID查询文章详情")
     @GetMapping("/admin/find/id/{postId}")
@@ -450,11 +451,11 @@ public class PostController {
      * @return
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role)." +
-            " ROLE_USER_ACTIVITY_MANAGER)" +
+            " ROLE_POST_MANAGER)" +
             " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or @postService.isAuthorOfOpenPost(#postId, #user.id)")
     @Operation(summary = "获取文章最新版本号")
-    @GetMapping("/amdin/getLatestVersion/{postId}")
+    @GetMapping("/admin/getLatestVersion/{postId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
@@ -587,8 +588,7 @@ public class PostController {
      * 查询所有文章
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE)")
     @Operation(summary = "查询所有文章")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {
@@ -607,7 +607,7 @@ public class PostController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_POST_MANAGER)" +
             " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or @postService.isAuthorOfOpenPost(#postId, #user.id)")
     @Operation(summary = "根据ID删除文章")
@@ -630,7 +630,7 @@ public class PostController {
      * 查询文章总数
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_POST_MANAGER)" +
             " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询文章总数")
     @GetMapping("/admin/count")
@@ -650,7 +650,7 @@ public class PostController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_POST_MANAGER)" +
             " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID查询文章是否存在")
     @GetMapping("/admin/exists/id/{postId}")

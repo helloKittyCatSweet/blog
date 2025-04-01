@@ -1,5 +1,6 @@
 package com.kitty.blog.service;
 
+import com.kitty.blog.model.User;
 import com.kitty.blog.model.report.Report;
 import com.kitty.blog.model.report.StatusType;
 import com.kitty.blog.repository.PostRepository;
@@ -61,13 +62,13 @@ public class ReportService {
     }
 
     @Transactional
-    @Cacheable(key = "#reportId")
-    public ResponseEntity<List<Report>> findByUserId(Integer userId) {
-        if (!userRepository.existsById(userId)) {
+    public ResponseEntity<List<Report>> findByUsername(String username) {
+        User user = userRepository.findByUsername(username).orElse(new User());
+        if (!userRepository.existsById(user.getUserId())) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         } else {
             return new ResponseEntity<>(
-                    reportRepository.findByUserId(userId).orElse(new ArrayList<>()),
+                    reportRepository.findByUserId(user.getUserId()).orElse(new ArrayList<>()),
                     HttpStatus.OK
             );
         }

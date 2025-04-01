@@ -108,14 +108,16 @@ public class CategoryService {
 
     @Transactional
     @Cacheable(key = "#parentCategoryId", unless = "#result.body.isEmpty()")
-    public ResponseEntity<List<TreeDto>> findByParentId(Integer parentCategoryId) {
-        if (Boolean.FALSE.equals(existsById(parentCategoryId).getBody())) {
+    public ResponseEntity<List<TreeDto>> findByParentName(String parentName) {
+        Category category = categoryRepository.findByName(parentName).orElse(new Category());
+        if (category.getCategoryId() == null) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         } else {
-            List<Category> categories = categoryRepository.findCategoriesByParentId(parentCategoryId)
+            List<Category> categories = categoryRepository.
+                    findCategoriesByParentId(category.getCategoryId())
                     .orElse(new ArrayList<>());
             return new ResponseEntity<>(
-                    CategoryTreeBuilder.buildTree(categories, parentCategoryId),
+                    CategoryTreeBuilder.buildTree(categories, category.getCategoryId()),
                     HttpStatus.OK);
         }
     }
@@ -123,13 +125,14 @@ public class CategoryService {
     // 可以同时处理是否有父节点的情况
     @Transactional
     @Cacheable
-    public ResponseEntity<List<TreeDto>> findDescendantsByParentId(Integer parentCategoryId) {
-        if (Boolean.FALSE.equals(existsById(parentCategoryId).getBody())) {
+    public ResponseEntity<List<TreeDto>> findDescendantsByParentName(String parentName) {
+        Category category = categoryRepository.findByName(parentName).orElse(new Category());
+        if (category.getCategoryId() == null) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         } else {
             List<Category> descendants = new ArrayList<>();
             List<Integer> currentLevelIds = new ArrayList<>();
-            currentLevelIds.add(parentCategoryId);
+            currentLevelIds.add(category.getCategoryId());
 
             while (!currentLevelIds.isEmpty()) {
                 List<Integer> nextLevelIds = new ArrayList<>();
@@ -145,7 +148,7 @@ public class CategoryService {
             }
 
             return new ResponseEntity<>(
-                    CategoryTreeBuilder.buildTree(descendants, parentCategoryId),
+                    CategoryTreeBuilder.buildTree(descendants, category.getCategoryId()),
                     HttpStatus.OK);
         }
     }

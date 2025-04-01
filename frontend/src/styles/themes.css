@@ -1,0 +1,74 @@
+/* 浅色主题 */
+.theme-light {
+  --primary-bg: #ffffff;
+  --primary-text: #303133;
+  --secondary-bg: #f5f7fa;
+  --border-color: #dcdfe6;
+}
+
+/* 深色主题 */
+.theme-dark {
+  --primary-bg: #1a1a1a;
+  --primary-text: #ffffff;
+  --secondary-bg: #2c2c2c;
+  --border-color: #4c4c4c;
+}
+
+/* 蓝色主题 */
+.theme-blue {
+  --primary-bg: #ecf5ff;
+  --primary-text: #303133;
+  --secondary-bg: #d9ecff;
+  --border-color: #409eff;
+}
+
+/* 粉色主题 */
+.theme-pink {
+  --primary-bg: #fff0f6;
+  --primary-text: #303133;
+  --secondary-bg: #ffd6e7;
+  --border-color: #ff69b4;
+}
+
+/* 绿色主题 */
+.theme-green {
+  --primary-bg: #f0f9eb;
+  --primary-text: #303133;
+  --secondary-bg: #e1f3d8;
+  --border-color: #67c23a;
+}
+
+/* 应用主题变量 */
+body {
+  background-color: var(--primary-bg);
+  color: var(--primary-text);
+}
+
+.el-card {
+  background-color: var(--secondary-bg);
+  border-color: var(--border-color);
+}
+
+/* Element Plus 组件主题适配 */
+.el-menu {
+  background-color: var(--secondary-bg) !important;
+}
+
+.el-header {
+  background-color: var(--primary-bg) !important;
+}
+
+.el-main {
+  background-color: var(--primary-bg) !important;
+}
+
+.el-footer {
+  background-color: var(--secondary-bg) !important;
+}
+
+.el-button--primary {
+  background-color: var(--border-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+/* 可以继续添加其他组件的主题样式 */

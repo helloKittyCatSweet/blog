@@ -142,4 +142,14 @@ public interface UserRepository extends JpaRepository<User, Integer> {
          */
         @Query("SELECT u FROM User u WHERE u.isActive = ?1")
         Optional<List<User>> findByActivated(boolean isActive);
+
+        boolean existsByEmail(String email);
+
+        /**
+         * 根据邮箱查询用户
+         * @param email
+         * @return
+         */
+        @Query("SELECT u FROM User u WHERE u.email = ?1")
+        Optional<User> findUserByEmail(String email);
 }

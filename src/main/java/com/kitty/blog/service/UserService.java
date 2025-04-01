@@ -56,7 +56,7 @@ public class UserService {
     @Transactional
     public ResponseEntity<Boolean> register(User user) {
         if (userRepository.findByUsername(user.getUsername()).isPresent() ||
-                userRepository.findByEmail(user.getEmail()).isPresent()) {
+                userRepository.existsByEmail(user.getEmail())) {
             return new ResponseEntity<>(false, HttpStatus.CONFLICT);
         }
 
@@ -190,6 +190,26 @@ public class UserService {
         } else {
             userRepository.resetPassword(userId, passwordEncoder.encode(password));
             return new ResponseEntity<>(true, HttpStatus.OK);
+        }
+    }
+
+    @Transactional
+    public ResponseEntity<Boolean> existsByEmail(String email) {
+        if (userRepository.existsByEmail(email)) {
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    @Transactional
+    public ResponseEntity<User> findUserByEmail(String email) {
+        if (userRepository.existsByEmail(email)) {
+            return new ResponseEntity<>(
+                    userRepository.findUserByEmail(email).orElse(new User()),
+                    HttpStatus.OK);
+        }else {
+            return new ResponseEntity<>(new User(), HttpStatus.NOT_FOUND);
         }
     }
 

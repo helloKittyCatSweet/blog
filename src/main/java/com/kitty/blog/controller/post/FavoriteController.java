@@ -1,5 +1,6 @@
 package com.kitty.blog.controller.post;
 
+import com.kitty.blog.dto.user.LoginResponseDto;
 import com.kitty.blog.model.Favorite;
 import com.kitty.blog.model.Post;
 import com.kitty.blog.service.FavoriteService;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -56,28 +58,32 @@ public class FavoriteController {
                 HttpStatus.BAD_REQUEST,  "参数错误");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER) " +
+            " and @favoriteService.IsUser(#userId, #user.id)")
     @Operation(summary = "根据用户id查询所有收藏", description = "根据用户id查询所有收藏")
     @GetMapping("/public/find/{userId}/list")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
                             @ApiResponse(responseCode = "404", description = "用户不存在") })
     public ResponseEntity<Response<List<Post>>> findByUserId
             (@RequestParam(value = "userId", required = true)
-             @PathVariable Integer userId) {
+             @PathVariable Integer userId,
+             @AuthenticationPrincipal LoginResponseDto user) {
         ResponseEntity<List<Post>> response = favoriteService.findByUserId(userId);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND,  "用户不存在");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER) " +
+            " and @favoriteService.IsUser(#userId, #user.id)")
     @Operation(summary = "查询用户收藏数量", description = "查询用户收藏数量")
     @GetMapping("/public/find/{userId}/count")
     @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
                             @ApiResponse(responseCode = "404", description = "用户不存在") })
     public ResponseEntity<Response<Integer>> countByUserId
             (@RequestParam(value = "userId", required = true)
-             @PathVariable Integer userId) {
+             @PathVariable Integer userId,
+             @AuthenticationPrincipal LoginResponseDto user) {
         ResponseEntity<Integer> response = favoriteService.countByUserId(userId);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",

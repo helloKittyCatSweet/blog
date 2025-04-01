@@ -116,6 +116,11 @@ public class FavoriteService {
         }
     }
 
+    @Transactional
+    public boolean IsUser(Integer userId, Integer testId){
+        return userId.equals(testId);
+    }
+
     /**
      * Auto-generated methods
      */

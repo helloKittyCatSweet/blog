@@ -8,8 +8,8 @@ export const update = (data) => request.put(`${categoryPrefix}/public/update`, d
 export const create = (data) => request.post(`${categoryPrefix}/public/create`, data)
 
 // 根据父分类id查询子分类
-export const findSubCategoriesByParentId = (id) =>
-  request.get(`${categoryPrefix}/public/find/parent/${id}`)
+export const findSubCategoriesByParentName = (name) =>
+  request.get(`${categoryPrefix}/public/find/parent/${name}`)
 
 // 根据名称查询分类
 export const findCategoryByName = (name) =>
@@ -19,8 +19,8 @@ export const findCategoryByName = (name) =>
 export const findCategoryById = (id) => request.get(`${categoryPrefix}/public/find/id/${id}`)
 
 // 根据父分类id查询所有子分类（包含子孙）
-export const findDescendantsByParentId = (id) =>
-  request.get(`${categoryPrefix}/public/find/descendants/${id}`)
+export const findDescendantsByParentName = (name) =>
+  request.get(`${categoryPrefix}/public/find/descendants/${name}`)
 
 // 查询所有分类
 export const findAll = () => request.get(`${categoryPrefix}/public/find/all`)

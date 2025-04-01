@@ -66,4 +66,4 @@ def analyze_dataset(json_file):
         return
 
 if __name__ == "__main__":
-    analyze_dataset("datasets/92502saf/alpaca_format.json")
+    analyze_dataset("../datasets/92502saf/alpaca_format.json")

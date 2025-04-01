@@ -17,9 +17,9 @@ export const existById = (id) => request.get(`${postPrefix}${reportPrefix}/admin
 // 统计举报数量
 export const count = () => request.get(`${postPrefix}${reportPrefix}/admin/count`)
 
-// 根据用户id查询报告列表
-export const findByUserId = (userId) =>
-  request.get(`${postPrefix}${reportPrefix}/admin/find/user/${userId}`)
+// 根据用户名查询报告列表
+export const findByUsername = (username) =>
+  request.get(`${postPrefix}${reportPrefix}/admin/find/user/${username}`)
 
 // 根据状态查询报告列表
 export const findByStatus = (status) =>

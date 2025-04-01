@@ -28,47 +28,85 @@ public class EmailVerificationService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    // 预定义邮件模板
+    private static final String EMAIL_TEMPLATE = "Thank you for signing up FreeShare! Your verification code is: %s. It's valid for 5 minutes.";
+
+    // 重试配置
+    private static final int MAX_RETRY_ATTEMPTS = 3;
+    private static final long RETRY_DELAY_MS = 1000;
+
     @Async("emailTaskExecutor")
     public CompletableFuture<String> sendVerificationEmail(String toEmail) {
-        // 检查是否已发送验证码
-        String existingCode = redisTemplate.opsForValue().get("EMAIL_CODE_" + toEmail);
-        if (existingCode != null) {
-            return CompletableFuture.completedFuture("验证码已发送至 " + toEmail + "，请稍后再试。");
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return sendEmailWithRetry(toEmail);
+            } catch (Exception e) {
+                log.error("Failed to send email after {} attempts", MAX_RETRY_ATTEMPTS, e);
+                throw new RuntimeException("邮件发送失败，请稍后重试");
+            }
+        });
+    }
+
+    private String sendEmailWithRetry(String toEmail) {
+        // 检查频率限制
+        String rateLimitKey = "EMAIL_RATE_" + toEmail;
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(rateLimitKey))) {
+            return "请等待60秒后再次请求验证码";
         }
-        log.info("Sending verification email to {}", toEmail);
 
-        // 随机生成验证码
+        // 生成验证码
         String code = generateCode();
+        SimpleMailMessage message = createEmailMessage(toEmail, code);
 
-        // 创建邮件内容
+        // 重试机制
+        for (int attempt = 0; attempt < MAX_RETRY_ATTEMPTS; attempt++) {
+            try {
+                mailSender.send(message);
+
+                // 存储验证码
+                redisTemplate.opsForValue().set("EMAIL_CODE_" + toEmail, code, 5, TimeUnit.MINUTES);
+                // 设置发送频率限制
+                redisTemplate.opsForValue().set(rateLimitKey, "1", 60, TimeUnit.SECONDS);
+
+                return "验证码已发送至 " + toEmail + "，请注意查收。";
+            } catch (Exception e) {
+                log.warn("Email sending attempt {} failed", attempt + 1, e);
+                if (attempt < MAX_RETRY_ATTEMPTS - 1) {
+                    try {
+                        Thread.sleep(RETRY_DELAY_MS);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        throw new RuntimeException("邮件发送中断");
+                    }
+                }
+            }
+        }
+        throw new RuntimeException("邮件发送失败");
+    }
+
+    private SimpleMailMessage createEmailMessage(String toEmail, String code) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);
         message.setTo(toEmail);
         message.setSubject("Verification Code");
-        message.setText("Thank you for signing up FreeShare! Your verification code is: " + code +
-        ". It's valid for 5 minutes.");
-
-        // 发送邮件
-        mailSender.send(message);
-
-        // 将验证码存储到 Redis，并设置过期时间为 5 分钟
-        redisTemplate.opsForValue().set("EMAIL_CODE_" + toEmail, code, 5, TimeUnit.MINUTES);
-        return CompletableFuture.completedFuture("验证码已发送至 " + toEmail + "，请注意查收。");
+        message.setText(String.format(EMAIL_TEMPLATE, code));
+        return message;
     }
 
     public boolean verifyCode(String email, String code) {
-        // 从 Redis 中获取验证码
         String storedCode = redisTemplate.opsForValue().get("EMAIL_CODE_" + email);
-        log.info("storedCode: " + storedCode);
         if (storedCode == null) {
             throw new RuntimeException("验证码已过期");
         }
-        return storedCode.equals(code);
+        boolean isValid = storedCode.equals(code);
+        if (isValid) {
+            // 验证成功后立即删除验证码
+            redisTemplate.delete("EMAIL_CODE_" + email);
+        }
+        return isValid;
     }
 
     private String generateCode() {
-        Random random = new Random();
-        int code = 100000 + random.nextInt(900000); // 6位数
-        return String.valueOf(code);
+        return String.format("%06d", new Random().nextInt(1000000));
     }
 }

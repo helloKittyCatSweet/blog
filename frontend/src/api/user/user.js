@@ -6,7 +6,11 @@ export const update = (data) => request.put(`${userPrefix}/public/update`, data)
 
 // 重置密码
 export const resetPassword = ({ userId, password }) =>
-  request.put(`${userPrefix}/public/reset`, { userId, password })
+  request.put(`${userPrefix}/auth/password/reset`, { userId, password })
+
+// 判断该邮箱是否已注册
+export const existsByEmail = (email) =>
+  request.get(`${userPrefix}/auth/exist/email/${email}`)
 
 // 激活账户
 export const activate = ({ userId, isActive }) =>
@@ -28,6 +32,10 @@ export const uploadAvatar = (file, userId) => {
   })
 }
 
+// 根据邮箱查询用户
+export const findUserByEmail = (email) =>
+  request.get(`${userPrefix}/auth/find/email/${email}`)
+
 // 注册
 export const register = (data) => request.post(`${userPrefix}/auth/register`, data)
 
@@ -42,14 +50,14 @@ export const findUserByUsername = (username) =>
   request.get(`${userPrefix}/public/find/username/${username}`)
 
 // 根据邮箱（模糊搜索）查询用户
-export const findUserByEmail = (email) => request.get(`${userPrefix}/public/find/email/${email}`)
+export const findByEmail = (email) => request.get(`${userPrefix}/public/find/email/${email}`)
 
 // 根据邮箱后缀查询用户
-export const findUserByEmailSuffix = (emailSuffix) =>
+export const findByEmailSuffix = (emailSuffix) =>
   request.get(`${userPrefix}/public/find/email/suffix/${emailSuffix}`)
 
 // 根据用户id查询用户
-export const findUserById = (userId) => request.get(`${userPrefix}/admin/find/id/${userId}`)
+export const findUserById = (userId) => request.get(`${userPrefix}/public/find/id/${userId}`)
 
 // 查询所有用户
 export const findAllUser = () => request.get(`${userPrefix}/admin/find/all`)

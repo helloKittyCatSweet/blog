@@ -7,33 +7,34 @@ const route = useRoute();
 const router = useRouter();
 
 const breadcrumbList = computed(() => {
-  // 获取当前路由的完整匹配记录
   const matched = route.matched;
-
-  // 提取有效的面包屑项
   const items = [];
+
   matched.forEach((item) => {
     if (item.meta?.breadcrumb) {
-      // 如果路由配置了breadcrumb数组，直接使用
-      items.push(...item.meta.breadcrumb);
-    } else if (item.meta?.title && item.path) {
-      // 否则使用title和path自动生成
-      items.push({
-        title: item.meta.title,
-        path: item.path,
-      });
+      if (Array.isArray(item.meta.breadcrumb)) {
+        // 如果是数组，直接使用配置的面包屑
+        items.push(...item.meta.breadcrumb);
+      } else if (item.meta?.title && item.path) {
+        // 如果 breadcrumb 为 true，使用路由信息生成面包屑
+        items.push({
+          title: item.meta.title,
+          path: item.path,
+        });
+      }
     }
   });
 
-  // 去重处理（避免重复项）
+  // 去重处理
   const uniqueItems = [];
   const pathSet = new Set();
   items.forEach((item) => {
     if (!pathSet.has(item.path)) {
       pathSet.add(item.path);
       uniqueItems.push({
-        ...item,
-        disabled: item.path === route.path, // 当前页禁用点击
+        title: item.title || "",
+        path: item.path || "",
+        disabled: item.path === route.path,
       });
     }
   });
@@ -41,6 +42,7 @@ const breadcrumbList = computed(() => {
   return uniqueItems;
 });
 
+// 添加导航处理函数
 const handleNavigate = (path, disabled) => {
   if (!disabled && path !== route.path) {
     router.push(path);
@@ -62,7 +64,7 @@ const handleNavigate = (path, disabled) => {
   </el-breadcrumb>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .breadcrumb-item {
   cursor: pointer;
   color: var(--el-text-color-regular);

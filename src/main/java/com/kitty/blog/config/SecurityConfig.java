@@ -79,10 +79,12 @@ public class SecurityConfig {
                         // Swagger 开放访问
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
                                 "/swagger-ui.html").permitAll()
+                        // WebSocket 接口需要登录
+                        .requestMatchers("/ws/**").authenticated()
                         // 所有用户都可以访问的接口
-                        .requestMatchers("api/*/public/**").hasRole(Role.ROLE_USER)
+                        .requestMatchers("/api/*/public/**").hasRole(Role.ROLE_USER)
                         // 管理员接口
-                        .requestMatchers("api/*/admin/**").
+                        .requestMatchers("/api/*/admin/**").
                             hasAnyRole(Role.ROLE_CATEGORY_MANAGER, Role.ROLE_PERMISSION_MANAGER,
                                     Role.ROLE_PERMISSION_MAPPING_MANAGER, Role.ROLE_TAG_MANAGER,
                                     Role.ROLE_POST_MANAGER, Role.ROLE_USER_ACTIVITY_MANAGER,
@@ -95,17 +97,6 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults());
         return http.build();
     }
-
-
-//    @Bean
-//    public UserDetailsService userDetailsService() {
-//        UserDetails admin = User.builder()
-//                .username("admin")
-//                .password(passwordEncoder().encode("123456")) // 注意：使用noop表示不进行密码加密
-//                .roles(Role.ROLE_USER)
-//                .build();
-//        return new InMemoryUserDetailsManager(admin);
-//    }
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {

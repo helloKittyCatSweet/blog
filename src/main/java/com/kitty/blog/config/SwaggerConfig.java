@@ -57,5 +57,14 @@ public class SwaggerConfig {
                 .pathsToMatch("/api/category/**", "/api/tag/**", "/api/comment/**")
                 .build();
     }
+
+    // WebSocket API 分组
+    @Bean
+    public GroupedOpenApi webSocketApi() {
+        return GroupedOpenApi.builder()
+                .group("WebSocket") // Swagger UI 下拉框中显示的名字
+                .pathsToMatch("/ws/**")
+                .build();
+    }
 }
    

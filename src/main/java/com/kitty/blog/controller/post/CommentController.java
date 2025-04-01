@@ -55,7 +55,7 @@ public class CommentController {
      * @param comment
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_COMMENT_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_COMMENT_MANAGER)" +
             " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or #comment.userId == principal.id)")
     @Operation(summary = "修改评论")
@@ -172,7 +172,7 @@ public class CommentController {
      *
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_COMMENT_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_COMMENT_MANAGER)" +
             " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "获取评论列表", description = "获取评论列表")
     @GetMapping("/admin/find/all")
@@ -191,7 +191,7 @@ public class CommentController {
      * @param commentId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_COMMENT_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_COMMENT_MANAGER)" +
             " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or #comment.userId == principal.id " +
             " or @commentService.isUnderAuthorPost(commentId, principal.id)")
@@ -212,7 +212,7 @@ public class CommentController {
      *
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_COMMENT_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_COMMENT_MANAGER)" +
             " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "获取评论总数", description = "获取评论总数")
     @GetMapping("/admin/count")
@@ -231,7 +231,7 @@ public class CommentController {
      * @param commentId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_COMMENT_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_COMMENT_MANAGER)" +
             " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "判断评论是否存在", description = "根据评论ID判断评论是否存在")
     @GetMapping("/admin/exists/{commentId}")

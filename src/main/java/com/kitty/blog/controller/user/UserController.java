@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Tag(name = "用户模块")
@@ -238,19 +239,46 @@ public class UserController {
                 HttpStatus.UNAUTHORIZED, "token失效");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
+    // 不需要权限
     @Operation(summary = "重置密码")
-    @PutMapping("/public/reset")
+    @PutMapping("/auth/password/reset")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "密码重置成功"),
             @ApiResponse(responseCode = "500", description = "密码重置失败")})
     public ResponseEntity<Response<Boolean>> resetPassword
-            (@RequestParam("userId") Integer userId,
-             @RequestParam("password") String password) {
+            (@RequestBody Map<String,Object> params) {
+        Integer userId = (Integer) params.get("userId");
+        String password = (String) params.get("password");
         ResponseEntity<Boolean> responseEntity = userService.resetPassword(userId, password);
         return Response.createResponse(responseEntity,
                 HttpStatus.OK, "密码重置成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "密码重置失败");
+    }
+
+    @Operation(summary = "判断邮箱是否已被注册")
+    @GetMapping("/auth/exist/email/{email}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "邮箱已被注册"),
+            @ApiResponse(responseCode = "404", description = "邮箱未被注册")
+    })
+    public ResponseEntity<Response<Boolean>> existsByEmail(@PathVariable("email") String email) {
+        ResponseEntity<Boolean> responseEntity = userService.existsByEmail(email);
+        return Response.createResponse(responseEntity,
+                HttpStatus.OK, "邮箱已被注册",
+                HttpStatus.NOT_FOUND, "邮箱未被注册");
+    }
+
+    @Operation(summary = "根据邮箱查询用户")
+    @GetMapping("/auth/find/email/{email}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "404", description = "用户不存在")
+    })
+    public ResponseEntity<Response<User>> findUserByEmail(@PathVariable("email") String email) {
+        ResponseEntity<User> responseEntity = userService.findUserByEmail(email);
+        return Response.createResponse(responseEntity,
+                HttpStatus.OK, "查询成功",
+                HttpStatus.NOT_FOUND, "用户不存在");
     }
 
     @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
@@ -355,10 +383,9 @@ public class UserController {
      * @param userId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER_USER_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.controller.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户ID查询用户")
-    @GetMapping("/admin/find/id/{userId}")
+    @GetMapping("/public/find/id/{userId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "用户不存在")

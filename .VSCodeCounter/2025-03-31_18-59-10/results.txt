@@ -1,0 +1,226 @@
+Date : 2025-03-31 18:59:10
+Directory : d:\examples\blog\src
+Total : 141 files,  9932 codes, 2344 comments, 1887 blanks, all 14163 lines
+
+Languages
++-----------------+------------+------------+------------+------------+------------+
+| language        | files      | code       | comment    | blank      | total      |
++-----------------+------------+------------+------------+------------+------------+
+| Java            |        130 |      9,621 |      2,251 |      1,821 |     13,693 |
+| MS SQL          |          4 |        139 |         46 |         37 |        222 |
+| YAML            |          4 |        117 |         36 |         19 |        172 |
+| XML             |          2 |         48 |          8 |          7 |         63 |
+| Java Properties |          1 |          7 |          3 |          3 |         13 |
++-----------------+------------+------------+------------+------------+------------+
+
+Directories
++---------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                                                    | files      | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                                                       |        141 |      9,932 |      2,344 |      1,887 |     14,163 |
+| main                                                                                                    |        138 |      9,908 |      2,321 |      1,879 |     14,108 |
+| main\java                                                                                               |        128 |      9,612 |      2,230 |      1,815 |     13,657 |
+| main\java\com                                                                                           |        128 |      9,612 |      2,230 |      1,815 |     13,657 |
+| main\java\com\kitty                                                                                     |        128 |      9,612 |      2,230 |      1,815 |     13,657 |
+| main\java\com\kitty\blog                                                                                |        128 |      9,612 |      2,230 |      1,815 |     13,657 |
+| main\java\com\kitty\blog (Files)                                                                        |          1 |         13 |          0 |          5 |         18 |
+| main\java\com\kitty\blog\aspect                                                                         |          1 |         21 |          1 |          6 |         28 |
+| main\java\com\kitty\blog\component                                                                      |          1 |         57 |          0 |         13 |         70 |
+| main\java\com\kitty\blog\component\sql                                                                  |          1 |         57 |          0 |         13 |         70 |
+| main\java\com\kitty\blog\config                                                                         |         10 |        417 |         45 |         84 |        546 |
+| main\java\com\kitty\blog\controller                                                                     |         23 |      3,415 |        840 |        344 |      4,599 |
+| main\java\com\kitty\blog\controller\common                                                              |          2 |        343 |        125 |         36 |        504 |
+| main\java\com\kitty\blog\controller\constant                                                            |          2 |         23 |          0 |         18 |         41 |
+| main\java\com\kitty\blog\controller\post                                                                |          8 |      1,292 |        355 |        118 |      1,765 |
+| main\java\com\kitty\blog\controller\user                                                                |         11 |      1,757 |        360 |        172 |      2,289 |
+| main\java\com\kitty\blog\controller\user (Files)                                                        |          9 |      1,643 |        352 |        153 |      2,148 |
+| main\java\com\kitty\blog\controller\user\security                                                       |          2 |        114 |          8 |         19 |        141 |
+| main\java\com\kitty\blog\dto                                                                            |         12 |        276 |          7 |         99 |        382 |
+| main\java\com\kitty\blog\dto\category                                                                   |          2 |         43 |          2 |         15 |         60 |
+| main\java\com\kitty\blog\dto\comment                                                                    |          2 |         48 |          2 |         13 |         63 |
+| main\java\com\kitty\blog\dto\common                                                                     |          1 |         17 |          0 |          8 |         25 |
+| main\java\com\kitty\blog\dto\message                                                                    |          2 |         74 |          3 |         19 |         96 |
+| main\java\com\kitty\blog\dto\user                                                                       |          4 |         80 |          0 |         36 |        116 |
+| main\java\com\kitty\blog\dto\userRole                                                                   |          1 |         14 |          0 |          8 |         22 |
+| main\java\com\kitty\blog\exception                                                                      |          1 |          9 |          0 |          2 |         11 |
+| main\java\com\kitty\blog\model                                                                          |         26 |      1,392 |         73 |        362 |      1,827 |
+| main\java\com\kitty\blog\model (Files)                                                                  |          9 |        625 |         35 |        168 |        828 |
+| main\java\com\kitty\blog\model\category                                                                 |          3 |        142 |         13 |         36 |        191 |
+| main\java\com\kitty\blog\model\message                                                                  |          2 |         94 |          5 |         24 |        123 |
+| main\java\com\kitty\blog\model\report                                                                   |          2 |         88 |          5 |         24 |        117 |
+| main\java\com\kitty\blog\model\rolePermission                                                           |          2 |         71 |          0 |         20 |         91 |
+| main\java\com\kitty\blog\model\tag                                                                      |          4 |        168 |          6 |         42 |        216 |
+| main\java\com\kitty\blog\model\userActivity                                                             |          2 |        107 |          5 |         24 |        136 |
+| main\java\com\kitty\blog\model\userRole                                                                 |          2 |         97 |          4 |         24 |        125 |
+| main\java\com\kitty\blog\repository                                                                     |         18 |        416 |        768 |        209 |      1,393 |
+| main\java\com\kitty\blog\repository (Files)                                                             |         16 |        381 |        737 |        194 |      1,312 |
+| main\java\com\kitty\blog\repository\tag                                                                 |          2 |         35 |         31 |         15 |         81 |
+| main\java\com\kitty\blog\security                                                                       |          5 |        242 |         65 |         41 |        348 |
+| main\java\com\kitty\blog\security (Files)                                                               |          2 |        162 |          4 |         24 |        190 |
+| main\java\com\kitty\blog\security\filter                                                                |          3 |         80 |         61 |         17 |        158 |
+| main\java\com\kitty\blog\service                                                                        |         26 |      3,136 |        370 |        595 |      4,101 |
+| main\java\com\kitty\blog\service (Files)                                                                |         19 |      2,607 |        205 |        462 |      3,274 |
+| main\java\com\kitty\blog\service\contentReview                                                          |          5 |        252 |         54 |         51 |        357 |
+| main\java\com\kitty\blog\service\postAnalysis                                                           |          2 |        277 |        111 |         82 |        470 |
+| main\java\com\kitty\blog\service\postAnalysis\author                                                    |          1 |        177 |         77 |         57 |        311 |
+| main\java\com\kitty\blog\service\postAnalysis\reader                                                    |          1 |        100 |         34 |         25 |        159 |
+| main\java\com\kitty\blog\utils                                                                          |          4 |        218 |         61 |         55 |        334 |
+| main\resources                                                                                          |         10 |        296 |         91 |         64 |        451 |
+| main\resources (Files)                                                                                  |          6 |        157 |         45 |         27 |        229 |
+| main\resources\sql                                                                                      |          4 |        139 |         46 |         37 |        222 |
+| main\resources\sql\init                                                                                 |          4 |        139 |         46 |         37 |        222 |
+| test                                                                                                    |          3 |         24 |         23 |          8 |         55 |
+| test\java                                                                                               |          2 |          9 |         21 |          6 |         36 |
+| test\java\com                                                                                           |          2 |          9 |         21 |          6 |         36 |
+| test\java\com\kitty                                                                                     |          2 |          9 |         21 |          6 |         36 |
+| test\java\com\kitty\blog                                                                                |          2 |          9 |         21 |          6 |         36 |
+| test\resources                                                                                          |          1 |         15 |          2 |          2 |         19 |
++---------------------------------------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++---------------------------------------------------------------------------------------------------------+-----------------+------------+------------+------------+------------+
+| filename                                                                                                | language        | code       | comment    | blank      | total      |
++---------------------------------------------------------------------------------------------------------+-----------------+------------+------------+------------+------------+
+| d:\examples\blog\src\main\java\com\kitty\blog\BlogApplication.java                                      | Java            |         13 |          0 |          5 |         18 |
+| d:\examples\blog\src\main\java\com\kitty\blog\aspect\LoggingAspect.java                                 | Java            |         21 |          1 |          6 |         28 |
+| d:\examples\blog\src\main\java\com\kitty\blog\component\sql\CustomDatabaseInitializer.java              | Java            |         57 |          0 |         13 |         70 |
+| d:\examples\blog\src\main\java\com\kitty\blog\config\AsyncConfig.java                                   | Java            |         19 |          0 |          3 |         22 |
+| d:\examples\blog\src\main\java\com\kitty\blog\config\CorsConfig.java                                    | Java            |         20 |          0 |          3 |         23 |
+| d:\examples\blog\src\main\java\com\kitty\blog\config\JacksonConfig.java                                 | Java            |         12 |          0 |          2 |         14 |
+| d:\examples\blog\src\main\java\com\kitty\blog\config\MailConfig.java                                    | Java            |         41 |          0 |         17 |         58 |
+| d:\examples\blog\src\main\java\com\kitty\blog\config\RedisConfig.java                                   | Java            |         30 |          3 |          7 |         40 |
+| d:\examples\blog\src\main\java\com\kitty\blog\config\SecurityConfig.java                                | Java            |         80 |         35 |         17 |        132 |
+| d:\examples\blog\src\main\java\com\kitty\blog\config\SwaggerConfig.java                                 | Java            |         56 |          4 |         10 |         70 |
+| d:\examples\blog\src\main\java\com\kitty\blog\config\WebConfig.java                                     | Java            |         29 |          0 |          5 |         34 |
+| d:\examples\blog\src\main\java\com\kitty\blog\config\WebSocketConfig.java                               | Java            |         84 |          3 |         12 |         99 |
+| d:\examples\blog\src\main\java\com\kitty\blog\config\WebSocketSecurityConfig.java                       | Java            |         46 |          0 |          8 |         54 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\common\CategoryController.java                 | Java            |        181 |         76 |         21 |        278 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\common\TagController.java                      | Java            |        162 |         49 |         15 |        226 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\constant\Role.java                             | Java            |         17 |          0 |         16 |         33 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\constant\Visibility.java                       | Java            |          6 |          0 |          2 |          8 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\post\AuthorAnalyticsController.java            | Java            |         33 |          3 |          4 |         40 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\post\CommentController.java                    | Java            |        167 |         64 |         17 |        248 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\post\ExportController.java                     | Java            |         74 |          0 |          6 |         80 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\post\FavoriteController.java                   | Java            |        169 |         27 |         19 |        215 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\post\PostController.java                       | Java            |        482 |        152 |         34 |        668 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\post\PostVersionController.java                | Java            |         99 |         33 |         13 |        145 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\post\RecommendationController.java             | Java            |         43 |          6 |          6 |         55 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\post\ReportController.java                     | Java            |        225 |         70 |         19 |        314 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\user\MessageController.java                    | Java            |        221 |         75 |         24 |        320 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\user\PermissionController.java                 | Java            |        115 |          0 |         13 |        128 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\user\RoleController.java                       | Java            |        199 |         59 |         18 |        276 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\user\RolePermissionController.java             | Java            |        173 |          0 |         14 |        187 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\user\UserActivityController.java               | Java            |        211 |         60 |         18 |        289 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\user\UserController.java                       | Java            |        350 |         91 |         23 |        464 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\user\UserRoleController.java                   | Java            |        131 |         29 |         12 |        172 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\user\UserSettingController.java                | Java            |        126 |         35 |         13 |        174 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\user\WebSocketController.java                  | Java            |        117 |          3 |         18 |        138 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\user\security\CaptchaController.java           | Java            |         73 |          6 |         12 |         91 |
+| d:\examples\blog\src\main\java\com\kitty\blog\controller\user\security\EmailVerificationController.java | Java            |         41 |          2 |          7 |         50 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\category\CategoryTreeBuilder.java                     | Java            |         29 |          2 |          8 |         39 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\category\TreeDto.java                                 | Java            |         14 |          0 |          7 |         21 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\comment\CommentTreeBuilder.java                       | Java            |         29 |          2 |          8 |         39 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\comment\TreeDto.java                                  | Java            |         19 |          0 |          5 |         24 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\common\FileDto.java                                   | Java            |         17 |          0 |          8 |         25 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\message\MessageInfo.java                              | Java            |         55 |          3 |         16 |         74 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\message\MessageStatusUpdate.java                      | Java            |         19 |          0 |          3 |         22 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\userRole\FindDto.java                                 | Java            |         14 |          0 |          8 |         22 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\user\EmailVerificationDto.java                        | Java            |         11 |          0 |          7 |         18 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\user\LoginDto.java                                    | Java            |         11 |          0 |          6 |         17 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\user\LoginResponseDto.java                            | Java            |         46 |          0 |         17 |         63 |
+| d:\examples\blog\src\main\java\com\kitty\blog\dto\user\RegisterDto.java                                 | Java            |         12 |          0 |          6 |         18 |
+| d:\examples\blog\src\main\java\com\kitty\blog\exception\WebSocketAuthenticationException.java           | Java            |          9 |          0 |          2 |         11 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\Comment.java                                        | Java            |         95 |          8 |         21 |        124 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\Favorite.java                                       | Java            |         71 |          5 |         17 |         93 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\Permission.java                                     | Java            |         30 |          1 |         13 |         44 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\Post.java                                           | Java            |        105 |          5 |         28 |        138 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\PostAttachment.java                                 | Java            |         28 |          0 |         11 |         39 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\PostVersion.java                                    | Java            |         82 |          5 |         20 |        107 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\Role.java                                           | Java            |         58 |          3 |         14 |         75 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\User.java                                           | Java            |         94 |          4 |         26 |        124 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\UserSetting.java                                    | Java            |         62 |          4 |         18 |         84 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\category\Category.java                              | Java            |         50 |         12 |         14 |         76 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\category\PostCategory.java                          | Java            |         56 |          0 |         12 |         68 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\category\PostCategoryId.java                        | Java            |         36 |          1 |         10 |         47 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\message\Message.java                                | Java            |         85 |          5 |         21 |        111 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\message\MessageStatus.java                          | Java            |          9 |          0 |          3 |         12 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\report\Report.java                                  | Java            |         74 |          5 |         19 |         98 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\report\StatusType.java                              | Java            |         14 |          0 |          5 |         19 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\rolePermission\RolePermission.java                  | Java            |         35 |          0 |         10 |         45 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\rolePermission\RolePermissionId.java                | Java            |         36 |          0 |         10 |         46 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\tag\Compare.java                                    | Java            |         14 |          0 |          6 |         20 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\tag\PostTag.java                                    | Java            |         56 |          0 |         11 |         67 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\tag\PostTagId.java                                  | Java            |         42 |          3 |         12 |         57 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\tag\Tag.java                                        | Java            |         56 |          3 |         13 |         72 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\userActivity\ActivityType.java                      | Java            |         25 |          0 |          7 |         32 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\userActivity\UserActivity.java                      | Java            |         82 |          5 |         17 |        104 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\userRole\UserRole.java                              | Java            |         58 |          4 |         14 |         76 |
+| d:\examples\blog\src\main\java\com\kitty\blog\model\userRole\UserRoleId.java                            | Java            |         39 |          0 |         10 |         49 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\BaseRepository.java                            | Java            |         11 |         10 |          5 |         26 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\CategoryRepository.java                        | Java            |         27 |         52 |         18 |         97 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\CommentRepository.java                         | Java            |         21 |         38 |         10 |         69 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\FavoriteRepository.java                        | Java            |         21 |         53 |         15 |         89 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\MessageRepository.java                         | Java            |         48 |         88 |         17 |        153 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\PermissionRepository.java                      | Java            |         15 |         23 |          7 |         45 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\PostAttachmentRepository.java                  | Java            |         13 |         26 |         12 |         51 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\PostRepository.java                            | Java            |         48 |        115 |         21 |        184 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\PostVersionRepository.java                     | Java            |         15 |         15 |          6 |         36 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\ReportRepository.java                          | Java            |         28 |         60 |         13 |        101 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\RolePermissionRepository.java                  | Java            |         19 |         30 |          8 |         57 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\RoleRepository.java                            | Java            |         22 |         46 |         13 |         81 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\UserActivityRepository.java                    | Java            |         21 |         38 |         10 |         69 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\UserRepository.java                            | Java            |         35 |        100 |         21 |        156 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\UserRoleRepository.java                        | Java            |         24 |         27 |         11 |         62 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\UserSettingRepository.java                     | Java            |         13 |         16 |          7 |         36 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\tag\TagRepository.java                         | Java            |         17 |         31 |          9 |         57 |
+| d:\examples\blog\src\main\java\com\kitty\blog\repository\tag\TagSpecification.java                      | Java            |         18 |          0 |          6 |         24 |
+| d:\examples\blog\src\main\java\com\kitty\blog\security\JwtTokenUtil.java                                | Java            |        152 |          4 |         21 |        177 |
+| d:\examples\blog\src\main\java\com\kitty\blog\security\SecretKeyGenerator.java                          | Java            |         10 |          0 |          3 |         13 |
+| d:\examples\blog\src\main\java\com\kitty\blog\security\filter\JwtAuthenticationEntryPoint.java          | Java            |         28 |          0 |          6 |         34 |
+| d:\examples\blog\src\main\java\com\kitty\blog\security\filter\JwtAuthenticationFilter.java              | Java            |         52 |          2 |         10 |         64 |
+| d:\examples\blog\src\main\java\com\kitty\blog\security\filter\LoginFilter.java                          | Java            |          0 |         59 |          1 |         60 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\CaptchaService.java                               | Java            |         85 |          7 |         20 |        112 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\CategoryService.java                              | Java            |        183 |         11 |         28 |        222 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\CommentService.java                               | Java            |        162 |         29 |         31 |        222 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\EmailVerificationService.java                     | Java            |         87 |          8 |         17 |        112 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\ExportService.java                                | Java            |         88 |         38 |         31 |        157 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\FavoriteService.java                              | Java            |        144 |         13 |         22 |        179 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\MessageService.java                               | Java            |        272 |         33 |         36 |        341 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\MyUserDetailService.java                          | Java            |         58 |          1 |         10 |         69 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\PermissionService.java                            | Java            |         50 |          3 |         15 |         68 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\PostService.java                                  | Java            |        390 |         14 |         54 |        458 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\PostVersionService.java                           | Java            |         99 |          3 |         21 |        123 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\ReportService.java                                | Java            |        172 |          6 |         23 |        201 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\RolePermissionService.java                        | Java            |         57 |          3 |         15 |         75 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\RoleService.java                                  | Java            |        128 |          6 |         22 |        156 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\TagService.java                                   | Java            |        110 |          9 |         23 |        142 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\UserActivityService.java                          | Java            |        135 |          3 |         22 |        160 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\UserRoleService.java                              | Java            |         84 |          3 |         16 |        103 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\UserService.java                                  | Java            |        227 |         11 |         43 |        281 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\UserSettingService.java                           | Java            |         76 |          4 |         13 |         93 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\contentReview\BaiduContentService.java            | Java            |         70 |         23 |         17 |        110 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\contentReview\Base64Util.java                     | Java            |         55 |          3 |          8 |         66 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\contentReview\FileUtil.java                       | Java            |         51 |         12 |         10 |         73 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\contentReview\GsonUtils.java                      | Java            |         17 |          6 |          7 |         30 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\contentReview\HttpUtil.java                       | Java            |         59 |         10 |          9 |         78 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\postAnalysis\author\AuthorAnalyticsService.java   | Java            |        177 |         77 |         57 |        311 |
+| d:\examples\blog\src\main\java\com\kitty\blog\service\postAnalysis\reader\RecommendationService.java    | Java            |        100 |         34 |         25 |        159 |
+| d:\examples\blog\src\main\java\com\kitty\blog\utils\AliyunOSSUploader.java                              | Java            |         99 |         32 |         21 |        152 |
+| d:\examples\blog\src\main\java\com\kitty\blog\utils\RedisUtil.java                                      | Java            |         31 |         21 |         11 |         63 |
+| d:\examples\blog\src\main\java\com\kitty\blog\utils\Response.java                                       | Java            |         69 |          6 |         19 |         94 |
+| d:\examples\blog\src\main\java\com\kitty\blog\utils\UpdateUtil.java                                     | Java            |         19 |          2 |          4 |         25 |
+| d:\examples\blog\src\main\resources\application-dev.yml                                                 | YAML            |         99 |         33 |         15 |        147 |
+| d:\examples\blog\src\main\resources\application-prod.yml                                                | YAML            |          0 |          0 |          1 |          1 |
+| d:\examples\blog\src\main\resources\application.properties                                              | Java Properties |          7 |          3 |          3 |         13 |
+| d:\examples\blog\src\main\resources\application.yml                                                     | YAML            |          3 |          1 |          1 |          5 |
+| d:\examples\blog\src\main\resources\logback-spring.xml                                                  | XML             |         29 |          4 |          4 |         37 |
+| d:\examples\blog\src\main\resources\logback.xml                                                         | XML             |         19 |          4 |          3 |         26 |
+| d:\examples\blog\src\main\resources\sql\init\admin_init.sql                                             | MS SQL          |          0 |          0 |          1 |          1 |
+| d:\examples\blog\src\main\resources\sql\init\permission_init.sql                                        | MS SQL          |         64 |         23 |         22 |        109 |
+| d:\examples\blog\src\main\resources\sql\init\role_init.sql                                              | MS SQL          |         11 |         11 |          0 |         22 |
+| d:\examples\blog\src\main\resources\sql\init\role_permission_init.sql                                   | MS SQL          |         64 |         12 |         14 |         90 |
+| d:\examples\blog\src\test\java\com\kitty\blog\AliyunOSSTest.java                                        | Java            |          0 |         21 |          1 |         22 |
+| d:\examples\blog\src\test\java\com\kitty\blog\BlogApplicationTests.java                                 | Java            |          9 |          0 |          5 |         14 |
+| d:\examples\blog\src\test\resources\application-test.yml                                                | YAML            |         15 |          2 |          2 |         19 |
+| Total                                                                                                   |                 |      9,932 |      2,344 |      1,887 |     14,163 |
++---------------------------------------------------------------------------------------------------------+-----------------+------------+------------+------------+------------+

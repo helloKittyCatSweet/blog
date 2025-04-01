@@ -1,11 +1,12 @@
 <script setup>
 import { RouterView } from "vue-router";
 import zh from "element-plus/es/locale/lang/zh-cn.mjs";
-import { useUserStore } from "./stores";
-import { onMounted, ref } from "vue";
+import { useUserStore, useSettingsStore } from "./stores";
+import { computed, onMounted, ref } from "vue";
 
 const isLoading = ref(true);
 const userStore = useUserStore();
+const settingsStore = useSettingsStore();
 
 onMounted(async () => {
   try {
@@ -22,14 +23,31 @@ onMounted(async () => {
     isLoading.value = false;
   }
 });
+
+const currentTheme = computed(() => `theme-${settingsStore.getTheme()}`);
 </script>
 
 <template>
-  <div></div>
-  <!-- 国际化处理 -->
   <el-config-provider :locale="zh">
-    <router-view />
+    <div id="app" :class="currentTheme">
+      <router-view v-if="!isLoading" />
+      <div v-else class="loading-container">
+        <el-loading :fullscreen="true" />
+      </div>
+    </div>
   </el-config-provider>
 </template>
 
-<style scoped></style>
+<style>
+#app {
+  min-height: 100vh;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.loading-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+</style>

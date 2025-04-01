@@ -41,10 +41,8 @@ public class UserSetting implements Serializable {
     @Column(name = "github_account")
     private String githubAccount;
 
-    @Column(name = "csdn_account")
     private String CSDNAccount;
 
-    @Column(name = "bilibili_account")
     private String BiliBiliAccount;
 
     /**
