@@ -13,10 +13,10 @@ import {
   USER_PROFILE_PATH,
   USER_PASSWORD_PATH,
   USER_SETTING_PATH,
-  USER_POST_COMMENT_MANAGE_PATH,
   USER_MESSAGE,
   USER_PROFILE,
-  USER_MESSAGE_DETAIL_PATH
+  USER_MESSAGE_DETAIL_PATH,
+  USER_LIKE_REPORT
 } from '@/constants/routes-constants.js'
 
 export default [
@@ -130,15 +130,24 @@ export default [
             }
           },
           {
-            path: USER_REPORT_MANAGE_PATH,
-            component: () => import('@/views/report/user/ReportManage.vue'),
+            path: USER_LIKE_REPORT,
+            component: () => import('@/views/message/user/LikeReport.vue'),
             meta: {
-              title: '举报管理',
+              title: '点赞/收藏',
               breadcrumb: true,
               roles: [ROLES.USER],
             }
           }
         ]
+      },
+      {
+        path: USER_REPORT_MANAGE_PATH,
+        component: () => import('@/views/report/user/ReportManage.vue'),
+        meta: {
+          title: '举报管理',
+          breadcrumb: true,
+          roles: [ROLES.USER],
+        }
       },
       // 个人中心
       {

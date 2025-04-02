@@ -17,9 +17,12 @@ export const USER_FAVORITE_MANAGE_PATH = `${USER_CONTENT}/favorite/manage`
 // 消息中心
 export const USER_MESSAGE = `${USER}/message`
 export const USER_MESSAGE_MANAGE_PATH = `${USER_MESSAGE}/manage`
+export const USER_LIKE_REPORT = `${USER_MESSAGE}/like`
 // 修改为可选
 export const USER_MESSAGE_DETAIL_PATH = `${USER_MESSAGE}/chat`
-export const USER_REPORT_MANAGE_PATH = `${USER_MESSAGE}/report/manage`
+
+// 举报中心
+export const USER_REPORT_MANAGE_PATH = `${USER}/report/manage`
 
 // 个人中心
 export const USER_PROFILE = `${USER}/profile`

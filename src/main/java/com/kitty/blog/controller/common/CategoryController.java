@@ -209,11 +209,11 @@ public class CategoryController {
     @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "查询所有分类")
     @GetMapping("/public/find/all")
-    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
-                            @ApiResponse(responseCode = "500", description = "服务器繁忙")})
-    public ResponseEntity<Response<List<Category>>> findAll() {
-        // TODO: find all categories
-        ResponseEntity<List<Category>> response = categoryService.findAll();
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "500", description = "服务器繁忙")})
+    public ResponseEntity<Response<List<TreeDto>>> findAll() {
+        ResponseEntity<List<TreeDto>> response = categoryService.findAll();
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");

@@ -63,6 +63,9 @@ public class PostService {
     @Autowired
     private BaiduContentService baiduContentService;
 
+    @Autowired
+    private TagWeightService tagWeightService;
+
     @Transactional
     public ResponseEntity<Boolean> create(Post post) {
         // 验证用户是否存在
@@ -163,6 +166,10 @@ public class PostService {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         postRepository.addTag(postId, tagId);
+        // 增加使用数
+        Tag tag = (Tag) tagRepository.findById(tagId).orElse(new Tag());
+        tagWeightService.incrementUseCount(tag);
+        tagWeightService.updateWeight(tag);
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 

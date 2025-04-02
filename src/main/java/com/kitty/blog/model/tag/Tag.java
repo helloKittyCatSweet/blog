@@ -11,6 +11,8 @@ import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -31,8 +33,20 @@ public class Tag implements Serializable {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @Column(name = "use_count")
+    private Integer useCount = 0; // 使用次数
+
+    @Column(name = "click_count")
+    private Integer clickCount = 0; // 点击次数
+
+    @Column(name = "last_used_at")
+    private LocalDateTime lastUsedAt; // 最后一次使用时间
+
     @Column
-    private Integer weight;
+    private Integer weight; // 权重，默认值10
+
+    @Column(name = "admin_weight")
+    private Integer adminWeight; // 管理员权重，默认值0
 
     /**
      * Transient字段，用于查询时不返回该字段

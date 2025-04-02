@@ -192,11 +192,22 @@ public class CategoryService {
 
     @Cacheable(key = "'all'", unless = "#result.body.isEmpty()")
     @Transactional
-    public ResponseEntity<List<Category>> findAll() {
-        if (categoryRepository.count() == 0) {
+    public ResponseEntity<List<TreeDto>> findAll() {
+        List<Category> allCategories = categoryRepository.findAll();
+        if (allCategories.isEmpty()) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
         }
-        return new ResponseEntity<>(categoryRepository.findAll(), HttpStatus.OK);
+
+        // 找出所有根节点（parentCategoryId = 0 的节点）
+        List<Category> rootCategories = allCategories.stream()
+                .filter(category -> category.getParentCategoryId() == 0)
+                .toList();
+
+        // 直接构建完整的树
+        return new ResponseEntity<>(
+                CategoryTreeBuilder.buildTree(allCategories, 0),
+                HttpStatus.OK
+        );
     }
 
     @CacheEvict(key = "#categoryId")

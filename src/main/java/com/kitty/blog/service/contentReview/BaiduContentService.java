@@ -29,14 +29,15 @@ public class BaiduContentService {
     private String accessToken;
 
     @PostConstruct
-    public void init() {
+    public void init() throws IOException {
+        this.accessToken = getAccessToken();
         refreshAccessToken();
     }
 
     /**
      * 定时任务，每30天执行一次，刷新access_token
      */
-    @Scheduled(cron = "0 0 0 1/29 * ?") // 29天以毫秒为单位
+    @Scheduled(cron = "0 0 0 1/29 * ?") //
     public void refreshAccessToken() {
         try {
             this.accessToken = getAccessToken();
@@ -64,6 +65,7 @@ public class BaiduContentService {
             try (Response response = HTTP_CLIENT.newCall(request).execute()) {
                 if (response.isSuccessful() && response.body() != null) {
                     String responseBody = response.body().string(); //
+                    System.out.println(responseBody);
                     return new JSONObject(responseBody).getString("conclusion");
                 } else {
                     throw new IOException("Unexpected code " + response);
@@ -82,12 +84,14 @@ public class BaiduContentService {
      * @throws IOException IO异常
      */
     private String getAccessToken() throws IOException {
-        MediaType mediaType = MediaType.parse("application/x-www-form-urlencoded");
-        RequestBody body = RequestBody.create(mediaType, "grant_type=client_credentials&client_id=" + API_KEY
-                + "&client_secret=" + SECRET_KEY);
+        MediaType mediaType = MediaType.parse("application/json");
+        RequestBody body = RequestBody.create(mediaType, "");
         Request request = new Request.Builder()
-                .url("https://aip.baidubce.com/oauth/2.0/token")
+                .url("https://aip.baidubce.com/oauth/2.0/token?client_id=" + API_KEY +
+                        "&client_secret=" + SECRET_KEY + "&grant_type=client_credentials")
                 .post(body)
+                .addHeader("Content-Type", "application/json")
+                .addHeader("Accept", "application/json")
                 .build();
 
         try (Response response = HTTP_CLIENT.newCall(request).execute()) {
@@ -105,6 +109,7 @@ public class BaiduContentService {
 //        contentService.API_KEY = "tZvDGGlR83jubJsuksqnYObj";
 //        contentService.SECRET_KEY = "7qZr8Y1lTzm6wEUteYU8u6W4KXKZkctL";
 //        String text = "爱你";
+//        contentService.refreshAccessToken();
 //        System.out.println(contentService.checkText(text));
 //    }
 }

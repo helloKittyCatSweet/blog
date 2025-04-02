@@ -7,17 +7,11 @@ import {
   ADMIN_POST_VERSION_MANAGE_PATH,
   ADMIN_CATEGORY_MANAGE_PATH,
   ADMIN_TAG_MANAGE_PATH,
-  ADMIN_USER_ACTIVITY_MANAGE_PATH,
-  ADMIN_COMMENT_MANAGE_PATH,
-  ADMIN_FAVORITE_MANAGE_PATH,
-  ADMIN_LIKE_MANAGE_PATH,
   ADMIN_REPORT_MANAGE_PATH,
   ADMIN_ROLE,
   ADMIN_USER_MANAGE_PATH,
   ADMIN_ROLE_MANAGE_PATH,
-  ADMIN_ROLE_USER_MANAGE_PATH,
   ADMIN_ROLE_PERMISSION_MANAGE_PATH,
-  ADMIN_PERMISSION_MANAGE_PATH,
   ADMIN_USER_SETTING_MANAGE_PATH,
   ADMIN_MESSAGE_MANAGE_PATH
 } from '@/constants/routes/admin';
@@ -95,52 +89,15 @@ export default [
       },
 
       // 用户行为管理模块
+
       {
-        path: ADMIN_USER_ACTIVITY_MANAGE_PATH,
-        component: () => import('@/views/layout/admin/UserActivityLayout.vue'),
+        path: ADMIN_REPORT_MANAGE_PATH,
+        component: () => import('@/views/report/admin/ReportManage.vue'),
         meta: {
-          title: '用户行为管理',
+          title: '举报管理',
           breadcrumb: true,
-          roles: [ROLES.SYSTEM_ADMINISTRATOR, ROLES.USER_ACTIVITY_MANAGER, ROLES.COMMENT_MANAGER],
-        },
-        children: [
-          {
-            path: ADMIN_COMMENT_MANAGE_PATH,
-            component: () => import('@/views/comment/admin/CommentManage.vue'),
-            meta: {
-              title: '评论管理',
-              breadcrumb: true,
-              roles: [ROLES.USER_ACTIVITY_MANAGER, ROLES.COMMENT_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
-            }
-          },
-          {
-            path: ADMIN_FAVORITE_MANAGE_PATH,
-            component: () => import('@/views/favorite/admin/FavoriteManage.vue'),
-            meta: {
-              title: '收藏管理',
-              breadcrumb: true,
-              roles: [ROLES.USER_ACTIVITY_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
-            }
-          },
-          {
-            path: ADMIN_LIKE_MANAGE_PATH,
-            component: () => import('@/views/like/admin/LikeManage.vue'),
-            meta: {
-              title: '点赞管理',
-              breadcrumb: true,
-              roles: [ROLES.USER_ACTIVITY_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
-            }
-          },
-          {
-            path: ADMIN_REPORT_MANAGE_PATH,
-            component: () => import('@/views/report/admin/ReportManage.vue'),
-            meta: {
-              title: '举报管理',
-              breadcrumb: true,
-              roles: [ROLES.REPORT_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
-            }
-          }
-        ]
+          roles: [ROLES.REPORT_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
+        }
       },
 
       // 用户权限管理模块
@@ -178,30 +135,12 @@ export default [
             }
           },
           {
-            path: ADMIN_ROLE_USER_MANAGE_PATH,
-            component: () => import('@/views/user/UserRoleManage.vue'),
-            meta: {
-              title: '用户角色管理',
-              breadcrumb: true,
-              roles: [ROLES.USER_ROLE_MAPPING_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
-            }
-          },
-          {
             path: ADMIN_ROLE_PERMISSION_MANAGE_PATH,
             component: () => import('@/views/role/RolePermissionManage.vue'),
             meta: {
               title: '角色权限配置',
               breadcrumb: true,
               roles: [ROLES.PERMISSION_MAPPING_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
-            }
-          },
-          {
-            path: ADMIN_PERMISSION_MANAGE_PATH,
-            component: () => import('@/views/permission/PermissionManage.vue'),
-            meta: {
-              title: '权限管理',
-              breadcrumb: true,
-              roles: [ROLES.PERMISSION_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
             }
           },
           {

@@ -21,7 +21,8 @@ import {
   Connection,
   HelpFilled,
   InfoFilled,
-  ChatDotRound
+  ChatDotRound,
+  Message
 } from "@element-plus/icons-vue";
 import { ROLES } from "@/constants/role-constants";
 import {
@@ -41,7 +42,8 @@ import {
   USER_PROFILE_PATH,
   USER_PASSWORD_PATH,
   USER_SETTING_PATH,
-  USER_MESSAGE_DETAIL_PATH
+  USER_MESSAGE_DETAIL_PATH,
+  USER_LIKE_REPORT
 } from '@/constants/routes/user';
 
 import {
@@ -51,17 +53,11 @@ import {
   ADMIN_POST_VERSION_MANAGE_PATH,
   ADMIN_CATEGORY_MANAGE_PATH,
   ADMIN_TAG_MANAGE_PATH,
-  ADMIN_USER_ACTIVITY_MANAGE_PATH,
-  ADMIN_COMMENT_MANAGE_PATH,
-  ADMIN_FAVORITE_MANAGE_PATH,
-  ADMIN_LIKE_MANAGE_PATH,
   ADMIN_REPORT_MANAGE_PATH,
   ADMIN_ROLE,
   ADMIN_USER_MANAGE_PATH,
   ADMIN_ROLE_MANAGE_PATH,
-  ADMIN_ROLE_USER_MANAGE_PATH,
   ADMIN_ROLE_PERMISSION_MANAGE_PATH,
-  ADMIN_PERMISSION_MANAGE_PATH,
   ADMIN_USER_SETTING_MANAGE_PATH,
   ADMIN_MESSAGE_MANAGE_PATH
 } from '@/constants/routes/admin';
@@ -126,7 +122,7 @@ export const userMenus = [
     ]
   },
   {
-    icon: Bell,
+    icon: Message,
     title: '消息中心',
     index: USER_MESSAGE_MANAGE_PATH,
     children: [
@@ -143,12 +139,17 @@ export const userMenus = [
         roles: [ROLES.USER]
       },
       {
-        icon: Bell,
-        title: '举报管理',
-        index: USER_REPORT_MANAGE_PATH,
-        roles: [ROLES.USER]
+        icon: InfoFilled,
+        title: '点赞/收藏',
+        index: USER_LIKE_REPORT,
       }
     ]
+  },
+  {
+    icon: Bell,
+    title: '举报管理',
+    index: USER_REPORT_MANAGE_PATH,
+    roles: [ROLES.USER]
   },
   {
     icon: User,
@@ -216,38 +217,15 @@ export const adminMenus = [
           }
         ]
       },
+
       {
-        icon: MagicStick,
-        title: '用户行为管理',
-        index: ADMIN_USER_ACTIVITY_MANAGE_PATH,
-        roles: [ROLES.SYSTEM_ADMINISTRATOR, ROLES.USER_ACTIVITY_MANAGER, ROLES.COMMENT_MANAGER],
-        children: [
-          {
-            icon: MessageBox,
-            title: '评论管理',
-            index: ADMIN_COMMENT_MANAGE_PATH,
-            roles: [ROLES.USER_ACTIVITY_MANAGER, ROLES.COMMENT_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
-          },
-          {
-            icon: StarFilled,
-            title: '收藏管理',
-            index: ADMIN_FAVORITE_MANAGE_PATH,
-            roles: [ROLES.USER_ACTIVITY_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
-          },
-          {
-            icon: StarFilled,
-            title: '点赞管理',
-            index: ADMIN_LIKE_MANAGE_PATH,
-            roles: [ROLES.USER_ACTIVITY_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
-          },
-          {
-            icon: Bell,
-            title: '举报管理',
-            index: ADMIN_REPORT_MANAGE_PATH,
-            roles: [ROLES.REPORT_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
-          }
-        ]
-      },
+        icon: Bell,
+        title: '举报管理',
+        index: ADMIN_REPORT_MANAGE_PATH,
+        roles: [ROLES.REPORT_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
+      }
+
+      ,
       {
         icon: UserFilled,
         title: '用户权限管理',
@@ -273,22 +251,10 @@ export const adminMenus = [
             roles: [ROLES.ROLE_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
           },
           {
-            icon: HelpFilled,
-            title: '用户角色管理',
-            index: ADMIN_ROLE_USER_MANAGE_PATH,
-            roles: [ROLES.USER_ROLE_MAPPING_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
-          },
-          {
             icon: SetUp,
             title: '角色权限配置',
             index: ADMIN_ROLE_PERMISSION_MANAGE_PATH,
             roles: [ROLES.PERMISSION_MAPPING_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
-          },
-          {
-            icon: InfoFilled,
-            title: '权限管理',
-            index: ADMIN_PERMISSION_MANAGE_PATH,
-            roles: [ROLES.PERMISSION_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
           },
           {
             icon: Setting,

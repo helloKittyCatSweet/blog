@@ -55,7 +55,7 @@ const handleNavigate = (path, disabled) => {
     <el-breadcrumb-item v-for="item in breadcrumbList" :key="item.path">
       <span
         class="breadcrumb-item"
-        :class="{ disabled: item.disabled }"
+        :class="{ disabled: item.disabled, 'is-link': !item.disabled }"
         @click="handleNavigate(item.path, item.disabled)"
       >
         {{ item.title }}
@@ -65,18 +65,53 @@ const handleNavigate = (path, disabled) => {
 </template>
 
 <style lang="scss" scoped>
+.el-breadcrumb {
+  background-color: var(--el-bg-color-page);
+  padding: 8px 16px;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
 .breadcrumb-item {
   cursor: pointer;
   color: var(--el-text-color-regular);
-  transition: color 0.3s;
+  transition: all 0.3s ease;
+  padding: 2px 4px;
+  border-radius: 3px;
+  position: relative;
 
-  &:hover:not(.disabled) {
-    color: var(--el-color-primary);
+  &.is-link {
+    &:hover {
+      color: var(--el-color-primary);
+      background-color: var(--el-color-primary-light-9);
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      height: 1px;
+      background-color: var(--el-color-primary);
+      transition: all 0.3s ease;
+      transform: translateX(-50%);
+    }
+
+    &:hover::after {
+      width: 100%;
+    }
   }
 
   &.disabled {
     color: var(--el-text-color-secondary);
     cursor: default;
+    font-weight: bold;
   }
+}
+
+:deep(.el-breadcrumb__separator) {
+  margin: 0 8px;
+  color: var(--el-text-color-placeholder);
 }
 </style>
