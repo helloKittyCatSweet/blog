@@ -20,4 +20,18 @@ public class TagSpecification {
             };
         };
     }
+
+    public static Specification<Tag> nameContains(String name) {
+        return (root, query, cb) -> {
+            if (name == null || name.trim().isEmpty()) {
+                return null;
+            }
+            return cb.like(cb.lower(root.get("name")), "%" + name.toLowerCase() + "%");
+        };
+    }
+
+    public static Specification<Tag> combinedSearch(String name, Integer weight, String operator) {
+        return Specification.where(nameContains(name))
+                .and(weight == null ? null : weightCompareTo(weight, Compare.valueOf(operator)));
+    }
 }

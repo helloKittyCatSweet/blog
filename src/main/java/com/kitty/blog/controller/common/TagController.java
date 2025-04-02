@@ -132,7 +132,7 @@ public class TagController {
      * @param tagId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_TAG_MANAGER or " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_TAG_MANAGER) or " +
             "hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID查询标签")
     @GetMapping("/admin/find/id/{tagId}")
@@ -171,7 +171,7 @@ public class TagController {
      * @param tagId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_TAG_MANAGER or " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_TAG_MANAGER) or " +
             "hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID删除标签")
     @DeleteMapping("/admin/delete/id/{tagId}")
@@ -222,4 +222,23 @@ public class TagController {
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND, "查询失败");
     }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @Operation(summary = "搜索标签")
+    @GetMapping("/public/find/combined")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "搜索成功"),
+            @ApiResponse(responseCode = "500", description = "搜索失败")
+    })
+    public ResponseEntity<Response<List<com.kitty.blog.model.tag.Tag>>> findByCombined(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Integer weight,
+            @RequestParam(required = false, defaultValue = "GREATER_THAN") String operator) {
+        ResponseEntity<List<com.kitty.blog.model.tag.Tag>> entity =
+                tagService.findByCombined(name, weight, operator);
+        return Response.createResponse(entity,
+                HttpStatus.OK, "搜索成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "搜索失败");
+    }
+
 }

@@ -196,6 +196,20 @@ public class UserService {
     }
 
     @Transactional
+    public ResponseEntity<Boolean> verifyPassword(Integer userId, String password){
+        if (!userRepository.existsById(userId)) {
+            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+        } else {
+            User user = userRepository.findById(userId).get();
+            if (passwordEncoder.matches(password, user.getPassword())) {
+                return new ResponseEntity<>(true, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(false, HttpStatus.UNAUTHORIZED);
+            }
+        }
+    }
+
+    @Transactional
     public ResponseEntity<Boolean> existsByEmail(String email) {
         if (userRepository.existsByEmail(email)) {
             return new ResponseEntity<>(true, HttpStatus.OK);

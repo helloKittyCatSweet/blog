@@ -132,10 +132,15 @@ public class TagService {
         return new ResponseEntity<>(tagRepository.existsById(tagId), HttpStatus.OK);
     }
 
-    // @Cacheable(key = "'hot_tags'", unless = "#result.body.isEmpty()")
-    // public ResponseEntity<List<Tag>> findHotTags() {
-    // // Implementation of findHotTags method
-    // return null; // Placeholder return, actual implementation needed
-    // }
-
+    @Transactional
+    public ResponseEntity<List<Tag>> findByCombined
+            (String name, Integer weight, String operator) {
+        try {
+            Specification<Tag> spec = TagSpecification.combinedSearch(name, weight, operator);
+            List<Tag> tags = tagRepository.findAll(spec);
+            return new ResponseEntity<>(tags, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(List.of(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

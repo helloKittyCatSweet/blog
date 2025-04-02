@@ -255,6 +255,22 @@ public class UserController {
                 HttpStatus.INTERNAL_SERVER_ERROR, "密码重置失败");
     }
 
+    @Operation(summary = "验证密码")
+    @PostMapping("/auth/password/verify")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "密码验证成功"),
+            @ApiResponse(responseCode = "500", description = "密码验证失败")
+    })
+    public ResponseEntity<Response<Boolean>> verifyPassword(@RequestBody Map<String,Object> params){
+        Integer userId = (Integer) params.get("userId");
+        String password = (String) params.get("password");
+        ResponseEntity<Boolean> responseEntity = userService.verifyPassword(userId, password);
+        return Response.createResponse(responseEntity,
+                HttpStatus.OK, "密码验证成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "密码验证失败");
+    }
+
+
     @Operation(summary = "判断邮箱是否已被注册")
     @GetMapping("/auth/exist/email/{email}")
     @ApiResponses(value = {

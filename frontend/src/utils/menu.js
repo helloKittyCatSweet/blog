@@ -39,7 +39,6 @@ import {
   USER_MESSAGE_MANAGE_PATH,
   USER_REPORT_MANAGE_PATH,
   USER_PROFILE_PATH,
-  USER_AVATAR_PATH,
   USER_PASSWORD_PATH,
   USER_SETTING_PATH,
   USER_MESSAGE_DETAIL_PATH
@@ -189,6 +188,7 @@ export const adminMenus = [
         icon: Files,
         title: '内容管理',
         index: ADMIN_CONTENT,
+        roles: [ROLES.SYSTEM_ADMINISTRATOR, ROLES.POST_MANAGER, ROLES.CATEGORY_MANAGER, ROLES.TAG_MANAGER],
         children: [
           {
             icon: Files,

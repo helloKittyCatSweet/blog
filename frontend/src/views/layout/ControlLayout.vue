@@ -22,28 +22,13 @@ import MenuRenderer from "@/components/MenuRenderer.vue";
 import { generateMenus } from "@/utils/menu";
 import { ROLES } from "@/constants/role-constants";
 
+import UserDropdown from "@/components/UserDropdown.vue";
+import { USER_PROFILE_PATH, USER_PASSWORD_PATH } from "@/constants/routes/user";
+
 const userStore = useUserStore();
 onMounted(() => {
   userStore.user;
 });
-
-const handleCommand = async (key) => {
-  if (key === "logout") {
-    // 退出操作
-    await ElMessageBox.confirm("你确认要进行退出么", "温馨提示", {
-      type: "warning",
-      confirmButtonText: "确认",
-      cancelButtonText: "取消",
-    });
-    // 清除本地的数据（token + user信息）
-    userStore.removeToken();
-    userStore.setUser({});
-    router.push("/login");
-  } else {
-    // 跳转操作
-    router.push(`/user/${key}`);
-  }
-};
 
 // 控制菜单伸缩
 const isCollapse = ref(true);
@@ -59,6 +44,32 @@ const CaretBottomIcon = markRaw(CaretBottom);
 const menus = computed(() => {
   return generateMenus(userStore);
 });
+
+// 处理用户下拉菜单命令
+const handleUserCommand = async (command) => {
+  switch (command) {
+    case "profile":
+      router.push(USER_PROFILE_PATH);
+      break;
+    case "password":
+      router.push(USER_PASSWORD_PATH);
+      break;
+    case "logout":
+      try {
+        await ElMessageBox.confirm("你确认要进行退出么", "温馨提示", {
+          type: "warning",
+          confirmButtonText: "确认",
+          cancelButtonText: "取消",
+        });
+        userStore.removeToken();
+        userStore.setUser({});
+        router.push("/login");
+      } catch {
+        // 用户取消操作
+      }
+      break;
+  }
+};
 </script>
 
 <template>
@@ -106,50 +117,7 @@ const menus = computed(() => {
       </el-aside>
 
       <el-container>
-        <el-header>
-          <div>
-            <strong>
-              {{ userStore.username }}
-            </strong>
-          </div>
-
-          <!-- 展示给用户默认看到的 -->
-          <el-dropdown placement="bottom-end" @command="handleCommand">
-            <span class="el-dropdown__box">
-              <el-avatar :src="userStore.avatar || avatar" />
-              <el-icon>
-                <CaretBottom />
-              </el-icon>
-            </span>
-            <!-- 折叠的下拉部分 -->
-            <template #dropdown>
-              <el-dropdown placement="bottom-end" @command="handleCommand">
-                <span class="el-dropdown__box">
-                  <el-avatar :src="userStore.avatar || avatar" />
-                  <el-icon>
-                    <component :is="CaretBottomIcon" />
-                  </el-icon>
-                </span>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item command="profile" :icon="UserIcon">
-                      基本资料
-                    </el-dropdown-item>
-                    <el-dropdown-item command="avatar" :icon="CropIcon">
-                      更换头像
-                    </el-dropdown-item>
-                    <el-dropdown-item command="password" :icon="EditPenIcon">
-                      重置密码
-                    </el-dropdown-item>
-                    <el-dropdown-item command="logout" :icon="SwitchButtonIcon">
-                      退出登录
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </template>
-          </el-dropdown>
-        </el-header>
+        <UserDropdown @command="handleUserCommand" />
         <el-main>
           <router-view></router-view>
         </el-main>

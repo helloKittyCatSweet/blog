@@ -8,6 +8,10 @@ export const update = (data) => request.put(`${userPrefix}/public/update`, data)
 export const resetPassword = ({ userId, password }) =>
   request.put(`${userPrefix}/auth/password/reset`, { userId, password })
 
+// 检查密码是否匹配
+export const verifyPassword = (data) =>
+  request.post(`${userPrefix}/auth/password/verify`, data)
+
 // 判断该邮箱是否已注册
 export const existsByEmail = (email) =>
   request.get(`${userPrefix}/auth/exist/email/${email}`)

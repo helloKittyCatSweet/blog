@@ -20,6 +20,10 @@ export const findById = (tagId) => request.get(`${tagPrefix}/admin/find/id/${tag
 // 查询所有标签
 export const findAll = () => request.get(`${tagPrefix}/public/find/all`)
 
+// 根据标签名称和权值查询
+export const findByCombined = (params) =>
+  request.get(`${tagPrefix}/public/find/combined`, { params })
+
 // 根据id查询标签是否存在
 export const existsById = (tagId) => request.get(`${tagPrefix}/public/exists/id/${tagId}`)
 
