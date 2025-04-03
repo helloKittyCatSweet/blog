@@ -7,6 +7,8 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import java.time.LocalDate;
 
@@ -17,6 +19,7 @@ import java.time.LocalDate;
 @DynamicUpdate
 @DynamicInsert
 @NoArgsConstructor
+@Audited
 public class UserActivity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,6 +55,7 @@ public class UserActivity {
     @JsonManagedReference
     private User user;
 
+    @NotAudited
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)

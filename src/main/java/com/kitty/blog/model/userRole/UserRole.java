@@ -9,6 +9,7 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
 import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serial;
@@ -20,6 +21,7 @@ import java.io.Serializable;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @DynamicUpdate
 @DynamicInsert
+@Audited
 public class UserRole implements Serializable {
 
     @Serial

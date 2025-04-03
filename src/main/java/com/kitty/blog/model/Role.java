@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.envers.Audited;
 import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serial;
@@ -22,6 +23,7 @@ import java.util.List;
 @DynamicUpdate
 @DynamicInsert
 @NoArgsConstructor
+@Audited
 public class Role implements Serializable {
 
     @Serial

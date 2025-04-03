@@ -3,12 +3,13 @@ package com.kitty.blog.controller.post;
 import com.kitty.blog.dto.user.LoginResponseDto;
 import com.kitty.blog.model.Report;
 import com.kitty.blog.service.report.ReportService;
-//import com.kitty.blog.service.report.ReportWorkflowService;
+import com.kitty.blog.service.report.ReportWorkflowService;
 import com.kitty.blog.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,13 +23,14 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/post/report")
 @CrossOrigin
+@Slf4j
 public class ReportController {
 
     @Autowired
     private ReportService reportService;
 
-//    @Autowired
-//    private ReportWorkflowService reportWorkflowService;
+    @Autowired
+    private ReportWorkflowService reportWorkflowService;
 
     /**
      * 创建报告
@@ -74,22 +76,18 @@ public class ReportController {
 
     /**
      * 根据用户ID查询报告列表
-     * @param username
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_REPORT_MANAGER) " +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
-            " or @reportService.hasReportedPost(#userId, #user.username)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户ID查询报告列表", description = "根据用户ID查询报告列表")
-    @GetMapping("/admin/find/user/{username}")
+    @GetMapping("/public/find/user/list")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "用户不存在")
     })
-    public ResponseEntity<Response<List<Report>>> findByUsername
-            (@PathVariable(value = "username") String username,
-             @AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<List<Report>> response = reportService.findByUsername(username);
+    public ResponseEntity<Response<List<Report>>> findByUserId
+            (@AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<List<Report>> response = reportService.findByUserId(user.getId());
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND, "用户不存在");
@@ -315,19 +313,37 @@ public class ReportController {
                 HttpStatus.NOT_FOUND, "不存在");
     }
 
-//    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
-//            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
-//    @Operation(summary = "审核举报")
-//    @PostMapping("/admin/review/{reportId}")
-//    public ResponseEntity<Response<Boolean>> reviewReport(
-//            @PathVariable Integer reportId,
-//            @RequestParam boolean approved,
-//            @RequestParam String comment) {
-//        try {
-//            reportWorkflowService.completeReviewTask(reportId, approved, comment);
-//            return Response.ok(true, "审核完成");
-//        } catch (Exception e) {
-//            return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "审核失败");
-//        }
-//    }
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @Operation(summary = "审核举报")
+    @PostMapping("/admin/review/{reportId}")
+    public ResponseEntity<Response<Boolean>> reviewReport(
+            @PathVariable Integer reportId,
+            @RequestParam boolean approved,
+            @RequestParam String comment) {
+        try {
+            reportWorkflowService.completeReviewTask(reportId, approved, comment);
+            return Response.ok(true, "审核完成");
+        } catch (Exception e) {
+            log.error("审核失败", e);
+            return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "审核失败: " + e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @Operation(summary = "提交举报")
+    @PostMapping("/public/submit")
+    public ResponseEntity<Response<Boolean>> submitReport(@RequestBody Report report) {
+        try {
+            ResponseEntity<Report> savedReport = reportService.save(report);
+            if (savedReport.getStatusCode() == HttpStatus.OK && savedReport.getBody() != null) {
+                reportWorkflowService.startReportProcess(savedReport.getBody());
+                return Response.ok(true, "举报提交成功");
+            }
+            return Response.error(HttpStatus.BAD_REQUEST, "举报提交失败");
+        } catch (Exception e) {
+            log.error("举报提交失败", e);
+            return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "举报提交失败: " + e.getMessage());
+        }
+    }
 }

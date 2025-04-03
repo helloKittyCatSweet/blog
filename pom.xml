@@ -69,7 +69,6 @@
             <artifactId>spring-boot-starter-data-jdbc</artifactId>
         </dependency>
 
-
         <!-- ANTLR -->
         <dependency>
             <groupId>org.antlr</groupId>
@@ -178,7 +177,7 @@
         </dependency>
 
 
-        <!--        DataTypeConverter-->
+        <!--  DataTypeConverter-->
         <dependency>
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
@@ -294,11 +293,17 @@
             <artifactId>spring-security-messaging</artifactId>
         </dependency>
 
-        <!-- Activiti 依赖 -->
+ <!-- 添加 Flowable 相关依赖 -->
+    <dependency>
+        <groupId>org.flowable</groupId>
+        <artifactId>flowable-spring-boot-starter</artifactId>
+        <version>7.0.0</version>
+    </dependency>
+
+        <!-- 审计功能 -->
         <dependency>
-            <groupId>org.activiti</groupId>
-            <artifactId>activiti-spring-boot-starter</artifactId>
-            <version>7.1.0.M6</version>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-envers</artifactId>
         </dependency>
 
     </dependencies>

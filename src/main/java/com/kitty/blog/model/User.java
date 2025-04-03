@@ -10,6 +10,9 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.security.Timestamp;
@@ -23,6 +26,7 @@ import java.util.List;
 @DynamicInsert
 @DynamicUpdate
 @NoArgsConstructor
+@Audited
 public class User implements Serializable {
 
     @Serial
@@ -38,6 +42,7 @@ public class User implements Serializable {
     private String nickname;
 
     @Column(nullable = false)
+    @NotAudited
     private String password;
 
     @Column(nullable = false, unique = true)
@@ -81,21 +86,25 @@ public class User implements Serializable {
     /**
      * Transient区域，用于存放一些不希望被序列化的字段
      */
+    @NotAudited
     @JsonIgnore
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference(value = "user-post")
     private List<Post> posts;
 
+    @NotAudited
     @JsonIgnore
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference(value = "user-comment")
     private List<Comment> comments;
+
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference(value = "user-favorite")
     private List<Favorite> favorites;
 
+    @NotAudited
     @JsonIgnore
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference(value = "user-userSetting")

@@ -43,13 +43,14 @@ blog/
 ### 后端
 - Spring Boot
 - Spring Security
-- Spring Data JPA
-- Hibernate Validator
+- Spring Data JPA -> Hibernate Validator
+- Spring Data Envers 审计功能
 - Redis
 - MySQL
 - Lombok
 - Swagger
 - Log4j2
+- Flowable 工作流
 
 ### 第三方服务
 - 阿里云对象存储服务（OSS）

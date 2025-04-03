@@ -62,13 +62,12 @@ public class ReportService {
     }
 
     @Transactional
-    public ResponseEntity<List<Report>> findByUsername(String username) {
-        User user = userRepository.findByUsername(username).orElse(new User());
-        if (!userRepository.existsById(user.getUserId())) {
+    public ResponseEntity<List<Report>> findByUserId(Integer userId) {
+        if (!userRepository.existsById(userId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         } else {
             return new ResponseEntity<>(
-                    reportRepository.findByUserId(user.getUserId()).orElse(new ArrayList<>()),
+                    reportRepository.findByUserId(userId).orElse(new ArrayList<>()),
                     HttpStatus.OK
             );
         }

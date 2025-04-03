@@ -8,6 +8,8 @@ import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import jakarta.persistence.*;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.springframework.data.redis.core.RedisHash;
 
 import java.io.Serial;
@@ -22,6 +24,7 @@ import java.util.Date;
 @DynamicUpdate
 @DynamicInsert
 @NoArgsConstructor
+@Audited
 public class Favorite implements Serializable {
 
     @Serial
@@ -55,6 +58,7 @@ public class Favorite implements Serializable {
     @JsonBackReference(value = "user-favorite")
     private User user;
 
+    @NotAudited
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)

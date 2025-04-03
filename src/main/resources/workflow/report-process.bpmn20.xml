@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
-             targetNamespace="http://activiti.org/bpmn20">
+<definitions xmlns="http://www.flowable.org/bpmn20"
+             targetNamespace="http://flowable.org/bpmn20">
+    
     <process id="reportReviewProcess" name="举报审核流程">
         <startEvent id="start" name="开始"/>
         <sequenceFlow id="flow1" sourceRef="start" targetRef="submitReport"/>

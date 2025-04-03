@@ -55,6 +55,19 @@ spring:
           max-idle: 8     # 连接池中的最大空闲连接
           min-idle: 0     # 连接池中的最小空闲连接
 
+  flowable:
+    database-schema-update: true
+    db-history-used: true
+    history-level: full
+    async-executor-activate: false
+    process-definition-location-prefix: classpath:/processes/
+    check-process-definitions: true
+    # 字体配置
+    font:
+      activity: 宋体
+      label: 宋体
+      annotation: 宋体s/
+
   #    #druid相关配置
   #    druid:
   #      #监控统计拦截的filters
@@ -105,9 +118,15 @@ spring:
           ssl:
             trust: smtp.qq.com
         debug: true
+  main:
+    allow-bean-definition-overriding: true
 
 logging:
   level:
+#    org.flowable: DEBUG
+#    org.flowable.engine.impl: DEBUG
+#    org.flowable.task.service.impl: DEBUG
+#    org.flowable.variable.service.impl: DEBUG
     com.kitty.dao: DEBUG
 
 #mybatis:
