@@ -17,7 +17,7 @@ import java.util.Date;
 
 @Data
 @Entity
-@Table(name = "post_versions")
+@Table(name = "fs_post_versions")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "versionId")
 @NoArgsConstructor
 @DynamicInsert

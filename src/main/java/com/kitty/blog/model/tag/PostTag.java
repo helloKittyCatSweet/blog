@@ -15,7 +15,7 @@ import java.io.Serializable;
 
 @Data
 @Entity
-@Table(name = "post_tags")
+@Table(name = "fs_post_tags")
 @DynamicUpdate
 @DynamicInsert
 public class PostTag implements Serializable{

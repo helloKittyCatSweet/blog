@@ -1,6 +1,7 @@
 package com.kitty.blog.model;
 
 import com.fasterxml.jackson.annotation.*;
+import com.kitty.blog.constant.ReportStatus;
 import lombok.Data;
 
 import jakarta.persistence.*;
@@ -14,7 +15,7 @@ import java.time.LocalDate;
 
 @Data
 @Entity
-@Table(name = "reports")
+@Table(name = "fs_reports")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "reportId")
 @DynamicUpdate
 @DynamicInsert
@@ -44,7 +45,9 @@ public class Report implements Serializable {
     columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDate createdAt;
 
-    private String status;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ReportStatus status = ReportStatus.PENDING;
 
     @Column(name = "process_instance_id")
     private String processInstanceId;

@@ -36,7 +36,6 @@ public class ReportService {
                 !postRepository.existsById(report.getPostId())) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
-        report.setStatus(ReportStatus.PENDING.name());
         reportRepository.save(report);
         return new ResponseEntity<>(true, HttpStatus.CREATED);
     }
@@ -56,7 +55,6 @@ public class ReportService {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
-        existingReport.setStatus(ReportStatus.PENDING.name());
         reportRepository.save(existingReport);
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
@@ -105,23 +103,23 @@ public class ReportService {
         }
     }
 
-    @Transactional
-    public ResponseEntity<Boolean> changeStatus(Integer reportId, String status) {
-        if (!reportRepository.existsById(reportId)) {
-            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
-        }
-        Report report = (Report) reportRepository.findById(reportId).orElse(null);
-        if (report == null) {
-            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
-        } else {
-            if (isStatusValid(status)) {
-                report.setStatus(status);
-                return new ResponseEntity<>(true, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-            }
-        }
-    }
+//    @Transactional
+//    public ResponseEntity<Boolean> changeStatus(Integer reportId, String status) {
+//        if (!reportRepository.existsById(reportId)) {
+//            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+//        }
+//        Report report = (Report) reportRepository.findById(reportId).orElse(null);
+//        if (report == null) {
+//            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+//        } else {
+//            if (isStatusValid(status)) {
+//                report.setStatus(status);
+//                return new ResponseEntity<>(true, HttpStatus.OK);
+//            } else {
+//                return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//            }
+//        }
+//    }
 
     private boolean isStatusValid(String status) {
         try {
@@ -135,14 +133,10 @@ public class ReportService {
     }
 
     @Transactional
-    public ResponseEntity<List<Report>> findByStatus(String status) {
-        if (isStatusValid(status)) {
-            return new ResponseEntity<>(
-                    reportRepository.findByStatus(status).orElse(new ArrayList<>()),
-                    HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
-        }
+    public ResponseEntity<List<Report>> findByStatus(ReportStatus status) {
+        return new ResponseEntity<>(
+                reportRepository.findByStatus(status).orElse(new ArrayList<>()),
+                HttpStatus.OK);
     }
 
     @Transactional

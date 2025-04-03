@@ -19,7 +19,7 @@ import java.util.Date;
 
 @Data
 @Entity
-@Table(name = "favorites")
+@Table(name = "fs_favorites")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "favoriteId")
 @DynamicUpdate
 @DynamicInsert

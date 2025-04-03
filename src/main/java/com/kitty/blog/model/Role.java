@@ -18,7 +18,7 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "roles")
+@Table(name = "fs_roles")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "roleId")
 @DynamicUpdate
 @DynamicInsert

@@ -1,5 +1,6 @@
 package com.kitty.blog.controller.post;
 
+import com.kitty.blog.constant.ReportStatus;
 import com.kitty.blog.dto.user.LoginResponseDto;
 import com.kitty.blog.model.Report;
 import com.kitty.blog.service.report.ReportService;
@@ -154,24 +155,24 @@ public class ReportController {
 //                HttpStatus.OK, "查询成功",
 //                HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
 //    }
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
-        " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
-    @Operation(summary = "修改报告状态")
-    @PutMapping("/admin/change/status/{id}/{status}")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "修改成功"),
-            @ApiResponse(responseCode = "400", description = "请求参数错误"),
-            @ApiResponse(responseCode = "404", description = "报告不存在"),
-            @ApiResponse(responseCode = "500", description = "服务器内部错误")
-    })
-    public ResponseEntity<Response<Boolean>> changeStatus
-            (@PathVariable(value = "id") Integer reportId,
-             @PathVariable(value = "status") String status) {
-        ResponseEntity<Boolean> response = reportService.changeStatus(reportId, status);
-        return Response.createResponse(response,
-                HttpStatus.OK, "修改成功",
-                HttpStatus.BAD_REQUEST, "请求参数错误");
-    }
+//    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+//        " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+//    @Operation(summary = "修改报告状态")
+//    @PutMapping("/admin/change/status/{id}/{status}")
+//    @ApiResponses(value = {
+//            @ApiResponse(responseCode = "200", description = "修改成功"),
+//            @ApiResponse(responseCode = "400", description = "请求参数错误"),
+//            @ApiResponse(responseCode = "404", description = "报告不存在"),
+//            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+//    })
+//    public ResponseEntity<Response<Boolean>> changeStatus
+//            (@PathVariable(value = "id") Integer reportId,
+//             @PathVariable(value = "status") String status) {
+//        ResponseEntity<Boolean> response = reportService.changeStatus(reportId, status);
+//        return Response.createResponse(response,
+//                HttpStatus.OK, "修改成功",
+//                HttpStatus.BAD_REQUEST, "请求参数错误");
+//    }
 
     @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
             " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
@@ -182,7 +183,7 @@ public class ReportController {
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     public ResponseEntity<Response<List<Report>>> findByStatus
-            (@PathVariable(value = "status") String status) {
+            (@PathVariable(value = "status") ReportStatus status) {
         ResponseEntity<List<Report>> response = reportService.findByStatus(status);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",

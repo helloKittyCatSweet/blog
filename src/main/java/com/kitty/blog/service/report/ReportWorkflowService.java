@@ -1,5 +1,6 @@
 package com.kitty.blog.service.report;
 
+import com.kitty.blog.constant.ReportStatus;
 import com.kitty.blog.model.Report;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.engine.RuntimeService;
@@ -52,7 +53,7 @@ public class ReportWorkflowService {
         taskService.complete(task.getId(), variables);
 
         // 更新举报状态
-        report.setStatus(approved ? "APPROVED" : "REJECTED");
+        report.setStatus(approved ? ReportStatus.APPROVED : ReportStatus.REJECTED);
         report.setComment(comment);
         reportService.update(report);
     }

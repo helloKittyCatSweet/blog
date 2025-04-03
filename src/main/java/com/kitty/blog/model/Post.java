@@ -19,7 +19,7 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "posts")
+@Table(name = "fs_posts")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "postId")
 @DynamicUpdate
 @DynamicInsert

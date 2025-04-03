@@ -1,5 +1,6 @@
 package com.kitty.blog.repository;
 
+import com.kitty.blog.constant.ReportStatus;
 import com.kitty.blog.model.Report;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -95,6 +96,6 @@ public interface ReportRepository extends BaseRepository<Report, Integer> {
      * @param status
      * @return
      */
-    @Query("select r from Report r where r.status = ?1")
-    Optional<List<Report>> findByStatus(String status);
+
+    Optional<List<Report>> findByStatus(ReportStatus status);
 }

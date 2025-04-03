@@ -17,7 +17,7 @@ import java.io.Serializable;
 
 @Data
 @Entity
-@Table(name = "post_categories")
+@Table(name = "fs_post_categories")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @DynamicUpdate
 @DynamicInsert

@@ -14,7 +14,7 @@ import java.time.LocalDate;
 
 @Data
 @Entity
-@Table(name = "user_activities")
+@Table(name = "fs_user_activities")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "activityId")
 @DynamicUpdate
 @DynamicInsert

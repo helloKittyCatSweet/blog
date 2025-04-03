@@ -1,18 +1,18 @@
 package com.kitty.blog.constant;
 
-import lombok.Getter;
-import lombok.ToString;
-
-@ToString
-@Getter
 public enum ReportStatus {
-    PENDING("PENDING"),
-    CONFIRMED("CONFIRMED"),
-    REJECTED("REJECTED");
+    PENDING("待处理"),
+    REVIEWING("审核中"),
+    APPROVED("已通过"),
+    REJECTED("已驳回");
 
-    public String status;
+    private final String description;
 
-    ReportStatus(String status){
-        this.status = status;
+    ReportStatus(String description) {
+        this.description = description;
+    }
+
+    public String getDescription() {
+        return description;
     }
 }

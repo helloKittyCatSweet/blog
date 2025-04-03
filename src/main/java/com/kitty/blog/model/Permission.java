@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "permissions")
+@Table(name = "fs_permissions")
 @Data
 public class Permission implements Serializable {
 

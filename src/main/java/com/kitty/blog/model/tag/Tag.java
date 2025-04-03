@@ -17,7 +17,7 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "tags")
+@Table(name = "fs_tags")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "tagId")
 @DynamicInsert
 @DynamicUpdate

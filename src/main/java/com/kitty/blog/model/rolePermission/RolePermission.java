@@ -11,7 +11,7 @@ import java.io.Serializable;
 
 @Data
 @Entity
-@Table(name = "role_permissions")
+@Table(name = "fs_role_permissions")
 @NoArgsConstructor
 public class RolePermission implements Serializable {
 

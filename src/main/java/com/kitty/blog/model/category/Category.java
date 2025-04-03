@@ -16,7 +16,7 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "categories")// 避免循环调用问题
+@Table(name = "fs_categories")// 避免循环调用问题
 //@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "categoryId")
 @DynamicUpdate // 动态更新注解
 @DynamicInsert // 动态插入注解

@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
-@Table(name = "post_attachments")
+@Table(name = "fs_post_attachments")
 @NoArgsConstructor
 @Entity
 public class PostAttachment implements Serializable {
