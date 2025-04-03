@@ -133,8 +133,8 @@ Total : 596 files,  100781 codes, 10018 comments, 16692 blanks, all 127491 lines
 | [src/main/java/com/kitty/blog/service/contentReview/FileUtil.java](/src/main/java/com/kitty/blog/service/contentReview/FileUtil.java) | Java | 51 | 12 | 10 | 73 |
 | [src/main/java/com/kitty/blog/service/contentReview/GsonUtils.java](/src/main/java/com/kitty/blog/service/contentReview/GsonUtils.java) | Java | 17 | 6 | 7 | 30 |
 | [src/main/java/com/kitty/blog/service/contentReview/HttpUtil.java](/src/main/java/com/kitty/blog/service/contentReview/HttpUtil.java) | Java | 59 | 10 | 9 | 78 |
-| [src/main/java/com/kitty/blog/service/postAnalysis/author/AuthorAnalyticsService.java](/src/main/java/com/kitty/blog/service/postAnalysis/author/AuthorAnalyticsService.java) | Java | 177 | 77 | 57 | 311 |
-| [src/main/java/com/kitty/blog/service/postAnalysis/reader/RecommendationService.java](/src/main/java/com/kitty/blog/service/postAnalysis/reader/RecommendationService.java) | Java | 100 | 34 | 25 | 159 |
+| [src/main/java/com/kitty/blog/service/postAnalysis/author/AuthorAnalyticsService.java](/com/kitty/blog/service/post/postAnalysis/author/AuthorAnalyticsService.java) | Java | 177 | 77 | 57 | 311 |
+| [src/main/java/com/kitty/blog/service/postAnalysis/reader/RecommendationService.java](/com/kitty/blog/service/post/postAnalysis/reader/RecommendationService.java) | Java | 100 | 34 | 25 | 159 |
 | [src/main/java/com/kitty/blog/utils/AliyunOSSUploader.java](/src/main/java/com/kitty/blog/utils/AliyunOSSUploader.java) | Java | 99 | 32 | 21 | 152 |
 | [src/main/java/com/kitty/blog/utils/RedisUtil.java](/src/main/java/com/kitty/blog/utils/RedisUtil.java) | Java | 31 | 21 | 11 | 63 |
 | [src/main/java/com/kitty/blog/utils/Response.java](/src/main/java/com/kitty/blog/utils/Response.java) | Java | 69 | 6 | 19 | 94 |

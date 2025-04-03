@@ -11,6 +11,7 @@ import com.kitty.blog.repository.*;
 import com.kitty.blog.repository.CategoryRepository;
 import com.kitty.blog.repository.tag.TagRepository;
 import com.kitty.blog.service.contentReview.BaiduContentService;
+import com.kitty.blog.service.tag.TagWeightService;
 import com.kitty.blog.utils.AliyunOSSUploader;
 import com.kitty.blog.utils.UpdateUtil;
 import org.apache.tika.Tika;

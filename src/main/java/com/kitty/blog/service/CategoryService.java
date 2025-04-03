@@ -7,6 +7,7 @@ import com.kitty.blog.repository.CategoryRepository;
 import com.kitty.blog.repository.PostRepository;
 import com.kitty.blog.service.contentReview.BaiduContentService;
 import com.kitty.blog.utils.UpdateUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Service
 @CacheConfig(cacheNames = "category")
 public class CategoryService {
@@ -40,7 +42,15 @@ public class CategoryService {
             return new ResponseEntity<>(false, HttpStatus.CONFLICT);
         }
         String name = baiduContentService.checkText(category.getName());
+        try {
+            // {"error_code":18,"error_msg":"Open api qps request limit reached"}
+            // 百度api限制每秒只能发送一个请求，这里休眠1秒
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         String description = baiduContentService.checkText(category.getDescription());
+        log.info("create a category: check: name: {}, description: {}",name,description);
         if (!name.equals("合规") || !description.equals("合规")){
             return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
         }
@@ -57,6 +67,12 @@ public class CategoryService {
         }
 
         String name = baiduContentService.checkText(category.getName());
+        try {
+            // api调用频率限制，一秒一次
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         String description = baiduContentService.checkText(category.getDescription());
         if (!name.equals("合规") || !description.equals("合规")){
             return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
@@ -107,32 +123,49 @@ public class CategoryService {
     }
 
     @Transactional
-    @Cacheable(key = "#parentCategoryId", unless = "#result.body.isEmpty()")
-    public ResponseEntity<List<TreeDto>> findByParentName(String parentName) {
-        Category category = categoryRepository.findByName(parentName).orElse(new Category());
-        if (category.getCategoryId() == null) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        } else {
-            List<Category> categories = categoryRepository.
-                    findCategoriesByParentId(category.getCategoryId())
-                    .orElse(new ArrayList<>());
-            return new ResponseEntity<>(
-                    CategoryTreeBuilder.buildTree(categories, category.getCategoryId()),
-                    HttpStatus.OK);
-        }
+    @Cacheable(key = "#name", unless = "#result.body.isEmpty()")
+    public ResponseEntity<List<Category>> findByNameLike(String name) {
+        return new ResponseEntity<>(
+                categoryRepository.findByNameLike(name).orElse(new ArrayList<>()),
+                HttpStatus.OK);
     }
 
-    // 可以同时处理是否有父节点的情况
     @Transactional
-    @Cacheable
-    public ResponseEntity<List<TreeDto>> findDescendantsByParentName(String parentName) {
-        Category category = categoryRepository.findByName(parentName).orElse(new Category());
-        if (category.getCategoryId() == null) {
+    @Cacheable(key = "#parentName", unless = "#result.body.isEmpty()")
+    public ResponseEntity<List<TreeDto>> findByParentNameLike(String parentName) {
+        List<Category> parentCategories = categoryRepository.findByNameLike(parentName).orElse(new ArrayList<>());
+        if (parentCategories.isEmpty()) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        } else {
+        }
+
+        List<TreeDto> allTrees = new ArrayList<>();
+        // 为每个匹配的父分类构建一棵树
+        for (Category parent : parentCategories) {
+            List<Category> children = categoryRepository.findCategoriesByParentId(parent.getCategoryId())
+                    .orElse(new ArrayList<>());
+            if (!children.isEmpty()) {
+                allTrees.addAll(CategoryTreeBuilder.buildTree(children, parent.getCategoryId()));
+            }
+        }
+        if (!allTrees.isEmpty()) {
+            return new ResponseEntity<>(allTrees, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+    }
+
+    @Transactional
+    @Cacheable(key = "#parentName", unless = "#result.body.isEmpty()")
+    public ResponseEntity<List<TreeDto>> findDescendantsByParentNameLike(String parentName) {
+        List<Category> parentCategories = categoryRepository.findByNameLike(parentName).orElse(new ArrayList<>());
+        if (parentCategories.isEmpty()) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        }
+
+        List<TreeDto> allTrees = new ArrayList<>();
+        for (Category parent : parentCategories) {
             List<Category> descendants = new ArrayList<>();
             List<Integer> currentLevelIds = new ArrayList<>();
-            currentLevelIds.add(category.getCategoryId());
+            currentLevelIds.add(parent.getCategoryId());
 
             while (!currentLevelIds.isEmpty()) {
                 List<Integer> nextLevelIds = new ArrayList<>();
@@ -140,17 +173,19 @@ public class CategoryService {
                     List<Category> children = categoryRepository.findCategoriesByParentId(parentId)
                             .orElse(new ArrayList<>());
                     descendants.addAll(children);
-                    for (Category child : children) {
-                        nextLevelIds.add(child.getCategoryId());
-                    }
+                    children.forEach(child -> nextLevelIds.add(child.getCategoryId()));
                 }
                 currentLevelIds = nextLevelIds;
             }
 
-            return new ResponseEntity<>(
-                    CategoryTreeBuilder.buildTree(descendants, category.getCategoryId()),
-                    HttpStatus.OK);
+            if (!descendants.isEmpty()) {
+                allTrees.addAll(CategoryTreeBuilder.buildTree(descendants, parent.getCategoryId()));
+            }
         }
+        if (!allTrees.isEmpty()) {
+            return new ResponseEntity<>(allTrees, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
     }
 
     @Transactional
@@ -170,13 +205,6 @@ public class CategoryService {
     @Transactional
     // 主键不存在则插入，主键存在则更新
     public ResponseEntity<Category> save(Category category) {
-        Category oldCategory = this.findByName(category.getName()).getBody();
-        // 这个分类已经存在,新增一个已经存在的Category
-        if (oldCategory != null && !oldCategory.equals(new Category())
-                && !Objects.equals(oldCategory.getCategoryId(),
-                        category.getCategoryId())) {
-            return new ResponseEntity<>(new Category(), HttpStatus.CONFLICT);
-        }
         return new ResponseEntity<>((Category) categoryRepository.save(category), HttpStatus.OK);
     }
 

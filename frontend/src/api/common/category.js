@@ -15,6 +15,10 @@ export const findSubCategoriesByParentName = (name) =>
 export const findCategoryByName = (name) =>
   request.get(`${categoryPrefix}/public/find/name/${name}`)
 
+// 根据名称模糊查询分类
+export const findCategoryByNameLike = (name) =>
+  request.get(`${categoryPrefix}/public/find/name/like/${name}`)
+
 // 根据id查询分类
 export const findCategoryById = (id) => request.get(`${categoryPrefix}/public/find/id/${id}`)
 

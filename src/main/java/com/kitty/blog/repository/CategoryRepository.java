@@ -77,6 +77,14 @@ public interface CategoryRepository extends BaseRepository<Category, Integer> {
     @Query(value = "SELECT c FROM Category c WHERE c.name = ?1")
     Optional<Category> findByName(String name);
 
+    /**
+     * 根据分类名称模糊查询
+     * @param name
+     * @return
+     */
+    @Query(value = "SELECT c FROM Category c WHERE c.name LIKE %?1%")
+    Optional<List<Category>> findByNameLike(String name);
+
 
     /**
      * findCategoriesByParentId

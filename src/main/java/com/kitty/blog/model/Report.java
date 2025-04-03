@@ -44,8 +44,13 @@ public class Report implements Serializable {
     columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDate createdAt;
 
-
     private String status;
+
+    @Column(name = "process_instance_id")
+    private String processInstanceId;
+
+    @Column(name = "comment")
+    private String comment;
 
     /**
      * Transient 字段，不参与数据库的映射，仅用于业务逻辑

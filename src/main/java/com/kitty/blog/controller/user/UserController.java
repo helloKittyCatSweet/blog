@@ -5,7 +5,7 @@ import com.kitty.blog.dto.user.LoginDto;
 import com.kitty.blog.dto.user.LoginResponseDto;
 import com.kitty.blog.dto.user.RegisterDto;
 import com.kitty.blog.model.User;
-import com.kitty.blog.service.UserService;
+import com.kitty.blog.service.user.UserService;
 import com.kitty.blog.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -230,7 +230,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "验证成功"),
             @ApiResponse(responseCode = "401", description = "token失效")
     })
-    public ResponseEntity<Response<String>> validateToken(@RequestParam String token) {
+    public ResponseEntity<Response<String>> validateToken(@RequestBody String token) {
         // 移除可能的引号
         token = token.trim().replace("\"", "");
         ResponseEntity<String> responseEntity = userService.validateToken(token);

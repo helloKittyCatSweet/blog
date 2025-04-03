@@ -1,7 +1,7 @@
 package com.kitty.blog.controller.post;
 
 import com.kitty.blog.model.Post;
-import com.kitty.blog.service.postAnalysis.reader.RecommendationService;
+import com.kitty.blog.service.post.postAnalysis.reader.RecommendationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

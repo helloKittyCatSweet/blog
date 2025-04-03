@@ -12,6 +12,8 @@ import authRoutes from './modules/auth.js'
 import userRoutes from './modules/user.js'
 import adminRoutes from './modules/admin.js'
 
+import { verifyToken } from '@/api/user/user.js';
+
 // createRouter 创建路由实例
 // 配置 history 模式
 // 1. history模式：createWebHistory     地址栏不带 #
@@ -96,6 +98,28 @@ router.beforeEach(async (to, from, next) => {
     // 2. 检查认证状态（确保token有效）
     if (!userStore.user.token) {
       console.log('拦截原因: 未认证');
+      return next({
+        path: LOGIN_PATH,
+        query: { redirect: to.fullPath }
+      });
+    }
+
+    // token有效性检查
+    try {
+      const response = await verifyToken(userStore.user.token);
+      if (response.data.status === 200) {
+        console.log('放行原因: token有效');
+      } else {
+        console.log('拦截原因: token无效');
+        await userStore.logout(); // 清除用户登录状态和用户相关的data
+        return next({
+          path: LOGIN_PATH,
+          query: { redirect: to.fullPath }
+        });
+      }
+    } catch (error) {
+      console.log('拦截原因: token无效');
+      await userStore.logout(); // 清除用户登录状态和用户相关的dat
       return next({
         path: LOGIN_PATH,
         query: { redirect: to.fullPath }

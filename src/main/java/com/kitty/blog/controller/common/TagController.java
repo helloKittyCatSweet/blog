@@ -1,7 +1,7 @@
 package com.kitty.blog.controller.common;
 
 import com.kitty.blog.constant.Compare;
-import com.kitty.blog.service.TagService;
+import com.kitty.blog.service.tag.TagService;
 import com.kitty.blog.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

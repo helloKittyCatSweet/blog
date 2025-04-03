@@ -125,6 +125,21 @@ public class CategoryController {
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
     }
 
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @Operation(summary = "根据名称模糊查询分类")
+    @GetMapping("/public/find/name/like/{name}")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
+                            @ApiResponse(responseCode = "500", description = "服务器繁忙")})
+    public ResponseEntity<Response<List<Category>>> findByNameLike(
+            @PathVariable("name") String name) {
+        // TODO: find category by name
+        ResponseEntity<List<Category>> response = categoryService.findByNameLike(name);
+        return Response.createResponse(response,
+                HttpStatus.OK, "查询成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
+    }
+
+
     /**
      * 根据父分类ID查询子分类
      * @param name
@@ -135,10 +150,10 @@ public class CategoryController {
     @GetMapping("/public/find/parent/{name}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
                             @ApiResponse(responseCode = "404", description = "分类不存在")})
-    public ResponseEntity<Response<List<TreeDto>>> findByParentName(
+    public ResponseEntity<Response<List<TreeDto>>> findByParentNameLike(
             @PathVariable("name") String name) {
         // TODO: find categories by parent id
-        ResponseEntity<List<TreeDto>> response= categoryService.findByParentName(name);
+        ResponseEntity<List<TreeDto>> response= categoryService.findByParentNameLike(name);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "分类不存在");
@@ -154,10 +169,10 @@ public class CategoryController {
     @GetMapping("/public/find/descendants/{name}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
                             @ApiResponse(responseCode = "404", description = "分类不存在")})
-    public ResponseEntity<Response<List<TreeDto>>> findDescendantsByParentName(
+    public ResponseEntity<Response<List<TreeDto>>> findDescendantsByParentNameLike(
             @PathVariable("name") String name) {
         // TODO: find categories by parent id
-        ResponseEntity<List<TreeDto>> response= categoryService.findDescendantsByParentName(name);
+        ResponseEntity<List<TreeDto>> response= categoryService.findDescendantsByParentNameLike(name);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "分类不存在");

@@ -1,6 +1,6 @@
 package com.kitty.blog.controller.user.security;
 
-import com.kitty.blog.service.CaptchaService;
+import com.kitty.blog.service.user.CaptchaService;
 import com.kitty.blog.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

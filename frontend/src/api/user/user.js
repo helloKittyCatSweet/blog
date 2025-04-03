@@ -21,7 +21,12 @@ export const activate = ({ userId, isActive }) =>
   request.put(`${userPrefix}/admin/activate`, { userId, isActive })
 
 // 验证token
-export const verifyToken = (token) => request.post(`${userPrefix}/public/validate`, { token })
+export const verifyToken = (token) => request.post(`${userPrefix}/public/validate`, token,
+  {
+    headers: {
+      'Content-Type': 'text/plain',
+    }
+  })
 
 // 上传头像
 export const uploadAvatar = (formData) => {

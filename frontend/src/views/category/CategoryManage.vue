@@ -2,7 +2,16 @@
 import { ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import { Search, Plus, Edit, Delete } from "@element-plus/icons-vue";
-import { create, update, deleteById, findAll } from "@/api/common/category.js";
+import {
+  create,
+  update,
+  deleteById,
+  deleteSubCategories,
+  findDescendantsByParentName,
+  findCategoryByNameLike,
+  findSubCategoriesByParentName,
+  findAll,
+} from "@/api/common/category.js";
 
 // 表格数据
 const tableData = ref([]);
@@ -13,9 +22,6 @@ const categoryOptions = ref([]); // 用于存储分类选项
 const total = ref(0);
 const currentPage = ref(1);
 const pageSize = ref(10);
-
-// 搜索条件
-const searchKey = ref("");
 
 // 对话框控制
 const dialogVisible = ref(false);
@@ -39,19 +45,6 @@ const rules = {
     { max: 200, message: "描述不能超过200个字符", trigger: "blur" },
   ],
   parentCategoryId: [{ required: true, message: "请选择父分类", trigger: "change" }],
-};
-
-// 获取父分类名称
-const getCategoryName = (categoryId) => {
-  if (!categoryId) return "无";
-  const category = categoryOptions.value.find((item) => item.categoryId === categoryId);
-  return category ? category.name : "未知分类";
-};
-
-// Reset search conditions
-const resetSearch = () => {
-  searchKey.value = "";
-  getCategoryList();
 };
 
 // Get category list
@@ -91,43 +84,63 @@ const flattenCategories = (trees) => {
 // Add/Edit category
 const handleEdit = (row) => {
   dialogTitle.value = row ? "编辑分类" : "新增分类";
-  form.value = row
-    ? {
-        categoryId: row.categoryId,
-        name: row.name,
-        description: row.description,
-        parentCategoryId: row.parentCategoryId || null,
-      }
-    : { categoryId: null, name: "", description: "", parentCategoryId: null };
+  if (row) {
+    // 修改时，设置表单值，包括父分类ID
+    form.value = {
+      categoryId: row.categoryId,
+      name: row.name,
+      description: row.description,
+      parentCategoryId: row.parentCategoryId || 0, // 如果没有父分类，设置为0（自立门户）
+    };
+  } else {
+    // 新增时，重置表单
+    form.value = {
+      categoryId: null,
+      name: "",
+      description: "",
+      parentCategoryId: 0, // 默认设置为自立门户
+    };
+  }
   dialogVisible.value = true;
 };
 
-// Delete category
+// 删除分类
 const handleDelete = async (row) => {
   try {
-    // 检查是否存在子分类
-    const hasChildren = tableData.value.some(
-      (item) =>
-        item.children &&
-        item.children.some((child) => child.category.parentCategoryId === row.categoryId)
-    );
+    const hasChildren = row.children && row.children.length > 0;
 
+    // 根据是否有子分类显示不同的确认框
     if (hasChildren) {
-      ElMessage.warning("该分类下还有子分类，请先删除子分类");
-      return;
-    }
-
-    await ElMessageBox.confirm("确认删除该分类吗？", "提示", {
-      type: "warning",
-    });
-
-    const response = await deleteById(row.categoryId);
-    if (response.status === 200) {
-      ElMessage.success("删除成功");
-      getCategoryList(); // 重新获取列表以更新树形结构
+      await ElMessageBox.confirm("该分类下有子分类，请选择删除方式", "提示", {
+        confirmButtonText: "删除所有",
+        cancelButtonText: "取消",
+        distinguishCancelAndClose: true,
+        showClose: true,
+        type: "warning",
+        showCancelButton: true,
+        // 添加自定义按钮
+        showDenied: true,
+        deniedButtonText: "仅删除本分类",
+      });
+      // 删除包含子节点的所有节点
+      const response = await deleteSubCategories(row.category.categoryId);
+      if (response.status === 200) {
+        ElMessage.success("删除分类及其子分类成功");
+        getCategoryList();
+      }
+    } else {
+      // 无子分类时的普通删除
+      await ElMessageBox.confirm("确认删除该分类吗？", "提示", {
+        type: "warning",
+      });
+      const response = await deleteById(row.category.categoryId);
+      if (response.status === 200) {
+        ElMessage.success("删除成功");
+        getCategoryList();
+      }
     }
   } catch (error) {
-    if (error !== "cancel") {
+    if (error !== "cancel" && error !== "close") {
       ElMessage.error("删除失败");
     }
   }
@@ -167,6 +180,76 @@ const submitForm = async () => {
 onMounted(() => {
   getCategoryList();
 });
+
+/**
+ * 搜索
+ */
+// 搜索条件
+const searchKey = ref("");
+const searchType = ref("name");
+// 搜索类型：name-名称搜索, sub-子分类搜索, all-所有后代搜索
+const advancedSearch = ref(false); // 是否显示高级搜索
+
+const handleSearch = async () => {
+  if (!searchKey.value) {
+    getCategoryList();
+    return;
+  }
+
+  loading.value = true;
+  try {
+    let res;
+    switch (searchType.value) {
+      case "name":
+        res = await findCategoryByNameLike(searchKey.value);
+        if (res.data.status === 200 && res.data.data) {
+          // 确保每个项都有正确的 category 结构
+          tableData.value = res.data.data.map((item) => ({
+            category: {
+              categoryId: item.categoryId,
+              name: item.name,
+              description: item.description,
+              parentCategoryId: item.parentCategoryId,
+            },
+            children: [],
+          }));
+        }
+        break;
+      case "sub":
+        res = await findSubCategoriesByParentName(searchKey.value);
+        if (res.data.status === 200 && res.data.data) {
+          // 直接使用返回的数据结构，它已经是正确的树形结构
+          tableData.value = res.data.data;
+          total.value = res.data.data.length;
+        }
+        break;
+      case "all":
+        res = await findDescendantsByParentName(searchKey.value);
+        if (res.data.status === 200) {
+          tableData.value = res.data.data;
+          total.value = res.data.data.length;
+        }
+        break;
+    }
+
+    if (res.data.status === 200) {
+      total.value = res.data.data.length;
+      categoryOptions.value = flattenCategories(tableData.value);
+    }
+  } catch (error) {
+    console.error("Search failed:", error);
+    ElMessage.error("搜索失败");
+  }
+  loading.value = false;
+};
+
+// 重置搜索
+const resetSearch = () => {
+  searchKey.value = "";
+  searchType.value = "name";
+  advancedSearch.value = false;
+  getCategoryList();
+};
 </script>
 
 <template>
@@ -174,12 +257,17 @@ onMounted(() => {
     <!-- 搜索栏 -->
     <el-card class="search-card">
       <el-row :gutter="20">
+        <el-col :span="4">
+          <el-button type="info" link @click="advancedSearch = !advancedSearch">
+            {{ advancedSearch ? "收起高级搜索" : "展开高级搜索" }}
+          </el-button>
+        </el-col>
         <el-col :span="6">
           <el-input
             v-model="searchKey"
             placeholder="请输入分类名称"
             clearable
-            @keyup.enter="getCategoryList"
+            @keyup.enter="handleSearch"
           >
             <template #suffix>
               <el-icon class="el-input__icon">
@@ -188,10 +276,15 @@ onMounted(() => {
             </template>
           </el-input>
         </el-col>
-        <el-col :span="10" style="text-align: right">
-          <el-button type="primary" :icon="Search" @click="getCategoryList"
-            >搜索</el-button
-          >
+        <el-col :span="6" v-if="advancedSearch">
+          <el-select v-model="searchType" placeholder="搜索方式" style="width: 100%">
+            <el-option label="按名称搜索" value="name" />
+            <el-option label="搜索子分类" value="sub" />
+            <el-option label="搜索所有后代" value="all" />
+          </el-select>
+        </el-col>
+        <el-col :span="8" style="text-align: right">
+          <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
           <el-button @click="resetSearch">重置</el-button>
         </el-col>
       </el-row>
@@ -330,6 +423,10 @@ onMounted(() => {
 <style lang="scss" scoped>
 .search-card {
   margin-bottom: 20px;
+
+  .el-select {
+    width: 100%;
+  }
 }
 
 .table-card {

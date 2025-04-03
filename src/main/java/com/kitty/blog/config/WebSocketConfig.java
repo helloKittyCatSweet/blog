@@ -3,13 +3,11 @@ package com.kitty.blog.config;
 import com.kitty.blog.dto.user.LoginResponseDto;
 import com.kitty.blog.exception.WebSocketAuthenticationException;
 import com.kitty.blog.security.JwtTokenUtil;
-import com.kitty.blog.service.MyUserDetailService;
-import com.kitty.blog.service.UserService;
+import com.kitty.blog.service.user.MyUserDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -20,7 +18,6 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import java.util.Map;
-import java.util.Objects;
 
 @Slf4j
 @Configuration

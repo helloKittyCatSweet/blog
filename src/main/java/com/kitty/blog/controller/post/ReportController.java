@@ -2,7 +2,8 @@ package com.kitty.blog.controller.post;
 
 import com.kitty.blog.dto.user.LoginResponseDto;
 import com.kitty.blog.model.Report;
-import com.kitty.blog.service.ReportService;
+import com.kitty.blog.service.report.ReportService;
+//import com.kitty.blog.service.report.ReportWorkflowService;
 import com.kitty.blog.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -25,6 +26,9 @@ public class ReportController {
 
     @Autowired
     private ReportService reportService;
+
+//    @Autowired
+//    private ReportWorkflowService reportWorkflowService;
 
     /**
      * 创建报告
@@ -310,4 +314,20 @@ public class ReportController {
                 HttpStatus.OK, "存在",
                 HttpStatus.NOT_FOUND, "不存在");
     }
+
+//    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
+//            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+//    @Operation(summary = "审核举报")
+//    @PostMapping("/admin/review/{reportId}")
+//    public ResponseEntity<Response<Boolean>> reviewReport(
+//            @PathVariable Integer reportId,
+//            @RequestParam boolean approved,
+//            @RequestParam String comment) {
+//        try {
+//            reportWorkflowService.completeReviewTask(reportId, approved, comment);
+//            return Response.ok(true, "审核完成");
+//        } catch (Exception e) {
+//            return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "审核失败");
+//        }
+//    }
 }

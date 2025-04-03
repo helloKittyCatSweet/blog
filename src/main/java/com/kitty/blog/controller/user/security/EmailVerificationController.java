@@ -1,7 +1,7 @@
 package com.kitty.blog.controller.user.security;
 
 import com.kitty.blog.dto.user.EmailVerificationDto;
-import com.kitty.blog.service.EmailVerificationService;
+import com.kitty.blog.service.user.EmailVerificationService;
 import com.kitty.blog.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.concurrent.CompletableFuture;
