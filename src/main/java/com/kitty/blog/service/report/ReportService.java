@@ -1,11 +1,13 @@
 package com.kitty.blog.service.report;
 
+import com.kitty.blog.dto.user.LoginResponseDto;
 import com.kitty.blog.model.User;
 import com.kitty.blog.model.Report;
 import com.kitty.blog.constant.ReportStatus;
 import com.kitty.blog.repository.PostRepository;
 import com.kitty.blog.repository.ReportRepository;
 import com.kitty.blog.repository.UserRepository;
+import com.kitty.blog.service.user.MyUserDetailService;
 import com.kitty.blog.utils.UpdateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
@@ -25,8 +27,10 @@ public class ReportService {
 
     @Autowired
     private ReportRepository reportRepository;
+
     @Autowired
     private UserRepository userRepository;
+
     @Autowired
     private PostRepository postRepository;
 
@@ -190,4 +194,34 @@ public class ReportService {
         return new ResponseEntity<>(reportRepository.existsById(reportId), HttpStatus.OK);
     }
 
+    /**
+     * 搜索举报信息（根据角色权限）
+     */
+    @Transactional
+    public ResponseEntity<List<Report>> searchReports(Integer userId, String keyword, ReportStatus status, boolean isAdmin) {
+        String username = userRepository.findById(userId).orElse(new User()).getUsername();
+        if (username == null) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        }
+        try {
+            List<Report> reports;
+
+
+            if (isAdmin) {
+                reports = reportRepository.searchReportsForAdmin(
+                        keyword.isEmpty() ? null : keyword,
+                        status
+                );
+            } else {
+                reports = reportRepository.searchReportsForUser(
+                        userId,
+                        keyword.isEmpty() ? null : keyword,
+                        status
+                );
+            }
+            return new ResponseEntity<>(reports, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

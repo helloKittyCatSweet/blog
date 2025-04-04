@@ -256,18 +256,14 @@ public class ReportController {
      * @param reportId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
-            " or @reportService.hasReportedPost(#postId, #user.id)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "根据报告ID删除报告", description = "根据报告ID删除报告")
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/public/delete/id/{id}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "404", description = "报告不存在")
     })
-    public ResponseEntity<Response<Boolean>> deleteById
-            (@PathVariable(value = "id") Integer reportId,
-             @AuthenticationPrincipal LoginResponseDto user) {
+    public ResponseEntity<Response<Boolean>> deleteById(@PathVariable(value = "id") Integer reportId) {
         ResponseEntity<Boolean> response = reportService.deleteById(reportId);
         return Response.createResponse(response,
                 HttpStatus.OK, "删除成功",
@@ -346,5 +342,31 @@ public class ReportController {
             log.error("举报提交失败", e);
             return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "举报提交失败: " + e.getMessage());
         }
+    }
+
+    /**
+     * 搜索举报信息
+     */
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @Operation(summary = "搜索举报信息", description = "根据关键字和状态搜索举报信息")
+    @GetMapping("/public/search")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    public ResponseEntity<Response<List<Report>>> searchReports(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) ReportStatus status,
+            @RequestParam(required = true) boolean isAdmin,
+            @AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<List<Report>> response = reportService.searchReports(
+                user.getId(),
+                keyword != null ? keyword : "",
+                status,
+                isAdmin
+        );
+        return Response.createResponse(response,
+                HttpStatus.OK, "查询成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
 }

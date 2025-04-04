@@ -4,6 +4,7 @@ import com.kitty.blog.constant.ReportStatus;
 import com.kitty.blog.model.Report;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -98,4 +99,24 @@ public interface ReportRepository extends BaseRepository<Report, Integer> {
      */
 
     Optional<List<Report>> findByStatus(ReportStatus status);
+
+    /**
+     * 管理员搜索所有举报信息
+     */
+    @Query("SELECT r FROM Report r WHERE " +
+            "(:keyword IS NULL OR r.reason LIKE %:keyword%) AND " +
+            "(:status IS NULL OR r.status = :status)")
+    List<Report> searchReportsForAdmin(@Param("keyword") String keyword,
+                                       @Param("status") ReportStatus status);
+
+    /**
+     * 用户搜索自己的举报信息
+     */
+    @Query("SELECT r FROM Report r WHERE " +
+            "r.userId = :userId AND " +
+            "(:keyword IS NULL OR r.reason LIKE %:keyword%) AND " +
+            "(:status IS NULL OR r.status = :status)")
+    List<Report> searchReportsForUser(@Param("userId") Integer userId,
+                                      @Param("keyword") String keyword,
+                                      @Param("status") ReportStatus status);
 }

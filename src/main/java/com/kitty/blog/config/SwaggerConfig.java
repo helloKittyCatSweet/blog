@@ -66,5 +66,14 @@ public class SwaggerConfig {
                 .pathsToMatch("/ws/**")
                 .build();
     }
+
+    // 系统监控日志 API 分组
+    @Bean
+    public GroupedOpenApi systemMonitorApi() {
+        return GroupedOpenApi.builder()
+                .group("系统监控") // Swagger UI 下拉框中显示的名字
+                .pathsToMatch("/api/admin/logs/**")
+                .build();
+    }
 }
    

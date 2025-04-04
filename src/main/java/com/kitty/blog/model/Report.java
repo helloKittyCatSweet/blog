@@ -8,6 +8,8 @@ import jakarta.persistence.*;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -20,6 +22,7 @@ import java.time.LocalDate;
 @DynamicUpdate
 @DynamicInsert
 @NoArgsConstructor
+@Audited
 public class Report implements Serializable {
 
     @Serial
@@ -60,12 +63,14 @@ public class Report implements Serializable {
      */
 
     // 关联对象，按需加载
+    @NotAudited
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id", insertable = false, updatable = false)
     @JsonManagedReference
     private Post post;
 
+    @NotAudited
     @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)

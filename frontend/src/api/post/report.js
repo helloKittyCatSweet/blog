@@ -40,4 +40,9 @@ export const findByPostId = (postId) =>
 export const findAll = () => request.get(`${postPrefix}${reportPrefix}/admin/find/all`)
 
 // 根据举报id删除举报
-export const deleteById = (id) => request.delete(`${postPrefix}${reportPrefix}/admin/delete/id/${id}`)
+export const deleteById = (id) => request.delete(`${postPrefix}${reportPrefix}/public/delete/id/${id}`)
+
+// 搜索举报信息
+export const searchReports = (params) => request.get(`${postPrefix}${reportPrefix}/public/search`, {
+  params
+})

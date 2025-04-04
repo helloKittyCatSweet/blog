@@ -1,9 +1,10 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Search, Edit } from "@element-plus/icons-vue";
+import { Search, Edit, Delete } from "@element-plus/icons-vue";
 import PageContainer from "@/components/PageContainer.vue";
-import { findByUserList } from "@/api/post/report";
+import { findByUserList, update, searchReports, deleteById } from "@/api/post/report";
+import { formatDateTime } from "@/utils/format";
 
 // 表格数据
 const loading = ref(false);
@@ -47,7 +48,8 @@ const getReportList = async () => {
 const getStatusType = (status) => {
   const map = {
     PENDING: "warning",
-    PROCESSED: "success",
+    REVIEWING: "info",
+    APPROVED: "success",
     REJECTED: "danger",
   };
   return map[status];
@@ -56,7 +58,8 @@ const getStatusType = (status) => {
 const getStatusLabel = (status) => {
   const map = {
     PENDING: "待处理",
-    PROCESSED: "已处理",
+    REVIEWING: "审核中",
+    APPROVED: "已处理",
     REJECTED: "已驳回",
   };
   return map[status];
@@ -67,6 +70,7 @@ const handleEdit = (row) => {
   form.value = {
     reportId: row.reportId,
     reason: row.reason,
+    status: row.status,
   };
   dialogVisible.value = true;
 };
@@ -77,7 +81,7 @@ const submitForm = async () => {
   await formRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        await updateReport(form.value.reportId, form.value.reason);
+        await update(form.value);
         ElMessage.success("修改成功");
         dialogVisible.value = false;
         getReportList();
@@ -89,26 +93,46 @@ const submitForm = async () => {
 };
 
 // 搜索
-const handleSearch = () => {
-  getReportList();
+const handleSearch = async () => {
+  loading.value = true;
+  try {
+    const params = {};
+    if (searchKey.value.trim()) {
+      params.keyword = searchKey.value.trim();
+    }
+    if (statusFilter.value) {
+      params.status = statusFilter.value;
+    }
+    params.isAdmin = false;
+    console.log("搜索参数：", params); // 调试用
+    const res = await searchReports(params);
+    if (res.data.status === 200) {
+      tableData.value = res.data.data;
+      total.value = res.data.data.length;
+    }
+  } catch (error) {
+    console.error("搜索错误：", error.response?.data || error); // 增加错误详情
+    ElMessage.error("搜索失败");
+  }
+  loading.value = false;
 };
 
 // 重置搜索
 const resetSearch = () => {
   searchKey.value = "";
   statusFilter.value = "";
-  getReportList();
+  getReportList(); // 重置后调用获取列表接口
 };
 
-// 分页
+// 分页处理也需要修改
 const handleSizeChange = (val) => {
   pageSize.value = val;
-  getReportList();
+  handleSearch(); // 改用搜索接口
 };
 
 const handleCurrentChange = (val) => {
   currentPage.value = val;
-  getReportList();
+  handleSearch(); // 改用搜索接口
 };
 
 // 查看文章
@@ -120,6 +144,30 @@ const viewPost = (postId) => {
 onMounted(() => {
   getReportList();
 });
+
+/**
+ * 删除
+ */
+const handleDelete = (row) => {
+  ElMessageBox.confirm("确定要删除这条举报吗？", "提示", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  }).then(async () => {
+    try {
+      console.log("reportId:", row.reportId);
+      const response = await deleteById(row.reportId);
+      if (response.data.status === 200) {
+        ElMessage.success("删除成功");
+        handleSearch();
+      } else {
+        ElMessage.error("删除失败");
+      }
+    } catch (error) {
+      ElMessage.error("删除失败");
+    }
+  });
+};
 </script>
 
 <template>
@@ -144,7 +192,8 @@ onMounted(() => {
         <el-col :span="6">
           <el-select v-model="statusFilter" placeholder="状态筛选" clearable>
             <el-option label="待处理" value="PENDING" />
-            <el-option label="已处理" value="PROCESSED" />
+            <el-option label="审核中" value="REVIEWING" />
+            <el-option label="已通过" value="APPROVED" />
             <el-option label="已驳回" value="REJECTED" />
           </el-select>
         </el-col>
@@ -158,6 +207,9 @@ onMounted(() => {
     <!-- 表格 -->
     <el-card class="table-card">
       <el-table v-loading="loading" :data="tableData" border stripe>
+        <template #empty>
+          <el-empty description="暂无举报数据" />
+        </template>
         <el-table-column type="index" label="序号" width="80" align="center" />
         <el-table-column prop="reason" label="举报原因" show-overflow-tooltip />
         <el-table-column prop="post.title" label="被举报文章" show-overflow-tooltip>
@@ -167,7 +219,11 @@ onMounted(() => {
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="举报时间" width="180" />
+        <el-table-column prop="createdAt" label="举报时间" width="180">
+          <template #default="{ row }">
+            {{ formatDateTime(row.createdAt) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
@@ -176,7 +232,7 @@ onMounted(() => {
           </template>
         </el-table-column>
         <el-table-column prop="comment" label="处理意见" show-overflow-tooltip />
-        <el-table-column label="操作" width="120" align="center">
+        <el-table-column label="操作" width="150" align="center">
           <template #default="{ row }">
             <el-button
               v-if="row.status === 'PENDING'"
@@ -184,6 +240,14 @@ onMounted(() => {
               :icon="Edit"
               circle
               @click="handleEdit(row)"
+              title="编辑举报"
+            />
+            <el-button
+              type="danger"
+              :icon="Delete"
+              circle
+              @click="handleDelete(row)"
+              title="删除举报"
             />
           </template>
         </el-table-column>
