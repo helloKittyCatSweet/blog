@@ -26,7 +26,7 @@ public class RecommendationController {
      * 获取个性化推荐
      */
     @Operation(summary = "获取个性化推荐")
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @GetMapping("/personal/{userId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "获取成功")
@@ -42,7 +42,7 @@ public class RecommendationController {
      * 获取热门文章推荐
      */
     @Operation(summary = "获取热门文章推荐")
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @GetMapping("/hot")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "获取成功")

@@ -40,7 +40,7 @@ public class MessageController {
      * @param message
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "创建消息", description = "创建消息")
     @PostMapping("/public/create")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "创建成功"),
@@ -59,7 +59,7 @@ public class MessageController {
      * @param message
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "更新消息", description = "更新消息")
     @PutMapping("/public/update")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "更新成功"),
@@ -78,7 +78,7 @@ public class MessageController {
      * @param receiverId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "读取消息", description = "根据消息ID，读取消息")
     @PutMapping("/public/read/{receiverId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "读取成功"),
@@ -93,7 +93,7 @@ public class MessageController {
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "标记未读", description = "根据消息ID，标记未读")
     @PutMapping("/public/unread/{receiverId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "标记未读成功"),
@@ -114,7 +114,7 @@ public class MessageController {
      * @param senderId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "查询消息", description = "根据发送者ID，查询消息")
     @GetMapping("/public/find/sender/{senderId}/list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -134,7 +134,7 @@ public class MessageController {
      * @param receiverId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "查询消息", description = "根据接收者ID，查询消息")
     @GetMapping("/public/find/receiver/{receiverId}/list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -153,7 +153,7 @@ public class MessageController {
      * @param content
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据消息内容和发送者ID，查询消息", description = "根据消息内容和发送者ID，查询消息")
     @GetMapping("/public/find/sender/{content}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -174,7 +174,7 @@ public class MessageController {
      * @param content
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "查询消息", description = "根据消息内容和接收者ID，查询消息")
     @GetMapping("/public/find/receiver/{content}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -194,7 +194,7 @@ public class MessageController {
      *
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "查询联系人", description = "查询联系人")
     @GetMapping("/public/find/contacted")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -215,7 +215,7 @@ public class MessageController {
      * @param receiverId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "查询对话", description = "查询对话")
     @GetMapping("/public/find/conversation/{senderId}/{receiverId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -235,7 +235,7 @@ public class MessageController {
      * @param message
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "保存消息", description = "保存消息")
     @PostMapping("/public/save")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "保存成功"),
@@ -254,8 +254,8 @@ public class MessageController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_MESSAGE_MANAGER) " +
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询消息", description = "根据消息ID，查询消息")
     @GetMapping("/admin/find/id/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -273,8 +273,8 @@ public class MessageController {
      *
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_MESSAGE_MANAGER) " +
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询所有消息", description = "查询所有消息")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -292,8 +292,8 @@ public class MessageController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or @messageService.hasDeletePermission(#user.id, #id)")
     @Operation(summary = "删除消息", description = "根据消息ID，删除消息")
     @DeleteMapping("/admin/delete/id/{id}")
@@ -313,8 +313,8 @@ public class MessageController {
      *
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询消息数量", description = "查询消息数量")
     @GetMapping("/admin/count")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -332,8 +332,8 @@ public class MessageController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_MESSAGE_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询消息是否存在", description = "根据消息ID，查询消息是否存在")
     @GetMapping("/admin/exists/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
@@ -346,7 +346,7 @@ public class MessageController {
                 HttpStatus.NOT_FOUND, "消息不存在");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "分页查询消息列表", description = "支持按接收者名称、内容和时间范围搜索")
     @GetMapping("/public/page")
     public ResponseEntity<Response<Page<Message>>> findMessagePage(
@@ -370,7 +370,7 @@ public class MessageController {
     /**
      * 批量删除消息
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "批量删除消息")
     @DeleteMapping("/public/batch")
     public ResponseEntity<Response<Void>> batchDelete(

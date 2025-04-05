@@ -71,7 +71,7 @@ public class UserController {
      * @param user
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "更新用户信息")
     @PutMapping("/public/update")
     @ApiResponses(value = {
@@ -93,8 +93,8 @@ public class UserController {
      * @param isActive
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_USER_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or userId == principal.id)")
     @Operation(summary = "激活用户")
     @PutMapping("/admin/activate")
@@ -117,7 +117,7 @@ public class UserController {
      * @param username
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户名查询用户")
     @GetMapping("/public/find/username/{username}")
     @ApiResponses(value = {
@@ -138,7 +138,7 @@ public class UserController {
      * @param email
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据邮箱（模糊搜索）查询用户")
     @GetMapping("/public/find/email/{email}")
     @ApiResponses(value = {
@@ -158,7 +158,7 @@ public class UserController {
      * @param emailSuffix
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据邮箱后缀查询用户")
     @GetMapping("/public/find/email/suffix/{emailSuffix}")
     @ApiResponses(value = {
@@ -178,8 +178,8 @@ public class UserController {
      *
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_USER_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询激活用户")
     @GetMapping("/admin/find/{isActive}")
     @ApiResponses(value = {
@@ -223,7 +223,7 @@ public class UserController {
         };
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "验证token")
     @PostMapping("/public/validate")
     @ApiResponses(value = {
@@ -297,7 +297,7 @@ public class UserController {
                 HttpStatus.NOT_FOUND, "用户不存在");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "上传头像", description = "上传用户头像图片，支持jpg、png、jpeg格式")
     @PostMapping(value = "/public/upload/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ApiResponses(value = {
@@ -378,8 +378,8 @@ public class UserController {
      *
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_USER_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询所有用户")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {
@@ -399,7 +399,7 @@ public class UserController {
      * @param userId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户ID查询用户")
     @GetMapping("/public/find/id/{userId}")
     @ApiResponses(value = {
@@ -419,8 +419,8 @@ public class UserController {
      * @param userId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_USER_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or userId == principal.id")
     @Operation(summary = "删除用户")
     @DeleteMapping("/admin/delete/{userId}")
@@ -441,8 +441,8 @@ public class UserController {
      * @return
      * @throws Exception
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_USER_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询用户数量")
     @GetMapping("/admin/count")
     @ApiResponses(value = {
@@ -462,8 +462,8 @@ public class UserController {
      * @param userId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_USER_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "判断用户是否存在")
     @GetMapping("/admin/exist/{userId}")
     @ApiResponses(value = {

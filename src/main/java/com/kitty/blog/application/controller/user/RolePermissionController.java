@@ -23,9 +23,9 @@ public class RolePermissionController {
     @Autowired
     private RolePermissionService rolePermissionService;
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role)." +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
             "ROLE_PERMISSION_MAPPING_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "判断角色是否存在指定权限")
     @GetMapping("/admin/exist/explicit/{roleId}/{permissionId}")
     @ApiResponses(value = {
@@ -44,9 +44,9 @@ public class RolePermissionController {
         }
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role)." +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
             "ROLE_PERMISSION_MAPPING_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据角色ID查询角色权限")
     @GetMapping("/admin/find/role/{roleId}")
     @ApiResponses(value = {
@@ -62,9 +62,9 @@ public class RolePermissionController {
         }
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role)." +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
             "ROLE_PERMISSION_MAPPING_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据权限ID查询角色权限")
     @GetMapping("/admin/find/permission/{permissionId}")
     @ApiResponses(value = {
@@ -82,9 +82,9 @@ public class RolePermissionController {
         }
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role)." +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
             "ROLE_PERMISSION_MAPPING_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据角色ID和权限ID查询角色权限")
     @GetMapping("admin//find/explicit/{roleId}/{permissionId}")
     @ApiResponses(value = {
@@ -102,9 +102,9 @@ public class RolePermissionController {
         }
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role)." +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
             "ROLE_PERMISSION_MAPPING_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "保存角色权限")
     @PostMapping("/admin/save")
     @ApiResponses(value = {
@@ -120,9 +120,9 @@ public class RolePermissionController {
         }
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role)." +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
             "ROLE_PERMISSION_MAPPING_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID查询角色权限")
     @GetMapping("/admin/find/id/{id}")
     @ApiResponses(value = {
@@ -138,9 +138,9 @@ public class RolePermissionController {
         }
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role)." +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
             "ROLE_PERMISSION_MAPPING_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询所有角色权限")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {
@@ -156,9 +156,9 @@ public class RolePermissionController {
         }
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role)." +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
             "ROLE_PERMISSION_MAPPING_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID删除角色权限")
     @DeleteMapping("/admin/delete/id/{id}")
     @ApiResponses(value = {
@@ -174,9 +174,9 @@ public class RolePermissionController {
         }
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role)." +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
             "ROLE_PERMISSION_MAPPING_MANAGER) " +
-            "or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询角色权限数量")
     @GetMapping("/admin/count")
     public ResponseEntity<Response<Long>> count() {

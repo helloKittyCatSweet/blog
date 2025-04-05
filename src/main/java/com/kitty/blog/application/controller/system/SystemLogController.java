@@ -19,7 +19,7 @@ import java.util.Map;
 @Tag(name = "系统日志管理", description = "系统日志管理相关接口")
 @RestController
 @RequestMapping("/api/admin/logs")
-@PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+@PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
 public class SystemLogController {
     @Autowired
     private SystemLogService logService;

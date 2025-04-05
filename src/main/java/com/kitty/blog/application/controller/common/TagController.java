@@ -30,7 +30,7 @@ public class TagController {
      * @param tag
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "创建标签")
     @PostMapping("/public/create")
     @ApiResponses(value = {
@@ -50,7 +50,7 @@ public class TagController {
      * @param tag
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "更新标签")
     @PutMapping("/public/update")
     @ApiResponses(value = {
@@ -70,7 +70,7 @@ public class TagController {
      * @param name
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据名称查询标签")
     @GetMapping("/public/find/name/{name}")
     @ApiResponses(value = {
@@ -90,7 +90,7 @@ public class TagController {
      * @param weight
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据权重查询标签")
     @GetMapping("/public/find/weight/{weight}/{compare}")
     @ApiResponses(value = {
@@ -112,7 +112,7 @@ public class TagController {
      * @param tag
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "保存标签")
     @PostMapping("/public/save")
     @ApiResponses(value = {
@@ -132,8 +132,8 @@ public class TagController {
      * @param tagId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_TAG_MANAGER) or " +
-            "hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_TAG_MANAGER) or " +
+            "hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID查询标签")
     @GetMapping("/admin/find/id/{tagId}")
     @ApiResponses(value = {
@@ -152,7 +152,7 @@ public class TagController {
      * 查询所有标签
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "查询所有标签")
     @GetMapping("/public/find/all")
     @ApiResponses(value = {
@@ -171,8 +171,8 @@ public class TagController {
      * @param tagId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_TAG_MANAGER) or " +
-            "hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_TAG_MANAGER) or " +
+            "hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据ID删除标签")
     @DeleteMapping("/admin/delete/id/{tagId}")
     @ApiResponses(value = {
@@ -190,7 +190,7 @@ public class TagController {
      * 查询标签数量
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "查询标签数量")
     @GetMapping("/public/count")
     @ApiResponses(value = {
@@ -209,7 +209,7 @@ public class TagController {
      * @param tagId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据ID查询标签是否存在")
     @GetMapping("/public/exists/id/{tagId}")
     @ApiResponses(value = {
@@ -223,7 +223,7 @@ public class TagController {
                 HttpStatus.NOT_FOUND, "查询失败");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "搜索标签")
     @GetMapping("/public/find/combined")
     @ApiResponses(value = {

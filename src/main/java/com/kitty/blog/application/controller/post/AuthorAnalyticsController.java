@@ -23,7 +23,7 @@ public class AuthorAnalyticsController {
     /**
      * 获取作者分析报告
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "获取作者分析报告", description = "根据作者ID获取作者的文章分析报告")
     @GetMapping("/public/author/{authorId}")
     @ApiResponses(value = {
