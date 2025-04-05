@@ -1,4 +1,4 @@
-package com.kitty.blog.dto.userActivity;
+package com.kitty.blog.application.dto.userActivity;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

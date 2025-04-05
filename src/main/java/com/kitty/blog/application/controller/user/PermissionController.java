@@ -1,8 +1,8 @@
-package com.kitty.blog.controller.user;
+package com.kitty.blog.application.controller.user;
 
-import com.kitty.blog.model.Permission;
-import com.kitty.blog.application.service.PermissionService;
-import com.kitty.blog.utils.Response;
+import com.kitty.blog.domain.model.Permission;
+import com.kitty.blog.domain.service.PermissionService;
+import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

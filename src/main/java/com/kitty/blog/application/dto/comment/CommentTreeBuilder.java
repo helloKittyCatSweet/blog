@@ -1,6 +1,6 @@
-package com.kitty.blog.dto.comment;
+package com.kitty.blog.application.dto.comment;
 
-import com.kitty.blog.model.Comment;
+import com.kitty.blog.domain.model.Comment;
 
 import java.util.ArrayList;
 import java.util.HashMap;

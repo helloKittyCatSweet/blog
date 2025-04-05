@@ -1,4 +1,4 @@
-package com.kitty.blog.model.rolePermission;
+package com.kitty.blog.domain.model.rolePermission;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

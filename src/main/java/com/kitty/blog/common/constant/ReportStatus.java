@@ -1,4 +1,4 @@
-package com.kitty.blog.constant;
+package com.kitty.blog.common.constant;
 
 public enum ReportStatus {
     PENDING("待处理"),

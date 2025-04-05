@@ -1,7 +1,7 @@
-package com.kitty.blog.controller.system;
+package com.kitty.blog.application.controller.system;
 
-import com.kitty.blog.model.SystemLog;
-import com.kitty.blog.application.service.system.SystemLogService;
+import com.kitty.blog.domain.model.SystemLog;
+import com.kitty.blog.domain.service.system.SystemLogService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

@@ -1,4 +1,4 @@
-package com.kitty.blog.utils;
+package com.kitty.blog.infrastructure.utils;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;

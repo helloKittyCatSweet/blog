@@ -1,7 +1,7 @@
-package com.kitty.blog.application.service.system;
+package com.kitty.blog.domain.service.system;
 
-import com.kitty.blog.model.SystemLog;
-import com.kitty.blog.repository.SystemLogRepository;
+import com.kitty.blog.domain.model.SystemLog;
+import com.kitty.blog.domain.repository.SystemLogRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;

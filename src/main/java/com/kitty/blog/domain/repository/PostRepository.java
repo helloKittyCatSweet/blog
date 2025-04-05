@@ -1,6 +1,6 @@
-package com.kitty.blog.repository;
+package com.kitty.blog.domain.repository;
 
-import com.kitty.blog.model.Post;
+import com.kitty.blog.domain.model.Post;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

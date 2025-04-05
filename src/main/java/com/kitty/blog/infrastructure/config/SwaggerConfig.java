@@ -1,4 +1,4 @@
-package com.kitty.blog.config;
+package com.kitty.blog.infrastructure.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

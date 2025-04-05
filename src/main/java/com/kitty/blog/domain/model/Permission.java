@@ -1,7 +1,7 @@
-package com.kitty.blog.model;
+package com.kitty.blog.domain.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.kitty.blog.model.rolePermission.RolePermission;
+import com.kitty.blog.domain.model.rolePermission.RolePermission;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.Getter;

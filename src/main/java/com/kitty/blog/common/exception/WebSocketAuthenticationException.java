@@ -1,4 +1,4 @@
-package com.kitty.blog.exception;
+package com.kitty.blog.common.exception;
 
 public class WebSocketAuthenticationException extends RuntimeException {
     public WebSocketAuthenticationException(String message) {

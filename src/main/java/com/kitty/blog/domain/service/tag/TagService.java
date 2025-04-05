@@ -1,11 +1,11 @@
-package com.kitty.blog.application.service.tag;
+package com.kitty.blog.domain.service.tag;
 
-import com.kitty.blog.constant.Compare;
-import com.kitty.blog.model.tag.Tag;
-import com.kitty.blog.repository.tag.TagSpecification;
-import com.kitty.blog.repository.tag.TagRepository;
-import com.kitty.blog.application.service.contentReview.BaiduContentService;
-import com.kitty.blog.utils.UpdateUtil;
+import com.kitty.blog.common.constant.Compare;
+import com.kitty.blog.domain.model.tag.Tag;
+import com.kitty.blog.domain.repository.tag.TagRepository;
+import com.kitty.blog.domain.repository.tag.TagSpecification;
+import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;

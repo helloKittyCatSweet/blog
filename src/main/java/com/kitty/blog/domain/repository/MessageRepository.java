@@ -1,6 +1,6 @@
-package com.kitty.blog.repository;
+package com.kitty.blog.domain.repository;
 
-import com.kitty.blog.model.Message;
+import com.kitty.blog.domain.model.Message;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;

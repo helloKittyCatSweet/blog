@@ -1,14 +1,14 @@
-package com.kitty.blog.application.service;
+package com.kitty.blog.domain.service;
 
-import com.kitty.blog.dto.message.MessageStatusUpdate;
-import com.kitty.blog.dto.message.MessageUserInfo;
-import com.kitty.blog.model.Message;
-import com.kitty.blog.model.User;
-import com.kitty.blog.constant.MessageStatus;
-import com.kitty.blog.repository.MessageRepository;
-import com.kitty.blog.repository.UserRepository;
-import com.kitty.blog.application.service.contentReview.BaiduContentService;
-import com.kitty.blog.utils.UpdateUtil;
+import com.kitty.blog.application.dto.message.MessageStatusUpdate;
+import com.kitty.blog.application.dto.message.MessageUserInfo;
+import com.kitty.blog.domain.model.Message;
+import com.kitty.blog.domain.model.User;
+import com.kitty.blog.common.constant.MessageStatus;
+import com.kitty.blog.domain.repository.MessageRepository;
+import com.kitty.blog.domain.repository.UserRepository;
+import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;

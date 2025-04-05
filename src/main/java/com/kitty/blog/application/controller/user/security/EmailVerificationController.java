@@ -1,8 +1,8 @@
-package com.kitty.blog.controller.user.security;
+package com.kitty.blog.application.controller.user.security;
 
-import com.kitty.blog.dto.user.EmailVerificationDto;
-import com.kitty.blog.application.service.user.EmailVerificationService;
-import com.kitty.blog.utils.Response;
+import com.kitty.blog.application.dto.user.EmailVerificationDto;
+import com.kitty.blog.domain.service.user.EmailVerificationService;
+import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

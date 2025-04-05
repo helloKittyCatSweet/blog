@@ -1,11 +1,11 @@
-package com.kitty.blog.controller.user;
+package com.kitty.blog.application.controller.user;
 
-import com.kitty.blog.dto.user.LoginResponseDto;
-import com.kitty.blog.dto.userActivity.UserActivityDto;
-import com.kitty.blog.model.UserActivity;
-import com.kitty.blog.application.service.PostService;
-import com.kitty.blog.application.service.UserActivityService;
-import com.kitty.blog.utils.Response;
+import com.kitty.blog.application.dto.user.LoginResponseDto;
+import com.kitty.blog.application.dto.userActivity.UserActivityDto;
+import com.kitty.blog.domain.model.UserActivity;
+import com.kitty.blog.domain.service.PostService;
+import com.kitty.blog.domain.service.UserActivityService;
+import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

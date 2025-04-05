@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2017 Baidu, Inc. All Rights Reserved.
  */
-package com.kitty.blog.application.service.contentReview;
+package com.kitty.blog.domain.service.contentReview;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

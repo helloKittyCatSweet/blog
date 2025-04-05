@@ -1,4 +1,4 @@
-package com.kitty.blog.config;
+package com.kitty.blog.infrastructure.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;

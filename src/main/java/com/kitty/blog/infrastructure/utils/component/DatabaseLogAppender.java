@@ -1,10 +1,10 @@
-package com.kitty.blog.utils.component;
+package com.kitty.blog.infrastructure.utils.component;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.spi.ThrowableProxyUtil;
 import ch.qos.logback.core.AppenderBase;
-import com.kitty.blog.model.SystemLog;
-import com.kitty.blog.repository.SystemLogRepository;
+import com.kitty.blog.domain.model.SystemLog;
+import com.kitty.blog.domain.repository.SystemLogRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

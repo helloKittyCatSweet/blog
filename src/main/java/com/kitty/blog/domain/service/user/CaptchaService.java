@@ -1,4 +1,4 @@
-package com.kitty.blog.application.service.user;
+package com.kitty.blog.domain.service.user;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;

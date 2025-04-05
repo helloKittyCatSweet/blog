@@ -89,3 +89,4 @@
 export * from './routes/base'
 export * from './routes/user'
 export * from './routes/admin'
+export * from './routes/blog'

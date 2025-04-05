@@ -1,9 +1,9 @@
-package com.kitty.blog.application.service;
+package com.kitty.blog.domain.service;
 
-import com.kitty.blog.model.Role;
-import com.kitty.blog.repository.RoleRepository;
-import com.kitty.blog.application.service.contentReview.BaiduContentService;
-import com.kitty.blog.utils.UpdateUtil;
+import com.kitty.blog.domain.model.Role;
+import com.kitty.blog.domain.repository.RoleRepository;
+import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;

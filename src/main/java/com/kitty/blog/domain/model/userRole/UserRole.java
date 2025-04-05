@@ -1,8 +1,8 @@
-package com.kitty.blog.model.userRole;
+package com.kitty.blog.domain.model.userRole;
 
 import com.fasterxml.jackson.annotation.*;
-import com.kitty.blog.model.Role;
-import com.kitty.blog.model.User;
+import com.kitty.blog.domain.model.Role;
+import com.kitty.blog.domain.model.User;
 import lombok.Data;
 import lombok.ToString;
 import org.hibernate.annotations.DynamicInsert;

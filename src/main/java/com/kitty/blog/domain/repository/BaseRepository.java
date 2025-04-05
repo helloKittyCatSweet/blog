@@ -1,4 +1,4 @@
-package com.kitty.blog.repository;
+package com.kitty.blog.domain.repository;
 
 import org.aspectj.lang.annotation.Aspect;
 

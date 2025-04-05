@@ -1,12 +1,12 @@
-package com.kitty.blog.application.service.user;
+package com.kitty.blog.domain.service.user;
 
-import com.kitty.blog.dto.user.LoginResponseDto;
-import com.kitty.blog.model.Role;
-import com.kitty.blog.model.User;
-import com.kitty.blog.model.userRole.UserRole;
-import com.kitty.blog.repository.RoleRepository;
-import com.kitty.blog.repository.UserRepository;
-import com.kitty.blog.repository.UserRoleRepository;
+import com.kitty.blog.application.dto.user.LoginResponseDto;
+import com.kitty.blog.domain.model.Role;
+import com.kitty.blog.domain.model.User;
+import com.kitty.blog.domain.model.userRole.UserRole;
+import com.kitty.blog.domain.repository.RoleRepository;
+import com.kitty.blog.domain.repository.UserRepository;
+import com.kitty.blog.domain.repository.UserRoleRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;

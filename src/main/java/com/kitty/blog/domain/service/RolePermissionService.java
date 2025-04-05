@@ -1,7 +1,7 @@
-package com.kitty.blog.application.service;
+package com.kitty.blog.domain.service;
 
-import com.kitty.blog.model.rolePermission.RolePermission;
-import com.kitty.blog.repository.RolePermissionRepository;
+import com.kitty.blog.domain.model.rolePermission.RolePermission;
+import com.kitty.blog.domain.repository.RolePermissionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.http.ResponseEntity;

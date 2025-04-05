@@ -1,3 +1,23 @@
+<script setup>
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { View, Star, ArrowRight } from "@element-plus/icons-vue";
+import { formatDate, formatDateTime } from "@/utils/date";
+
+const router = useRouter();
+
+// 模拟数据
+const featuredPosts = ref([]);
+const latestPosts = ref([]);
+const categories = ref([]);
+const tags = ref([]);
+
+// 在实际应用中，这里需要调用后端 API 获取数据
+onMounted(() => {
+  // 获取数据的逻辑
+});
+</script>
+
 <template>
   <div class="home">
     <section class="featured-posts">
@@ -112,26 +132,6 @@
     </aside>
   </div>
 </template>
-
-<script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { View, Star, ArrowRight } from "@element-plus/icons-vue";
-import { formatDate } from "@/utils/format";
-
-const router = useRouter();
-
-// 模拟数据
-const featuredPosts = ref([]);
-const latestPosts = ref([]);
-const categories = ref([]);
-const tags = ref([]);
-
-// 在实际应用中，这里需要调用后端 API 获取数据
-onMounted(() => {
-  // 获取数据的逻辑
-});
-</script>
 
 <style scoped>
 .home {

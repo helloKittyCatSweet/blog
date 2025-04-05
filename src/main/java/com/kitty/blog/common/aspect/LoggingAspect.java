@@ -1,4 +1,4 @@
-package com.kitty.blog.aspect;
+package com.kitty.blog.common.aspect;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.After;
@@ -12,16 +12,23 @@ import org.springframework.stereotype.Component;
 @Component
 public class LoggingAspect {
 
-    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(LoggingAspect.class);
 
-    // 定义切入点：拦截repository包下的所有方法
-    @Before("execution(* com.kitty.blog.repository.*.*(..))")
-    public void logBefore(JoinPoint joinPoint) {
-        logger.info("Before method: {} with arguments: {}", joinPoint.getSignature().getName(), joinPoint.getArgs());
+    @Before("execution(* com.kitty.blog.application..*.*(..))" +
+            " || execution(* com.kitty.blog.interfaces..*.*(..))" +
+            " && !execution(* com.kitty.blog.infrastructure.security.filter..*.*(..))")
+    public void before(JoinPoint joinPoint) {
+        String methodName = joinPoint.getSignature().getName();
+        String className = joinPoint.getTarget().getClass().getSimpleName();
+        log.info("[{}] Before executing method: {}", className, methodName);
     }
 
-    @After("execution(* com.kitty.blog.repository.*.*(..))")
-    public void logAfter(JoinPoint joinPoint) {
-        logger.info("After method: {}", joinPoint.getSignature().getName());
+    @After("execution(* com.kitty.blog.application..*.*(..))" +
+            " || execution(* com.kitty.blog.interfaces..*.*(..))" +
+            " && !execution(* com.kitty.blog.infrastructure.security.filter..*.*(..))")
+    public void after(JoinPoint joinPoint) {
+        String methodName = joinPoint.getSignature().getName();
+        String className = joinPoint.getTarget().getClass().getSimpleName();
+        log.info("[{}] After executing method: {}", className, methodName);
     }
 }

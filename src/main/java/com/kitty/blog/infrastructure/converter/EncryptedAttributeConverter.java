@@ -1,6 +1,6 @@
-package com.kitty.blog.converter;
+package com.kitty.blog.infrastructure.converter;
 
-import com.kitty.blog.utils.component.EncryptionUtil;
+import com.kitty.blog.infrastructure.utils.component.EncryptionUtil;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 import org.springframework.beans.factory.annotation.Autowired;

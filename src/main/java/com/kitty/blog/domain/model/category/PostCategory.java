@@ -1,10 +1,10 @@
-package com.kitty.blog.model.category;
+package com.kitty.blog.domain.model.category;
 
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
-import com.kitty.blog.model.Post;
+import com.kitty.blog.domain.model.Post;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;

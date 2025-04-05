@@ -1,8 +1,8 @@
-package com.kitty.blog.model;
+package com.kitty.blog.domain.model;
 
 import com.fasterxml.jackson.annotation.*;
-import com.kitty.blog.model.category.PostCategory;
-import com.kitty.blog.model.tag.PostTag;
+import com.kitty.blog.domain.model.category.PostCategory;
+import com.kitty.blog.domain.model.tag.PostTag;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;

@@ -1,8 +1,8 @@
-package com.kitty.blog.controller.common;
+package com.kitty.blog.application.controller.common;
 
-import com.kitty.blog.constant.Compare;
-import com.kitty.blog.application.service.tag.TagService;
-import com.kitty.blog.utils.Response;
+import com.kitty.blog.common.constant.Compare;
+import com.kitty.blog.domain.service.tag.TagService;
+import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -38,7 +38,7 @@ public class TagController {
             @ApiResponse(responseCode = "500", description = "创建失败")
     })
     public ResponseEntity<Response<Boolean>> create
-            (@RequestBody com.kitty.blog.model.tag.Tag tag) {
+            (@RequestBody com.kitty.blog.domain.model.tag.Tag tag) {
         ResponseEntity<Boolean> entity = tagService.create(tag);
         return Response.createResponse(entity,
                 HttpStatus.OK, "创建成功",
@@ -58,7 +58,7 @@ public class TagController {
             @ApiResponse(responseCode = "500", description = "更新失败")
     })
     public ResponseEntity<Response<Boolean>> update
-            (@RequestBody com.kitty.blog.model.tag.Tag tag) {
+            (@RequestBody com.kitty.blog.domain.model.tag.Tag tag) {
         ResponseEntity<Boolean> entity = tagService.update(tag);
         return Response.createResponse(entity,
                 HttpStatus.OK, "更新成功",
@@ -77,9 +77,9 @@ public class TagController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
-    public ResponseEntity<Response<com.kitty.blog.model.tag.Tag>> findByName
+    public ResponseEntity<Response<com.kitty.blog.domain.model.tag.Tag>> findByName
             (@PathVariable("name") String name) {
-        ResponseEntity<com.kitty.blog.model.tag.Tag> entity = tagService.findByName(name);
+        ResponseEntity<com.kitty.blog.domain.model.tag.Tag> entity = tagService.findByName(name);
         return Response.createResponse(entity,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
@@ -97,10 +97,10 @@ public class TagController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
-    public ResponseEntity<Response<List<com.kitty.blog.model.tag.Tag>>> findTagsByWeight
+    public ResponseEntity<Response<List<com.kitty.blog.domain.model.tag.Tag>>> findTagsByWeight
     (@PathVariable("weight") Integer weight,
     @PathVariable("compare") Compare compare) {
-        ResponseEntity<List<com.kitty.blog.model.tag.Tag>> entity =
+        ResponseEntity<List<com.kitty.blog.domain.model.tag.Tag>> entity =
                 tagService.findTagsByWeight(weight, compare);
         return Response.createResponse(entity,
                 HttpStatus.OK, "查询成功",
@@ -119,9 +119,9 @@ public class TagController {
             @ApiResponse(responseCode = "200", description = "保存成功"),
             @ApiResponse(responseCode = "500", description = "保存失败")
     })
-    public ResponseEntity<Response<com.kitty.blog.model.tag.Tag>> save
-            (@RequestBody com.kitty.blog.model.tag.Tag tag) {
-        ResponseEntity<com.kitty.blog.model.tag.Tag> entity = tagService.save(tag);
+    public ResponseEntity<Response<com.kitty.blog.domain.model.tag.Tag>> save
+            (@RequestBody com.kitty.blog.domain.model.tag.Tag tag) {
+        ResponseEntity<com.kitty.blog.domain.model.tag.Tag> entity = tagService.save(tag);
         return Response.createResponse(entity,
                 HttpStatus.OK, "保存成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "保存失败");
@@ -140,9 +140,9 @@ public class TagController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
-    public ResponseEntity<Response<com.kitty.blog.model.tag.Tag>> findById
+    public ResponseEntity<Response<com.kitty.blog.domain.model.tag.Tag>> findById
             (@PathVariable("tagId") Integer tagId) {
-        ResponseEntity<com.kitty.blog.model.tag.Tag> entity = tagService.findById(tagId);
+        ResponseEntity<com.kitty.blog.domain.model.tag.Tag> entity = tagService.findById(tagId);
         return Response.createResponse(entity,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
@@ -159,8 +159,8 @@ public class TagController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
-    public ResponseEntity<Response<List<com.kitty.blog.model.tag.Tag>>> findAll() {
-        ResponseEntity<List<com.kitty.blog.model.tag.Tag>> entity = tagService.findAll();
+    public ResponseEntity<Response<List<com.kitty.blog.domain.model.tag.Tag>>> findAll() {
+        ResponseEntity<List<com.kitty.blog.domain.model.tag.Tag>> entity = tagService.findAll();
         return Response.createResponse(entity,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
@@ -230,11 +230,11 @@ public class TagController {
             @ApiResponse(responseCode = "200", description = "搜索成功"),
             @ApiResponse(responseCode = "500", description = "搜索失败")
     })
-    public ResponseEntity<Response<List<com.kitty.blog.model.tag.Tag>>> findByCombined(
+    public ResponseEntity<Response<List<com.kitty.blog.domain.model.tag.Tag>>> findByCombined(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer weight,
             @RequestParam(required = false, defaultValue = "GREATER_THAN") String operator) {
-        ResponseEntity<List<com.kitty.blog.model.tag.Tag>> entity =
+        ResponseEntity<List<com.kitty.blog.domain.model.tag.Tag>> entity =
                 tagService.findByCombined(name, weight, operator);
         return Response.createResponse(entity,
                 HttpStatus.OK, "搜索成功",

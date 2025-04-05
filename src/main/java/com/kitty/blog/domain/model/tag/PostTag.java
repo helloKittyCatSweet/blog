@@ -1,8 +1,8 @@
-package com.kitty.blog.model.tag;
+package com.kitty.blog.domain.model.tag;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.kitty.blog.model.Post;
+import com.kitty.blog.domain.model.Post;
 import lombok.Data;
 import jakarta.persistence.*;
 import lombok.ToString;

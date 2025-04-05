@@ -1,4 +1,4 @@
-package com.kitty.blog.constant;
+package com.kitty.blog.common.constant;
 
 import lombok.Getter;
 import lombok.ToString;

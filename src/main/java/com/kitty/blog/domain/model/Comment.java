@@ -1,4 +1,4 @@
-package com.kitty.blog.model;
+package com.kitty.blog.domain.model;
 
 import com.fasterxml.jackson.annotation.*;
 import lombok.Data;

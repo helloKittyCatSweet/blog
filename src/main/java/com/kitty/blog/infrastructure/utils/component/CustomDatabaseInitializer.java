@@ -1,8 +1,8 @@
-package com.kitty.blog.utils.component;
+package com.kitty.blog.infrastructure.utils.component;
 
-import com.kitty.blog.repository.PermissionRepository;
-import com.kitty.blog.repository.RolePermissionRepository;
-import com.kitty.blog.repository.RoleRepository;
+import com.kitty.blog.domain.repository.PermissionRepository;
+import com.kitty.blog.domain.repository.RolePermissionRepository;
+import com.kitty.blog.domain.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.Resource;

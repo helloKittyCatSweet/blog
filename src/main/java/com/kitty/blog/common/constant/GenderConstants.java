@@ -1,4 +1,4 @@
-package com.kitty.blog.constant;
+package com.kitty.blog.common.constant;
 
 public class GenderConstants {
     public static final int MALE = 0;

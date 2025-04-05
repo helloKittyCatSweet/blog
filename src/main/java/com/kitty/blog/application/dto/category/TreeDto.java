@@ -1,6 +1,6 @@
-package com.kitty.blog.dto.category;
+package com.kitty.blog.application.dto.category;
 
-import com.kitty.blog.model.category.Category;
+import com.kitty.blog.domain.model.category.Category;
 import lombok.Data;
 
 import java.io.Serial;

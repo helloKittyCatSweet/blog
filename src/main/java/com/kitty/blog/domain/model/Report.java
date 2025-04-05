@@ -1,7 +1,7 @@
-package com.kitty.blog.model;
+package com.kitty.blog.domain.model;
 
 import com.fasterxml.jackson.annotation.*;
-import com.kitty.blog.constant.ReportStatus;
+import com.kitty.blog.common.constant.ReportStatus;
 import lombok.Data;
 
 import jakarta.persistence.*;

@@ -1,8 +1,8 @@
-package com.kitty.blog.config;
+package com.kitty.blog.infrastructure.config;
 
-import com.kitty.blog.constant.Role;
-import com.kitty.blog.security.filter.JwtAuthenticationEntryPoint;
-import com.kitty.blog.security.filter.JwtAuthenticationFilter;
+import com.kitty.blog.common.constant.Role;
+import com.kitty.blog.infrastructure.security.filter.JwtAuthenticationEntryPoint;
+import com.kitty.blog.infrastructure.security.filter.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

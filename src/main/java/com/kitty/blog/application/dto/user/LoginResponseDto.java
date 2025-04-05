@@ -1,4 +1,4 @@
-package com.kitty.blog.dto.user;
+package com.kitty.blog.application.dto.user;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;

@@ -1,4 +1,4 @@
-package com.kitty.blog.security.filter;
+package com.kitty.blog.infrastructure.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;

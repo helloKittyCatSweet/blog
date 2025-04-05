@@ -1,0 +1,6 @@
+export const BLOG_HOME_PATH = '/'
+export const BLOG_POSTS_PATH = '/posts'
+export const BLOG_POST_DETAIL_PATH = '/post/:id'
+export const BLOG_CATEGORIES_PATH = '/categories'
+export const BLOG_TAGS_PATH = '/tags'
+export const BLOG_ABOUT_PATH = '/about'

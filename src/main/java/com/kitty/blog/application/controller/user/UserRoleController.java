@@ -1,11 +1,11 @@
-package com.kitty.blog.controller.user;
+package com.kitty.blog.application.controller.user;
 
-import com.kitty.blog.dto.userRole.FindDto;
-import com.kitty.blog.model.Role;
-import com.kitty.blog.model.userRole.UserRole;
-import com.kitty.blog.model.userRole.UserRoleId;
-import com.kitty.blog.application.service.UserRoleService;
-import com.kitty.blog.utils.Response;
+import com.kitty.blog.application.dto.userRole.FindDto;
+import com.kitty.blog.domain.model.Role;
+import com.kitty.blog.domain.model.userRole.UserRole;
+import com.kitty.blog.domain.model.userRole.UserRoleId;
+import com.kitty.blog.domain.service.UserRoleService;
+import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

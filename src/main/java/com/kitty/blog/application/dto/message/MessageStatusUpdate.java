@@ -1,4 +1,4 @@
-package com.kitty.blog.dto.message;
+package com.kitty.blog.application.dto.message;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

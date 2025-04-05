@@ -1,12 +1,12 @@
-package com.kitty.blog.application.service.report;
+package com.kitty.blog.domain.service.report;
 
-import com.kitty.blog.model.User;
-import com.kitty.blog.model.Report;
-import com.kitty.blog.constant.ReportStatus;
-import com.kitty.blog.repository.PostRepository;
-import com.kitty.blog.repository.ReportRepository;
-import com.kitty.blog.repository.UserRepository;
-import com.kitty.blog.utils.UpdateUtil;
+import com.kitty.blog.domain.model.User;
+import com.kitty.blog.domain.model.Report;
+import com.kitty.blog.common.constant.ReportStatus;
+import com.kitty.blog.domain.repository.PostRepository;
+import com.kitty.blog.domain.repository.ReportRepository;
+import com.kitty.blog.domain.repository.UserRepository;
+import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;

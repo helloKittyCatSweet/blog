@@ -1,4 +1,4 @@
-package com.kitty.blog.application.service.contentReview;
+package com.kitty.blog.domain.service.contentReview;
 
 import jakarta.annotation.PostConstruct;
 import okhttp3.*;

@@ -1,7 +1,7 @@
-package com.kitty.blog.controller.post;
+package com.kitty.blog.application.controller.post;
 
-import com.kitty.blog.application.service.post.postAnalysis.author.AuthorAnalyticsService;
-import com.kitty.blog.application.service.post.postAnalysis.author.AuthorAnalyticsService.AuthorAnalyticsReport;
+import com.kitty.blog.domain.service.post.postAnalysis.author.AuthorAnalyticsService;
+import com.kitty.blog.domain.service.post.postAnalysis.author.AuthorAnalyticsService.AuthorAnalyticsReport;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

@@ -1,4 +1,4 @@
-package com.kitty.blog.dto.userRole;
+package com.kitty.blog.application.dto.userRole;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

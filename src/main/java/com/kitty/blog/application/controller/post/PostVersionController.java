@@ -1,8 +1,8 @@
-package com.kitty.blog.controller.post;
+package com.kitty.blog.application.controller.post;
 
-import com.kitty.blog.model.PostVersion;
-import com.kitty.blog.application.service.PostVersionService;
-import com.kitty.blog.utils.Response;
+import com.kitty.blog.domain.model.PostVersion;
+import com.kitty.blog.domain.service.PostVersionService;
+import com.kitty.blog.infrastructure.utils.Response;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

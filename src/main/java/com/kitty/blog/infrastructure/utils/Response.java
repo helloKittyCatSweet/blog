@@ -1,6 +1,6 @@
-package com.kitty.blog.utils;
+package com.kitty.blog.infrastructure.utils;
 
-import com.kitty.blog.model.Favorite;
+import com.kitty.blog.domain.model.Favorite;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

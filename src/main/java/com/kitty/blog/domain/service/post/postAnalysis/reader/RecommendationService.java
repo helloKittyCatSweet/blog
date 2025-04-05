@@ -1,12 +1,12 @@
-package com.kitty.blog.application.service.post.postAnalysis.reader;
+package com.kitty.blog.domain.service.post.postAnalysis.reader;
 
-import com.kitty.blog.model.Post;
+import com.kitty.blog.domain.model.Post;
 
-import com.kitty.blog.constant.ActivityType;
-import com.kitty.blog.model.UserActivity;
-import com.kitty.blog.repository.CategoryRepository;
-import com.kitty.blog.repository.PostRepository;
-import com.kitty.blog.repository.UserActivityRepository;
+import com.kitty.blog.common.constant.ActivityType;
+import com.kitty.blog.domain.model.UserActivity;
+import com.kitty.blog.domain.repository.CategoryRepository;
+import com.kitty.blog.domain.repository.PostRepository;
+import com.kitty.blog.domain.repository.UserActivityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 

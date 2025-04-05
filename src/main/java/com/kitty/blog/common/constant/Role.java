@@ -1,4 +1,4 @@
-package com.kitty.blog.constant;
+package com.kitty.blog.common.constant;
 
 import java.io.Serializable;
 

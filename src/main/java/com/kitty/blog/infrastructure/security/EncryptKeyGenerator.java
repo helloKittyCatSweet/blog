@@ -1,4 +1,4 @@
-package com.kitty.blog.security;
+package com.kitty.blog.infrastructure.security;
 
 import java.security.SecureRandom;
 import java.util.Base64;

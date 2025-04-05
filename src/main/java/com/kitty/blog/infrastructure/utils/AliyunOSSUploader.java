@@ -1,4 +1,4 @@
-package com.kitty.blog.utils;
+package com.kitty.blog.infrastructure.utils;
 
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;

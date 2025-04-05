@@ -1,11 +1,11 @@
-package com.kitty.blog.controller.post;
+package com.kitty.blog.application.controller.post;
 
-import com.kitty.blog.constant.ReportStatus;
-import com.kitty.blog.dto.user.LoginResponseDto;
-import com.kitty.blog.model.Report;
-import com.kitty.blog.application.service.report.ReportService;
-import com.kitty.blog.application.service.report.ReportWorkflowService;
-import com.kitty.blog.utils.Response;
+import com.kitty.blog.common.constant.ReportStatus;
+import com.kitty.blog.application.dto.user.LoginResponseDto;
+import com.kitty.blog.domain.model.Report;
+import com.kitty.blog.domain.service.report.ReportService;
+import com.kitty.blog.domain.service.report.ReportWorkflowService;
+import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

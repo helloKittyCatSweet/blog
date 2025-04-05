@@ -11,6 +11,7 @@ import { ROLES } from '@/constants/role-constants.js'
 import authRoutes from './modules/auth.js'
 import userRoutes from './modules/user.js'
 import adminRoutes from './modules/admin.js'
+import blogRoutes from './modules/blog.js'
 
 import { verifyToken } from '@/api/user/user.js';
 
@@ -24,6 +25,9 @@ import { verifyToken } from '@/api/user/user.js';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
+    // 博客前台路由
+    blogRoutes,
+
     // 基础权限认证路由
     ...authRoutes,
 

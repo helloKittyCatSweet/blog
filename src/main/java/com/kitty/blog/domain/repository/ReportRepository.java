@@ -1,7 +1,7 @@
-package com.kitty.blog.repository;
+package com.kitty.blog.domain.repository;
 
-import com.kitty.blog.constant.ReportStatus;
-import com.kitty.blog.model.Report;
+import com.kitty.blog.common.constant.ReportStatus;
+import com.kitty.blog.domain.model.Report;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

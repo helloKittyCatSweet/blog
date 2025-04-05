@@ -1,11 +1,12 @@
-package com.kitty.blog.application.service;
+package com.kitty.blog.domain.service;
 
-import com.kitty.blog.dto.userRole.FindDto;
-import com.kitty.blog.model.Role;
-import com.kitty.blog.model.userRole.UserRole;
-import com.kitty.blog.repository.RoleRepository;
-import com.kitty.blog.repository.UserRepository;
-import com.kitty.blog.repository.UserRoleRepository;
+import com.kitty.blog.domain.model.Role;
+import com.kitty.blog.application.dto.userRole.FindDto;
+
+import com.kitty.blog.domain.model.userRole.UserRole;
+import com.kitty.blog.domain.repository.RoleRepository;
+import com.kitty.blog.domain.repository.UserRepository;
+import com.kitty.blog.domain.repository.UserRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -58,7 +59,8 @@ public class UserRoleService {
                 new ArrayList<>(userRoleRepository.findByUserId(id).orElse(new ArrayList<>()));
         ArrayList<Role> roles = new ArrayList<>();
         for (UserRole userRole : userRoles) {
-            roles.add(userRole.getRole());
+            Role role = roleRepository.findById(userRole.getId().getRoleId()).orElse(null);
+            roles.add(role);
         }
         return new ResponseEntity<>(roles, HttpStatus.OK);
     }

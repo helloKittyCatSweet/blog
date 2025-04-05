@@ -1,4 +1,4 @@
-package com.kitty.blog.utils.component;
+package com.kitty.blog.infrastructure.utils.component;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;

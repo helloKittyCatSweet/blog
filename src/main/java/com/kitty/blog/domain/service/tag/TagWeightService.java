@@ -1,6 +1,6 @@
-package com.kitty.blog.application.service.tag;
+package com.kitty.blog.domain.service.tag;
 
-import com.kitty.blog.model.tag.Tag;
+import com.kitty.blog.domain.model.tag.Tag;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;

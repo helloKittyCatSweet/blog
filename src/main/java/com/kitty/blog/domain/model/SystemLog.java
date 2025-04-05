@@ -1,4 +1,4 @@
-package com.kitty.blog.model;
+package com.kitty.blog.domain.model;
 
 import jakarta.persistence.*;
 import lombok.Data;

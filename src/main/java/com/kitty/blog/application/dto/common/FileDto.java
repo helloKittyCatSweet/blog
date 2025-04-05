@@ -1,4 +1,4 @@
-package com.kitty.blog.dto.common;
+package com.kitty.blog.application.dto.common;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

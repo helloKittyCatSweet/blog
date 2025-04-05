@@ -1,4 +1,4 @@
-package com.kitty.blog.model.category;
+package com.kitty.blog.domain.model.category;
 
 import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.Entity;

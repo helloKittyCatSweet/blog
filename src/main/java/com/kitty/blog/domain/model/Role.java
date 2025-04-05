@@ -1,7 +1,7 @@
-package com.kitty.blog.model;
+package com.kitty.blog.domain.model;
 
 import com.fasterxml.jackson.annotation.*;
-import com.kitty.blog.model.userRole.UserRole;
+import com.kitty.blog.domain.model.userRole.UserRole;
 import lombok.Data;
 
 import jakarta.persistence.*;

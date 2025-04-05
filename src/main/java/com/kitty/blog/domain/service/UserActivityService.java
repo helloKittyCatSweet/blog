@@ -1,14 +1,14 @@
-package com.kitty.blog.application.service;
+package com.kitty.blog.domain.service;
 
-import com.kitty.blog.constant.ActivityType;
-import com.kitty.blog.dto.userActivity.UserActivityDto;
-import com.kitty.blog.model.Post;
-import com.kitty.blog.model.User;
-import com.kitty.blog.model.UserActivity;
-import com.kitty.blog.repository.PostRepository;
-import com.kitty.blog.repository.UserActivityRepository;
-import com.kitty.blog.repository.UserRepository;
-import com.kitty.blog.utils.UpdateUtil;
+import com.kitty.blog.common.constant.ActivityType;
+import com.kitty.blog.application.dto.userActivity.UserActivityDto;
+import com.kitty.blog.domain.model.Post;
+import com.kitty.blog.domain.model.User;
+import com.kitty.blog.domain.model.UserActivity;
+import com.kitty.blog.domain.repository.PostRepository;
+import com.kitty.blog.domain.repository.UserActivityRepository;
+import com.kitty.blog.domain.repository.UserRepository;
+import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;

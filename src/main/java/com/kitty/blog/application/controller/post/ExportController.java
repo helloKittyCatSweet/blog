@@ -1,6 +1,6 @@
-package com.kitty.blog.controller.post;
+package com.kitty.blog.application.controller.post;
 
-import com.kitty.blog.application.service.post.ExportService;
+import com.kitty.blog.domain.service.post.ExportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

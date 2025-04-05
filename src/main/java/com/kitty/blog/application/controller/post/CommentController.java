@@ -1,9 +1,9 @@
-package com.kitty.blog.controller.post;
+package com.kitty.blog.application.controller.post;
 
-import com.kitty.blog.dto.comment.TreeDto;
-import com.kitty.blog.model.Comment;
-import com.kitty.blog.application.service.CommentService;
-import com.kitty.blog.utils.Response;
+import com.kitty.blog.application.dto.comment.TreeDto;
+import com.kitty.blog.domain.model.Comment;
+import com.kitty.blog.domain.service.CommentService;
+import com.kitty.blog.infrastructure.utils.Response;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

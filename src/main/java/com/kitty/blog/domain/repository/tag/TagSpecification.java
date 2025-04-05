@@ -1,7 +1,7 @@
-package com.kitty.blog.repository.tag;
+package com.kitty.blog.domain.repository.tag;
 
-import com.kitty.blog.constant.Compare;
-import com.kitty.blog.model.tag.Tag;
+import com.kitty.blog.common.constant.Compare;
+import com.kitty.blog.domain.model.tag.Tag;
 import jakarta.persistence.criteria.Path;
 import org.springframework.data.jpa.domain.Specification;
 

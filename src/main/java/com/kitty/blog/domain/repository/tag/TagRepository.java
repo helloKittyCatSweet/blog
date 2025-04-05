@@ -1,7 +1,7 @@
-package com.kitty.blog.repository.tag;
+package com.kitty.blog.domain.repository.tag;
 
-import com.kitty.blog.model.tag.Tag;
-import com.kitty.blog.repository.BaseRepository;
+import com.kitty.blog.domain.model.tag.Tag;
+import com.kitty.blog.domain.repository.BaseRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

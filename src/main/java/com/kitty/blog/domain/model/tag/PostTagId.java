@@ -1,4 +1,4 @@
-package com.kitty.blog.model.tag;
+package com.kitty.blog.domain.model.tag;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

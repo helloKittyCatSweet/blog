@@ -1,7 +1,7 @@
-package com.kitty.blog.application.service.report;
+package com.kitty.blog.domain.service.report;
 
-import com.kitty.blog.constant.ReportStatus;
-import com.kitty.blog.model.Report;
+import com.kitty.blog.common.constant.ReportStatus;
+import com.kitty.blog.domain.model.Report;
 import lombok.extern.slf4j.Slf4j;
 import org.flowable.engine.RuntimeService;
 import org.flowable.engine.TaskService;

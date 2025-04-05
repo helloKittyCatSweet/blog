@@ -1,10 +1,10 @@
-package com.kitty.blog.controller.common;
+package com.kitty.blog.application.controller.common;
 
-import com.kitty.blog.dto.category.TreeDto;
-import com.kitty.blog.model.category.Category;
-import com.kitty.blog.application.service.CategoryService;
+import com.kitty.blog.application.dto.category.TreeDto;
+import com.kitty.blog.domain.model.category.Category;
+import com.kitty.blog.domain.service.CategoryService;
 
-import com.kitty.blog.utils.Response;
+import com.kitty.blog.infrastructure.utils.Response;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

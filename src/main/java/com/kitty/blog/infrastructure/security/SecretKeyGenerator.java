@@ -1,4 +1,4 @@
-package com.kitty.blog.security;
+package com.kitty.blog.infrastructure.security;
 
 import java.util.Base64;
 import io.jsonwebtoken.security.Keys; // 导入Keys类所在的包

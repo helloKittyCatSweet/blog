@@ -1,9 +1,9 @@
-package com.kitty.blog.config;
+package com.kitty.blog.infrastructure.config;
 
-import com.kitty.blog.dto.user.LoginResponseDto;
-import com.kitty.blog.exception.WebSocketAuthenticationException;
-import com.kitty.blog.security.JwtTokenUtil;
-import com.kitty.blog.application.service.user.MyUserDetailService;
+import com.kitty.blog.application.dto.user.LoginResponseDto;
+import com.kitty.blog.common.exception.WebSocketAuthenticationException;
+import com.kitty.blog.infrastructure.security.JwtTokenUtil;
+import com.kitty.blog.domain.service.user.MyUserDetailService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

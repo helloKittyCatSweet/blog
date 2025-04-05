@@ -1,4 +1,4 @@
-package com.kitty.blog.utils;
+package com.kitty.blog.infrastructure.utils;
 
 import java.lang.reflect.Field;
 import java.util.Objects;
