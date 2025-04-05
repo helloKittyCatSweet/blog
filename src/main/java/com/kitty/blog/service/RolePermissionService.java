@@ -47,7 +47,8 @@ public class RolePermissionService {
 
     @Transactional
     public ResponseEntity<Boolean> save(RolePermission rolePermission) {
-        return ResponseEntity.ok((Boolean)rolePermissionRepository.save(rolePermission));
+        rolePermissionRepository.save(rolePermission);
+        return ResponseEntity.ok(true);
     }
 
     @Transactional

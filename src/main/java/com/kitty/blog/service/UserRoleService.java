@@ -76,18 +76,17 @@ public class UserRoleService {
     @Transactional
     @Cacheable(key = "#username")
     public ResponseEntity<List<FindDto>> findAll() {
-        List<Object[]> userRoles = userRoleRepository.findAll();
-        Map<String, FindDto> userRoleMap = new HashMap<>();
+//        List<UserRole> userRoles = userRoleRepository.findAll();
+//        Map<String, FindDto> userRoleMap = new HashMap<>();
+//
+//        for (UserRole userRole : userRoles) {
+//            String userName = userRole.getUser().getUsername();
+//
+//            userRoleMap.putIfAbsent(userName, new FindDto(userName, new ArrayList<>()));
+//            userRoleMap.get(userName).getRoleNames().add(roleName);
+//        }
 
-        for (Object[] userRole : userRoles) {
-            String userName = (String) userRole[0];
-            String roleName = (String) userRole[1];
-
-            userRoleMap.putIfAbsent(userName, new FindDto(userName, new ArrayList<>()));
-            userRoleMap.get(userName).getRoleNames().add(roleName);
-        }
-
-        return new ResponseEntity<>(new ArrayList<>(userRoleMap.values()), HttpStatus.OK);
+        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
     }
 
     @Transactional

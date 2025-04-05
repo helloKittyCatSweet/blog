@@ -2,13 +2,15 @@ package com.kitty.blog.repository;
 
 import com.kitty.blog.model.UserActivity;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.history.RevisionRepository;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface UserActivityRepository extends BaseRepository<UserActivity, Integer> {
+public interface UserActivityRepository extends BaseRepository<UserActivity, Integer>{
      /*
       save(S entity)：保存实体。
       findById(ID id)：根据主键查找实体。
@@ -48,12 +50,19 @@ public interface UserActivityRepository extends BaseRepository<UserActivity, Int
     Optional<List<UserActivity>> findByUserId(Integer userId);
 
     /**
-     * 根据类型查找用户活动
-     * @param activityType
-     * @return
+     * 根据活动类型和用户ID搜索互动记录
      */
-    @Query("SELECT ua FROM UserActivity ua WHERE ua.activityType = ?1")
-    Optional<List<UserActivity>> findByActivityType(String activityType);
+    @Query(value = """
+       SELECT DISTINCT ua.* FROM fs_user_activities ua 
+       INNER JOIN fs_posts p ON ua.post_id = p.post_id
+       WHERE p.user_id = :authorId
+       AND (:activityType IS NULL OR ua.activity_type = :activityType)
+       AND ua.is_deleted = false
+       ORDER BY ua.created_at DESC
+       """, nativeQuery = true)
+    Optional<List<UserActivity>> findByActivityType(
+            @Param("authorId") Integer authorId,
+            @Param("activityType") String activityType);
 
     /**
      * 根据用户ID、文章ID、类型查找用户活动
@@ -65,4 +74,15 @@ public interface UserActivityRepository extends BaseRepository<UserActivity, Int
     @Query("SELECT ua FROM UserActivity ua WHERE ua.userId = ?1 AND ua.postId = ?2 " +
             "AND ua.activityType = ?3")
     Optional<UserActivity> findExplicit(Integer userId, Integer postId, String activityType);
+
+    // 查询其他用户对当前用户文章的有效互动记录
+    @Query(value = """
+       SELECT ua.* FROM fs_user_activities ua 
+       INNER JOIN fs_posts p ON ua.post_id = p.post_id
+       WHERE p.user_id = :authorId
+       AND ua.activity_type IN ('LIKE', 'FAVORITE', 'COMMENT')
+       AND ua.is_deleted = false
+       ORDER BY ua.created_at DESC
+       """, nativeQuery = true)
+    List<UserActivity> findPostInteractions(@Param("authorId") Integer authorId);
 }

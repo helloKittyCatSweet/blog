@@ -340,7 +340,7 @@ public class PostService {
                     ActivityType.LIKE.name()).getBody();
             if (!Objects.equals(userActivity, new UserActivity())) {
                 assert userActivity != null;
-                userActivityService.deleteById(userActivity.getActivityId());
+                userActivityService.deleteById(userActivity.getActivityId(), userActivity.getUserId());
             } else {
                 return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
             }
@@ -369,7 +369,7 @@ public class PostService {
             UserActivity userActivity = userActivityService.findExplicit(userId, postId,
                     ActivityType.FAVORITE.name()).getBody();
             assert userActivity != null;
-            userActivityService.deleteById(userActivity.getActivityId());
+            userActivityService.deleteById(userActivity.getActivityId(), userActivity.getUserId());
         }
         return new ResponseEntity<>(true, HttpStatus.OK);
     }

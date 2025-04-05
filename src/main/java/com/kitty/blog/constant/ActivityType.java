@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.ToString;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 @ToString
@@ -27,5 +28,24 @@ public enum ActivityType {
         return Arrays.stream(ActivityType.values())
                 .filter(activityType -> activityType.getType().equalsIgnoreCase(type))
                 .findFirst();
+    }
+
+    /**
+     * 获取所有互动类型
+     */
+    public static List<String> getInteractTypes() {
+        return Arrays.asList(
+                LIKE.getType(),
+                COMMENT.getType(),
+                FAVORITE.getType(),
+                FOLLOW.getType(),
+                UNFOLLOW.getType(),
+                SHARE.getType()
+        );
+    }
+
+    // 检查是否为有效的互动类型
+    public static boolean isValidInteractType(String type) {
+        return type == null || getInteractTypes().contains(type.toLowerCase());
     }
 }

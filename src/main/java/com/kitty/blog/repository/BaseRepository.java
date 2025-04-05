@@ -20,6 +20,6 @@ import java.util.logging.Logger;
   existsById(ID id)：检查实体是否存在。
  */
 @Component
-public interface BaseRepository<T,ID> extends JpaRepository {
+public interface BaseRepository<T,ID> extends JpaRepository<T,ID> {
     // 可添加通用方法
 }

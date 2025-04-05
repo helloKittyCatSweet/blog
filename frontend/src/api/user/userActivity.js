@@ -18,7 +18,7 @@ export const findByUserId = (userId) =>
 
 // 根据互动类型获取用户动态列表
 export const findByType = (activityType) =>
-  request.get(`${userPrefix}${userActivityPrefix}/admin/find/type/${activityType}`)
+  request.get(`${userPrefix}${userActivityPrefix}/public/find/type/${activityType}`)
 
 // 根据文章id获取用户动态列表
 export const findByPostId = (postId) =>
@@ -40,4 +40,7 @@ export const count = () => request.get(`${userPrefix}${userActivityPrefix}/admin
 
 // 删除用户动态
 export const deleteById = (activityId) =>
-  request.delete(`${userPrefix}${userActivityPrefix}/admin/delete/id/${activityId}`)
+  request.delete(`${userPrefix}${userActivityPrefix}/public/delete/id/${activityId}`)
+
+// 获取其他用户对该用户的动态
+export const getInteractions = () => request.get(`${userPrefix}${userActivityPrefix}/public/interactions`)

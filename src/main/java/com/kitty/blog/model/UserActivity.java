@@ -3,12 +3,14 @@ package com.kitty.blog.model;
 import com.fasterxml.jackson.annotation.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
 import jakarta.persistence.*;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
+import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDate;
 
@@ -20,6 +22,7 @@ import java.time.LocalDate;
 @DynamicInsert
 @NoArgsConstructor
 @Audited
+@Slf4j
 public class UserActivity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,6 +46,9 @@ public class UserActivity {
             updatable = false,
     columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDate createdAt;
+
+    @Column(name = "is_deleted")
+    private boolean isDeleted;
 
     /**
      * Transient属性，不参与数据库的映射，仅用于业务逻辑处理

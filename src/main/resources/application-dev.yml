@@ -30,6 +30,9 @@ spring:
         format_sql: true
         # 禁用OpenSessionInView
         open-in-view: false
+
+        # 启用存储删除时的数据（关键配置）
+        store-data-at-delete: false
         audit_table_prefix: fs_ # 审计表前缀
         audit_table_suffix: _aud # 审计表后缀
         revision_field_name: rev # 版本字段名

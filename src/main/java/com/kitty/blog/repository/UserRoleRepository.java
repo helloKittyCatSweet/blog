@@ -55,7 +55,4 @@ public interface UserRoleRepository extends BaseRepository<UserRole, Integer> {
     @Query("SELECT ur FROM UserRole ur WHERE ur.id.roleId = ?1")
     Optional<List<UserRole>> findByRoleId(Integer roleId);
 
-    @Query("SELECT u.username, r.roleName FROM UserRole ur JOIN ur.user u JOIN ur.role r " +
-            "GROUP BY u.username, r.roleName")
-    List<Object[]> findAll();
 }

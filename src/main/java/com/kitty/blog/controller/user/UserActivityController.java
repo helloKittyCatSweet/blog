@@ -1,6 +1,7 @@
 package com.kitty.blog.controller.user;
 
 import com.kitty.blog.dto.user.LoginResponseDto;
+import com.kitty.blog.dto.userActivity.UserActivityDto;
 import com.kitty.blog.model.UserActivity;
 import com.kitty.blog.service.PostService;
 import com.kitty.blog.service.UserActivityService;
@@ -121,18 +122,18 @@ public class UserActivityController {
      * @param activityType
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "根据互动类型获取用户动态列表")
-    @GetMapping("/admin/find/type/{activityType}")
+    @GetMapping("/public/find/type/{activityType}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "获取成功"),
             @ApiResponse(responseCode = "500", description = "获取失败")
     })
-    public ResponseEntity<Response<List<UserActivity>>> findByActivityType
-            (@PathVariable(name = "activityType") String activityType) {
-        ResponseEntity<List<UserActivity>> response =
-                userActivityService.findByActivityType(activityType);
+    public ResponseEntity<Response<List<UserActivityDto>>> findByActivityType
+            (@PathVariable(name = "activityType") String activityType,
+             @AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<List<UserActivityDto>> response =
+                userActivityService.findByActivityType(user.getId(), activityType);
         return Response.createResponse(response,
                 HttpStatus.OK, "获取成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "获取失败");
@@ -230,17 +231,17 @@ public class UserActivityController {
      * @param activityId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
     @Operation(summary = "删除用户动态")
-    @DeleteMapping("/admin/delete/id/{activityId}")
+    @DeleteMapping("/public/delete/id/{activityId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "404", description = "动态不存在")
     })
     public ResponseEntity<Response<Boolean>> deleteById
-            (@PathVariable(name = "activityId") Integer activityId) {
-        ResponseEntity<Boolean> response = userActivityService.deleteById(activityId);
+            (@PathVariable(name = "activityId") Integer activityId,
+             @AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<Boolean> response = userActivityService.deleteById(activityId, user.getId());
         return Response.createResponse(response,
                 HttpStatus.OK, "删除成功",
                 HttpStatus.NOT_FOUND, "动态不存在");
@@ -284,5 +285,22 @@ public class UserActivityController {
         return Response.createResponse(response,
                 HttpStatus.OK, "存在",
                 HttpStatus.NOT_FOUND, "不存在");
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.constant.Role).ROLE_USER)")
+    @Operation(summary = "获取文章互动记录")
+    @GetMapping("/public/interactions")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取成功"),
+            @ApiResponse(responseCode = "404", description = "用户不存在"),
+            @ApiResponse(responseCode = "500", description = "服务器错误")
+    })
+    public ResponseEntity<Response<List<UserActivityDto>>> getPostInteractions(
+            @AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<List<UserActivityDto>> response =
+                userActivityService.findPostInteractions(user.getId());
+        return Response.createResponse(response,
+                HttpStatus.OK, "获取成功",
+                HttpStatus.NOT_FOUND, "用户不存在");
     }
 }

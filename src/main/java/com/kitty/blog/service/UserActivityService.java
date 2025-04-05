@@ -1,5 +1,9 @@
 package com.kitty.blog.service;
 
+import com.kitty.blog.constant.ActivityType;
+import com.kitty.blog.dto.userActivity.UserActivityDto;
+import com.kitty.blog.model.Post;
+import com.kitty.blog.model.User;
 import com.kitty.blog.model.UserActivity;
 import com.kitty.blog.repository.PostRepository;
 import com.kitty.blog.repository.UserActivityRepository;
@@ -9,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -16,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @CacheConfig(cacheNames = "userActivity")
@@ -30,12 +36,17 @@ public class UserActivityService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @Transactional
     public ResponseEntity<Boolean> create(UserActivity userActivity) {
         if (!postRepository.existsById(userActivity.getPostId()) ||
                 !userRepository.existsById(userActivity.getUserId())) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
+        // 默认假删字段为false
+        userActivity.setDeleted(false);
         userActivityRepository.save(userActivity);
         return new ResponseEntity<>(true, HttpStatus.CREATED);
     }
@@ -85,10 +96,37 @@ public class UserActivityService {
 
     @Transactional
     @Cacheable(key = "#activityType")
-    public ResponseEntity<List<UserActivity>> findByActivityType(String activityType) {
-        return new ResponseEntity<>(
-                userActivityRepository.findByActivityType(activityType).orElse(new ArrayList<>()),
-                HttpStatus.OK);
+    public ResponseEntity<List<UserActivityDto>> findByActivityType(Integer userId, String activityType) {
+        if (!userRepository.existsById(userId)){
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        }
+
+        // 验证活动类型
+        if (activityType != null && !ActivityType.isValidInteractType(activityType)){
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
+        }
+        try{
+            List<UserActivity> interactions = userActivityRepository.findByActivityType(userId,
+                    activityType != null ? activityType.toLowerCase() : null).orElse(new ArrayList<>());
+            List<UserActivityDto> dtoList = new ArrayList<>();
+            for (UserActivity interaction : interactions) {
+                String userName = userRepository.findById(interaction.getUserId()).
+                        orElse(new User()).getUsername();
+                String postTitle = postRepository.findById(interaction.getPostId()).
+                        orElse(new Post()).getTitle();
+                dtoList.add(new UserActivityDto().builder()
+                        .activityId(interaction.getActivityId())
+                        .username(userName)
+                        .postTitle(postTitle)
+                        .postId(interaction.getPostId())
+                        .activityDetail(interaction.getActivityDetail())
+                        .activityType(interaction.getActivityType())
+                        .createdAt(interaction.getCreatedAt()).build());
+            }
+            return new ResponseEntity<>(dtoList, HttpStatus.OK);
+        }catch (Exception e) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Transactional
@@ -135,12 +173,28 @@ public class UserActivityService {
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public ResponseEntity<Boolean> deleteById(Integer activityId) {
-        if (!existsById(activityId).getBody()){
-            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+    public ResponseEntity<Boolean> deleteById(Integer activityId, Integer userId) {
+        try {
+            // 1. 先获取完整的实体
+            UserActivity userActivity = userActivityRepository.findById(activityId)
+                    .orElse(null);
+            if (userActivity == null) {
+                return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+            }
+
+            if(!Objects.equals(userActivity.getUserId(), userId)){
+                // 文章作者修改的，假删就行了
+                userActivity.setDeleted(true);
+                userActivityRepository.save(userActivity);
+            }else {
+                // 操作执行的本人执行的，直接删除
+                userActivityRepository.deleteById(activityId);
+            }
+
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        userActivityRepository.deleteById(activityId);
-        return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
     @Transactional
@@ -155,5 +209,33 @@ public class UserActivityService {
         return new ResponseEntity<>(
                 userActivityRepository.existsById(activityId),
                 HttpStatus.OK);
+    }
+
+    // 获取用户文章的互动记录
+    public ResponseEntity<List<UserActivityDto>> findPostInteractions(Integer authorId) {
+        if (!userRepository.existsById(authorId)) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        }
+        try {
+            List<UserActivity> interactions = userActivityRepository.findPostInteractions(authorId);
+            List<UserActivityDto> dtoList = new ArrayList<>();
+            for (UserActivity interaction : interactions) {
+                String userName = userRepository.findById(interaction.getUserId()).
+                        orElse(new User()).getUsername();
+                String postTitle = postRepository.findById(interaction.getPostId()).
+                        orElse(new Post()).getTitle();
+                dtoList.add(new UserActivityDto().builder()
+                        .activityId(interaction.getActivityId())
+                        .username(userName)
+                        .postTitle(postTitle)
+                        .postId(interaction.getPostId())
+                        .activityDetail(interaction.getActivityDetail())
+                        .activityType(interaction.getActivityType())
+                        .createdAt(interaction.getCreatedAt()).build());
+            }
+            return new ResponseEntity<>(dtoList, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
