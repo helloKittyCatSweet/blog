@@ -1,5 +1,6 @@
 package com.kitty.blog.domain.service;
 
+import com.kitty.blog.application.dto.favorite.FavoriteDto;
 import com.kitty.blog.domain.model.Favorite;
 import com.kitty.blog.domain.model.Post;
 import com.kitty.blog.domain.repository.FavoriteRepository;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @CacheConfig(cacheNames = "favorite")
@@ -60,14 +62,18 @@ public class FavoriteService {
 
     @Transactional
     @Cacheable(key = "#userId")
-    public ResponseEntity<List<Post>> findByUserId(Integer userId) {
+    public ResponseEntity<List<FavoriteDto>> findByUserId(Integer userId) {
         if (!userRepository.existsById(userId)){
             return new ResponseEntity<>(new ArrayList<>(),HttpStatus.NOT_FOUND);
         }else {
             List<Favorite> favorites = favoriteRepository.findByUserId(userId).orElse(new ArrayList<>());
-            List<Post> posts = new ArrayList<>();
+            List<FavoriteDto> posts = new ArrayList<>();
             for (Favorite favorite : favorites) {
-                posts.add(postRepository.findById(favorite.getPostId()).orElse(new Post()));
+                posts.add(new FavoriteDto(
+                        postRepository.findById(favorite.getPostId()).orElse(new Post()),
+                        favorite.getFavoriteId(),
+                        favorite.getFolderName()
+                ));
             }
             return new ResponseEntity<>(
                     posts,
@@ -174,5 +180,96 @@ public class FavoriteService {
     @Transactional
     public ResponseEntity<Boolean> existsById(Integer id) {
         return new ResponseEntity<>(favoriteRepository.existsById(id), HttpStatus.OK);
+    }
+
+    /**
+     * 获取用户的所有收藏夹名称
+     */
+    @Transactional
+    @Cacheable(key = "'folders_' + #userId")
+    public ResponseEntity<List<String>> getFolderNames(Integer userId) {
+        if (!userRepository.existsById(userId)) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(favoriteRepository.findFolderNamesByUserId(userId), HttpStatus.OK);
+    }
+
+    /**
+     * 获取用户特定收藏夹中的收藏
+     */
+    @Transactional
+    @Cacheable(key = "'folder_' + #userId + '_' + #folderName")
+    public ResponseEntity<List<FavoriteDto>> findByUserIdAndFolderName(Integer userId, String folderName) {
+        if (!userRepository.existsById(userId)) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        }
+        List<Favorite> favorites = favoriteRepository.findByUserIdAndFolderName(userId, folderName)
+                .orElse(new ArrayList<>());
+        List<FavoriteDto> posts = new ArrayList<>();
+        for (Favorite favorite : favorites) {
+            posts.add(new FavoriteDto(
+                    postRepository.findById(favorite.getPostId()).orElse(new Post()),
+                    favorite.getFavoriteId(),
+                    favorite.getFolderName()
+            ));
+        }
+        return new ResponseEntity<>(posts, HttpStatus.OK);
+    }
+
+    /**
+     * 移动收藏到指定文件夹
+     */
+    @Transactional
+    @CacheEvict(allEntries = true)
+    public ResponseEntity<Boolean> moveToFolder(Integer favoriteId, String folderName) {
+        Optional<Favorite> favoriteOpt = favoriteRepository.findById(favoriteId);
+        if (favoriteOpt.isEmpty()) {
+            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+        }
+        Favorite favorite = favoriteOpt.get();
+        favorite.setFolderName(folderName);
+        favoriteRepository.save(favorite);
+        return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
+    /**
+     * 获取用户特定收藏夹中的收藏数量
+     */
+    @Transactional
+    @Cacheable(key = "'folder_count_' + #userId + '_' + #folderName")
+    public ResponseEntity<Integer> countByUserIdAndFolderName(Integer userId, String folderName) {
+        if (!userRepository.existsById(userId)) {
+            return new ResponseEntity<>(-1, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(
+                favoriteRepository.countByUserIdAndFolderName(userId, folderName),
+                HttpStatus.OK
+        );
+    }
+
+    @Transactional
+    @CacheEvict(allEntries = true)
+    public ResponseEntity<Boolean> deleteFolder(Integer userId, String folderName) {
+        // 不允许删除默认收藏夹
+        if ("默认收藏夹".equals(folderName)) {
+            return new ResponseEntity<>(false, HttpStatus.FORBIDDEN);
+        }
+
+        // 检查文件夹是否存在
+        if (!favoriteRepository.existsByUserIdAndFolderName(userId, folderName)) {
+            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+        }
+
+        // 获取该文件夹下的所有收藏
+        List<Favorite> favorites = favoriteRepository.findByUserIdAndFolderName(userId, folderName)
+                .orElse(new ArrayList<>());
+
+        // 将收藏移动到默认收藏夹
+        for (Favorite favorite : favorites) {
+            favorite.setFolderName("默认收藏夹");
+            favoriteRepository.save(favorite);
+        }
+
+        return new ResponseEntity<>(true, HttpStatus.OK);
     }
 }

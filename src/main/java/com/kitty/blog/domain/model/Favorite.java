@@ -40,11 +40,11 @@ public class Favorite implements Serializable {
     @Column(name = "post_id")
     private Integer postId;
 
+    @Column(name = "folder_name")
+    private String folderName = "默认收藏夹";
+
     // 禁止手动插入，禁止更新
-    @Column(name = "created_at",
-            insertable = false,
-            updatable = false,
-            columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP")
+    @Column(name = "created_at", insertable = false, updatable = false, columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP")
     private LocalDate createdAt;
 
     /**
@@ -81,8 +81,10 @@ public class Favorite implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass()!= o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Favorite favorite = (Favorite) o;
         return favoriteId.equals(favorite.favoriteId) &&
                 userId.equals(favorite.userId) &&

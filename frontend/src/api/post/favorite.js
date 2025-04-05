@@ -8,8 +8,18 @@ export const create = (data) => request.post(`${postPrefix}${favoritePrefix}/pub
 export const update = (data) => request.put(`${postPrefix}${favoritePrefix}/public/update`, data)
 
 // 根据用户id查询所有收藏
-export const findByUserId = (userId) =>
-  request.get(`${postPrefix}${favoritePrefix}/public/find/${userId}/list`)
+export const findByUserId = () => request.get(`${postPrefix}${favoritePrefix}/public/find/list`)
+
+// 获取用户的所有收藏夹名称
+export const getFolderNames = () => request.get(`${postPrefix}${favoritePrefix}/public/find/folder`)
+
+// 获取用户特定收藏夹中的文章
+export const getPostsByFolder = (folderName) =>
+  request.get(`${postPrefix}${favoritePrefix}/public/find/folder/${folderName}`)
+
+// 移动收藏夹到指定文件夹
+export const moveToFolder = (favoriteIds, folderName) =>
+  request.put(`${postPrefix}${favoritePrefix}/public/update/folder/${favoriteIds}?folderName=${folderName}`)
 
 // 查询用户收藏数量
 export const countByUserId = (userId) =>

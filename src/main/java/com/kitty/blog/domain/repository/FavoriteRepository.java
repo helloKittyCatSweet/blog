@@ -85,4 +85,28 @@ public interface FavoriteRepository extends BaseRepository<Favorite, Integer> {
     @Query("select f from Favorite f where f.userId = ?1 and f.postId = ?2")
     Optional<Favorite> findByUserIdAndPostId(Integer userId, Integer postId);
 
+    /**
+     * 获取用户的所有收藏夹名称
+     */
+    @Query("SELECT DISTINCT f.folderName FROM Favorite f WHERE f.userId = ?1")
+    List<String> findFolderNamesByUserId(Integer userId);
+
+    /**
+     * 获取用户特定收藏夹中的收藏
+     */
+    @Query("SELECT f FROM Favorite f WHERE f.userId = ?1 AND f.folderName = ?2")
+    Optional<List<Favorite>> findByUserIdAndFolderName(Integer userId, String folderName);
+
+    /**
+     * 获取用户特定收藏夹中的收藏数量
+     */
+    @Query("SELECT COUNT(f) FROM Favorite f WHERE f.userId = ?1 AND f.folderName = ?2")
+    Integer countByUserIdAndFolderName(Integer userId, String folderName);
+
+   /**
+     * 检查文件夹是否存在
+     */
+    @Query("SELECT COUNT(f) > 0 FROM Favorite f WHERE f.userId = ?1 AND f.folderName = ?2")
+    boolean existsByUserIdAndFolderName(Integer userId, String folderName);
+
 }
