@@ -42,6 +42,9 @@ public class Role implements Serializable {
     @Column(nullable = false)
     private String administratorName;
 
+    @Column(nullable = false)
+    private Integer count;
+
     /**
      * Transient字段，仅用于业务
      */

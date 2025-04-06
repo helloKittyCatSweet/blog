@@ -21,7 +21,6 @@ onMounted(() => {
 <template>
   <div class="home">
     <section class="featured-posts">
-      <h2 class="section-title">精选文章</h2>
       <el-row :gutter="20">
         <el-col v-for="post in featuredPosts" :key="post.id" :span="8">
           <el-card class="post-card" :body-style="{ padding: '0px' }">

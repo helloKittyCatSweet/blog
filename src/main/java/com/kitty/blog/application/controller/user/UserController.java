@@ -4,6 +4,7 @@ import com.kitty.blog.application.dto.common.FileDto;
 import com.kitty.blog.application.dto.user.LoginDto;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.application.dto.user.RegisterDto;
+import com.kitty.blog.application.dto.userRole.WholeUserInfo;
 import com.kitty.blog.domain.model.User;
 import com.kitty.blog.domain.service.user.UserService;
 import com.kitty.blog.infrastructure.utils.Response;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Tag(name = "用户模块")
@@ -93,9 +96,8 @@ public class UserController {
      * @param isActive
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
-            " or userId == principal.id)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "激活用户")
     @PutMapping("/admin/activate")
     @ApiResponses(value = {
@@ -176,9 +178,8 @@ public class UserController {
     /**
      * 查询激活用户
      *
-     * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER)" +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询激活用户")
     @GetMapping("/admin/find/{isActive}")
@@ -186,9 +187,9 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "没有激活用户")
     })
-    public ResponseEntity<Response<List<User>>> findByActivated
+    public ResponseEntity<Response<List<WholeUserInfo>>> findByActivated
     (@PathVariable("isActive") boolean isActive) {
-        ResponseEntity<List<User>> responseEntity = userService.findByActivated(isActive);
+        ResponseEntity<List<WholeUserInfo>> responseEntity = userService.findByActivated(isActive);
         return Response.createResponse(responseEntity,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND, "没有激活用户");
@@ -378,7 +379,7 @@ public class UserController {
      *
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER)" +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询所有用户")
     @GetMapping("/admin/find/all")
@@ -386,8 +387,8 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
-    public ResponseEntity<Response<List<User>>> findAll() {
-        ResponseEntity<List<User>> responseEntity = userService.findAll();
+    public ResponseEntity<Response<List<WholeUserInfo>>> findAll() {
+        ResponseEntity<List<WholeUserInfo>> responseEntity = userService.findAll();
         return Response.createResponse(responseEntity,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
@@ -419,7 +420,7 @@ public class UserController {
      * @param userId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER)" +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or userId == principal.id")
     @Operation(summary = "删除用户")
@@ -441,7 +442,7 @@ public class UserController {
      * @return
      * @throws Exception
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER)" +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询用户数量")
     @GetMapping("/admin/count")
@@ -462,7 +463,7 @@ public class UserController {
      * @param userId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_USER_MANAGER)" +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER)" +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "判断用户是否存在")
     @GetMapping("/admin/exist/{userId}")
@@ -475,5 +476,48 @@ public class UserController {
         return Response.createResponse(responseEntity,
                 HttpStatus.OK, "存在",
                 HttpStatus.NOT_FOUND, "不存在");
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @Operation(summary = "搜索用户")
+    @GetMapping("/admin/find/keyword")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "搜索成功"),
+            @ApiResponse(responseCode = "404", description = "未找到匹配用户")
+    })
+    public ResponseEntity<Response<List<WholeUserInfo>>> searchUsers
+            (@RequestParam("keyword") String keyword) {
+        ResponseEntity<List<WholeUserInfo>> responseEntity =
+                userService.findUserByUsernameAndEmail(keyword);
+        return Response.createResponse(responseEntity,
+                HttpStatus.OK, "搜索成功",
+                HttpStatus.NOT_FOUND, "未找到匹配用户");
+    }
+
+    @PostMapping("/admin/import")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    public ResponseEntity<Response<String>> importUsers(@RequestParam("file") MultipartFile file) {
+        if (file.isEmpty()) {
+            return Response.error("请选择要上传的文件");
+        }
+
+        String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
+        if (!"xlsx".equals(fileExtension) && !"xls".equals(fileExtension)) {
+            return Response.error("只支持 Excel 文件格式（.xlsx 或 .xls）");
+        }
+
+        ResponseEntity<List<UserService.ImportError>> response = userService.importUsers(file);
+
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return Response.ok("导入成功");
+        } else {
+            List<UserService.ImportError> errors = response.getBody();
+            String errorMessage = errors.stream()
+                    .map(e -> String.format("第 %d 行：%s", e.getRow(), e.getMessage()))
+                    .collect(Collectors.joining("\n"));
+            return Response.error("导入失败：\n" + errorMessage);
+        }
     }
 }

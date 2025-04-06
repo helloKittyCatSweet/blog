@@ -17,8 +17,8 @@ export const existsByEmail = (email) =>
   request.get(`${userPrefix}/auth/exist/email/${email}`)
 
 // 激活账户
-export const activate = ({ userId, isActive }) =>
-  request.put(`${userPrefix}/admin/activate`, { userId, isActive })
+export const activate = (userId, isActive) =>
+  request.put(`${userPrefix}/admin/activate?userId=${userId}&isActive=${isActive}`)
 
 // 验证token
 export const verifyToken = (token) => request.post(`${userPrefix}/public/validate`, token,
@@ -48,7 +48,7 @@ export const register = (data) => request.post(`${userPrefix}/auth/register`, da
 export const login = (data) => request.post(`${userPrefix}/auth/login`, data)
 
 // 查询激活用户
-export const findActivateUser = (isActive) => request.post(`${userPrefix}/admin/find/${isActive}`)
+export const findActivatedUser = (isActive) => request.get(`${userPrefix}/admin/find/${isActive}`)
 
 // 根据用户名查询用户
 export const findUserByUsername = (username) =>
@@ -75,3 +75,18 @@ export const count = () => request.get(`${userPrefix}/admin/count`)
 
 // 删除用户
 export const deleteById = (userId) => request.delete(`${userPrefix}/admin/delete/${userId}`)
+
+// 根据用户名或者邮箱查找用户
+export const findByKeywordForAdmin = (keyword) =>
+  request.get(`${userPrefix}/admin/find/keyword?keyword=${encodeURIComponent(keyword)}`)
+
+// 导入用户数据
+export const importUserData = (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return request.post(`${userPrefix}/admin/import`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+};

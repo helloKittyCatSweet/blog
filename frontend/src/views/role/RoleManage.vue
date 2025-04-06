@@ -1,14 +1,24 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Search, Edit, Delete, Plus } from "@element-plus/icons-vue";
+import {
+  Search,
+  Edit,
+  Delete,
+  Plus,
+  User,
+  Upload,
+  Download,
+  InfoFilled,
+} from "@element-plus/icons-vue";
 import PageContainer from "@/components/PageContainer.vue";
+import { findAll, update } from "@/api/user/role";
+import { save, deleteRole, findRoleUsers, importRoleData } from "@/api/user/userRole";
+import { findAllUser } from "@/api/user/user";
+import * as XLSX from "xlsx";
 
 const loading = ref(false);
 const tableData = ref([]);
-
-// 搜索条件
-const searchKey = ref("");
 
 // 对话框控制
 const dialogVisible = ref(false);
@@ -37,67 +47,330 @@ const handleEdit = (row) => {
   dialogVisible.value = true;
 };
 
-// 处理删除
-const handleDelete = (row) => {
-  ElMessageBox.confirm("确认删除该角色吗？", "警告", {
-    confirmButtonText: "确定",
-    cancelButtonText: "取消",
-    type: "warning",
-  }).then(() => {
-    // TODO: 调用删除API
-  });
-};
-
-// 处理新增
-const handleAdd = () => {
-  dialogTitle.value = "新增角色";
-  form.value = {
-    roleId: null,
-    roleName: "",
-    description: "",
-    administratorName: "",
-  };
-  dialogVisible.value = true;
-};
-
 // 提交表单
 const submitForm = async () => {
   if (!formRef.value) return;
-  await formRef.value.validate((valid) => {
+  await formRef.value.validate(async (valid) => {
     if (valid) {
-      // TODO: 调用保存API
+      try {
+        const res = await update(form.value);
+        if (res.data.status === 200) {
+          ElMessage.success("更新成功");
+          dialogVisible.value = false;
+          getRoleList();
+        }
+      } catch (error) {
+        ElMessage.error("更新失败");
+      }
     }
   });
+};
+
+/**
+ * 用户列表相关状态
+ */
+const userDrawerVisible = ref(false);
+const currentRole = ref(null);
+const roleUsers = ref([]);
+const roleUsersLoading = ref(false);
+
+// 获取角色列表，简化逻辑
+const getRoleList = async () => {
+  loading.value = true;
+  try {
+    const res = await findAll();
+    if (res.data.status === 200) {
+      tableData.value = res.data.data;
+    } else {
+      ElMessage.warning(res.data.message || "获取角色列表失败");
+    }
+  } catch (error) {
+    console.error("获取角色列表失败:", error);
+    ElMessage.error("获取角色列表失败");
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 查看角色用户
+const handleViewUsers = async (row) => {
+  currentRole.value = row;
+  userDrawerVisible.value = true;
+  await loadRoleUsers(row.roleId);
+};
+
+// 加载角色用户列表
+const loadRoleUsers = async (roleId) => {
+  roleUsersLoading.value = true;
+  try {
+    const response = await findRoleUsers(roleId);
+    if (response.data.status === 200) {
+      roleUsers.value = response.data.data;
+    } else {
+      ElMessage.warning(response.data.message || "获取用户列表失败");
+    }
+  } catch (error) {
+    ElMessage.error("获取用户列表失败");
+  } finally {
+    roleUsersLoading.value = false;
+  }
+};
+
+/**
+ * 给用户添加角色
+ */
+// 添加新的状态
+const addUserDialogVisible = ref(false);
+const allUsers = ref([]); // 所有可选用户
+const selectedUsers = ref([]); // 选中的用户
+
+// 添加用户到角色
+const handleAddUsers = async () => {
+  addUserDialogVisible.value = true;
+  try {
+    const res = await findAllUser();
+    if (res.data.status === 200) {
+      // 过滤掉已经有这个角色的用户
+      allUsers.value = res.data.data
+        .filter(
+          (item) => !item.roles.some((role) => role.roleId === currentRole.value.roleId)
+        )
+        .map((item) => item.user);
+    }
+  } catch (error) {
+    ElMessage.error("获取用户列表失败");
+  }
+};
+
+// 确认添加用户
+const confirmAddUsers = async () => {
+  if (!selectedUsers.value.length) {
+    ElMessage.warning("请选择要添加的用户");
+    return;
+  }
+  try {
+    await Promise.all(
+      selectedUsers.value.map((user) =>
+        save({
+          userId: user.userId,
+          roleId: currentRole.value.roleId,
+        })
+      )
+    );
+
+    ElMessage.success("添加成功");
+    addUserDialogVisible.value = false;
+    await loadRoleUsers(currentRole.value.roleId);
+  } catch (error) {
+    ElMessage.error("添加失败");
+  }
+};
+
+onMounted(() => {
+  getRoleList();
+});
+
+/**
+ * 删除用户角色
+ */
+const handleRemoveUser = (row) => {
+  ElMessageBox.confirm(`确认将用户 ${row.username} 从该角色中移除吗？`, "警告", {
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
+    type: "warning",
+  }).then(async () => {
+    try {
+      const res = await deleteRole({
+        userId: row.userId,
+        roleId: currentRole.value.roleId,
+      });
+      if (res.data.status === 200) {
+        ElMessage.success("移除成功");
+        await loadRoleUsers(currentRole.value.roleId);
+      }
+    } catch (error) {
+      ElMessage.error("移除失败");
+    }
+  });
+};
+
+/**
+ * 上传和下载
+ */
+// 导出角色数据
+const handleExportRoles = async () => {
+  try {
+    loading.value = true;
+    // 获取所有角色的用户数据
+    const roleDataPromises = tableData.value.map(async (role) => {
+      const response = await findRoleUsers(role.roleId);
+      const users = response.data.status === 200 ? response.data.data : [];
+      return {
+        role,
+        users,
+      };
+    });
+
+    const rolesWithUsers = await Promise.all(roleDataPromises);
+
+    // 准备工作簿
+    const wb = XLSX.utils.book_new();
+
+    // 创建角色总表
+    const roleSheet = XLSX.utils.json_to_sheet(
+      rolesWithUsers.map((item) => ({
+        角色名称: item.role.roleName,
+        角色描述: item.role.description || "",
+        管理员: item.role.administratorName,
+        用户数量: item.role.count || 0,
+      }))
+    );
+    XLSX.utils.book_append_sheet(wb, roleSheet, "角色列表");
+
+    // 为每个角色创建用户明细表
+    rolesWithUsers.forEach((item) => {
+      const userSheet = XLSX.utils.json_to_sheet(
+        item.users.map((user) => ({
+          用户名: user.username,
+          邮箱: user.email,
+          昵称: user.nickname || "",
+          状态: user.isActive ? "已激活" : "已禁用",
+          最后登录时间: user.lastLoginTime || "",
+        }))
+      );
+      XLSX.utils.book_append_sheet(wb, userSheet, `${item.role.roleName}-用户列表`);
+    });
+
+    // 生成文件并下载
+    XLSX.writeFile(wb, `角色数据_${new Date().toLocaleDateString()}.xlsx`);
+    ElMessage.success("导出成功");
+  } catch (error) {
+    console.error("导出失败:", error);
+    ElMessage.error("导出失败");
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 处理文件上传
+const handleFileUpload = async (file) => {
+  try {
+    const res = await importRoleData(file);
+    if (res.data.status === 200) {
+      ElMessage.success("导入成功");
+      getRoleList(); // 刷新列表
+    } else {
+      ElMessage.error(res.data.message || "导入失败");
+    }
+    return false; // 阻止默认上传
+  } catch (error) {
+    console.error("导入失败:", error);
+    ElMessage.error("导入失败");
+    return false;
+  }
+};
+
+// 上传前校验
+const beforeUpload = (file) => {
+  const isExcel =
+    file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+    file.type === "application/vnd.ms-excel";
+  if (!isExcel) {
+    ElMessage.error("只能上传 Excel 文件！");
+    return false;
+  }
+  return true;
+};
+
+// 导入成功处理
+const handleImportSuccess = (response) => {
+  if (response.status === 200) {
+    ElMessage.success("导入成功");
+    getRoleList(); // 刷新列表
+  } else {
+    ElMessage.error(response.message || "导入失败");
+  }
+};
+
+// 导入失败处理
+const handleImportError = () => {
+  ElMessage.error("导入失败");
 };
 </script>
 
 <template>
   <page-container title="角色管理">
-    <!-- 搜索栏 -->
-    <el-card class="search-card">
-      <el-row :gutter="20">
-        <el-col :span="6">
-          <el-input
-            v-model="searchKey"
-            placeholder="搜索角色名称"
-            clearable
-            @keyup.enter="handleSearch"
-          >
-            <template #suffix>
-              <el-icon class="el-input__icon">
-                <Search />
-              </el-icon>
-            </template>
-          </el-input>
-        </el-col>
-        <el-col :span="18" style="text-align: right">
-          <el-button type="primary" :icon="Plus" @click="handleAdd">新增角色</el-button>
-        </el-col>
-      </el-row>
-    </el-card>
-
     <!-- 表格 -->
     <el-card class="table-card">
+      <!-- 添加操作按钮区 -->
+      <div class="table-operations">
+        <el-button type="success" :icon="Download" @click="handleExportRoles"
+          >导出角色数据</el-button
+        >
+        <el-upload
+          class="upload-button"
+          :show-file-list="false"
+          :before-upload="handleFileUpload"
+          :on-success="handleImportSuccess"
+          :on-error="handleImportError"
+        >
+          <el-button type="primary" :icon="Upload">导入角色数据</el-button>
+        </el-upload>
+        <el-popover
+          placement="bottom"
+          :width="400"
+          trigger="hover"
+          title="Excel 导入格式说明"
+          :show-after="100"
+        >
+          <template #reference>
+            <el-button :icon="InfoFilled" circle type="info" />
+          </template>
+          <div class="import-guide">
+            <div class="guide-section">
+              <h4>工作表要求：</h4>
+              <div class="guide-item">
+                <div class="sheet-name">1. 角色列表（第一个工作表）</div>
+                <div class="columns">
+                  <span class="required">角色名称</span>
+                  <span class="optional">角色描述</span>
+                  <span class="required">管理员</span>
+                </div>
+              </div>
+              <div class="guide-item">
+                <div class="sheet-name">2. 用户列表（格式：角色名称-用户列表）</div>
+                <div class="columns">
+                  <span class="required">用户名</span>
+                  <span class="required">邮箱</span>
+                  <span class="optional">昵称</span>
+                  <span class="optional">状态</span>
+                </div>
+              </div>
+            </div>
+            <div class="guide-section">
+              <h4>导入说明：</h4>
+              <div class="guide-item">
+                <div class="sheet-name">角色处理规则</div>
+                <div class="rule-item">
+                  <span class="warning">· 只能更新已存在的角色，不会创建新角色</span>
+                  <span class="warning">· 只会更新角色的描述字段</span>
+                  <span class="warning">· 管理员字段不会被更新</span>
+                </div>
+              </div>
+              <div class="guide-item">
+                <div class="sheet-name">用户处理规则</div>
+                <div class="rule-item">
+                  <span class="warning">· 只处理系统中已存在的用户</span>
+                  <span class="warning">· 不会创建新用户</span>
+                  <span class="warning">· 只会创建用户与角色的关联关系</span>
+                </div>
+              </div>
+            </div>
+            <div class="guide-tip">提示：建议先导出现有数据作为模板使用</div>
+          </div>
+        </el-popover>
+      </div>
+
       <el-table v-loading="loading" :data="tableData" border stripe>
         <template #empty>
           <el-empty description="暂无数据" />
@@ -106,21 +379,33 @@ const submitForm = async () => {
         <el-table-column prop="roleName" label="角色名称" show-overflow-tooltip />
         <el-table-column prop="description" label="角色描述" show-overflow-tooltip />
         <el-table-column prop="administratorName" label="管理员" show-overflow-tooltip />
-        <el-table-column label="操作" width="150" align="center">
+        <el-table-column prop="userCount" label="用户数量" width="100" align="center">
           <template #default="{ row }">
+            <el-tag>{{ row.count || 0 }}</el-tag>
+          </template>
+        </el-table-column>
+        <!-- 修改角色列表的操作列 -->
+        <el-table-column label="操作" width="220" align="center">
+          <template #default="{ row }">
+            <el-tooltip
+              :content="row.description || '暂无描述'"
+              placement="top"
+              effect="dark"
+            >
+              <el-button
+                type="primary"
+                :icon="Edit"
+                circle
+                @click="handleEdit(row)"
+                title="编辑"
+              />
+            </el-tooltip>
             <el-button
-              type="primary"
-              :icon="Edit"
+              type="info"
+              :icon="User"
               circle
-              @click="handleEdit(row)"
-              title="编辑"
-            />
-            <el-button
-              type="danger"
-              :icon="Delete"
-              circle
-              @click="handleDelete(row)"
-              title="删除"
+              @click="handleViewUsers(row)"
+              title="查看用户"
             />
           </template>
         </el-table-column>
@@ -142,7 +427,12 @@ const submitForm = async () => {
           />
         </el-form-item>
         <el-form-item label="管理员" prop="administratorName">
-          <el-input v-model="form.administratorName" placeholder="请输入管理员名称" />
+          <!-- 该字段的值不可修改 -->
+          <el-input
+            v-model="form.administratorName"
+            placeholder="请输入管理员名称"
+            :disabled="form.roleId !== null"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -152,6 +442,86 @@ const submitForm = async () => {
         </span>
       </template>
     </el-dialog>
+
+    <!-- 添加用户列表抽屉 -->
+    <el-drawer
+      v-model="userDrawerVisible"
+      :title="`${currentRole?.roleName || ''} - 用户列表`"
+      size="80%"
+    >
+      <template #header>
+        <div
+          style="
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          "
+        >
+          <span>{{ currentRole?.roleName || "" }} - 用户列表</span>
+          <el-button type="primary" @click="handleAddUsers">添加用户</el-button>
+        </div>
+      </template>
+      <el-table
+        v-loading="roleUsersLoading"
+        :data="roleUsers"
+        border
+        stripe
+        style="width: 100%"
+      >
+        <template #empty>
+          <el-empty description="暂无用户" />
+        </template>
+        <el-table-column type="index" label="序号" width="80" align="center" />
+        <el-table-column prop="username" label="用户名" />
+        <el-table-column prop="email" label="邮箱" />
+        <el-table-column prop="lastLoginTime" label="最后登录时间" />
+        <el-table-column prop="isActive" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.isActive ? 'success' : 'danger'">
+              {{ row.isActive ? "已激活" : "已禁用" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <!-- 添加操作列 -->
+        <el-table-column label="操作" width="100" align="center">
+          <template #default="{ row }">
+            <el-button
+              type="danger"
+              :icon="Delete"
+              circle
+              @click="handleRemoveUser(row)"
+              title="移除用户"
+            />
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 添加用户对话框 -->
+      <el-dialog
+        v-model="addUserDialogVisible"
+        title="添加用户"
+        width="50%"
+        append-to-body
+      >
+        <el-table
+          v-loading="loading"
+          :data="allUsers"
+          @selection-change="(val) => (selectedUsers = val)"
+        >
+          <el-table-column type="selection" width="55" />
+          <el-table-column prop="username" label="用户名" />
+          <el-table-column prop="nickname" label="昵称" />
+          <el-table-column prop="email" label="邮箱" />
+        </el-table>
+        <template #footer>
+          <span class="dialog-footer">
+            <el-button @click="addUserDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="confirmAddUsers">确定</el-button>
+          </span>
+        </template>
+      </el-dialog>
+    </el-drawer>
   </page-container>
 </template>
 
@@ -162,5 +532,114 @@ const submitForm = async () => {
 
 .table-card {
   margin-bottom: 20px;
+}
+
+.table-operations {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 10px;
+}
+
+.upload-button {
+  display: inline-block;
+}
+
+.import-guide {
+  padding: 8px;
+}
+
+.guide-section {
+  margin-bottom: 16px;
+}
+
+.guide-section h4 {
+  margin: 0 0 12px 0;
+  color: #303133;
+}
+
+.guide-item {
+  margin-bottom: 12px;
+  padding: 8px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.sheet-name {
+  font-weight: bold;
+  margin-bottom: 8px;
+  color: #409eff;
+}
+
+.columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.columns span {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.required {
+  background: #f56c6c20;
+  color: #f56c6c;
+  border: 1px solid #f56c6c50;
+}
+
+.optional {
+  background: #67c23a20;
+  color: #67c23a;
+  border: 1px solid #67c23a50;
+}
+
+.guide-tip {
+  font-size: 13px;
+  color: #909399;
+  padding: 8px;
+  background: #f4f4f5;
+  border-radius: 4px;
+}
+
+.rule-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rule-item span {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.warning {
+  color: #e6a23c;
+}
+
+.import-guide {
+  padding: 8px;
+  max-height: 400px; /* 设置最大高度 */
+  overflow-y: auto; /* 添加垂直滚动 */
+}
+
+.guide-section {
+  margin-bottom: 16px;
+  padding-right: 8px; /* 为滚动条预留空间 */
+}
+
+/* 自定义滚动条样式 */
+.import-guide::-webkit-scrollbar {
+  width: 6px;
+}
+
+.import-guide::-webkit-scrollbar-thumb {
+  background-color: #909399;
+  border-radius: 3px;
+}
+
+.import-guide::-webkit-scrollbar-track {
+  background-color: #f4f4f5;
+  border-radius: 3px;
 }
 </style>

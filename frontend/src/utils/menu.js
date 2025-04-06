@@ -58,7 +58,6 @@ import {
   ADMIN_USER_MANAGE_PATH,
   ADMIN_ROLE_MANAGE_PATH,
   ADMIN_ROLE_PERMISSION_MANAGE_PATH,
-  ADMIN_USER_SETTING_MANAGE_PATH,
   ADMIN_MESSAGE_MANAGE_PATH
 } from '@/constants/routes/admin';
 import { icon } from "@fortawesome/fontawesome-svg-core";
@@ -250,18 +249,14 @@ export const adminMenus = [
             index: ADMIN_ROLE_MANAGE_PATH,
             roles: [ROLES.ROLE_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
           },
+          /*
           {
             icon: SetUp,
             title: '角色权限配置',
             index: ADMIN_ROLE_PERMISSION_MANAGE_PATH,
             roles: [ROLES.PERMISSION_MAPPING_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
           },
-          {
-            icon: Setting,
-            title: '用户设置管理',
-            index: ADMIN_USER_SETTING_MANAGE_PATH,
-            roles: [ROLES.SYSTEM_ADMINISTRATOR]
-          }
+          */
         ]
       },
       {

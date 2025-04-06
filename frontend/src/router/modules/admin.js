@@ -106,6 +106,7 @@ export default [
         component: () => import('@/views/layout/RoleLayout.vue'),
         meta: {
           title: '用户权限管理',
+          redirect: ADMIN_USER_MANAGE_PATH,
           breadcrumb: true,
           roles: [
             ROLES.USER_USER_MANAGER,
@@ -143,15 +144,6 @@ export default [
               roles: [ROLES.PERMISSION_MAPPING_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
             }
           },
-          {
-            path: ADMIN_USER_SETTING_MANAGE_PATH,
-            component: () => import('@/views/user/admin/UserSettingManage.vue'),
-            meta: {
-              title: '用户设置管理',
-              breadcrumb: true,
-              roles: [ROLES.SYSTEM_ADMINISTRATOR],
-            }
-          }
         ]
       },
 

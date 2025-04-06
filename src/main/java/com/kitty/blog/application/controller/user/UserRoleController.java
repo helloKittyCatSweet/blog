@@ -2,6 +2,7 @@ package com.kitty.blog.application.controller.user;
 
 import com.kitty.blog.application.dto.userRole.FindDto;
 import com.kitty.blog.domain.model.Role;
+import com.kitty.blog.domain.model.User;
 import com.kitty.blog.domain.model.userRole.UserRole;
 import com.kitty.blog.domain.model.userRole.UserRoleId;
 import com.kitty.blog.domain.service.UserRoleService;
@@ -16,6 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -28,7 +30,7 @@ public class UserRoleController {
     @Autowired
     private UserRoleService userRoleService;
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER) " +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "删除角色")
     @DeleteMapping("/admin/delete/{userId}/{roleId}")
@@ -50,7 +52,7 @@ public class UserRoleController {
      * @param ur
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER) " +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "保存角色")
     @PostMapping("/admin/save")
@@ -58,7 +60,7 @@ public class UserRoleController {
             @ApiResponse(responseCode = "200", description = "保存成功"),
             @ApiResponse(responseCode = "500", description = "保存失败")
     })
-    public ResponseEntity<Response<UserRole>> save(UserRoleId ur) {
+    public ResponseEntity<Response<UserRole>> save(@RequestBody UserRoleId ur) {
         UserRole userRole = new UserRole(ur);
         ResponseEntity<UserRole> response = userRoleService.save(userRole);
         return Response.createResponse(response,
@@ -71,7 +73,7 @@ public class UserRoleController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER) " +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR) " +
             " or #userId == authentication.principal.id")
     @Operation(summary = "查找一个用户都有什么角色")
@@ -93,7 +95,7 @@ public class UserRoleController {
      * @param id
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER) " +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "根据角色ID查询角色")
     @GetMapping("/admin/find/role/{roleId}")
@@ -101,9 +103,9 @@ public class UserRoleController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
-    public ResponseEntity<Response<List<UserRole>>> findByRoleId
+    public ResponseEntity<Response<List<User>>> findByRoleId
             (@PathVariable("roleId") Integer id) {
-        ResponseEntity<List<UserRole>> response = userRoleService.findByRoleId(id);
+        ResponseEntity<List<User>> response = userRoleService.findByRoleId(id);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
@@ -113,7 +115,7 @@ public class UserRoleController {
      * 查询所有角色
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER) " +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询所有角色")
     @GetMapping("/admin/find/all")
@@ -132,7 +134,7 @@ public class UserRoleController {
      * 查询用户角色关系数量
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER) " +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "查询用户角色关系数量")
     @GetMapping("/admin/count")
@@ -153,7 +155,7 @@ public class UserRoleController {
      * @param roleId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_ROLE_MAPPING_MANAGER) " +
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER) " +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "判断角色是否存在")
     @GetMapping("/admin/exist/id/{userId}/{roleId}")
@@ -167,5 +169,15 @@ public class UserRoleController {
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER) " +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PostMapping(value = "/admin/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Response<String>> importRoleData(@RequestParam("file") MultipartFile file) {
+        ResponseEntity<String> response = userRoleService.importRoleData(file);
+        return Response.createResponse(response,
+                HttpStatus.OK, "导入成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "导入失败");
     }
 }

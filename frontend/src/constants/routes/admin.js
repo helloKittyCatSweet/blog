@@ -18,7 +18,7 @@ export const ADMIN_ROLE = `${ADMIN}/role`
 export const ADMIN_USER_MANAGE_PATH = `${ADMIN_ROLE}/user/manage`
 export const ADMIN_ROLE_MANAGE_PATH = `${ADMIN_ROLE}/role/manage`
 export const ADMIN_ROLE_PERMISSION_MANAGE_PATH = `${ADMIN_ROLE}/permission/mapping/manage`
-export const ADMIN_USER_SETTING_MANAGE_PATH = `${ADMIN_ROLE}/user/setting/manage`
+
 
 // 消息管理
 export const ADMIN_MESSAGE_MANAGE_PATH = `${ADMIN}/message/manage`

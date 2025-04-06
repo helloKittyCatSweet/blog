@@ -83,6 +83,15 @@ public class User implements Serializable {
     @Column
     private List<String> tags;
 
+    @Column(name = "is_deleted")
+    private boolean isDeleted;
+
+    @Column(name = "last_login_ip",length = 45)
+    private String lastLoginIp;
+
+    @Column(name = "last_login_location")
+    private String lastLoginLocation;
+
     /**
      * Transient区域，用于存放一些不希望被序列化的字段
      */

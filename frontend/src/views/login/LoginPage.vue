@@ -44,15 +44,15 @@ const formModel = ref({
 
 const rules = {
   username: [
-    { required: true, messgae: "请输入用户名", trigger: "blur" },
+    { required: true, message: "请输入用户名", trigger: "blur" },
     { min: 5, max: 10, message: "用户名必须是5-10位的字符", trigger: "blur" },
   ], // 失焦的时候检验
   password: [
-    { required: true, messgae: "请输入密码", trigger: "blur" },
+    { required: true, message: "请输入密码", trigger: "blur" },
     { pattern: /^\S{6,15}$/, message: "密码必须是6-15位的非空字符", trigger: "blur" },
   ],
   repassword: [
-    { required: true, messgae: "请输入密码", trigger: "blur" },
+    { required: true, message: "请输入密码", trigger: "blur" },
     { pattern: /^\S{6,15}$/, message: "密码必须是6-15位的非空字符", trigger: "blur" },
     {
       validator: (rule, value, callback) => {

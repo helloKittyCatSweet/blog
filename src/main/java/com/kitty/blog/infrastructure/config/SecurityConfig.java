@@ -83,7 +83,7 @@ public class SecurityConfig {
                             hasAnyRole(Role.ROLE_CATEGORY_MANAGER, Role.ROLE_PERMISSION_MANAGER,
                                     Role.ROLE_PERMISSION_MAPPING_MANAGER, Role.ROLE_TAG_MANAGER,
                                     Role.ROLE_POST_MANAGER, Role.ROLE_USER_ACTIVITY_MANAGER,
-                                    Role.ROLE_USER_ROLE_MAPPING_MANAGER, Role.ROLE_COMMENT_MANAGER,
+                                    Role.ROLE_COMMENT_MANAGER,
                                     Role.ROLE_MESSAGE_MANAGER, Role.ROLE_REPORT_MANAGER,
                                     Role.ROLE_ROLE_MANAGER, Role.ROLE_SYSTEM_ADMINISTRATOR)
                         .anyRequest().authenticated()

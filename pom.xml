@@ -294,7 +294,7 @@
             <artifactId>spring-security-messaging</artifactId>
         </dependency>
 
- <!-- 添加 Flowable 相关依赖 -->
+    <!-- 添加 Flowable 相关依赖 -->
     <dependency>
         <groupId>org.flowable</groupId>
         <artifactId>flowable-spring-boot-starter</artifactId>
@@ -305,6 +305,25 @@
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-envers</artifactId>
+        </dependency>
+
+        <!-- IP 解析工具-->
+        <dependency>
+            <groupId>org.lionsoul</groupId>
+            <artifactId>ip2region</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+
+        <!-- 文件解析 -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>5.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.3</version>
         </dependency>
 
     </dependencies>

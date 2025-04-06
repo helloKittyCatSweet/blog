@@ -4,7 +4,7 @@
       <div class="header-content">
         <div class="logo">
           <router-link to="/">
-            <h1>FreeShare</h1>
+            <img src="@/assets/logo.png" alt="FreeShare" class="logo-image" />
           </router-link>
         </div>
         <nav class="nav-menu">
@@ -50,25 +50,25 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { Search } from '@element-plus/icons-vue'
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { Search } from "@element-plus/icons-vue";
 
-const router = useRouter()
-const searchKey = ref('')
+const router = useRouter();
+const searchKey = ref("");
 
 const handleSearch = () => {
   if (searchKey.value.trim()) {
     router.push({
-      path: '/posts',
-      query: { search: searchKey.value.trim() }
-    })
+      path: "/posts",
+      query: { search: searchKey.value.trim() },
+    });
   }
-}
+};
 
 const goToLogin = () => {
-  router.push('/login')
-}
+  router.push("/login");
+};
 </script>
 
 <style scoped>
@@ -80,7 +80,7 @@ const goToLogin = () => {
 
 .blog-header {
   background-color: var(--el-bg-color);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -169,5 +169,27 @@ const goToLogin = () => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+}
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo-image {
+  width: 200px; /* 调整为更大的尺寸 */
+  height: 40px;
+  object-fit: contain; /* 确保图片不会被压缩变形 */
+}
+.logo h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--el-text-color-primary);
 }
 </style>

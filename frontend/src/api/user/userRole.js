@@ -25,3 +25,14 @@ export const count = () => request.get(`${userPrefix}${userRolePrefix}/admin/cou
 // 删除角色
 export const deleteRole = (userId, roleId) =>
   request.delete(`${userPrefix}${userRolePrefix}/admin/delete/${userId}/${roleId}`)
+
+// 导入角色数据
+export const importRoleData = (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request.post(`${userPrefix}${userRolePrefix}/admin/import`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

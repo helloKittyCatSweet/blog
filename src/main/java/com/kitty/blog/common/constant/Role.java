@@ -18,8 +18,6 @@ public class Role implements Serializable {
 
     public static final String ROLE_USER_ACTIVITY_MANAGER = "USER_ACTIVITY_MANAGER";
 
-    public static final String ROLE_USER_ROLE_MAPPING_MANAGER = "USER_ROLE_MAPPING_MANAGER";
-
     public static final String ROLE_COMMENT_MANAGER = "COMMENT_MANAGER";
 
     public static final String ROLE_MESSAGE_MANAGER = "MESSAGE_MANAGER";
