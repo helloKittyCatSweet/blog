@@ -1,6 +1,7 @@
 package com.kitty.blog.application.controller.post;
 
 import com.kitty.blog.application.dto.common.FileDto;
+import com.kitty.blog.application.dto.post.PostDto;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.model.*;
 import com.kitty.blog.domain.model.category.PostCategory;
@@ -26,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "文章模块")
 @RestController
@@ -663,5 +665,54 @@ public class PostController {
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "获取控制面板统计数据")
+    @GetMapping("/dashboard/stats")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    public ResponseEntity<Response<Map<String, Object>>> getDashboardStats() {
+        ResponseEntity<Map<String, Object>> response = postService.getDashboardStats();
+        return Response.createResponse(response,
+                HttpStatus.OK, "获取成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "获取统计数据失败");
+    }
+
+    @GetMapping("/dashboard/monthly-stats")
+    public ResponseEntity<Response<Map<String, Object>>> getMonthlyStats() {
+        Map<String, Object> stats = postService.getMonthlyStats();
+        return Response.createResponse(
+                new ResponseEntity<>(stats, HttpStatus.OK),
+                HttpStatus.OK, "获取成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "获取失败"
+        );
+    }
+
+    @GetMapping("/dashboard/recent-posts")
+    public ResponseEntity<Response<List<PostDto>>> getRecentPosts() {
+        List<PostDto> posts = postService.getRecentPosts().getBody();
+        return Response.createResponse(
+                new ResponseEntity<>(posts, HttpStatus.OK),
+                HttpStatus.OK, "获取成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "获取失败"
+        );
+    }
+
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "获取互动数据统计")
+    @GetMapping("/dashboard/interaction-stats")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    public ResponseEntity<Response<Map<String, Integer>>> getInteractionStats() {
+        ResponseEntity<Map<String, Integer>> response = postService.getInteractionStats();
+        return Response.createResponse(response,
+                HttpStatus.OK, "获取成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "获取互动统计失败");
     }
 }

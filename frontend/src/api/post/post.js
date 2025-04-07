@@ -84,3 +84,18 @@ export const deleteCategory = (data) => request.delete(`${postPrefix}/public/del
 
 // 根据id删除文章
 export const deleteById = (data) => request.delete(`${postPrefix}/admin/delete/id`, data)
+
+
+// 获取仪表盘统计数据
+export const getDashboardStats = () => request.get(`${postPrefix}/dashboard/stats`)
+
+// 获取月度统计数据
+export const getMonthlyStats = (year, month) =>
+  request.get(`${postPrefix}/dashboard/monthly-stats`, { params: { year, month } })
+
+// 获取互动数据统计
+export const getInteractionStats = () => request.get(`${postPrefix}/dashboard/interaction-stats`)
+
+// 获取最近文章
+export const getRecentPosts = (limit = 5) =>
+  request.get(`${postPrefix}/dashboard/recent-posts`, { params: { limit } })

@@ -95,10 +95,12 @@ public interface CategoryRepository extends BaseRepository<Category, Integer> {
     Optional<List<Category>> findCategoriesByParentId(Integer parentCategoryId);
 
     /**
-     * findCategoryByCategoryId
-     * @param postId
-     * @return
+     * 通过文章ID查找分类列表
+     * @param postId 文章ID
+     * @return 分类列表
      */
-    @Query(value = "SELECT pc.id.categoryId FROM PostCategory pc WHERE pc.id.postId = :postId")
-    Optional<Integer> findByPostId(Integer postId);
+    @Query("SELECT c FROM Category c " +
+            "JOIN PostCategory pc ON c.categoryId = pc.id.categoryId " +
+            "WHERE pc.id.postId = :postId")
+    Optional<Category> findByPostId(Integer postId);
 }

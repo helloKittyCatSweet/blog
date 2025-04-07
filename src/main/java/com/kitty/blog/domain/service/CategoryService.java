@@ -188,11 +188,11 @@ public class CategoryService {
     }
 
     @Transactional
-    public ResponseEntity<Integer> findByPostId(Integer postId) {
+    public ResponseEntity<Category> findByPostId(Integer postId) {
         if (!postRepository.existsById(postId)){
-            return new ResponseEntity<>(0, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new Category(), HttpStatus.NOT_FOUND);
         }else {
-            return new ResponseEntity<>(categoryRepository.findByPostId(postId).orElse(0),
+            return new ResponseEntity<>(categoryRepository.findByPostId(postId).orElse(new Category()),
                     HttpStatus.OK);
         }
     }

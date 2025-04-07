@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -181,4 +183,34 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
      */
     @Query("SELECT p FROM Post p WHERE p.visibility = ?1 AND p.userId = ?2")
     Optional<List<Post>> findByVisibility(String visibility, Integer userId);
+
+
+
+    @Query("SELECT COALESCE(SUM(p.views), 0) FROM Post p")
+    Integer getTotalViews();
+
+    @Query("SELECT COALESCE((SELECT COUNT(c) FROM Comment c), 0)")
+    Integer getTotalComments();
+
+    @Query("SELECT COALESCE(SUM(p.likes), 0) FROM Post p")
+    Integer getTotalLikes();
+
+    @Query("SELECT COALESCE(SUM(p.favorites), 0) FROM Post p")
+    Integer getTotalFavorites();
+
+    @Query("SELECT MONTH(p.createdAt) as month, COUNT(p) as count " +
+            "FROM Post p " +
+            "WHERE p.createdAt >= :startDate AND p.createdAt <= :endDate " +
+            "GROUP BY MONTH(p.createdAt) " +
+            "ORDER BY month")
+    List<Object[]> getMonthlyPostCount(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT MONTH(p.createdAt) as month, SUM(p.views) as views " +
+            "FROM Post p " +
+            "WHERE p.createdAt >= :startDate AND p.createdAt <= :endDate " +
+            "GROUP BY MONTH(p.createdAt) " +
+            "ORDER BY month")
+    List<Object[]> getMonthlyViewCount(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+
+    List<Post> findTop5ByOrderByCreatedAtDesc();
 }

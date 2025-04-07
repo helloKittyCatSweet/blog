@@ -4,6 +4,7 @@ import com.kitty.blog.domain.model.Post;
 
 import com.kitty.blog.common.constant.ActivityType;
 import com.kitty.blog.domain.model.UserActivity;
+import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.repository.CategoryRepository;
 import com.kitty.blog.domain.repository.PostRepository;
 import com.kitty.blog.domain.repository.UserActivityRepository;
@@ -58,9 +59,9 @@ public class RecommendationService {
             if (postRepository.existsById(activity.getPostId())){
                 Post post = postRepository.findById(activity.getPostId()).orElse(null);
                 assert post != null;
-                Integer categoryId = categoryRepository.findByPostId(post.getPostId()).orElse(0);
+                Category category = categoryRepository.findByPostId(post.getPostId()).orElse(new Category());
                 double score = calculateActivityScore(activity);
-                categoryScores.merge(categoryId, score, Double::sum);
+                categoryScores.merge(category.getCategoryId(), score, Double::sum);
 
             }
         }
@@ -102,9 +103,9 @@ public class RecommendationService {
         // 2. 计算每篇文章的推荐分数
         Map<Post, Double> postScores = new HashMap<>();
         for (Post post : allPosts) {
-            Integer categoryId = categoryRepository.findByPostId(post.getPostId()).orElse(0);
-            if (!readPostIds.contains(post.getPostId()) && categoryId!= 0) {
-                Double categoryScore = categoryScores.getOrDefault(categoryId, 0.0);
+            Category category = categoryRepository.findByPostId(post.getPostId()).orElse(new Category());
+            if (!readPostIds.contains(post.getPostId()) && category.getCategoryId()!= 0) {
+                Double categoryScore = categoryScores.getOrDefault(category.getCategoryId(), 0.0);
 
                 // 考虑文章的其他因素
                 double finalScore = calculatePostScore(post, categoryScore);
