@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import PageContainer from "@/components/PageContainer.vue";
@@ -226,17 +226,19 @@ watch(
 // 添加版本相关的响应式数据
 const selectedVersion = ref(null);
 
-// 添加版本变更处理函数
+const isCurrentVersion = computed(() => {
+  return selectedVersion.value?.version === form.value.version;
+});
+
+// 版本变更处理函数
 const handleVersionChange = (version) => {
   if (version) {
-    form.value = {
-      ...form.value,
-      version: version.version,
-      title: version.title,
-      content: version.content,
-      coverImage: version.coverImage,
-      visibility: version.visibility,
-    };
+    console.log("父组件选中的版本：", version);
+    // 更新版本内容和版本号
+    form.value.content = version.content;
+    form.value.version = version.version;
+    selectedVersion.value = version;
+    console.log("selectedVersion:", selectedVersion.value);
   }
 };
 </script>
@@ -250,20 +252,30 @@ const handleVersionChange = (version) => {
           <version-select
             v-model="selectedVersion"
             :post-id="form.postId"
+            :current-version="form.version"
+            :current-content="form.content"
             @update:modelValue="handleVersionChange"
           />
         </el-form-item>
 
         <el-form-item label="文章标题" prop="title">
-          <el-input v-model="form.title" placeholder="请输入文章标题" />
+          <el-input
+            v-model="form.title"
+            placeholder="请输入文章标题"
+            :disabled="!isCurrentVersion"
+          />
         </el-form-item>
 
         <el-form-item label="文章分类">
-          <category-select v-model="form.categoryId" v-model:category="form.category" />
+          <category-select
+            v-model="form.categoryId"
+            v-model:category="form.category"
+            :disabled="!isCurrentVersion"
+          />
         </el-form-item>
 
         <el-form-item label="文章标签">
-          <tag-select v-model="form.tags" />
+          <tag-select v-model="form.tags" :disabled="!isCurrentVersion" />
         </el-form-item>
 
         <el-form-item label="文章封面">

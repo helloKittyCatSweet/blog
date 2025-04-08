@@ -37,43 +37,43 @@ const processTreeData = (items) => {
 const getAllCategories = async () => {
   try {
     const response = await findAllCategories();
-    console.log("获取到的分类数据:", response.data);
+    // console.log("获取到的分类数据:", response.data);
     if (response.data.status === 200) {
       categories.value = processTreeData(response.data.data);
-      console.log("处理后的分类数据:", categories.value);
+      // console.log("处理后的分类数据:", categories.value);
     } else {
       categories.value = [];
     }
   } catch (error) {
-    console.error("获取分类列表失败:", error);
+    // console.error("获取分类列表失败:", error);
     ElMessage.error("获取分类列表失败");
     categories.value = [];
   }
 };
 
 const handleCategoryChange = (val, evt) => {
-  console.log("handleCategoryChange 被触发, val:", val, "evt:", evt);
+  // console.log("handleCategoryChange 被触发, val:", val, "evt:", evt);
 
   // 如果是事件对象，说明是复选框点击触发
   if (val && val.target) {
-    console.log("是复选框点击事件，返回");
+    // console.log("是复选框点击事件，返回");
     return;
   }
 
   selectedValue.value = val;
-  console.log("selectedValue 已更新:", selectedValue.value);
+  // console.log("selectedValue 已更新:", selectedValue.value);
 
   if (val !== null && val !== undefined) {
     const numericVal = Number(val);
-    console.log("转换后的数值:", numericVal);
+    // console.log("转换后的数值:", numericVal);
     const selectedCategory = findCategoryById(categories.value, numericVal);
-    console.log("categories 数据:", categories.value);
-    console.log("查找到的分类:", selectedCategory);
+    // console.log("categories 数据:", categories.value);
+    // console.log("查找到的分类:", selectedCategory);
 
     emit("update:category", selectedCategory || null);
     emit("update:modelValue", numericVal);
   } else {
-    console.log("清空选择");
+    // console.log("清空选择");
     emit("update:category", null);
     emit("update:modelValue", null);
   }

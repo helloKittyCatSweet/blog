@@ -200,6 +200,13 @@ public class PostService {
             }
         }
 
+        // 同步版本管理
+        PostVersion postVersion = postVersionRepository.findByPostIdAndVersion
+                (updatedPost.getPostId(), updatedPost.getVersion()).orElse(new PostVersion());
+        postVersion.setContent(updatedPost.getContent());
+        postVersionRepository.save(postVersion);
+        postVersionRepository.save(postVersion);
+
         // 构建返回的 PostDto
         PostDto postDto = new PostDto();
         postDto.setPost(updatedPost);
@@ -266,23 +273,25 @@ public class PostService {
     }
 
     @Transactional
-    public ResponseEntity<Boolean> addVersion(Integer postId, String content, Integer userId) {
+    public ResponseEntity<PostVersion> addVersion(Integer postId, String content, Integer userId) {
         if (!postRepository.existsById(postId)
                 || !userRepository.existsById(userId)) {
-            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new PostVersion(), HttpStatus.NOT_FOUND);
         }
 
-        String s = baiduContentService.checkText(content);
-        if (!s.equals("合规")){
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+        if (content != null && !content.trim().isEmpty()){
+            String s = baiduContentService.checkText(content);
+            if (!s.equals("合规")){
+                return new ResponseEntity<>(new PostVersion(), HttpStatus.BAD_REQUEST);
+            }
         }
 
         PostVersion postVersion = (PostVersion) postVersionRepository.
                 save(new PostVersion(postId, content, userId, getLatestVersion(postId).getBody() + 1));
         if (postVersion.equals(new PostVersion()))
-            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(new PostVersion(), HttpStatus.INTERNAL_SERVER_ERROR);
 
-        return new ResponseEntity<>(true, HttpStatus.OK);
+        return new ResponseEntity<>(postVersion, HttpStatus.OK);
     }
 
     @Transactional

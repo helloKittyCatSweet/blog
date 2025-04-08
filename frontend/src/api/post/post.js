@@ -39,7 +39,12 @@ export const uploadAttachment = async (file, postId) => {
 export const create = (data) => request.post(`${postPrefix}/public/create`, data)
 
 // 添加文章版本
-export const addVersion = (data) => request.post(`${postPrefix}/public/add/version`, data)
+export const addVersion = ({ postId, content, userId }) =>
+  request.post(`${postPrefix}/public/add/version`, {
+    postId: parseInt(postId),
+    content,
+    userId: parseInt(userId),
+  })
 
 // 添加文章标签
 export const addTag = (data) => request.post(`${postPrefix}/public/add/tag`, data)
@@ -83,7 +88,7 @@ export const existById = (postId) => request.get(`${postPrefix}/admin/exists/id/
 export const count = () => request.get(`${postPrefix}/admin/count`)
 
 // 删除文章版本
-export const deleteVersion = (data) => request.delete(`${postPrefix}/public/delete/version`, data)
+export const deleteVersion = (data) => request.delete(`${postPrefix}/public/delete/version`, { data })
 
 // 删除文章标签
 export const deleteTag = (data) => request.delete(`${postPrefix}/public/delete/tag`, data)

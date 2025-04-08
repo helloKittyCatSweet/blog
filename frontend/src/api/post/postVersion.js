@@ -25,3 +25,7 @@ export const count = () => request.get(`${postPrefix}${postVersionPrefix}/admin/
 // 删除版本
 export const deleteById = (versionId) =>
   request.delete(`${postPrefix}${postVersionPrefix}/admin/delete/id/${versionId}`)
+
+// 激活文章版本
+export const activateVersion = (postId, versionId) =>
+  request.put(`${postPrefix}${postVersionPrefix}/public/activate/${postId}/${versionId}`)

@@ -35,11 +35,24 @@ public class PostVersionController {
     @GetMapping("/public/find/post/{postId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
                            @ApiResponse(responseCode = "500", description = "查询失败")})
-    public ResponseEntity<Response<List<PostVersion>>> findByPostId(Integer postId) {
+    public ResponseEntity<Response<List<PostVersion>>> findByPostId(@PathVariable Integer postId) {
         ResponseEntity<List<PostVersion>> entity = postVersionService.findByPostId(postId);
         return Response.createResponse(entity,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "激活版本")
+    @PutMapping("/public/activate/{postId}/{versionId}")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "激活成功"),
+                           @ApiResponse(responseCode = "500", description = "激活失败")})
+    public ResponseEntity<Response<Boolean>> activateVersion
+            (@PathVariable Integer postId, @PathVariable Integer versionId) {
+        ResponseEntity<Boolean> entity = postVersionService.activateVersion(postId, versionId);
+        return Response.createResponse(entity,
+                HttpStatus.OK, "激活成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "激活失败");
     }
 
     /**

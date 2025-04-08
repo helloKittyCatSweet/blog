@@ -201,14 +201,14 @@ public class PostController {
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "添加文章版本")
-    @PostMapping("/add/version")
+    @PostMapping("/public/add/version")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "添加成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<Boolean>> addVersion
+    public ResponseEntity<Response<PostVersion>> addVersion
             (@RequestBody PostVersion postVersion) {
-        ResponseEntity<Boolean> response = postService.addVersion
+        ResponseEntity<PostVersion> response = postService.addVersion
                 (postVersion.getPostId(), postVersion.getContent(), postVersion.getUserId());
         return Response.createResponse(response,
                 HttpStatus.OK, "添加成功",

@@ -1,6 +1,7 @@
 package com.kitty.blog.domain.repository;
 
 import com.kitty.blog.domain.model.PostVersion;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -32,4 +33,11 @@ public interface PostVersionRepository extends BaseRepository<PostVersion, Integ
     @Query("select pv from PostVersion pv where pv.postId = ?1 " +
             "order by pv.versionAt desc")
     Optional<List<PostVersion>> findByPostId(Integer postId);
+
+    @Modifying
+    @Query("update Post p set p.version = ?2 where p.postId = ?1")
+    void activateVersion(Integer postId, Integer versionId);
+
+    @Query("select pv from PostVersion pv where pv.postId = ?1 and pv.version = ?2")
+    Optional<PostVersion> findByPostIdAndVersion(Integer postId, Integer version);
 }

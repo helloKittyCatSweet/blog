@@ -62,6 +62,18 @@ public class PostVersionService {
         }
     }
 
+    @Transactional
+    public ResponseEntity<Boolean> activateVersion(Integer postId, Integer versionId) {
+        if (!postRepository.existsById(postId)) {
+            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+        }
+        if (!postVersionRepository.existsById(versionId)) {
+            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+        }
+        postVersionRepository.activateVersion(postId, versionId);
+        return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
 
     /**
      * Auto-generated methods
