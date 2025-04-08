@@ -34,15 +34,19 @@ public class TagController {
     @Operation(summary = "创建标签")
     @PostMapping("/public/create")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "创建成功"),
-            @ApiResponse(responseCode = "500", description = "创建失败")
+            @ApiResponse(responseCode = "201", description = "创建成功"),
+            @ApiResponse(responseCode = "409", description = "标签名称已存在"),
+            @ApiResponse(responseCode = "500", description = "标签名称不合规")
     })
     public ResponseEntity<Response<Boolean>> create
             (@RequestBody com.kitty.blog.domain.model.tag.Tag tag) {
         ResponseEntity<Boolean> entity = tagService.create(tag);
-        return Response.createResponse(entity,
-                HttpStatus.OK, "创建成功",
-                HttpStatus.INTERNAL_SERVER_ERROR, "创建失败");
+        return switch (entity.getStatusCode().value()) {
+            case 409 -> Response.error(HttpStatus.CONFLICT, "标签名称已存在");
+            case 500 -> Response.error(HttpStatus.BAD_REQUEST, "标签名称不合规");
+            case 201 -> Response.ok(true, "创建成功");
+            default -> Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "创建失败");
+        };
     }
 
     /**

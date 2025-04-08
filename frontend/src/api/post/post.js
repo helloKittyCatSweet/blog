@@ -13,16 +13,25 @@ export const collectPost = ({ postId, count }) =>
   request.post(`${postPrefix}/public/collect`, { postId, count })
 
 // 上传文件
-export const uploadAttachment = (file, postId) => {
+export const uploadAttachment = async (file, postId) => {
   const formData = new FormData()
   formData.append('file', file)
-  formData.append('postId', postId)
+  if (postId) {
+    formData.append('postId', parseInt(postId))
+  }
 
-  return request.post(`${postPrefix}/public/upload/attachment`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  })
+  try {
+    const response = await request.post(`${postPrefix}/public/upload/attachment`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    console.log('上传响应:', response)
+    return response
+  } catch (error) {
+    console.error('上传错误:', error.response || error)
+    throw error
+  }
 }
 
 
@@ -62,7 +71,7 @@ export const findByKeysInContent = (keyword) => request.get(`${postPrefix}/publi
 export const getLatestVersion = (postId) => request.get(`${postPrefix}/admin/getLatestVersion/${postId}`)
 
 // 根据文章id查询文章详情
-export const findById = (postId) => request.get(`${postPrefix}/admin/find/id/${postId}`)
+export const findById = (postId) => request.get(`${postPrefix}/public/find/id/${postId}`)
 
 // 查询所有文章
 export const findAll = () => request.get(`${postPrefix}/admin/find/all`)
@@ -83,19 +92,19 @@ export const deleteTag = (data) => request.delete(`${postPrefix}/public/delete/t
 export const deleteCategory = (data) => request.delete(`${postPrefix}/public/delete/category`, data)
 
 // 根据id删除文章
-export const deleteById = (data) => request.delete(`${postPrefix}/admin/delete/id`, data)
+export const deleteById = (data) => request.delete(`${postPrefix}/public/delete/id/${data}`)
 
 
 // 获取仪表盘统计数据
-export const getDashboardStats = () => request.get(`${postPrefix}/dashboard/stats`)
+export const getDashboardStats = () => request.get(`${postPrefix}/public/dashboard/stats`)
 
 // 获取月度统计数据
 export const getMonthlyStats = (year, month) =>
-  request.get(`${postPrefix}/dashboard/monthly-stats`, { params: { year, month } })
+  request.get(`${postPrefix}/public/dashboard/monthly-stats`, { params: { year, month } })
 
 // 获取互动数据统计
-export const getInteractionStats = () => request.get(`${postPrefix}/dashboard/interaction-stats`)
+export const getInteractionStats = () => request.get(`${postPrefix}/public/dashboard/interaction-stats`)
 
 // 获取最近文章
 export const getRecentPosts = (limit = 5) =>
-  request.get(`${postPrefix}/dashboard/recent-posts`, { params: { limit } })
+  request.get(`${postPrefix}/public/dashboard/recent-posts`, { params: { limit } })

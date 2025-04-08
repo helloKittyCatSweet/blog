@@ -34,7 +34,8 @@ public class PostVersion implements Serializable {
     @Column(name = "post_id")
     private Integer postId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Lob
     private String content;
 
     // 禁止手动加入，禁止更新
@@ -68,10 +69,11 @@ public class PostVersion implements Serializable {
     @JsonManagedReference
     private User user;
 
-    public PostVersion(Integer postId, String content, Integer userId) {
+    public PostVersion(Integer postId, String content, Integer userId, Integer version) {
         this.postId = postId;
         this.content = content;
         this.userId = userId;
+        this.version = version;
     }
 
     @Override

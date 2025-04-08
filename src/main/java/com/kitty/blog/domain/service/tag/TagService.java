@@ -6,6 +6,7 @@ import com.kitty.blog.domain.repository.tag.TagRepository;
 import com.kitty.blog.domain.repository.tag.TagSpecification;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 
 @Service
 @CacheConfig(cacheNames = "tag")
+@Slf4j
 public class TagService {
 
     @Autowired
@@ -37,6 +39,7 @@ public class TagService {
     @Transactional
     public ResponseEntity<Boolean> create(Tag tag) {
         if (tagRepository.findByName(tag.getName()).isPresent()) {
+            log.info("Tag already exists: " + tag.getName());
             return new ResponseEntity<>(false, HttpStatus.CONFLICT);
         }
 
@@ -52,7 +55,7 @@ public class TagService {
 
         // 如果管理员没有指定权重，则使用默认权重
         if (tag.getAdminWeight() == null) {
-            tag.setAdminWeight(100);
+            tag.setAdminWeight(10);
         } else {
             // 如果指定了权重，将其作为管理员权重
             tag.setAdminWeight(tag.getAdminWeight());

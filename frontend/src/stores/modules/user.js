@@ -3,7 +3,7 @@ import { ref } from "vue";
 
 export const useUserStore = defineStore("free-share-user", () => {
   const user = ref({
-    id: "",
+    id: null,
     username: "",
     avatar: "",
     token: "",
@@ -48,7 +48,7 @@ export const useUserStore = defineStore("free-share-user", () => {
   // 清除方法
   const clear = () => {
     user.value = {
-      id: "",
+      id: null,
       username: "",
       avatar: "",
       token: "",

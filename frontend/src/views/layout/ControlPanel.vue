@@ -10,6 +10,7 @@ import {
   getRecentPosts,
 } from "@/api/post/post";
 import { ElMessage } from "element-plus";
+import { USER_POST_LIST_PATH } from "@/constants/routes/user.js";
 
 const router = useRouter();
 const postChartRef = ref(null);
@@ -45,7 +46,15 @@ const fetchRecentPosts = async () => {
   try {
     const res = await getRecentPosts();
     if (res.data.status === 200) {
-      recentPosts.value = res.data.data;
+      // 转换数据格式以适配表格显示
+      recentPosts.value = res.data.data.map((item) => ({
+        id: item.post.postId,
+        title: item.post.title,
+        category: item.category,
+        views: item.post.views,
+        createTime: item.post.createdAt,
+        author: item.author,
+      }));
     }
   } catch (error) {
     ElMessage.error("获取最近文章失败");
@@ -183,6 +192,13 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
 });
+
+// 添加表格表头样式
+const tableHeaderStyle = {
+  backgroundColor: "var(--el-color-primary-light-9)",
+  color: "var(--el-text-color-primary)",
+  fontWeight: "bold",
+};
 </script>
 
 <template>
@@ -250,7 +266,7 @@ onUnmounted(() => {
             <el-icon class="header-icon"><Document /></el-icon>
             <span>最近发布</span>
           </div>
-          <el-button type="primary" link @click="router.push('/posts')">
+          <el-button type="primary" link @click="router.push(USER_POST_LIST_PATH)">
             查看全部
             <el-icon class="el-icon--right"><arrow-right /></el-icon>
           </el-button>
@@ -274,7 +290,7 @@ onUnmounted(() => {
         </el-table-column>
         <el-table-column label="分类" width="120">
           <template #default="{ row }">
-            <el-tag size="small" :type="row.category?.name ? '' : 'info'">
+            <el-tag size="small" :type="row.category?.name ? 'info' : 'success'">
               {{ row.category?.name || "未分类" }}
             </el-tag>
           </template>

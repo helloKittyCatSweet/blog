@@ -5,6 +5,7 @@ import com.kitty.blog.common.constant.Visibility;
 import com.kitty.blog.application.dto.common.FileDto;
 import com.kitty.blog.domain.model.*;
 import com.kitty.blog.domain.model.category.Category;
+import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.model.tag.Tag;
 import com.kitty.blog.common.constant.ActivityType;
 import com.kitty.blog.domain.model.UserActivity;
@@ -74,65 +75,149 @@ public class PostService {
     private CommentRepository commentRepository;
 
     @Transactional
-    public ResponseEntity<Boolean> create(Post post) {
+    public ResponseEntity<PostDto> create(PostDto input) {
+        Post post = input.getPost();
+        Integer categoryId = input.getCategory().getCategoryId();
+        List<Integer> tagIds = input.getTags().stream().map(Tag:: getTagId).toList();
+
         // 验证用户是否存在
         if (!userRepository.existsById(post.getUserId())) {
-            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new PostDto(), HttpStatus.NOT_FOUND);
         }
 
+        // 内容审核
         String s = baiduContentService.checkText(post.getContent());
-        System.out.println(s);
         if (!s.equals("合规")){
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
         }
 
-        // 初始化一些默认值
+        // 初始化默认值
         post.setLikes(0);
         post.setFavorites(0);
         post.setIsDraft(false);
+        post.setVersion(1);
+        log.info("create post: " + post.toString());
 
-        // 保存 Post
+        // 保存文章
         Post savedPost = (Post) postRepository.save(post);
+
+        // 保存版本记录
         postVersionRepository.save(
-                new PostVersion(savedPost.getPostId(), savedPost.getContent(), savedPost.getUserId()));
-        return new ResponseEntity<>(true, HttpStatus.CREATED);
+                new PostVersion(savedPost.getPostId(), savedPost.getContent(),
+                        savedPost.getUserId(), savedPost.getVersion()));
+
+        // 添加分类
+        if (categoryId != null && categoryRepository.existsById(categoryId)) {
+            postRepository.addCategory(savedPost.getPostId(), categoryId);
+        }
+
+        // 添加标签
+        if (!tagIds.isEmpty()) {
+            for (Integer tagId : tagIds) {
+                if (tagRepository.existsById(tagId)) {
+                    postRepository.addTag(savedPost.getPostId(), tagId);
+                    // 更新标签权重
+                    Tag tag = (Tag) tagRepository.findById(tagId).orElse(new Tag());
+                    tagWeightService.incrementUseCount(tag);
+                    tagWeightService.updateWeight(tag);
+                }
+            }
+        }
+
+        // 构建返回的 PostDto
+        PostDto postDto = new PostDto();
+        postDto.setPost(savedPost);
+        postDto.setCategory(categoryRepository.findByPostId(savedPost.getPostId()).orElse(new Category()));
+        postDto.setTags(tagRepository.findByPostId(savedPost.getPostId()).orElse(new ArrayList<>()));
+        postDto.setComments(new ArrayList<>());
+        User author = userRepository.findById(savedPost.getUserId()).orElse(null);
+        if (author != null) {
+            postDto.setAuthor(author.getUsername());
+        }
+
+        return new ResponseEntity<>(postDto, HttpStatus.CREATED);
     }
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public ResponseEntity<Boolean> update(Post post) {
-        // 检查 Post 是否存在
+    public ResponseEntity<PostDto> update(PostDto input) {
+        Post post = input.getPost();
+        Integer categoryId = input.getCategory().getCategoryId();
+        List<Integer> tagIds = input.getTags().stream().map(Tag:: getTagId).toList();
+
+        // 检查文章是否存在
         if (!postRepository.existsById(post.getPostId())) {
-            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new PostDto(), HttpStatus.NOT_FOUND);
         }
 
+        // 内容审核
         String s = baiduContentService.checkText(post.getContent());
-        System.out.println(s);
         if (!s.equals("合规")){
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
         }
 
-        // 获取已有的 Post 信息
+        // 获取现有文章
         Post existingPost = (Post) postRepository.findById(post.getPostId()).orElse(null);
         if (existingPost == null) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new PostDto(), HttpStatus.NOT_FOUND);
         }
 
-        // 按需更新字段
+        // 更新文章字段
         try {
             UpdateUtil.updateNotNullProperties(post, existingPost);
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
 
-        postRepository.save(existingPost);
-        return new ResponseEntity<>(true, HttpStatus.OK);
+        // 保存更新后的文章
+        Post updatedPost = (Post) postRepository.save(existingPost);
+
+        Integer oldCategoryId = categoryRepository.findByPostId(existingPost.getPostId()).
+                orElse(new Category()).getCategoryId();
+        // 如果更换了分类
+        if (!Objects.equals(oldCategoryId, categoryId)){
+            // 如果现在的分类存在
+            if (categoryId != null && categoryRepository.existsById(categoryId)){
+                log.info("postRepository.addCategory:{} ", categoryId);
+                postRepository.updatePostCategory(post.getPostId(),categoryId,oldCategoryId);
+            }
+        }
+
+        // 获取现有标签
+        List<Tag> currentTags = tagRepository.findByPostId(updatedPost.getPostId()).
+                orElse(new ArrayList<>());
+        // 删除现有标签
+        for (Tag tag : currentTags) {
+            postRepository.deleteTag(updatedPost.getPostId(), tag.getTagId());
+        }
+        // 添加新标签
+        for (Integer tagId : tagIds) {
+            if (tagRepository.existsById(tagId)) {
+                postRepository.addTag(updatedPost.getPostId(), tagId);
+                Tag tag = (Tag) tagRepository.findById(tagId).orElse(new Tag());
+                tagWeightService.incrementUseCount(tag);
+                tagWeightService.updateWeight(tag);
+            }
+        }
+
+        // 构建返回的 PostDto
+        PostDto postDto = new PostDto();
+        postDto.setPost(updatedPost);
+        postDto.setCategory(categoryRepository.findByPostId(updatedPost.getPostId()).orElse(new Category()));
+        postDto.setTags(tagRepository.findByPostId(updatedPost.getPostId()).orElse(new ArrayList<>()));
+        postDto.setComments(commentRepository.findByPostId(updatedPost.getPostId()).orElse(new ArrayList<>()));
+        User author = userRepository.findById(updatedPost.getUserId()).orElse(null);
+        if (author != null) {
+            postDto.setAuthor(author.getUsername());
+        }
+
+        return new ResponseEntity<>(postDto, HttpStatus.OK);
     }
 
     @Transactional
-    public ResponseEntity<Boolean> uploadAttachment(FileDto fileDto) {
+    public ResponseEntity<String> uploadAttachment(FileDto fileDto) {
         if (!postRepository.existsById(fileDto.getSomeId())) {
-            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("false", HttpStatus.NOT_FOUND);
         }
         fileDto.setIdType("postId");
         String attachment = aliyunOSSUploader.uploadByFileType(fileDto.getFile(), fileDto.getSomeId(),
@@ -148,10 +233,10 @@ public class PostService {
             postAttachment.setAttachmentType(tika.detect(fileDto.getFile()));
             postAttachmentRepository.save(postAttachment);
 
-            return new ResponseEntity<>(true, HttpStatus.OK);
+            return new ResponseEntity<>(attachment, HttpStatus.OK);
         } catch (IOException e) {
             e.printStackTrace();
-            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("false", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -192,7 +277,8 @@ public class PostService {
             return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
         }
 
-        PostVersion postVersion = (PostVersion) postVersionRepository.save(new PostVersion(postId, content, userId));
+        PostVersion postVersion = (PostVersion) postVersionRepository.
+                save(new PostVersion(postId, content, userId, getLatestVersion(postId).getBody() + 1));
         if (postVersion.equals(new PostVersion()))
             return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -247,15 +333,27 @@ public class PostService {
 
     @Transactional
     @Cacheable(key = "#postId")
-    public ResponseEntity<List<Post>> findByUsername(String username) {
+    public ResponseEntity<List<PostDto>> findByUsername(String username) {
         Optional<User> user = userRepository.findByUsername(username);
         if (!user.isPresent()) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         }else {
             Integer userId = user.get().getUserId();
-            return new ResponseEntity<>(
-                    postRepository.findByUserId(userId).orElse(new ArrayList<>()),
-                    HttpStatus.OK);
+            List<Post> posts = postRepository.findByUserId(userId).orElse(new ArrayList<>());
+            List<PostDto> postDtos = posts.stream().map(post -> {
+                PostDto postDto = new PostDto();
+                postDto.setPost(post);
+                postDto.setCategory(categoryRepository.findByPostId(post.getPostId()).orElse(new Category()));
+                postDto.setTags(tagRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
+                postDto.setComments(commentRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
+                // 设置作者信息
+                User author = userRepository.findById(post.getUserId()).orElse(null);
+                if (author != null) {
+                    postDto.setAuthor(author.getUsername());
+                }
+                return postDto;
+            }).collect(Collectors.toList());
+            return new ResponseEntity<>( postDtos, HttpStatus.OK);
         }
     }
 
@@ -391,17 +489,6 @@ public class PostService {
     }
 
     @Transactional
-    public boolean isAuthorOfOpenPost(String username, Integer postId) {
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isEmpty()) {
-            return false;
-        } else {
-            Integer userId = user.get().getUserId();
-            return isAuthorOfOpenPost(userId, postId);
-        }
-    }
-
-    @Transactional
     public ResponseEntity<List<Post>> findByVisibility(String visibility, Integer userId){
         try{
             Visibility.valueOf(visibility);
@@ -429,10 +516,19 @@ public class PostService {
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public ResponseEntity<Post> findById(Integer postId) {
-        return new ResponseEntity<>(
-                (Post) postRepository.findById(postId).orElse(new Post()),
-                HttpStatus.OK);
+    public ResponseEntity<PostDto> findById(Integer postId){
+        if (!postRepository.existsById(postId)) {
+            return new ResponseEntity<>(new PostDto(), HttpStatus.NOT_FOUND);
+        }
+        Post post = (Post) postRepository.findById(postId).orElse(new Post());
+        PostDto postDto = new PostDto();
+        postDto.setPost(post);
+        postDto.setCategory(categoryRepository.findByPostId(post.getPostId()).orElse(new Category()));
+        postDto.setTags(tagRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
+        postDto.setComments(commentRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
+        userRepository.findById(post.getUserId()).
+                ifPresent(author -> postDto.setAuthor(author.getUsername()));
+        return new ResponseEntity<>(postDto, HttpStatus.OK);
     }
 
     @Transactional
@@ -468,6 +564,11 @@ public class PostService {
         return new ResponseEntity<>(postRepository.existsById(postId), HttpStatus.OK);
     }
 
+    /**
+     * 控制台数据首页数据渲染
+     * @return
+     */
+
     @Transactional
     @Cacheable(key = "'dashboard_stats'")
     public ResponseEntity<Map<String, Object>> getDashboardStats() {
@@ -484,6 +585,7 @@ public class PostService {
         }
     }
 
+    @Transactional
     public Map<String, Object> getMonthlyStats() {
         LocalDate now = LocalDate.now();
         LocalDate startDate = now.minusMonths(5).withDayOfMonth(1); // 获取6个月前的第一天
@@ -549,17 +651,7 @@ public class PostService {
         List<PostDto> postDtos = posts.stream()
                 .map(post -> {
                     PostDto dto = new PostDto();
-                    dto.setId(post.getPostId());
-                    dto.setTitle(post.getTitle());
-                    dto.setViews(post.getViews());
-                    dto.setLikes(post.getLikes());
-                    dto.setFavorites(post.getFavorites());
-                    // Change date format to only include date
-                    dto.setCreateTime(post.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                    dto.setUpdateTime(post.getUpdatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                    dto.setIsDraft(post.getIsDraft());
-                    dto.setVisibility(post.getVisibility().toString());
-
+                    dto.setPost(post);
                     // 设置分类、标签和评论列表
                     dto.setCategory(categoryRepository.findByPostId(post.getPostId()).orElse(new Category()));
                     dto.setTags(tagRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));

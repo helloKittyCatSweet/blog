@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Search, Edit, Delete, Plus, View } from "@element-plus/icons-vue";
+import { Search, Edit, Delete, Plus, View, Document } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
 import PageContainer from "@/components/PageContainer.vue";
-import { formatDateTime } from "@/utils/format";
+import { findByUsername, deleteById } from "@/api/post/post.js";
+import { useUserStore } from "@/stores/modules/user.js";
+import { USER_POST_EDIT_PATH, USER_POST_CREATE_PATH } from "@/constants/routes/user.js";
 
 const router = useRouter();
 const loading = ref(false);
@@ -25,11 +27,28 @@ const statusOptions = [
   { label: "草稿", value: "DRAFT" },
 ];
 
+const userStore = useUserStore();
+
 // 获取文章列表
 const getPostList = async () => {
   loading.value = true;
   try {
-    // TODO: 调用获取文章列表API
+    const response = await findByUsername(userStore.user.username);
+    if (response.data.status === 200) {
+      // 转换数据格式以适配表格显示
+      tableData.value = response.data.data.map((item) => ({
+        postId: item.post.postId,
+        title: item.post.title,
+        isPublished: item.post.isPublished,
+        views: item.post.views,
+        likes: item.post.likes,
+        favorites: item.post.favorites,
+        updatedAt: item.post.updatedAt ? item.post.updatedAt.split(" ")[0] : "-", // 只保留日期部分
+        category: item.category,
+        author: item.author,
+      }));
+      total.value = tableData.value.length;
+    }
     loading.value = false;
   } catch (error) {
     ElMessage.error("获取文章列表失败");
@@ -39,25 +58,29 @@ const getPostList = async () => {
 
 // 新建文章
 const handleCreate = () => {
-  router.push("/user/post/edit");
+  router.push(USER_POST_CREATE_PATH);
 };
 
 // 编辑文章
-const handleEdit = (row) => {
-  router.push(`/user/post/edit/${row.postId}`);
+const handleEdit = (id) => {
+  router.push(`${USER_POST_EDIT_PATH}/${id}`);
 };
 
 // 删除文章
-const handleDelete = (row) => {
+const handleDelete = (postId) => {
   ElMessageBox.confirm("确认删除该文章吗？", "警告", {
     confirmButtonText: "确定",
     cancelButtonText: "取消",
     type: "warning",
   }).then(async () => {
     try {
-      // TODO: 调用删除API
-      ElMessage.success("删除成功");
-      getPostList();
+      const response = await deleteById(postId);
+      if (response.data.status === 200) {
+        ElMessage.success("删除成功");
+        getPostList(); // 刷新列表
+      } else {
+        ElMessage.error(response.data.message || "删除失败");
+      }
     } catch (error) {
       ElMessage.error("删除失败");
     }
@@ -65,8 +88,8 @@ const handleDelete = (row) => {
 };
 
 // 查看文章
-const handleView = (row) => {
-  window.open(`/post/${row.postId}`, "_blank");
+const handleView = (postId) => {
+  window.open(`/post/${postId}`, "_blank");
 };
 
 // 处理分页
@@ -83,6 +106,13 @@ const handleCurrentChange = (val) => {
 onMounted(() => {
   getPostList();
 });
+
+/**
+ * 版本管理
+ */
+const handleVersion = (postId) => {
+  router.push(`/user/post/version/${postId}`);
+};
 </script>
 
 <template>
@@ -134,6 +164,13 @@ onMounted(() => {
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="分类" width="120">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.category?.name ? 'info' : 'warning'">
+              {{ row.category?.name || "未分类" }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="数据统计" width="250">
           <template #default="{ row }">
             <el-space>
@@ -145,32 +182,42 @@ onMounted(() => {
         </el-table-column>
         <el-table-column prop="updatedAt" label="更新时间" width="180">
           <template #default="{ row }">
-            {{ formatDateTime(row.updatedAt) }}
+            {{ row.updatedAt }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" align="center">
+        <!-- 操作列 -->
+        <el-table-column label="操作" width="220" align="center">
           <template #default="{ row }">
-            <el-button
-              type="primary"
-              :icon="View"
-              circle
-              @click="handleView(row)"
-              title="查看"
-            />
-            <el-button
-              type="warning"
-              :icon="Edit"
-              circle
-              @click="handleEdit(row)"
-              title="编辑"
-            />
-            <el-button
-              type="danger"
-              :icon="Delete"
-              circle
-              @click="handleDelete(row)"
-              title="删除"
-            />
+            <el-space :size="10" wrap>
+              <el-button
+                type="primary"
+                :icon="View"
+                circle
+                @click="handleView(row.postId)"
+                title="查看"
+              />
+              <el-button
+                type="warning"
+                :icon="Edit"
+                circle
+                @click="handleEdit(row.postId)"
+                title="编辑"
+              />
+              <el-button
+                type="info"
+                :icon="Document"
+                circle
+                @click="handleVersion(row.postId)"
+                title="版本"
+              />
+              <el-button
+                type="danger"
+                :icon="Delete"
+                circle
+                @click="handleDelete(row.postId)"
+                title="删除"
+              />
+            </el-space>
           </template>
         </el-table-column>
       </el-table>

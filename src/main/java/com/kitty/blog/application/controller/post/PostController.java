@@ -41,7 +41,7 @@ public class PostController {
 
     /**
      * 创建文章
-     * @param post 文章实体类
+     * @param postDto 文章实体类
      * @return 成功或失败的响应
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
@@ -51,8 +51,8 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "创建成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<Boolean>> create(@RequestBody Post post) {
-        ResponseEntity<Boolean> response = postService.create(post);
+    public ResponseEntity<Response<PostDto>> create(@RequestBody PostDto postDto) {
+        ResponseEntity<PostDto> response = postService.create(postDto);
         return Response.createResponse(response,
                 HttpStatus.OK, "创建成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -60,22 +60,21 @@ public class PostController {
 
     /**
      * 更新文章
-     * @param post
+     * @param postDto
      * @return
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)" +
-            " and #post.userId == #user.id")
+            " and (#postDto.post.userId == #user.id)")
     @Operation(summary = "更新文章")
     @PutMapping("/public/update")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "更新成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<Boolean>> update(
-            @RequestBody Post post,
-            @AuthenticationPrincipal LoginResponseDto user
-            ) {
-        ResponseEntity<Boolean> response = postService.update(post);
+    public ResponseEntity<Response<PostDto>> update(
+            @RequestBody PostDto postDto,
+            @AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<PostDto> response = postService.update(postDto);
         return Response.createResponse(response,
                 HttpStatus.OK, "更新成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -91,7 +90,7 @@ public class PostController {
             @ApiResponse(responseCode = "404", description = "用户不存在"),
             @ApiResponse(responseCode = "500", description = "上传失败")
     })
-    public ResponseEntity<Response<Boolean>> uploadAttachment(
+    public ResponseEntity<Response<String>> uploadAttachment(
             @Parameter(description = "文件", required = true)
             @RequestPart(value = "file") @NotNull MultipartFile file,
             @Parameter(description = "博客ID", required = true)
@@ -119,18 +118,16 @@ public class PostController {
             fileDto.setFile(tempFile);
             fileDto.setSomeId(postId);
             // 调用服务层处理上传
-            ResponseEntity<Boolean> result = postService.uploadAttachment(fileDto);
+            ResponseEntity<String> result = postService.uploadAttachment(fileDto);
             // 删除临时文件
             if (!tempFile.delete()) {
                 log.warn("临时文件删除失败: {}", tempFile.getAbsolutePath());
             }
             // 处理响应
-            if (result.getStatusCode() == HttpStatus.OK &&
-                    Boolean.TRUE.equals(result.getBody())) {
-                return Response.createResponse
-                        (result, HttpStatus.OK,
-                                "上传成功", null, null);
-            } else if (result.getStatusCode() == HttpStatus.NOT_FOUND) {
+            if (result.getStatusCode() == HttpStatus.OK) {
+                result.getBody();
+            }
+            if (result.getStatusCode() == HttpStatus.NOT_FOUND) {
                 return Response.createResponse(
                         result, HttpStatus.NOT_FOUND,
                         "用户不存在", null, null);
@@ -309,14 +306,14 @@ public class PostController {
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户名查询文章列表")
-    @GetMapping("/find/user/{username}")
+    @GetMapping("/public/find/user/{username}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Post>>> findByUsername
+    public ResponseEntity<Response<List<PostDto>>> findByUsername
             (@PathVariable String username) {
-        ResponseEntity<List<Post>> response = postService.findByUsername(username);
+        ResponseEntity<List<PostDto>> response = postService.findByUsername(username);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -349,7 +346,7 @@ public class PostController {
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据内容关键字查询文章列表")
-    @GetMapping("/find/content/{keyword}")
+    @GetMapping("/public/find/content/{keyword}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
@@ -432,16 +429,15 @@ public class PostController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_POST_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据文章ID查询文章详情")
-    @GetMapping("/admin/find/id/{postId}")
+    @GetMapping("/public/find/id/{postId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<Post>> findById(@PathVariable Integer postId) {
-        ResponseEntity<Post> response = postService.findById(postId);
+    public ResponseEntity<Response<PostDto>> findById(@PathVariable Integer postId) {
+        ResponseEntity<PostDto> response = postService.findById(postId);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -613,15 +609,14 @@ public class PostController {
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or @postService.isAuthorOfOpenPost(#postId, #user.id)")
     @Operation(summary = "根据ID删除文章")
-    @DeleteMapping("/admin/delete/id/{postId}")
+    @DeleteMapping("/public/delete/id/{postId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     public ResponseEntity<Response<Boolean>> deleteById(
             @PathVariable Integer postId,
-            @AuthenticationPrincipal LoginResponseDto user
-            ) {
+            @AuthenticationPrincipal LoginResponseDto user) {
         ResponseEntity<Boolean> response = postService.deleteById(postId);
         return Response.createResponse(response,
                 HttpStatus.OK, "删除成功",
@@ -669,7 +664,7 @@ public class PostController {
 
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "获取控制面板统计数据")
-    @GetMapping("/dashboard/stats")
+    @GetMapping("/public/dashboard/stats")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "获取成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
@@ -681,7 +676,7 @@ public class PostController {
                 HttpStatus.INTERNAL_SERVER_ERROR, "获取统计数据失败");
     }
 
-    @GetMapping("/dashboard/monthly-stats")
+    @GetMapping("/public/dashboard/monthly-stats")
     public ResponseEntity<Response<Map<String, Object>>> getMonthlyStats() {
         Map<String, Object> stats = postService.getMonthlyStats();
         return Response.createResponse(
@@ -691,7 +686,7 @@ public class PostController {
         );
     }
 
-    @GetMapping("/dashboard/recent-posts")
+    @GetMapping("/public/dashboard/recent-posts")
     public ResponseEntity<Response<List<PostDto>>> getRecentPosts() {
         List<PostDto> posts = postService.getRecentPosts().getBody();
         return Response.createResponse(
@@ -704,7 +699,7 @@ public class PostController {
 
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "获取互动数据统计")
-    @GetMapping("/dashboard/interaction-stats")
+    @GetMapping("/public/dashboard/interaction-stats")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "获取成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")

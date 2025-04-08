@@ -5,6 +5,7 @@ import {
   USER_POST_LIST_PATH,
   USER_POST_VERSION_MANAGE_PATH,
   USER_POST_EDIT_PATH,
+  USER_POST_CREATE_PATH,
   USER_POST_ATTACHMENT_LIST_PATH,
   USER_COMMENT_MANAGE_PATH,
   USER_REPORT_MANAGE_PATH,
@@ -51,10 +52,19 @@ export default [
             }
           },
           {
-            path: USER_POST_EDIT_PATH,
+            path: USER_POST_CREATE_PATH,
             component: () => import('@/views/post/user/PostEdit.vue'),
             meta: {
-              title: '修改文章',
+              title: '写文章',
+              breadcrumb: true,
+              roles: [ROLES.USER],
+            }
+          },
+          {
+            path: `${USER_POST_EDIT_PATH}/:id`,
+            component: () => import('@/views/post/user/PostEdit.vue'),
+            meta: {
+              title: '编辑文章',
               breadcrumb: true,
               roles: [ROLES.USER],
             }

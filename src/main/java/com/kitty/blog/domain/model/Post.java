@@ -39,7 +39,8 @@ public class Post implements Serializable {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Lob
     private String content;
 
     // 禁止手动加入，禁止更新

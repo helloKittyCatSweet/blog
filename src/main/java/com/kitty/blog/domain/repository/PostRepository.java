@@ -1,6 +1,7 @@
 package com.kitty.blog.domain.repository;
 
 import com.kitty.blog.domain.model.Post;
+import com.kitty.blog.domain.model.category.PostCategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -213,4 +214,8 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     List<Object[]> getMonthlyViewCount(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
     List<Post> findTop5ByOrderByCreatedAtDesc();
+
+    @Query("UPDATE PostCategory pc SET pc.id.categoryId = :categoryId WHERE " +
+            "pc.id.postId = :postId AND pc.id.categoryId = :oldCategoryId")
+    boolean updatePostCategory(Integer postId, Integer categoryId, Integer oldCategoryId);
 }
