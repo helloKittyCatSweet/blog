@@ -1,8 +1,10 @@
 package com.kitty.blog.domain.service;
 
+import com.kitty.blog.application.dto.post.PostAttachmentDto;
 import com.kitty.blog.application.dto.post.PostDto;
 import com.kitty.blog.common.constant.Visibility;
 import com.kitty.blog.application.dto.common.FileDto;
+import com.kitty.blog.common.exception.ResourceNotFoundException;
 import com.kitty.blog.domain.model.*;
 import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.model.tag.Tag;
@@ -80,7 +82,7 @@ public class PostService {
     public ResponseEntity<PostDto> create(PostDto input) {
         Post post = input.getPost();
         Integer categoryId = input.getCategory().getCategoryId();
-        List<Integer> tagIds = input.getTags().stream().map(Tag:: getTagId).toList();
+        List<Integer> tagIds = input.getTags().stream().map(Tag::getTagId).toList();
 
         // 验证用户是否存在
         if (!userRepository.existsById(post.getUserId())) {
@@ -89,7 +91,7 @@ public class PostService {
 
         // 内容审核
         String s = baiduContentService.checkText(post.getContent());
-        if (!s.equals("合规")){
+        if (!s.equals("合规")) {
             return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
         }
 
@@ -136,6 +138,8 @@ public class PostService {
         if (author != null) {
             postDto.setAuthor(author.getUsername());
         }
+        postDto.setAttachments(postAttachmentRepository.findByPostId(savedPost.getPostId()).
+                orElse(new ArrayList<>()));
 
         return new ResponseEntity<>(postDto, HttpStatus.CREATED);
     }
@@ -145,7 +149,7 @@ public class PostService {
     public ResponseEntity<PostDto> update(PostDto input) {
         Post post = input.getPost();
         Integer categoryId = input.getCategory().getCategoryId();
-        List<Integer> tagIds = input.getTags().stream().map(Tag:: getTagId).toList();
+        List<Integer> tagIds = input.getTags().stream().map(Tag::getTagId).toList();
 
         // 检查文章是否存在
         if (!postRepository.existsById(post.getPostId())) {
@@ -154,7 +158,7 @@ public class PostService {
 
         // 内容审核
         String s = baiduContentService.checkText(post.getContent());
-        if (!s.equals("合规")){
+        if (!s.equals("合规")) {
             return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
         }
 
@@ -177,11 +181,11 @@ public class PostService {
         Integer oldCategoryId = categoryRepository.findByPostId(existingPost.getPostId()).
                 orElse(new Category()).getCategoryId();
         // 如果更换了分类
-        if (!Objects.equals(oldCategoryId, categoryId)){
+        if (!Objects.equals(oldCategoryId, categoryId)) {
             // 如果现在的分类存在
-            if (categoryId != null && categoryRepository.existsById(categoryId)){
+            if (categoryId != null && categoryRepository.existsById(categoryId)) {
                 log.info("postRepository.addCategory:{} ", categoryId);
-                postRepository.updatePostCategory(post.getPostId(),categoryId,oldCategoryId);
+                postRepository.updatePostCategory(post.getPostId(), categoryId, oldCategoryId);
             }
         }
 
@@ -218,6 +222,8 @@ public class PostService {
         if (author != null) {
             postDto.setAuthor(author.getUsername());
         }
+        postDto.setAttachments(postAttachmentRepository.findByPostId(updatedPost.getPostId()).
+                orElse(new ArrayList<>()));
 
         return new ResponseEntity<>(postDto, HttpStatus.OK);
     }
@@ -235,6 +241,7 @@ public class PostService {
         postAttachment.setPostId(fileDto.getSomeId());
         postAttachment.setUrl(attachment);
         postAttachment.setAttachmentName(fileDto.getFile().getName());
+        postAttachment.setSize(fileDto.getFile().length());
 
         Tika tika = new Tika();
         try {
@@ -246,6 +253,55 @@ public class PostService {
             e.printStackTrace();
             return new ResponseEntity<>("false", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @Transactional
+    public ResponseEntity<String> uploadPostCover(FileDto fileDto) {
+        if (!postRepository.existsById(fileDto.getSomeId())) {
+            return new ResponseEntity<>("false", HttpStatus.NOT_FOUND);
+        }
+        fileDto.setIdType("postCover");
+        String attachment = aliyunOSSUploader.uploadByFileType(fileDto.getFile(), fileDto.getSomeId(),
+                fileDto.getIdType());
+        // 保存关联信息到数据库
+        PostAttachment postAttachment = new PostAttachment();
+        postAttachment.setPostId(fileDto.getSomeId());
+        postAttachment.setUrl(attachment);
+        postAttachment.setAttachmentName(fileDto.getFile().getName());
+        postAttachment.setSize(fileDto.getFile().length());
+        postAttachmentRepository.save(postAttachment);
+
+        Post post = (Post) postRepository.findById(fileDto.getSomeId()).orElse(new Post());
+        post.setCoverImage(attachment);
+        postRepository.save(post);
+        return new ResponseEntity<>(attachment, HttpStatus.OK);
+    }
+
+    @Transactional
+    public ResponseEntity<String> deleteAttachment(Integer attachmentId) {
+        PostAttachment attachment = postAttachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("附件不存在"));
+
+        try {
+            // 先删除OSS文件
+            String objectName = aliyunOSSUploader.parseObjectName(attachment.getUrl());
+            aliyunOSSUploader.deleteFile(objectName);
+
+            // 再删除数据库记录
+            postAttachmentRepository.deleteById(attachmentId);
+            return new ResponseEntity<>("删除成功", HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("附件删除失败 attachmentId: {}", attachmentId, e);
+            throw new RuntimeException("附件删除失败，请稍后重试");
+        }
+    }
+
+    // 添加附件权限验证方法
+    public boolean isAttachmentOwner(Integer attachmentId, Integer userId) {
+        PostAttachment attachment = postAttachmentRepository.findById(attachmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("附件不存在"));
+        Post post = postRepository.findById(attachment.getPostId()).orElse(new Post());
+        return post.getUserId().equals(userId);
     }
 
     @Transactional
@@ -280,9 +336,9 @@ public class PostService {
             return new ResponseEntity<>(new PostVersion(), HttpStatus.NOT_FOUND);
         }
 
-        if (content != null && !content.trim().isEmpty()){
+        if (content != null && !content.trim().isEmpty()) {
             String s = baiduContentService.checkText(content);
-            if (!s.equals("合规")){
+            if (!s.equals("合规")) {
                 return new ResponseEntity<>(new PostVersion(), HttpStatus.BAD_REQUEST);
             }
         }
@@ -301,11 +357,11 @@ public class PostService {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         Post post = (Post) postRepository.findById(postId).orElse(new Post());
-        try{
+        try {
             Visibility.valueOf(visibility);
             post.setVisibility(visibility);
             postRepository.save(post);
-        }catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             e.printStackTrace();
         }
         return new ResponseEntity<>(true, HttpStatus.OK);
@@ -347,7 +403,7 @@ public class PostService {
         Optional<User> user = userRepository.findByUsername(username);
         if (!user.isPresent()) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        }else {
+        } else {
             Integer userId = user.get().getUserId();
             List<Post> posts = postRepository.findByUserId(userId).orElse(new ArrayList<>());
             List<PostDto> postDtos = posts.stream().map(post -> {
@@ -361,9 +417,11 @@ public class PostService {
                 if (author != null) {
                     postDto.setAuthor(author.getUsername());
                 }
+                postDto.setAttachments(postAttachmentRepository.findByPostId(post.getPostId()).
+                        orElse(new ArrayList<>()));
                 return postDto;
             }).collect(Collectors.toList());
-            return new ResponseEntity<>( postDtos, HttpStatus.OK);
+            return new ResponseEntity<>(postDtos, HttpStatus.OK);
         }
     }
 
@@ -383,6 +441,8 @@ public class PostService {
             if (author != null) {
                 postDto.setAuthor(author.getUsername());
             }
+            postDto.setAttachments(postAttachmentRepository.findByPostId(post.getPostId()).
+                    orElse(new ArrayList<>()));
 
             return postDto;
         }).collect(Collectors.toList());
@@ -404,7 +464,7 @@ public class PostService {
         Optional<User> user = userRepository.findByUsername(username);
         if (!user.isPresent()) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        }else {
+        } else {
             Integer userId = user.get().getUserId();
             return new ResponseEntity<>(
                     postRepository.findByUserIdIsPublished(isPublished, userId)
@@ -505,17 +565,17 @@ public class PostService {
 
     @Transactional
     public boolean isAuthorOfOpenPost(Integer userId, Integer postId) {
-        if (!postRepository.existsById(postId)){
+        if (!postRepository.existsById(postId)) {
             return false;
-        }else {
+        } else {
             Post post = postRepository.findById(postId).orElse(new Post());
             return post.getUserId().equals(userId);
         }
     }
 
     @Transactional
-    public ResponseEntity<List<Post>> findByVisibility(String visibility, Integer userId){
-        try{
+    public ResponseEntity<List<Post>> findByVisibility(String visibility, Integer userId) {
+        try {
             Visibility.valueOf(visibility);
             List<Post> posts = postRepository.
                     findByVisibility(visibility, userId).orElse(new ArrayList<>());
@@ -533,7 +593,7 @@ public class PostService {
     public ResponseEntity<Post> save(Post post) {
         String s = baiduContentService.checkText(post.getContent());
         System.out.println(s);
-        if (!s.equals("合规")){
+        if (!s.equals("合规")) {
             return new ResponseEntity<>(new Post(), HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>((Post) postRepository.save(post), HttpStatus.OK);
@@ -541,7 +601,7 @@ public class PostService {
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public ResponseEntity<PostDto> findById(Integer postId){
+    public ResponseEntity<PostDto> findById(Integer postId) {
         if (!postRepository.existsById(postId)) {
             return new ResponseEntity<>(new PostDto(), HttpStatus.NOT_FOUND);
         }
@@ -553,6 +613,8 @@ public class PostService {
         postDto.setComments(commentRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
         userRepository.findById(post.getUserId()).
                 ifPresent(author -> postDto.setAuthor(author.getUsername()));
+        postDto.setAttachments(postAttachmentRepository.findByPostId(post.getPostId()).
+                orElse(new ArrayList<>()));
         return new ResponseEntity<>(postDto, HttpStatus.OK);
     }
 
@@ -593,6 +655,7 @@ public class PostService {
 
     /**
      * 控制台数据首页数据渲染
+     *
      * @return
      */
 
@@ -756,8 +819,43 @@ public class PostService {
                         dto.setAuthor(author.getUsername());
                     }
 
+                    dto.setAttachments(postAttachmentRepository.findByPostId(post.getPostId()).
+                            orElse(new ArrayList<>()));
+
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public List<PostAttachmentDto> findAttachmentsByUserId(Integer userId) {
+        // 1. 获取用户的所有文章
+        List<Post> userPosts = postRepository.findByUserId(userId)
+                .orElse(Collections.emptyList());
+
+        // 2. 收集所有文章的附件
+        List<PostAttachmentDto> attachmentDtos = new ArrayList<>();
+        for (Post post : userPosts) {
+            List<PostAttachment> attachments = postAttachmentRepository
+                    .findByPostId(post.getPostId())
+                    .orElse(Collections.emptyList());
+
+            // 3. 转换为DTO
+            for (PostAttachment attachment : attachments) {
+                PostAttachmentDto dto = PostAttachmentDto.builder()
+                        .attachmentId(attachment.getAttachmentId())
+                        .postId(post.getPostId())
+                        .postTitle(post.getTitle())
+                        .attachmentName(attachment.getAttachmentName())
+                        .attachmentType(attachment.getAttachmentType())
+                        .attachmentUrl(attachment.getUrl())
+                        .createdTime(attachment.getCreatedTime())
+                        .size(attachment.getSize())
+                        .build();
+                attachmentDtos.add(dto);
+            }
+        }
+
+        return attachmentDtos;
     }
 }

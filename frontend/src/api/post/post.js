@@ -34,6 +34,31 @@ export const uploadAttachment = async (file, postId) => {
   }
 }
 
+// 上传文章封面
+export const uploadPostCover = async (file, postId) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  if (postId) {
+    formData.append('postId', parseInt(postId))
+  }
+
+  try {
+    const response = await request.post(`${postPrefix}/public/upload/cover`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+    console.log('上传响应:', response)
+    return response
+  } catch (error) {
+    console.error('上传错误:', error.response || error)
+    throw error
+  }
+}
+
+export const deleteAttachment = (attachmentId) =>
+  request.delete(`${postPrefix}/public/delete/attachment/${attachmentId}`)
+
 
 // 创建文章
 export const create = (data) => request.post(`${postPrefix}/public/create`, data)
@@ -125,3 +150,6 @@ export const getRecentPosts = (limit = 5) =>
 
 // 搜索文章
 export const searchPosts = (criteria) => request.post(`${postPrefix}/public/search`, criteria)
+
+// 根据用户id查询附件列表
+export const findAttachmentsByUserId = () => request.get(`${postPrefix}/public/find/attachments`)

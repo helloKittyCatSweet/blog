@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 @Component
@@ -63,13 +65,21 @@ public class AliyunOSSUploader {
      * 上传图片到 OSS ( 使用时间戳生成路径 )
      */
     public String uploadImage(File image, Integer someId, String idType) {
-        boolean type = getIdType(idType);
         String objectName = "images/";
-        if (type) {
-            objectName += "user/" + someId + "/";
-            deleteFilesInDirectory(objectName);
-        } else {
-            objectName += "post/" + someId + "/";
+        switch (idType) {
+            case "userId":
+                objectName += "user/" + someId + "/";
+                deleteFilesInDirectory(objectName);
+                break;
+            case "postId":
+                objectName += "post/" + someId + "/";
+                break;
+            case "postCover":
+                objectName += "post/" + someId + "/cover/";
+                deleteFilesInDirectory(objectName);
+                break;
+            default:
+                break;
         }
         objectName += System.currentTimeMillis() + "-" + image.getName();
         return uploadFile(image, objectName, someId);
@@ -109,15 +119,6 @@ public class AliyunOSSUploader {
         return "https://" + bucketName + "." + endpoint + "/" + objectName;
     }
 
-    private boolean getIdType(String idType) {
-        if (idType.equals("userId")) {
-            return true;
-        } else if (idType.equals("postId")) {
-            return false;
-        } else {
-            throw new RuntimeException("idType 参数错误");
-        }
-    }
 
     /**
      * 删除指定目录下的所有文件
@@ -146,6 +147,45 @@ public class AliyunOSSUploader {
             if (ossClient != null) {
                 ossClient.shutdown();
             }
+        }
+    }
+
+    /**
+     * 删除指定文件
+     *
+     * @param objectName 完整文件路径（例如：posts/123/456-filename.txt）
+     */
+    public void deleteFile(String objectName) {
+        OSS ossClient = null;
+        try {
+            ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+            // 检查文件是否存在
+            if (!ossClient.doesObjectExist(bucketName, objectName)) {
+                throw new RuntimeException("文件不存在");
+            }
+            ossClient.deleteObject(bucketName, objectName);
+        } catch (Exception e) {
+            throw new RuntimeException("删除文件失败: " + e.getMessage(), e);
+        } finally {
+            if (ossClient != null) {
+                ossClient.shutdown();
+            }
+        }
+    }
+
+    /**
+     * 根据完整URL解析出OSS objectName
+     *
+     * @param fileUrl 例如：https://bucket-name.oss-cn-beijing.aliyuncs.com/posts/123/456-filename.txt
+     * @return objectName 例如：posts/123/456-filename.txt
+     */
+    public String parseObjectName(String fileUrl) {
+        try {
+            URI uri = new URI(fileUrl);
+            String path = uri.getPath();
+            return path.startsWith("/") ? path.substring(1) : path;
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("无效的OSS文件URL");
         }
     }
 }

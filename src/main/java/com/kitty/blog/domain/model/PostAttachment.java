@@ -35,4 +35,6 @@ public class PostAttachment implements Serializable {
     @Column(name = "created_time", insertable = false, updatable = false,
             columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP")
     private LocalDateTime createdTime;
+
+    private Long size;
 }

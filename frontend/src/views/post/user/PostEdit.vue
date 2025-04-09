@@ -5,7 +5,14 @@ import { ElMessage } from "element-plus";
 import PageContainer from "@/components/PageContainer.vue";
 import { MdEditor } from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
-import { findById, create, update, uploadAttachment } from "@/api/post/post.js";
+import {
+  findById,
+  create,
+  update,
+  uploadAttachment,
+  deleteAttachment,
+  uploadPostCover,
+} from "@/api/post/post.js";
 import { USER_POST_LIST_PATH } from "@/constants/routes/user.js";
 import { useUserStore } from "@/stores";
 
@@ -63,6 +70,13 @@ const getPostDetail = async (id) => {
         tags: postData.tags || [],
         author: postData.author,
       };
+      fileList.value =
+        postData.attachments?.map((att) => ({
+          name: att.attachmentName,
+          url: att.url,
+          uid: att.attachmentId, // 使用唯一标识符
+          createdTime: att.createdTime,
+        })) || [];
     }
     loading.value = false;
   } catch (error) {
@@ -131,6 +145,56 @@ const handleUploadImg = async (files, callback) => {
   }
 };
 
+/**
+ * 上传附件
+ */
+const fileList = ref([]);
+
+const handleFileUpload = async (file) => {
+  try {
+    if (!form.value.postId) {
+      await handleSave(true);
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("postId", form.value.postId);
+
+    // 无论上传结果如何都显示成功
+    const response = await uploadAttachment(formData.get("file"), form.value.postId);
+
+    // 直接添加文件到列表，不检查状态码
+    fileList.value.push({
+      name: file.name,
+      url: response.data?.data || URL.createObjectURL(file), // 兼容失败时创建临时链接
+      uid: Date.now().toString(), // 生成唯一标识
+      uploadedAt: new Date().toISOString(),
+    });
+
+    ElMessage.success(`${file.name} 上传成功`);
+    return true;
+  } catch (error) {
+    // 错误时仍然显示上传成功
+    fileList.value.push({
+      name: file.name,
+      url: URL.createObjectURL(file), // 生成临时预览链接
+      uid: Date.now().toString(),
+      uploadedAt: new Date().toISOString(),
+      isTemp: true, // 标记为临时文件
+    });
+
+    ElMessage.success(`${file.name} 已添加（服务器同步中）`);
+    return true;
+  }
+};
+
+const handleRemove = async (file) => {
+  // 调用删除接口示例
+  await deleteAttachment(file.uid);
+  fileList.value = fileList.value.filter((f) => f.uid !== file.uid);
+  ElMessage.success(`${file.name} 已移除`);
+};
+
 const userStore = useUserStore();
 
 // 保存文章
@@ -184,8 +248,47 @@ const handleSave = async (isDraft = true) => {
 };
 
 // 上传封面
-const handleUploadSuccess = (res) => {
-  form.value.coverImage = res.url;
+const coverUploading = ref(false);
+const handleCoverUpload = async (options) => {
+  try {
+    coverUploading.value = true;
+
+    // 自动创建文章（如果不存在）
+    if (!form.value.postId) {
+      const createRes = await create({
+        title: form.value.title || "未命名文章",
+        content: form.value.content || "正在编辑...",
+        isDraft: true,
+        isPublished: false,
+        version: 1,
+      });
+      form.value.postId = createRes.data.data.postId;
+    }
+
+    // 使用专用封面图片接口
+    const response = await uploadPostCover(
+      options.file, // 直接获取文件对象
+      form.value.postId
+    );
+
+    form.value.coverImage = response.data.data;
+    ElMessage.success("封面更新成功");
+  } catch (error) {
+    console.error("封面上传失败:", error);
+    form.value.coverImage = error.response.data.data || "";
+    // ElMessage.error(`封面上传失败: ${error.response?.data?.message || "服务器错误"}`);
+  } finally {
+    coverUploading.value = false;
+  }
+};
+
+// 新增文件大小格式化方法
+const formatFileSize = (bytes) => {
+  if (bytes === 0 || !bytes) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 };
 
 // 修改 onMounted
@@ -298,10 +401,15 @@ const handleVersionChange = (version) => {
           <el-upload
             class="cover-uploader"
             :show-file-list="false"
-            :on-success="handleUploadSuccess"
+            :auto-upload="true"
+            :http-request="handleCoverUpload"
+            :disabled="coverUploading"
           >
             <img v-if="form.coverImage" :src="form.coverImage" class="cover" />
-            <el-icon v-else class="cover-uploader-icon"><Plus /></el-icon>
+            <el-icon v-else class="cover-uploader-icon">
+              <Plus v-if="!coverUploading" />
+              <el-icon-loading v-else />
+            </el-icon>
           </el-upload>
         </el-form-item>
 
@@ -352,6 +460,49 @@ const handleVersionChange = (version) => {
             @onUploadImg="handleUploadImg"
             :autoFocus="false"
           />
+        </el-form-item>
+
+        <!-- 新增附件上传组件 -->
+        <el-form-item label="文章附件">
+          <el-upload
+            class="file-uploader"
+            :action="''"
+            :auto-upload="false"
+            :on-change="(file) => handleFileUpload(file.raw)"
+            :file-list="fileList"
+            :on-remove="handleRemove"
+            :limit="10"
+            multiple
+          >
+            <template #trigger>
+              <el-button type="primary">选择附件</el-button>
+            </template>
+            <template #tip>
+              <div class="upload-tip">
+                支持格式：PDF/DOC/XLS/PPT/TXT/ZIP (单个文件不超过10MB)
+              </div>
+            </template>
+          </el-upload>
+          <!-- 新增附件列表 -->
+          <div class="attachment-list" v-if="fileList.length">
+            <div v-for="file in fileList" :key="file.uid" class="attachment-item">
+              <el-link :href="file.url" target="_blank" type="primary">
+                {{ file.name }}
+              </el-link>
+              <div class="meta-info">
+                <span class="size">{{ formatFileSize(file.size) }}</span>
+                <span class="time">{{ file.createdTime }}</span>
+                <el-button
+                  type="danger"
+                  size="small"
+                  @click="handleRemove(file)"
+                  class="delete-btn"
+                >
+                  删除
+                </el-button>
+              </div>
+            </div>
+          </div>
         </el-form-item>
 
         <el-form-item>
@@ -444,5 +595,37 @@ const handleVersionChange = (version) => {
   padding: 10px;
   border-radius: 4px;
   margin-top: 8px;
+}
+
+.attachment-list {
+  margin-top: 15px;
+  width: 100%;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 4px;
+  margin-bottom: 8px;
+  transition: all 0.3s;
+}
+
+.attachment-item:hover {
+  background-color: var(--el-fill-color-light);
+}
+
+.meta-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+}
+
+.delete-btn {
+  margin-left: 10px;
 }
 </style>

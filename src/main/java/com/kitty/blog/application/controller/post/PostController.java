@@ -1,6 +1,7 @@
 package com.kitty.blog.application.controller.post;
 
 import com.kitty.blog.application.dto.common.FileDto;
+import com.kitty.blog.application.dto.post.PostAttachmentDto;
 import com.kitty.blog.application.dto.post.PostDto;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.model.*;
@@ -149,6 +150,96 @@ public class PostController {
                     , HttpStatus.INTERNAL_SERVER_ERROR,
                     null, null, "上传失败");
         }
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER) " +
+            "and @postService.isAuthorOfOpenPost(#user.id, #postId)")
+    @Operation(summary = "上传文章封面", description = "上传文章封面，支持图片格式")
+    @PostMapping(value = "/public/upload/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "上传成功"),
+            @ApiResponse(responseCode = "400", description = "文件格式不正确"),
+            @ApiResponse(responseCode = "404", description = "用户不存在"),
+            @ApiResponse(responseCode = "500", description = "上传失败")
+    })
+    public ResponseEntity<Response<String>> uploadCover(
+            @Parameter(description = "文件", required = true)
+            @RequestPart(value = "file") @NotNull MultipartFile file,
+            @Parameter(description = "博客ID", required = true)
+            @RequestParam Integer postId,
+            @AuthenticationPrincipal LoginResponseDto user) {
+        // 检查文件是否为空
+        if (file.isEmpty()) {
+            return Response.createResponse(new ResponseEntity<>(HttpStatus.NO_CONTENT),
+                    HttpStatus.BAD_REQUEST,
+                    "文件为空", null, null);
+        }
+        // 检查文件大小（限制为5MB）
+        if (file.getSize() > 5 * 1024 * 1024) {
+            return Response.createResponse(new ResponseEntity<>(HttpStatus.NO_CONTENT),
+                    HttpStatus.BAD_REQUEST,
+                    "文件大小超出限制", null, null);
+        }
+        try {
+            // 创建临时文件
+            File tempFile = File.createTempFile("tmp", "-" +
+                    file.getOriginalFilename());
+            file.transferTo(tempFile);
+            // 构建文件传输对象
+            FileDto fileDto = new FileDto();
+            fileDto.setFile(tempFile);
+            fileDto.setSomeId(postId);
+            // 调用服务层处理上传
+            ResponseEntity<String> result = postService.uploadPostCover(fileDto);
+            // 删除临时文件
+            if (!tempFile.delete()) {
+                log.warn("临时文件删除失败: {}", tempFile.getAbsolutePath());
+            }
+            // 处理响应
+            if (result.getStatusCode() == HttpStatus.OK) {
+                result.getBody();
+            }
+            if (result.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Response.createResponse(
+                        result, HttpStatus.NOT_FOUND,
+                        "用户不存在", null, null);
+            } else {
+                return Response.createResponse(
+                        result, HttpStatus.INTERNAL_SERVER_ERROR,
+                        "上传失败", null, null);
+            }
+
+        } catch (IOException e) {
+            log.error("文件处理失败", e);
+            return Response.createResponse(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR),
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    null, null, "文件处理失败");
+        } catch (Exception e) {
+            log.error("上传失败", e);
+            return Response.createResponse(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR)
+                    , HttpStatus.INTERNAL_SERVER_ERROR,
+                    null, null, "上传失败");
+        }
+    }
+
+    // 附件删除接口
+    @PreAuthorize("@postService.isAttachmentOwner(#attachmentId, #user.id) " +
+            "and hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "删除文章附件")
+    @DeleteMapping("/public/delete/attachment/{attachmentId}")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "删除成功"),
+            @ApiResponse(responseCode = "403", description = "无操作权限"),
+            @ApiResponse(responseCode = "404", description = "附件不存在")
+    })
+    public ResponseEntity<Response<Boolean>> deleteAttachment(
+            @PathVariable Integer attachmentId,
+            @AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<String> response = postService.deleteAttachment(attachmentId);
+        return Response.createResponse(
+                new ResponseEntity<>(true, HttpStatus.OK),
+                HttpStatus.OK, "删除成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "服务器错误");
     }
 
     /**
@@ -731,5 +822,17 @@ public class PostController {
                 new ResponseEntity<>(posts, HttpStatus.OK),
                 HttpStatus.OK, "搜索成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "搜索失败");
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "根据用户ID查询附件列表")
+    @GetMapping("/public/find/attachments")
+    public ResponseEntity<Response<List<PostAttachmentDto>>>
+    findAttachmentsByPostId(@AuthenticationPrincipal LoginResponseDto user) {
+        List<PostAttachmentDto> attachments = postService.findAttachmentsByUserId(user.getId());
+        return Response.createResponse(
+                new ResponseEntity<>(attachments, HttpStatus.OK),
+                HttpStatus.OK, "查询成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
     }
 }
