@@ -227,18 +227,34 @@ watch(
 const selectedVersion = ref(null);
 
 const isCurrentVersion = computed(() => {
+  // 如果是新建文章，始终返回 true
+  if (!form.value.postId) return true;
+  // 如果是编辑文章，则检查是否是当前版本
   return selectedVersion.value?.version === form.value.version;
 });
 
-// 版本变更处理函数
+// 添加编辑器重新渲染的 key
+const editorKey = ref(0);
+
+// 修改版本变更处理函数
 const handleVersionChange = (version) => {
+  console.log("版本切换 - 新的版本：", version);
+
   if (version) {
-    console.log("父组件选中的版本：", version);
-    // 更新版本内容和版本号
-    form.value.content = version.content;
-    form.value.version = version.version;
+    console.log("版本切换 - 选中版本：", version);
+
+    // 更新选中的版本
     selectedVersion.value = version;
-    console.log("selectedVersion:", selectedVersion.value);
+
+    // 更新表单内容，但不更新版本号（因为这只是预览）
+    form.value = {
+      ...form.value,
+      content: version.content,
+      // 不更新 version，保持原版本号不变
+    };
+
+    // 强制重新渲染编辑器
+    editorKey.value += 1;
   }
 };
 </script>
@@ -262,7 +278,7 @@ const handleVersionChange = (version) => {
           <el-input
             v-model="form.title"
             placeholder="请输入文章标题"
-            :disabled="!isCurrentVersion"
+            :disabled="form.postId && !isCurrentVersion"
           />
         </el-form-item>
 
@@ -270,12 +286,12 @@ const handleVersionChange = (version) => {
           <category-select
             v-model="form.categoryId"
             v-model:category="form.category"
-            :disabled="!isCurrentVersion"
+            :disabled="form.postId && !isCurrentVersion"
           />
         </el-form-item>
 
         <el-form-item label="文章标签">
-          <tag-select v-model="form.tags" :disabled="!isCurrentVersion" />
+          <tag-select v-model="form.tags" :disabled="form.postId && !isCurrentVersion" />
         </el-form-item>
 
         <el-form-item label="文章封面">

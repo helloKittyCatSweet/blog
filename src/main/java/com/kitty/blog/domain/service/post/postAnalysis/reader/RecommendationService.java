@@ -6,7 +6,7 @@ import com.kitty.blog.common.constant.ActivityType;
 import com.kitty.blog.domain.model.UserActivity;
 import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.repository.CategoryRepository;
-import com.kitty.blog.domain.repository.PostRepository;
+import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.UserActivityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

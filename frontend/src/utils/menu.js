@@ -33,7 +33,6 @@ import {
   USER_POST_MANAGE_PATH,
   USER_POST_LIST_PATH,
   USER_POST_CREATE_PATH,
-  USER_POST_VERSION_MANAGE_PATH,
   USER_POST_ATTACHMENT_LIST_PATH,
   USER_COMMENT_MANAGE_PATH,
   USER_FAVORITE_MANAGE_PATH,
@@ -90,12 +89,6 @@ export const userMenus = [
             icon: Edit,
             title: '写文章',
             index: USER_POST_CREATE_PATH,
-            roles: [ROLES.USER]
-          },
-          {
-            icon: Notebook,
-            title: '文章版本管理',
-            index: USER_POST_VERSION_MANAGE_PATH,
             roles: [ROLES.USER]
           },
           {

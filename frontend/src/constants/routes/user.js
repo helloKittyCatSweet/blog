@@ -9,7 +9,6 @@ export const USER_POST_MANAGE_PATH = `${USER_CONTENT}/post`
 export const USER_POST_LIST_PATH = `${USER_POST_MANAGE_PATH}/list`
 export const USER_POST_CREATE_PATH = `${USER_POST_MANAGE_PATH}/create`;
 export const USER_POST_EDIT_PATH = `${USER_POST_MANAGE_PATH}/edit`;
-export const USER_POST_VERSION_MANAGE_PATH = `${USER_POST_MANAGE_PATH}/version/manage`
 export const USER_POST_ATTACHMENT_LIST_PATH = `${USER_POST_MANAGE_PATH}/attachment/list`
 export const USER_POST_COMMENT_MANAGE_PATH = `${USER_POST_MANAGE_PATH}/comment/manage`
 export const USER_COMMENT_MANAGE_PATH = `${USER_CONTENT}/comment/manage`

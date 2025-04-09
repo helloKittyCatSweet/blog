@@ -22,6 +22,10 @@ const props = defineProps({
     type: String,
     default: "",
   },
+  activeVersion: {
+    type: Number,
+    required: false,
+  },
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -86,12 +90,26 @@ const handleCreateVersion = async (command) => {
   }
 };
 
+// 监听 activeVersion 的变化
+watch(
+  () => props.activeVersion,
+  (newVal) => {
+    if (newVal) {
+      postVersion.value = newVal;
+    }
+  }
+);
+
+const postVersion = ref(props.currentVersion); // 文章真正的版本
+
 // 设置当前版本为活动版本
 const handleSetActive = async (version) => {
   try {
     const response = await activateVersion(props.postId, version.version);
     if (response.data.status === 200) {
       ElMessage.success("设置活动版本成功");
+      // 更新当前激活版本号
+      postVersion.value = version.version;
       await loadVersions();
       // 更新选中的版本
       selectedVersion.value = version;
@@ -103,11 +121,15 @@ const handleSetActive = async (version) => {
 };
 
 // 版本变更处理
-const handleVersionChange = (versionId) => {
-  const selected = versions.value.find((v) => v.versionId === versionId);
-  if (selected) {
-    selectedVersion.value = selected;
-    emit("update:modelValue", selected);
+const handleVersionChange = (version) => {
+  console.log("选中的版本对象:", version);
+
+  if (version) {
+    console.log("找到匹配的版本");
+    selectedVersion.value = version;
+    emit("update:modelValue", version);
+  } else {
+    console.log("未找到匹配的版本");
   }
 };
 
@@ -140,9 +162,7 @@ const handleDeleteVersion = async (version) => {
   }
 };
 
-const postVersion = ref(null);
 onMounted(() => {
-  postVersion.value = props.currentVersion;
   loadVersions();
 });
 

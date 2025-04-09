@@ -6,6 +6,7 @@ import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.model.*;
 import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.model.tag.PostTag;
+import com.kitty.blog.domain.repository.post.PostSearchCriteria;
 import com.kitty.blog.domain.service.PostService;
 import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
@@ -331,9 +332,9 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Post>>> findByTitleContaining
+    public ResponseEntity<Response<List<PostDto>>> findByTitleContaining
             (@PathVariable String keyword) {
-        ResponseEntity<List<Post>> response = postService.findByTitleContaining(keyword);
+        ResponseEntity<List<PostDto>> response = postService.findByTitleContaining(keyword);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -370,7 +371,7 @@ public class PostController {
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or @postService.isAuthorOfOpenPost(#username, #user.id)")
     @Operation(summary = "根据用户名和发布状态查询文章列表")
-    @GetMapping("/admin/find/{username}/{isPublished}/published")
+    @GetMapping("/public/find/{username}/{isPublished}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
@@ -709,5 +710,26 @@ public class PostController {
         return Response.createResponse(response,
                 HttpStatus.OK, "获取成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "获取互动统计失败");
+    }
+
+    /**
+     * 搜索文章
+     */
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "搜索文章")
+    @PostMapping("/public/search")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "搜索成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    public ResponseEntity<Response<List<PostDto>>> search(
+            @RequestBody PostSearchCriteria criteria,
+            @AuthenticationPrincipal LoginResponseDto user) {
+        criteria.setUserId(user.getId());
+        List<PostDto> posts = postService.searchPostsByMultipleCriteria(criteria);
+        return Response.createResponse(
+                new ResponseEntity<>(posts, HttpStatus.OK),
+                HttpStatus.OK, "搜索成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "搜索失败");
     }
 }

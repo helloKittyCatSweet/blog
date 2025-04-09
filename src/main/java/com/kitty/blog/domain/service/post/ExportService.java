@@ -6,7 +6,7 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.element.Paragraph;
 import com.kitty.blog.domain.model.Post;
 import com.kitty.blog.domain.model.User;
-import com.kitty.blog.domain.repository.PostRepository;
+import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.infrastructure.utils.AliyunOSSUploader;
 import com.vladsch.flexmark.html2md.converter.FlexmarkHtmlConverter;
 import org.springframework.beans.factory.annotation.Autowired;

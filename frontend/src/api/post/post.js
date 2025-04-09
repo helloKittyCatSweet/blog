@@ -61,13 +61,22 @@ export const findByCategory = (category) =>
 
 // 根据用户名和发布状态查询文章列表
 export const findByUserAndStatus = ({ username, isPublished }) =>
-  request.get(`${postPrefix}/admin/find/user/${username}/${isPublished}/published`)
+  request.get(`${postPrefix}/public/find/user/${username}/${isPublished}`)
 
 // 根据用户名查找文章列表
 export const findByUsername = (username) => request.get(`${postPrefix}/public/find/user/${username}`)
 
 // 根据标题关键字查询文章列表
-export const findByKeysInTitle = (keyword) => request.get(`${postPrefix}/public/find/title/${keyword}`)
+
+export const findByKeysInTitle = async (keyword, isPublished = null) => {
+  const url = `${postPrefix}/public/find/title/${keyword}`
+  // 如果提供了发布状态，在前端进行过滤
+  const response = await request.get(url)
+  if (isPublished !== null && response.data?.data) {
+    response.data.data = response.data.data.filter(post => post.isPublished === isPublished)
+  }
+  return response
+}
 
 // 根据内容关键字查询文章列表
 export const findByKeysInContent = (keyword) => request.get(`${postPrefix}/public/find/content/${keyword}`)
@@ -113,3 +122,6 @@ export const getInteractionStats = () => request.get(`${postPrefix}/public/dashb
 // 获取最近文章
 export const getRecentPosts = (limit = 5) =>
   request.get(`${postPrefix}/public/dashboard/recent-posts`, { params: { limit } })
+
+// 搜索文章
+export const searchPosts = (criteria) => request.post(`${postPrefix}/public/search`, criteria)

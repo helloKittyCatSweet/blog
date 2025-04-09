@@ -78,6 +78,9 @@ public class Post implements Serializable {
     @Column(name = "visibility")
     private String visibility;
 
+    @Column(name = "is_deleted")
+    private boolean isDeleted = false;
+
     /**
      * Transient 字段，不参与数据库的映射，仅用于业务逻辑处理
      */

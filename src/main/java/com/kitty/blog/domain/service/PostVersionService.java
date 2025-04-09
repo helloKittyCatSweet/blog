@@ -1,7 +1,7 @@
 package com.kitty.blog.domain.service;
 
 import com.kitty.blog.domain.model.PostVersion;
-import com.kitty.blog.domain.repository.PostRepository;
+import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.PostVersionRepository;
 import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;

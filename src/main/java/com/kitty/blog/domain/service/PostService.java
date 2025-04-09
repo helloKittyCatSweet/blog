@@ -5,12 +5,14 @@ import com.kitty.blog.common.constant.Visibility;
 import com.kitty.blog.application.dto.common.FileDto;
 import com.kitty.blog.domain.model.*;
 import com.kitty.blog.domain.model.category.Category;
-import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.model.tag.Tag;
 import com.kitty.blog.common.constant.ActivityType;
 import com.kitty.blog.domain.model.UserActivity;
 import com.kitty.blog.domain.repository.*;
 import com.kitty.blog.domain.repository.CategoryRepository;
+import com.kitty.blog.domain.repository.post.PostRepository;
+import com.kitty.blog.domain.repository.post.PostSearchCriteria;
+import com.kitty.blog.domain.repository.post.PostSpecification;
 import com.kitty.blog.domain.repository.tag.TagRepository;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.domain.service.tag.TagWeightService;
@@ -22,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -29,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -205,7 +207,6 @@ public class PostService {
                 (updatedPost.getPostId(), updatedPost.getVersion()).orElse(new PostVersion());
         postVersion.setContent(updatedPost.getContent());
         postVersionRepository.save(postVersion);
-        postVersionRepository.save(postVersion);
 
         // 构建返回的 PostDto
         PostDto postDto = new PostDto();
@@ -368,10 +369,25 @@ public class PostService {
 
     @Transactional
     @Cacheable(key = "#postId")
-    public ResponseEntity<List<Post>> findByTitleContaining(String keyword) {
-        return new ResponseEntity<>(
-                postRepository.findByTitleContaining(keyword).orElse(new ArrayList<>()),
-                HttpStatus.OK);
+    public ResponseEntity<List<PostDto>> findByTitleContaining(String keyword) {
+        List<Post> posts = postRepository.findByTitleContaining(keyword).orElse(new ArrayList<>());
+        List<PostDto> postDtos = posts.stream().map(post -> {
+            PostDto postDto = new PostDto();
+            postDto.setPost(post);
+            postDto.setCategory(categoryRepository.findByPostId(post.getPostId()).orElse(new Category()));
+            postDto.setTags(tagRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
+            postDto.setComments(commentRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
+
+            // 设置作者信息
+            User author = userRepository.findById(post.getUserId()).orElse(null);
+            if (author != null) {
+                postDto.setAuthor(author.getUsername());
+            }
+
+            return postDto;
+        }).collect(Collectors.toList());
+
+        return new ResponseEntity<>(postDtos, HttpStatus.OK);
     }
 
     @Transactional
@@ -559,7 +575,9 @@ public class PostService {
         if (!existsById(postId).getBody()) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
-        postRepository.deleteById(postId);
+        postRepository.findById(postId).orElse(new Post()).setDeleted(true);
+
+//        postRepository.deleteById(postId);
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
@@ -677,5 +695,69 @@ public class PostService {
                 .collect(Collectors.toList());
 
         return new ResponseEntity<>(postDtos, HttpStatus.OK);
+    }
+
+    @Transactional
+    public List<Post> searchPosts(PostSearchCriteria criteria) {
+        Specification<Post> spec = PostSpecification.createSpecification(criteria);
+        return postRepository.findAll(spec);
+    }
+
+    @Transactional
+    public List<PostDto> searchPostsByMultipleCriteria(PostSearchCriteria searchCriteria) {
+        // 构建搜索条件
+        PostSearchCriteria.PostSearchCriteriaBuilder builder = PostSearchCriteria.builder();
+
+        // 动态添加搜索条件
+        Optional.ofNullable(searchCriteria.getTitle())
+                .filter(title -> !title.trim().isEmpty())
+                .ifPresent(builder::title);
+
+        Optional.ofNullable(searchCriteria.getContent())
+                .filter(content -> !content.trim().isEmpty())
+                .ifPresent(builder::content);
+
+        Optional.ofNullable(searchCriteria.getUserId())
+                .ifPresent(builder::userId);
+
+        Optional.ofNullable(searchCriteria.getIsPublished())
+                .ifPresent(builder::isPublished);
+
+        Optional.ofNullable(searchCriteria.getVisibility())
+                .filter(visibility -> !visibility.trim().isEmpty())
+                .ifPresent(builder::visibility);
+
+        Optional.ofNullable(searchCriteria.getCategoryId())
+                .ifPresent(builder::categoryId);
+
+        Optional.ofNullable(searchCriteria.getTagId())
+                .ifPresent(builder::tagId);
+
+        Optional.ofNullable(searchCriteria.getStartDate())
+                .ifPresent(builder::startDate);
+
+        Optional.ofNullable(searchCriteria.getEndDate())
+                .ifPresent(builder::endDate);
+
+        // 执行搜索
+        List<Post> posts = searchPosts(builder.build());
+
+        // 转换为 PostDto
+        return posts.stream()
+                .map(post -> {
+                    PostDto dto = new PostDto();
+                    dto.setPost(post);
+                    dto.setCategory(categoryRepository.findByPostId(post.getPostId()).orElse(new Category()));
+                    dto.setTags(tagRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
+                    dto.setComments(commentRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
+
+                    User author = userRepository.findById(post.getUserId()).orElse(null);
+                    if (author != null) {
+                        dto.setAuthor(author.getUsername());
+                    }
+
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 }

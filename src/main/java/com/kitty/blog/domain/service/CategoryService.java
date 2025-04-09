@@ -4,7 +4,7 @@ import com.kitty.blog.application.dto.category.CategoryTreeBuilder;
 import com.kitty.blog.application.dto.category.TreeDto;
 import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.repository.CategoryRepository;
-import com.kitty.blog.domain.repository.PostRepository;
+import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;

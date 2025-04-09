@@ -5,7 +5,7 @@ import com.kitty.blog.application.dto.userActivity.UserActivityDto;
 import com.kitty.blog.domain.model.Post;
 import com.kitty.blog.domain.model.User;
 import com.kitty.blog.domain.model.UserActivity;
-import com.kitty.blog.domain.repository.PostRepository;
+import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.UserActivityRepository;
 import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;

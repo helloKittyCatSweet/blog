@@ -3,7 +3,6 @@ import {
   USER,
   USER_POST_MANAGE_PATH,
   USER_POST_LIST_PATH,
-  USER_POST_VERSION_MANAGE_PATH,
   USER_POST_EDIT_PATH,
   USER_POST_CREATE_PATH,
   USER_POST_ATTACHMENT_LIST_PATH,
@@ -65,15 +64,6 @@ export default [
             component: () => import('@/views/post/user/PostEdit.vue'),
             meta: {
               title: '编辑文章',
-              breadcrumb: true,
-              roles: [ROLES.USER],
-            }
-          },
-          {
-            path: USER_POST_VERSION_MANAGE_PATH,
-            component: () => import('@/views/post/user/PostVersionManage.vue'),
-            meta: {
-              title: '文章版本管理',
               breadcrumb: true,
               roles: [ROLES.USER],
             }

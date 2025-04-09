@@ -5,7 +5,7 @@ import com.kitty.blog.application.dto.comment.TreeDto;
 import com.kitty.blog.domain.model.Comment;
 import com.kitty.blog.domain.model.Post;
 import com.kitty.blog.domain.repository.CommentRepository;
-import com.kitty.blog.domain.repository.PostRepository;
+import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
