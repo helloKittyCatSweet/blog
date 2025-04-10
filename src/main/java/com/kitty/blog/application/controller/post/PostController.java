@@ -835,4 +835,16 @@ public class PostController {
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
     }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "生成文章摘要")
+    @PostMapping("/public/summary")
+    public ResponseEntity<Response<String>> generateSummary(@RequestBody String content) {
+        String summary = postService.generateAbstract(content);
+        return Response.createResponse(
+                new ResponseEntity<>(summary, HttpStatus.OK),
+                HttpStatus.OK, "生成成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "生成失败");
+    }
+
 }

@@ -153,3 +153,11 @@ export const searchPosts = (criteria) => request.post(`${postPrefix}/public/sear
 
 // 根据用户id查询附件列表
 export const findAttachmentsByUserId = () => request.get(`${postPrefix}/public/find/attachments`)
+
+// 生成文章摘要
+export const generateSummary = (content) =>
+  request.post(`${postPrefix}/public/summary`, { content }, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })

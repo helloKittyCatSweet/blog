@@ -175,3 +175,11 @@ frontend:
 encryption:
   key:
     pf46F20xY/x+owVHLxbSeA==
+
+xunfei:
+  hostUrl: "wss://maas-api.cn-huabei-1.xf-yun.com/v1.1/chat"
+  appId: "c73dd22e"
+  apiKey: "c09f43b355833ace9136ab3ed88d8723"
+  apiSecret: "MWEwMTNkY2YyZjMzZDc0NWVkZTgyMTg3"
+  patchId: "1905925166225440768"
+  domain: "xdeepseekr1qwen7b"

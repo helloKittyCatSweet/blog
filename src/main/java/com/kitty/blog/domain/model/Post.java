@@ -39,6 +39,9 @@ public class Post implements Serializable {
     @Column(nullable = false)
     private String title;
 
+    @Column(columnDefinition = "TEXT", name = "abstract_content")
+    private String abstractContent;
+
     @Column(nullable = false, columnDefinition = "LONGTEXT")
     @Lob
     private String content;

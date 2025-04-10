@@ -25,7 +25,7 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
    */
   // save
   @Query("SELECT CASE WHEN COUNT(c) > 0 " +
-      "THEN true ELSE false END FROM Comment c WHERE c.commentId = ?1")
+          "THEN true ELSE false END FROM Comment c WHERE c.commentId = ?1")
   boolean existsById(Integer commentId);
 
   /**
@@ -50,7 +50,7 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
 
   /**
    * 根据postId查找评论列表
-   * 
+   *
    * @param postId
    * @return
    */
@@ -59,10 +59,21 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
 
   /**
    * 根据userId查找评论列表
-   * 
+   *
    * @param postId
    * @return
    */
   @Query("SELECT c FROM Comment c WHERE c.userId = ?1")
   Optional<Integer> getCommentCountByPostId(Integer postId);
+
+  /**
+   * 根据用户ID查找评论列表
+   * @param userId 用户ID
+   * @return 评论列表
+   */
+  @Query("SELECT c FROM Comment c WHERE c.userId = ?1 ORDER BY c.createdAt DESC")
+  Optional<List<Comment>> findByUserId(Integer userId);
+
+  @Query("SELECT c FROM Comment c JOIN Post p ON c.postId = p.postId WHERE p.userId = ?1")
+  Optional<List<Comment>> findByPostAuthorId(Integer authorId);
 }

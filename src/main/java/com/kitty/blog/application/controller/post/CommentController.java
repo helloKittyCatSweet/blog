@@ -1,6 +1,8 @@
 package com.kitty.blog.application.controller.post;
 
+import com.kitty.blog.application.dto.comment.CommentDto;
 import com.kitty.blog.application.dto.comment.TreeDto;
+import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.model.Comment;
 import com.kitty.blog.domain.service.CommentService;
 import com.kitty.blog.infrastructure.utils.Response;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -105,6 +108,40 @@ public class CommentController {
     public ResponseEntity<Response<List<TreeDto>>> findByPostId(
             @PathVariable Integer postId) {
         ResponseEntity<List<TreeDto>> response = commentService.findByPostId(postId);
+        return Response.createResponse(response,
+                HttpStatus.OK, "获取成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_COMMENT_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @Operation(summary = "根据用户ID获取评论")
+    @GetMapping("/public/find/user/{userId}")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "获取成功"),
+            @ApiResponse(responseCode = "403", description = "无权限访问"),
+            @ApiResponse(responseCode = "404", description = "用户不存在")
+    })
+    public ResponseEntity<Response<List<CommentDto>>> getCommentsByUser(
+            @PathVariable Integer userId) {
+        ResponseEntity<List<CommentDto>> response = commentService.findByUserId(userId);
+        return Response.createResponse(response,
+                HttpStatus.OK, "获取成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
+    }
+
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "获取作者文章的所有评论")
+    @GetMapping("/public/find/author")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "获取成功"),
+            @ApiResponse(responseCode = "403", description = "无权限访问"),
+            @ApiResponse(responseCode = "404", description = "作者不存在")
+    })
+    public ResponseEntity<Response<List<CommentDto>>> getAuthorPostComments
+            (@AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<List<CommentDto>> response = commentService.findByPostAuthor(user.getId());
         return Response.createResponse(response,
                 HttpStatus.OK, "获取成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");

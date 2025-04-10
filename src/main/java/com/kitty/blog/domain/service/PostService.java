@@ -17,6 +17,7 @@ import com.kitty.blog.domain.repository.post.PostSearchCriteria;
 import com.kitty.blog.domain.repository.post.PostSpecification;
 import com.kitty.blog.domain.repository.tag.TagRepository;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+import com.kitty.blog.domain.service.post.abstractContent.XunfeiService;
 import com.kitty.blog.domain.service.tag.TagWeightService;
 import com.kitty.blog.infrastructure.utils.AliyunOSSUploader;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
@@ -77,6 +78,9 @@ public class PostService {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private XunfeiService xunfeiService;
 
     @Transactional
     public ResponseEntity<PostDto> create(PostDto input) {
@@ -857,5 +861,15 @@ public class PostService {
         }
 
         return attachmentDtos;
+    }
+
+    @Transactional
+    public String generateAbstract(String content){
+        final String instruction = "请仔细阅读以下文章，生成一个准确、完整且简洁的摘要。摘要应当：" +
+                "\\n1. 包含文章的主要论点和核心观点" +
+                "\\n2. 保留关键的事实和数据\\n3. 使用简洁清晰的语言\\n4. 确保摘要的逻辑性和连贯性";
+        String summary = xunfeiService.chat(instruction + content);
+        log.info("生成摘要请求：{}, 结果：{}", content, summary );
+        return summary;
     }
 }

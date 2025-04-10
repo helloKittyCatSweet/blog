@@ -12,6 +12,7 @@ import {
   uploadAttachment,
   deleteAttachment,
   uploadPostCover,
+  generateSummary,
 } from "@/api/post/post.js";
 import { USER_POST_LIST_PATH } from "@/constants/routes/user.js";
 import { useUserStore } from "@/stores";
@@ -39,6 +40,7 @@ const form = ref({
   categoryId: null,
   tags: [],
   author: "",
+  summary: "",
 });
 
 // 表单校验规则
@@ -69,7 +71,9 @@ const getPostDetail = async (id) => {
         categoryId: postData.category?.categoryId || null,
         tags: postData.tags || [],
         author: postData.author,
+        summary: postData.post.summary || "", // 加载文章摘要
       };
+      postSummary.value = postData.post.summary || ""; // 更新显示的摘要
       fileList.value =
         postData.attachments?.map((att) => ({
           name: att.attachmentName,
@@ -218,6 +222,7 @@ const handleSave = async (isDraft = true) => {
             isPublished: !isDraft,
             visibility: form.value.visibility,
             version: form.value.version,
+            summary: postSummary.value || form.value.summary,
           },
           category: form.value.category || null,
           tags: form.value.tags || [],
@@ -360,6 +365,37 @@ const handleVersionChange = (version) => {
     editorKey.value += 1;
   }
 };
+
+/**
+ * 生成摘要
+ */
+const postSummary = ref("");
+const summaryLoading = ref(false);
+
+// 添加生成摘要的方法
+const handleGenerateSummary = async () => {
+  if (!form.value.content) {
+    ElMessage.warning("请先输入文章内容");
+    return;
+  }
+
+  summaryLoading.value = true;
+  try {
+    const response = await generateSummary(form.value.content);
+    if (response.data?.status === 200) {
+      const summary = response.data.data;
+      console.log("生成的摘要：", summary);
+      form.value.summary = summary; // 保存到表单数据中
+      postSummary.value = summary; // 更新显示的摘要
+      ElMessage.success("摘要生成成功");
+    }
+  } catch (error) {
+    console.error("生成摘要失败:", error);
+    ElMessage.error("生成摘要失败");
+  } finally {
+    summaryLoading.value = false;
+  }
+};
 </script>
 
 <template>
@@ -418,6 +454,30 @@ const handleVersionChange = (version) => {
             <el-radio :value="PUBLIC">公开</el-radio>
             <el-radio :value="PRIVATE">私密</el-radio>
           </el-radio-group>
+        </el-form-item>
+
+        <!-- 在文章基本信息区域添加摘要输入框和生成按钮 -->
+        <el-form-item label="文章摘要">
+          <el-input
+            v-model="postSummary"
+            type="textarea"
+            :rows="5"
+            :autosize="{ minRows: 5, maxRows: 10 }"
+            placeholder="请输入文章摘要，或点击右侧按钮自动生成"
+          />
+          <div class="summary-actions">
+            <div class="summary-tip">
+              <el-icon><Warning /></el-icon>
+              内容由微调Deepseek生成，请甄别
+            </div>
+            <el-button
+              type="primary"
+              :loading="summaryLoading"
+              @click="handleGenerateSummary"
+            >
+              自动生成摘要
+            </el-button>
+          </div>
         </el-form-item>
 
         <el-form-item label="文章内容" prop="content">
@@ -627,5 +687,69 @@ const handleVersionChange = (version) => {
 
 .delete-btn {
   margin-left: 10px;
+}
+
+.summary-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end; /* 修改为右对齐 */
+  align-items: center;
+  gap: 16px; /* 增加间距 */
+}
+
+.summary-tip {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto; /* 让提示文字靠左 */
+}
+
+:deep(.el-textarea__inner) {
+  min-height: 120px !important;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 12px;
+  width: 100%;
+}
+
+.summary-tip .el-icon {
+  font-size: 16px;
+  color: var(--el-color-warning);
+  transform: scale(1.2);
+}
+
+.summary-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.generate-btn {
+  position: absolute;
+  right: 0;
+  top: 0;
+  margin: 8px;
+  z-index: 1;
+}
+
+.summary-tip {
+  margin-top: 8px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:deep(.el-textarea__inner) {
+  min-height: 120px !important;
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 12px;
+  padding-right: 130px; /* 为按钮留出空间 */
+  width: 100%;
 }
 </style>

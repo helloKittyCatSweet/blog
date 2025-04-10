@@ -1,9 +1,11 @@
 package com.kitty.blog.domain.service;
 
+import com.kitty.blog.application.dto.comment.CommentDto;
 import com.kitty.blog.application.dto.comment.CommentTreeBuilder;
 import com.kitty.blog.application.dto.comment.TreeDto;
 import com.kitty.blog.domain.model.Comment;
 import com.kitty.blog.domain.model.Post;
+import com.kitty.blog.domain.model.User;
 import com.kitty.blog.domain.repository.CommentRepository;
 import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.UserRepository;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -136,6 +139,65 @@ public class CommentService {
                     commentRepository.getCommentCountByPostId(postId).orElse(0),
                     HttpStatus.OK);
         }
+    }
+
+    @Transactional
+    public ResponseEntity<List<CommentDto>> findByUserId(Integer userId) {
+        if (!userRepository.existsById(userId)) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        }
+
+        List<Comment> comments = commentRepository.findByUserId(userId)
+                .orElse(Collections.emptyList());
+
+        List<CommentDto> commentDtos = new ArrayList<>();
+        for (Comment comment : comments) {
+            Post post = (Post) postRepository.findById(comment.getPostId()).orElse(new Post());
+            User user = (User) userRepository.findById(comment.getUserId()).orElse(new User());
+            CommentDto commentDto = CommentDto.builder()
+                    .commentId(comment.getCommentId())
+                    .postId(comment.getPostId())
+                    .title(post.getTitle())
+                    .content(comment.getContent())
+                    .userId(comment.getUserId())
+                    .username(user.getUsername())
+                    .createdAt(comment.getCreatedAt().toString())
+                    .likes(comment.getLikes())
+                    .build();
+            commentDtos.add(commentDto);
+        }
+
+        return new ResponseEntity<>(commentDtos, HttpStatus.OK);
+    }
+
+    @Transactional
+    public ResponseEntity<List<CommentDto>> findByPostAuthor(Integer authorId) {
+        // 验证作者是否存在
+        if (!userRepository.existsById(authorId)) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        }
+
+        List<Comment> comments = commentRepository.findByPostAuthorId(authorId)
+                .orElse(Collections.emptyList());
+
+        List<CommentDto> commentDtos = new ArrayList<>();
+        for (Comment comment : comments) {
+            Post post = (Post) postRepository.findById(comment.getPostId()).orElse(new Post());
+            User user = (User) userRepository.findById(comment.getUserId()).orElse(new User());
+            CommentDto commentDto = CommentDto.builder()
+                    .commentId(comment.getCommentId())
+                    .postId(comment.getPostId())
+                    .title(post.getTitle())
+                    .content(comment.getContent())
+                    .userId(comment.getUserId())
+                    .username(user.getUsername())
+                    .createdAt(comment.getCreatedAt().toString())
+                    .likes(comment.getLikes())
+                    .build();
+            commentDtos.add(commentDto);
+        }
+
+        return new ResponseEntity<>(commentDtos, HttpStatus.OK);
     }
 
     /**
