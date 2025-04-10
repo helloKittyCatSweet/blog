@@ -4,7 +4,6 @@ import { ElMessage, ElMessageBox } from "element-plus";
 import { Search, Edit, Delete } from "@element-plus/icons-vue";
 import PageContainer from "@/components/PageContainer.vue";
 import { findByUserList, update, searchReports, deleteById } from "@/api/post/report";
-import { formatDateTime } from "@/utils/format";
 
 // 表格数据
 const loading = ref(false);
@@ -221,7 +220,7 @@ const handleDelete = (row) => {
         </el-table-column>
         <el-table-column prop="createdAt" label="举报时间" width="180">
           <template #default="{ row }">
-            {{ formatDateTime(row.createdAt) }}
+            {{ row.createdAt }}
           </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">

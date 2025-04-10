@@ -1,190 +1,393 @@
-<script>
+<script setup>
 import { ref, onMounted } from "vue";
-import { ElMessage } from "element-plus";
-import axios from "axios";
+import { ElMessage, ElMessageBox } from "element-plus";
+import { Search, View, Delete } from "@element-plus/icons-vue";
+import PageContainer from "@/components/PageContainer.vue";
+import { review, findAll, searchReports, deleteById } from "@/api/post/report";
+import * as XLSX from "xlsx";
+import table2Excel from "js-table2excel";
+import { formatDate } from "@/utils/date.js";
+import { debounce } from "lodash-es";
 
-export default {
-  name: "ReportManage",
-  setup() {
-    const reports = ref([]);
-    const searchKeyword = ref("");
-    const searchStatus = ref("");
-    const currentPage = ref(1);
-    const pageSize = ref(10);
-    const total = ref(0);
-    const reviewDialogVisible = ref(false);
-    const detailsDialogVisible = ref(false);
-    const selectedReport = ref(null);
-    const reviewForm = ref({
-      approved: true,
-      comment: "",
-    });
+// 表格数据
+const loading = ref(false);
+const tableData = ref([]);
+const total = ref(0);
+const currentPage = ref(1);
+const pageSize = ref(10);
 
-    const statusOptions = [
-      { value: "PENDING", label: "待处理" },
-      { value: "APPROVED", label: "已通过" },
-      { value: "REJECTED", label: "已驳回" },
-    ];
+// 搜索条件
+const searchKey = ref("");
+const statusFilter = ref("");
 
-    const getStatusType = (status) => {
-      const statusMap = {
-        PENDING: "warning",
-        APPROVED: "success",
-        REJECTED: "danger",
-      };
-      return statusMap[status] || "info";
-    };
+// 审核对话框
+const reviewDialogVisible = ref(false);
+const formRef = ref(null);
+const reviewForm = ref({
+  reportId: null,
+  approved: true,
+  comment: "",
+});
 
-    const getStatusLabel = (status) => {
-      const statusMap = {
-        PENDING: "待处理",
-        APPROVED: "已通过",
-        REJECTED: "已驳回",
-      };
-      return statusMap[status] || status;
-    };
+const rules = {
+  comment: [{ required: true, message: "请输入审核意见", trigger: "blur" }],
+};
 
-    const searchReports = async () => {
+// 获取举报列表
+const getReportList = async () => {
+  loading.value = true;
+  try {
+    let res;
+    const params = {};
+    if (searchKey.value.trim() || statusFilter.value) {
+      params.keyword = searchKey.value.trim();
+      params.status = statusFilter.value;
+      params.isAdmin = true;
+      res = await searchReports(params);
+    } else {
+      res = await findAll();
+    }
+    if (res.data.status === 200) {
+      tableData.value = res.data.data || [];
+      total.value = Number(res.data.total || res.data.data.length) || 0;
+    } else {
+      ElMessage.error("获取数据失败：" + res.data.message);
+      tableData.value = [];
+      total.value = 0;
+    }
+  } catch (error) {
+    ElMessage.error("获取数据失败：" + error.message);
+    tableData.value = [];
+    total.value = 0;
+  }
+  loading.value = false;
+};
+
+const debouncedGetList = debounce(getReportList, 300);
+
+// 状态处理
+const getStatusType = (status) => {
+  const map = {
+    PENDING: "warning",
+    REVIEWING: "info",
+    APPROVED: "success",
+    REJECTED: "danger",
+  };
+  return map[status];
+};
+
+const getStatusLabel = (status) => {
+  const map = {
+    PENDING: "待处理",
+    REVIEWING: "审核中",
+    APPROVED: "已通过",
+    REJECTED: "已驳回",
+  };
+  return map[status];
+};
+
+// 处理审核
+const handleReview = (row) => {
+  reviewForm.value = {
+    reportId: row.reportId,
+    approved: true,
+    comment: "",
+  };
+  reviewDialogVisible.value = true;
+};
+
+// 提交审核
+const submitReview = async () => {
+  if (!formRef.value) return;
+  await formRef.value.validate(async (valid) => {
+    if (valid) {
       try {
-        const response = await axios.get("/api/post/report/admin/search", {
-          params: {
-            keyword: searchKeyword.value,
-            status: searchStatus.value,
-            isAdmin: true,
-          },
+        const res = await review(reviewForm.value.reportId, {
+          approved: reviewForm.value.approved,
+          comment: reviewForm.value.comment,
         });
-        reports.value = response.data.data;
-      } catch (error) {
-        ElMessage.error("获取举报列表失败");
-      }
-    };
-
-    const handleReview = (report) => {
-      selectedReport.value = report;
-      reviewForm.value = {
-        approved: true,
-        comment: "",
-      };
-      reviewDialogVisible.value = true;
-    };
-
-    const submitReview = async () => {
-      try {
-        await axios.post(
-          `/api/post/report/admin/review/${selectedReport.value.reportId}`,
-          null,
-          {
-            params: {
-              approved: reviewForm.value.approved,
-              comment: reviewForm.value.comment,
-            },
-          }
-        );
-        ElMessage.success("审核成功");
-        reviewDialogVisible.value = false;
-        searchReports();
+        if (res.data.status === 200) {
+          ElMessage.success("审核成功");
+          reviewDialogVisible.value = false;
+          formRef.value.resetFields();
+          await getReportList();
+        }
       } catch (error) {
         ElMessage.error("审核失败");
       }
-    };
+    }
+  });
+};
 
-    const viewDetails = (report) => {
-      selectedReport.value = report;
-      detailsDialogVisible.value = true;
-    };
+// 查看文章
+const viewPost = (postId) => {
+  window.open(`/post/${postId}`, "_blank");
+};
 
-    const handleSizeChange = (val) => {
-      pageSize.value = val;
-      searchReports();
-    };
+// 分页处理
+const handleSizeChange = (val) => {
+  pageSize.value = val;
+  getReportList();
+};
 
-    const handleCurrentChange = (val) => {
-      currentPage.value = val;
-      searchReports();
-    };
+const handleCurrentChange = (val) => {
+  currentPage.value = val;
+  getReportList();
+};
 
-    onMounted(() => {
-      searchReports();
+onMounted(() => {
+  getReportList();
+});
+
+/**
+ * 搜索
+ */
+const handleSearch = async () => {
+  loading.value = true;
+  try {
+    const params = {
+      keyword: searchKey.value.trim(),
+      status: statusFilter.value,
+      isAdmin: true,
+      page: currentPage.value,
+      pageSize: pageSize.value,
+    };
+    console.log("搜索参数：", params);
+    const res = await searchReports(params);
+    if (res.data.status === 200) {
+      tableData.value = res.data.data || [];
+      total.value = Number(res.data.data.length) || 0;
+    }
+  } catch (error) {
+    console.error("搜索错误：", error.response?.data || error);
+    ElMessage.error("搜索失败");
+  }
+  loading.value = false;
+};
+
+// 重置搜索
+const resetSearch = () => {
+  searchKey.value = "";
+  statusFilter.value = "";
+  getReportList();
+};
+
+/**
+ * 删除举报
+ */
+// 删除举报记录
+const deleteReport = async (row) => {
+  // 只有状态为已通过或已驳回时才允许删除
+  if (["APPROVED", "REJECTED"].includes(row.status)) {
+    ElMessageBox.confirm("确定要删除这条举报吗？", "提示", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    }).then(async () => {
+      try {
+        console.log("reportId:", row.reportId);
+        const response = await deleteById(row.reportId);
+        if (response.data.status === 200) {
+          ElMessage.success("删除成功");
+          handleSearch();
+        } else {
+          ElMessage.error("删除失败");
+        }
+      } catch (error) {
+        ElMessage.error("删除失败");
+      }
     });
+  } else {
+    ElMessage.warning("只有已通过或已驳回的举报才能删除");
+  }
+};
 
-    return {
-      reports,
-      searchKeyword,
-      searchStatus,
-      statusOptions,
-      currentPage,
-      pageSize,
-      total,
-      reviewDialogVisible,
-      detailsDialogVisible,
-      selectedReport,
-      reviewForm,
-      getStatusType,
-      getStatusLabel,
-      searchReports,
-      handleReview,
-      submitReview,
-      viewDetails,
-      handleSizeChange,
-      handleCurrentChange,
-    };
-  },
+const batchDelete = async () => {
+  if (multipleSelection.value.length === 0) return;
+
+  ElMessageBox.confirm(
+    `确定要删除这${multipleSelection.value.length}条举报吗？`,
+    "提示",
+    {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    }
+  ).then(async () => {
+    try {
+      const ids = multipleSelection.value.map((item) => item.reportId);
+      await Promise.all(ids.map((id) => deleteById(id)));
+      ElMessage.success(`已删除${ids.length}条举报`);
+      getReportList();
+    } catch (error) {
+      ElMessage.error("批量删除失败");
+    }
+  });
+};
+
+/**
+ * 导出举报
+ */
+// 导出 Excel
+const exportExcel = () => {
+  if (tableData.value.length === 0) {
+    ElMessage.warning("暂无数据可供导出");
+    return;
+  }
+  const exportConfig = [
+    { title: "序号", key: "index", type: "text" },
+    { title: "用户名称", key: "username", type: "text" },
+    { title: "举报原因", key: "reason", type: "text" },
+    { title: "被举报文章", key: "postTitle", type: "text" },
+    { title: "举报时间", key: "createdAt", type: "text" },
+    { title: "状态", key: "status", type: "text" },
+    { title: "处理意见", key: "comment", type: "text" },
+  ];
+
+  const data = tableData.value.map((item, index) => ({
+    ...item,
+    index: index + 1,
+    createdAt: item.createdAt,
+    status: getStatusLabel(item.status),
+  }));
+
+  const fileName = `举报数据_${new Date().toLocaleDateString()}`; // 添加日期后缀
+  table2Excel(exportConfig, data, fileName);
+};
+
+/**
+ * 批量操作
+ */
+const multipleSelection = ref([]);
+const handleSelectionChange = (val) => {
+  multipleSelection.value = val;
 };
 </script>
+
 <template>
-  <div class="report-manage">
+  <page-container title="举报管理">
+    <!-- 搜索栏 -->
     <el-card class="search-card">
-      <div class="search-section">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索举报内容"
-          class="search-input"
-          clearable
-        />
-        <el-select v-model="searchStatus" placeholder="选择状态" clearable>
-          <el-option
-            v-for="item in statusOptions"
-            :key="item.value"
-            :label="item.label"
-            :value="item.value"
-          />
-        </el-select>
-        <el-button type="primary" @click="searchReports">搜索</el-button>
-      </div>
+      <el-row :gutter="20">
+        <el-col :span="6">
+          <el-input
+            v-model="searchKey"
+            placeholder="搜索举报内容"
+            clearable
+            @keyup.enter="handleSearch"
+            @input="debouncedGetList"
+          >
+            <template #suffix>
+              <el-icon class="el-input__icon">
+                <Search />
+              </el-icon>
+            </template>
+          </el-input>
+        </el-col>
+        <el-col :span="6">
+          <el-select v-model="statusFilter" placeholder="状态筛选" clearable>
+            <el-option label="待处理" value="PENDING" />
+            <el-option label="审核中" value="REVIEWING" />
+            <el-option label="已通过" value="APPROVED" />
+            <el-option label="已驳回" value="REJECTED" />
+          </el-select>
+        </el-col>
+        <el-col :span="12" style="text-align: right">
+          <el-button type="primary" :icon="Search" @click="getReportList">搜索</el-button>
+          <el-button @click="resetSearch"> 重置 </el-button>
+          <el-button type="success" @click="exportExcel">导出为 Excel</el-button>
+          <el-button
+            v-if="multipleSelection.length > 0"
+            type="danger"
+            @click="batchDelete"
+          >
+            批量删除({{ multipleSelection.length }})
+          </el-button>
+        </el-col>
+      </el-row>
     </el-card>
 
-    <el-card class="report-list">
-      <el-table :data="reports" style="width: 100%">
-        <el-table-column prop="reportId" label="ID" width="80" />
-        <el-table-column prop="userId" label="举报人ID" width="100" />
-        <el-table-column prop="postId" label="文章ID" width="100" />
-        <el-table-column prop="reason" label="举报原因" />
-        <el-table-column prop="description" label="详细描述" />
-        <el-table-column prop="status" label="状态" width="120">
-          <template #default="scope">
-            <el-tag :type="getStatusType(scope.row.status)">
-              {{ getStatusLabel(scope.row.status) }}
+    <!-- 表格 -->
+    <el-card class="table-card">
+      <el-table
+        v-loading="loading"
+        :data="tableData"
+        border
+        stripe
+        @selection-change="handleSelectionChange"
+      >
+        <template #empty>
+          <el-empty description="暂无举报数据" />
+        </template>
+        <el-table-column type="selection" width="55" />
+        <el-table-column type="index" label="序号" width="80" align="center" />
+        <el-table-column prop="username" label="用户名称" width="120" />
+        <el-table-column
+          prop="reason"
+          label="举报原因"
+          show-overflow-tooltip
+          width="120"
+        />
+        <el-table-column
+          prop="postTitle"
+          label="被举报文章"
+          width="200"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            <el-link type="primary" @click="viewPost(row.postId)">
+              {{ row.postTitle || "文章已删除" }}
+            </el-link>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdAt" label="举报时间" width="180">
+          <template #default="{ row }">
+            {{ formatDate(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="status" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag
+              :type="getStatusType(row.status)"
+              @click="
+                statusFilter = row.status;
+                getReportList();
+              "
+              style="cursor: pointer"
+            >
+              {{ getStatusLabel(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="举报时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
-          <template #default="scope">
+        <el-table-column
+          prop="comment"
+          label="处理意见"
+          show-overflow-tooltip
+          width="120"
+        />
+        <el-table-column label="操作" width="180" align="center" fixed="right">
+          <template #default="{ row }">
             <el-button
-              v-if="scope.row.status === 'PENDING'"
+              v-if="row.status === 'PENDING'"
               type="primary"
-              size="small"
-              @click="handleReview(scope.row)"
-            >
-              审核
-            </el-button>
-            <el-button type="info" size="small" @click="viewDetails(scope.row)">
-              详情
-            </el-button>
+              :icon="View"
+              circle
+              @click="handleReview(row)"
+              title="审核举报"
+            />
+            <el-button
+              v-if="['APPROVED', 'REJECTED'].includes(row.status)"
+              type="danger"
+              :icon="Delete"
+              circle
+              @click="deleteReport(row)"
+              title="删除举报"
+            />
           </template>
         </el-table-column>
       </el-table>
 
+      <!-- 分页 -->
       <div class="pagination">
         <el-pagination
           v-model:current-page="currentPage"
@@ -192,96 +395,55 @@ export default {
           :total="total"
           :page-sizes="[10, 20, 50, 100]"
           layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
+          @update:page-size="handleSizeChange"
+          @update:current-change="handleCurrentChange"
         />
       </div>
     </el-card>
 
     <!-- 审核对话框 -->
     <el-dialog v-model="reviewDialogVisible" title="举报审核" width="500px">
-      <div class="review-form">
-        <el-form :model="reviewForm" label-width="100px">
-          <el-form-item label="审核结果">
-            <el-radio-group v-model="reviewForm.approved">
-              <el-radio :label="true">通过</el-radio>
-              <el-radio :label="false">驳回</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="审核意见">
-            <el-input
-              v-model="reviewForm.comment"
-              type="textarea"
-              rows="4"
-              placeholder="请输入审核意见"
-            />
-          </el-form-item>
-        </el-form>
-      </div>
+      <el-form ref="formRef" :model="reviewForm" :rules="rules" label-width="100px">
+        <el-form-item label="审核结果">
+          <el-radio-group v-model="reviewForm.approved">
+            <el-radio :label="true">通过</el-radio>
+            <el-radio :label="false">驳回</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="审核意见" prop="comment">
+          <el-input
+            v-model="reviewForm.comment"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入审核意见"
+          />
+        </el-form-item>
+      </el-form>
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="reviewDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitReview">确认</el-button>
+          <el-button type="primary" @click="submitReview">确定</el-button>
         </span>
       </template>
     </el-dialog>
-
-    <!-- 详情对话框 -->
-    <el-dialog v-model="detailsDialogVisible" title="举报详情" width="600px">
-      <div v-if="selectedReport" class="report-details">
-        <p><strong>举报ID：</strong>{{ selectedReport.reportId }}</p>
-        <p><strong>举报人ID：</strong>{{ selectedReport.userId }}</p>
-        <p><strong>文章ID：</strong>{{ selectedReport.postId }}</p>
-        <p><strong>举报原因：</strong>{{ selectedReport.reason }}</p>
-        <p><strong>详细描述：</strong>{{ selectedReport.description }}</p>
-        <p><strong>状态：</strong>{{ getStatusLabel(selectedReport.status) }}</p>
-        <p><strong>举报时间：</strong>{{ selectedReport.createdAt }}</p>
-        <p v-if="selectedReport.comment">
-          <strong>审核意见：</strong>{{ selectedReport.comment }}
-        </p>
-      </div>
-    </el-dialog>
-  </div>
+  </page-container>
 </template>
 
 <style scoped>
-.report-manage {
-  padding: 20px;
-}
-
 .search-card {
   margin-bottom: 20px;
 }
 
-.search-section {
-  display: flex;
-  gap: 15px;
-}
-
-.search-input {
-  width: 200px;
-}
-
-.report-list {
-  margin-top: 20px;
+.table-card {
+  margin-bottom: 20px;
 }
 
 .pagination {
   margin-top: 20px;
-  display: flex;
-  justify-content: flex-end;
+  text-align: right;
 }
 
-.review-form {
-  padding: 20px;
-}
-
-.report-details {
-  padding: 20px;
-}
-
-.report-details p {
-  margin: 10px 0;
-  line-height: 1.5;
+.dialog-footer {
+  text-align: right;
 }
 </style>

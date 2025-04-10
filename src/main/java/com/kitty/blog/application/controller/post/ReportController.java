@@ -1,5 +1,6 @@
 package com.kitty.blog.application.controller.post;
 
+import com.kitty.blog.application.dto.report.ReportDto;
 import com.kitty.blog.common.constant.ReportStatus;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.model.Report;
@@ -244,8 +245,8 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Report>>> findAll() {
-        ResponseEntity<List<Report>> response = reportService.findAll();
+    public ResponseEntity<Response<List<ReportDto>>> findAll() {
+        ResponseEntity<List<ReportDto>> response = reportService.findAll();
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -354,12 +355,12 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Report>>> searchReports(
+    public ResponseEntity<Response<List<ReportDto>>> searchReports(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(required = true) boolean isAdmin,
             @AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<List<Report>> response = reportService.searchReports(
+        ResponseEntity<List<ReportDto>> response = reportService.searchReports(
                 user.getId(),
                 keyword != null ? keyword : "",
                 status,

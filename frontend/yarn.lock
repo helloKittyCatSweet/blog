@@ -2464,6 +2464,11 @@ isexe@^2.0.0:
   resolved "https://registry.npmmirror.com/isexe/-/isexe-2.0.0.tgz"
   integrity sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==
 
+js-table2excel@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.npmmirror.com/js-table2excel/-/js-table2excel-1.1.2.tgz"
+  integrity sha512-E5QcPLjlF7qcqqF+DgaPxj9b+lQsItMqkwcXKpODtZ8zo5f07huuvem3Ek1WYzOcSOalU7RwEAG/66WQ5PVfWA==
+
 js-tokens@^4.0.0:
   version "4.0.0"
   resolved "https://registry.npmmirror.com/js-tokens/-/js-tokens-4.0.0.tgz"

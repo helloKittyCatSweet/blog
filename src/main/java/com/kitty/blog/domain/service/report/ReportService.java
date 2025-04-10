@@ -1,5 +1,7 @@
 package com.kitty.blog.domain.service.report;
 
+import com.kitty.blog.application.dto.report.ReportDto;
+import com.kitty.blog.domain.model.Post;
 import com.kitty.blog.domain.model.User;
 import com.kitty.blog.domain.model.Report;
 import com.kitty.blog.common.constant.ReportStatus;
@@ -165,11 +167,36 @@ public class ReportService {
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public ResponseEntity<List<Report>> findAll() {
+    public ResponseEntity<List<ReportDto>> findAll() {
         if (reportRepository.count() == 0) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
         }
-        return new ResponseEntity<>(reportRepository.findAll(), HttpStatus.OK);
+        List<Report> reports = reportRepository.findAll();
+        List<ReportDto> reportDtos = new ArrayList<>();
+        fpr: for (Report report : reports) {
+            User user = userRepository.findById(report.getUserId()).orElse(null);
+            if (user == null) {
+                continue fpr;
+            }
+            Post post = postRepository.findById(report.getPostId()).orElse(null);
+            if (post == null) {
+                continue fpr;
+            }
+            ReportDto reportDto = ReportDto.builder()
+                    .reportId(report.getReportId())
+                    .postId(report.getPostId())
+                    .userId(report.getUserId())
+                    .reason(report.getReason())
+                    .createdAt(report.getCreatedAt())
+                    .status(report.getStatus())
+                    .processInstanceId(report.getProcessInstanceId())
+                    .comment(report.getComment())
+                    .username(user.getUsername())
+                    .postTitle(post.getTitle())
+                    .build();
+            reportDtos.add(reportDto);
+        }
+        return new ResponseEntity<>(reportDtos, HttpStatus.OK);
     }
 
     @Transactional
@@ -196,14 +223,14 @@ public class ReportService {
      * 搜索举报信息（根据角色权限）
      */
     @Transactional
-    public ResponseEntity<List<Report>> searchReports(Integer userId, String keyword, ReportStatus status, boolean isAdmin) {
+    public ResponseEntity<List<ReportDto>> searchReports
+    (Integer userId, String keyword, ReportStatus status, boolean isAdmin) {
         String username = userRepository.findById(userId).orElse(new User()).getUsername();
         if (username == null) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         }
         try {
             List<Report> reports;
-
 
             if (isAdmin) {
                 reports = reportRepository.searchReportsForAdmin(
@@ -217,7 +244,33 @@ public class ReportService {
                         status
                 );
             }
-            return new ResponseEntity<>(reports, HttpStatus.OK);
+
+            List<ReportDto> reportDtos = new ArrayList<>();
+            for (Report report : reports) {
+                User user = userRepository.findById(report.getUserId()).orElse(null);
+                if (user == null) {
+                    continue;
+                }
+                Post post = postRepository.findById(report.getPostId()).orElse(null);
+                if (post == null) {
+                    continue;
+                }
+                ReportDto reportDto = ReportDto.builder()
+                       .reportId(report.getReportId())
+                       .postId(report.getPostId())
+                       .userId(report.getUserId())
+                       .reason(report.getReason())
+                       .createdAt(report.getCreatedAt())
+                       .status(report.getStatus())
+                       .processInstanceId(report.getProcessInstanceId())
+                       .comment(report.getComment())
+                       .username(user.getUsername())
+                       .postTitle(post.getTitle())
+                       .build();
+                reportDtos.add(reportDto);
+            }
+
+            return new ResponseEntity<>(reportDtos, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

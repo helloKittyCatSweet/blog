@@ -46,3 +46,12 @@ export const deleteById = (id) => request.delete(`${postPrefix}${reportPrefix}/p
 export const searchReports = (params) => request.get(`${postPrefix}${reportPrefix}/public/search`, {
   params
 })
+
+// 审核举报
+export const review = (reportId, data) =>
+  request.post(`${postPrefix}${reportPrefix}/admin/review/${reportId}`, null, {
+    params: {
+      approved: data.approved,
+      comment: data.comment
+    }
+  })

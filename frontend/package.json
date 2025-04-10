@@ -23,6 +23,7 @@
     "echarts": "^5.6.0",
     "element-plus": "^2.9.6",
     "emoji-mart-vue-fast": "^15.0.4",
+    "js-table2excel": "^1.1.2",
     "md-editor-v3": "^5.4.5",
     "pinia": "^2.3.1",
     "sockjs-client": "^1.6.1",
