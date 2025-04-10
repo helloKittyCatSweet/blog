@@ -113,18 +113,17 @@ public class CommentController {
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_COMMENT_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户ID获取评论")
-    @GetMapping("/public/find/user/{userId}")
+    @GetMapping("/public/find/user")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "获取成功"),
             @ApiResponse(responseCode = "403", description = "无权限访问"),
             @ApiResponse(responseCode = "404", description = "用户不存在")
     })
     public ResponseEntity<Response<List<CommentDto>>> getCommentsByUser(
-            @PathVariable Integer userId) {
-        ResponseEntity<List<CommentDto>> response = commentService.findByUserId(userId);
+            @AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<List<CommentDto>> response = commentService.findByUserId(user.getId());
         return Response.createResponse(response,
                 HttpStatus.OK, "获取成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
@@ -233,12 +232,27 @@ public class CommentController {
             " or #comment.userId == principal.id " +
             " or @commentService.isUnderAuthorPost(commentId, principal.id)")
     @Operation(summary = "删除评论", description = "根据评论ID删除评论")
-    @DeleteMapping("/delete/id/{commentId}/{userId}")
+    @DeleteMapping("/public/delete/id/{commentId}/{userId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "404", description = "该评论不存在")})
     public ResponseEntity<Response<Boolean>> deleteById(
             @PathVariable Integer commentId) {
         ResponseEntity<Boolean> response = commentService.deleteById(commentId);
+        return Response.createResponse(response,
+                HttpStatus.OK, "删除成功",
+                HttpStatus.NOT_FOUND, "该评论不存在");
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_COMMENT_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+            " or @commentService.isUnderAuthorPost(commentIds, principal.id)")
+    @Operation(summary = "删除评论", description = "根据评论ID删除评论")
+    @DeleteMapping("/public/delete/batch")
+    @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
+            @ApiResponse(responseCode = "404", description = "该评论不存在")})
+    public ResponseEntity<Response<Boolean>> deleteBatch(
+            @RequestBody List<Integer> commentIds) {
+        ResponseEntity<Boolean> response = commentService.deleteBatch(commentIds);
         return Response.createResponse(response,
                 HttpStatus.OK, "删除成功",
                 HttpStatus.NOT_FOUND, "该评论不存在");

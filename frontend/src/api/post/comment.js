@@ -31,4 +31,14 @@ export const findAll = () => request.get(`${commentPrefix}/admin/find/all`)
 
 // 删除评论
 export const deleteById = (commentId, userId) =>
-  request.delete(`${commentPrefix}/admin/delete/id/${commentId}/${userId}`)
+  request.delete(`${commentPrefix}/public/delete/id/${commentId}/${userId}`)
+
+// 批量删除评论
+export const batchDelete = (commentIds) =>
+  request.delete(`${commentPrefix}/public/delete/batch`, { data: commentIds })
+
+// 根据作者获取评论
+export const findByAuthor = () => request.get(`${commentPrefix}/public/find/author`)
+
+// 根据用户id获取评论
+export const findByUserId = () => request.get(`${commentPrefix}/public/find/user`)

@@ -1,3 +1,136 @@
+<script>
+import { ref, onMounted } from "vue";
+import { ElMessage } from "element-plus";
+import axios from "axios";
+
+export default {
+  name: "ReportManage",
+  setup() {
+    const reports = ref([]);
+    const searchKeyword = ref("");
+    const searchStatus = ref("");
+    const currentPage = ref(1);
+    const pageSize = ref(10);
+    const total = ref(0);
+    const reviewDialogVisible = ref(false);
+    const detailsDialogVisible = ref(false);
+    const selectedReport = ref(null);
+    const reviewForm = ref({
+      approved: true,
+      comment: "",
+    });
+
+    const statusOptions = [
+      { value: "PENDING", label: "待处理" },
+      { value: "APPROVED", label: "已通过" },
+      { value: "REJECTED", label: "已驳回" },
+    ];
+
+    const getStatusType = (status) => {
+      const statusMap = {
+        PENDING: "warning",
+        APPROVED: "success",
+        REJECTED: "danger",
+      };
+      return statusMap[status] || "info";
+    };
+
+    const getStatusLabel = (status) => {
+      const statusMap = {
+        PENDING: "待处理",
+        APPROVED: "已通过",
+        REJECTED: "已驳回",
+      };
+      return statusMap[status] || status;
+    };
+
+    const searchReports = async () => {
+      try {
+        const response = await axios.get("/api/post/report/admin/search", {
+          params: {
+            keyword: searchKeyword.value,
+            status: searchStatus.value,
+            isAdmin: true,
+          },
+        });
+        reports.value = response.data.data;
+      } catch (error) {
+        ElMessage.error("获取举报列表失败");
+      }
+    };
+
+    const handleReview = (report) => {
+      selectedReport.value = report;
+      reviewForm.value = {
+        approved: true,
+        comment: "",
+      };
+      reviewDialogVisible.value = true;
+    };
+
+    const submitReview = async () => {
+      try {
+        await axios.post(
+          `/api/post/report/admin/review/${selectedReport.value.reportId}`,
+          null,
+          {
+            params: {
+              approved: reviewForm.value.approved,
+              comment: reviewForm.value.comment,
+            },
+          }
+        );
+        ElMessage.success("审核成功");
+        reviewDialogVisible.value = false;
+        searchReports();
+      } catch (error) {
+        ElMessage.error("审核失败");
+      }
+    };
+
+    const viewDetails = (report) => {
+      selectedReport.value = report;
+      detailsDialogVisible.value = true;
+    };
+
+    const handleSizeChange = (val) => {
+      pageSize.value = val;
+      searchReports();
+    };
+
+    const handleCurrentChange = (val) => {
+      currentPage.value = val;
+      searchReports();
+    };
+
+    onMounted(() => {
+      searchReports();
+    });
+
+    return {
+      reports,
+      searchKeyword,
+      searchStatus,
+      statusOptions,
+      currentPage,
+      pageSize,
+      total,
+      reviewDialogVisible,
+      detailsDialogVisible,
+      selectedReport,
+      reviewForm,
+      getStatusType,
+      getStatusLabel,
+      searchReports,
+      handleReview,
+      submitReview,
+      viewDetails,
+      handleSizeChange,
+      handleCurrentChange,
+    };
+  },
+};
+</script>
 <template>
   <div class="report-manage">
     <el-card class="search-card">
@@ -45,11 +178,7 @@
             >
               审核
             </el-button>
-            <el-button
-              type="info"
-              size="small"
-              @click="viewDetails(scope.row)"
-            >
+            <el-button type="info" size="small" @click="viewDetails(scope.row)">
               详情
             </el-button>
           </template>
@@ -70,11 +199,7 @@
     </el-card>
 
     <!-- 审核对话框 -->
-    <el-dialog
-      v-model="reviewDialogVisible"
-      title="举报审核"
-      width="500px"
-    >
+    <el-dialog v-model="reviewDialogVisible" title="举报审核" width="500px">
       <div class="review-form">
         <el-form :model="reviewForm" label-width="100px">
           <el-form-item label="审核结果">
@@ -102,11 +227,7 @@
     </el-dialog>
 
     <!-- 详情对话框 -->
-    <el-dialog
-      v-model="detailsDialogVisible"
-      title="举报详情"
-      width="600px"
-    >
+    <el-dialog v-model="detailsDialogVisible" title="举报详情" width="600px">
       <div v-if="selectedReport" class="report-details">
         <p><strong>举报ID：</strong>{{ selectedReport.reportId }}</p>
         <p><strong>举报人ID：</strong>{{ selectedReport.userId }}</p>
@@ -115,141 +236,13 @@
         <p><strong>详细描述：</strong>{{ selectedReport.description }}</p>
         <p><strong>状态：</strong>{{ getStatusLabel(selectedReport.status) }}</p>
         <p><strong>举报时间：</strong>{{ selectedReport.createdAt }}</p>
-        <p v-if="selectedReport.comment"><strong>审核意见：</strong>{{ selectedReport.comment }}</p>
+        <p v-if="selectedReport.comment">
+          <strong>审核意见：</strong>{{ selectedReport.comment }}
+        </p>
       </div>
     </el-dialog>
   </div>
 </template>
-
-<script>
-import { ref, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import axios from 'axios'
-
-export default {
-  name: 'ReportManage',
-  setup() {
-    const reports = ref([])
-    const searchKeyword = ref('')
-    const searchStatus = ref('')
-    const currentPage = ref(1)
-    const pageSize = ref(10)
-    const total = ref(0)
-    const reviewDialogVisible = ref(false)
-    const detailsDialogVisible = ref(false)
-    const selectedReport = ref(null)
-    const reviewForm = ref({
-      approved: true,
-      comment: ''
-    })
-
-    const statusOptions = [
-      { value: 'PENDING', label: '待处理' },
-      { value: 'APPROVED', label: '已通过' },
-      { value: 'REJECTED', label: '已驳回' }
-    ]
-
-    const getStatusType = (status) => {
-      const statusMap = {
-        PENDING: 'warning',
-        APPROVED: 'success',
-        REJECTED: 'danger'
-      }
-      return statusMap[status] || 'info'
-    }
-
-    const getStatusLabel = (status) => {
-      const statusMap = {
-        PENDING: '待处理',
-        APPROVED: '已通过',
-        REJECTED: '已驳回'
-      }
-      return statusMap[status] || status
-    }
-
-    const searchReports = async () => {
-      try {
-        const response = await axios.get('/api/post/report/admin/search', {
-          params: {
-            keyword: searchKeyword.value,
-            status: searchStatus.value,
-            isAdmin: true
-          }
-        })
-        reports.value = response.data.data
-      } catch (error) {
-        ElMessage.error('获取举报列表失败')
-      }
-    }
-
-    const handleReview = (report) => {
-      selectedReport.value = report
-      reviewForm.value = {
-        approved: true,
-        comment: ''
-      }
-      reviewDialogVisible.value = true
-    }
-
-    const submitReview = async () => {
-      try {
-        await axios.post(`/api/post/report/admin/review/${selectedReport.value.reportId}`, null, {
-          params: {
-            approved: reviewForm.value.approved,
-            comment: reviewForm.value.comment
-          }
-        })
-        ElMessage.success('审核成功')
-        reviewDialogVisible.value = false
-        searchReports()
-      } catch (error) {
-        ElMessage.error('审核失败')
-      }
-    }
-
-    const viewDetails = (report) => {
-      selectedReport.value = report
-      detailsDialogVisible.value = true
-    }
-
-    const handleSizeChange = (val) => {
-      pageSize.value = val
-      searchReports()
-    }
-
-    const handleCurrentChange = (val) => {
-      currentPage.value = val
-      searchReports()
-    }
-
-    onMounted(() => {
-      searchReports()
-    })
-
-    return {
-      reports,
-      searchKeyword,
-      searchStatus,
-      statusOptions,
-      currentPage,
-      pageSize,
-      total,
-      reviewDialogVisible,
-      detailsDialogVisible,
-      selectedReport,
-      reviewForm,
-      getStatusType,
-      getStatusLabel,
-      searchReports,
-      handleReview,
-      submitReview,
-      viewDetails,
-      handleSizeChange,
-      handleCurrentChange
-    }
-  }
-}
-</script>
 
 <style scoped>
 .report-manage {

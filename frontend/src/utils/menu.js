@@ -34,6 +34,7 @@ import {
   USER_POST_LIST_PATH,
   USER_POST_CREATE_PATH,
   USER_POST_ATTACHMENT_LIST_PATH,
+  USER_POST_COMMENT_MANAGE_PATH,
   USER_COMMENT_MANAGE_PATH,
   USER_FAVORITE_MANAGE_PATH,
   USER_MESSAGE_MANAGE_PATH,
@@ -96,12 +97,18 @@ export const userMenus = [
             title: '文章附件管理',
             index: USER_POST_ATTACHMENT_LIST_PATH,
             roles: [ROLES.USER]
-          }
+          },
+          {
+            icon: Comment,
+            title: '文章评论管理',
+            index: USER_POST_COMMENT_MANAGE_PATH,
+            roles: [ROLES.USER]
+          },
         ]
       },
       {
         icon: Comment,
-        title: '评论管理',
+        title: '我的评论',
         index: USER_COMMENT_MANAGE_PATH,
         roles: [ROLES.USER]
       },

@@ -6,6 +6,7 @@ import {
   USER_POST_EDIT_PATH,
   USER_POST_CREATE_PATH,
   USER_POST_ATTACHMENT_LIST_PATH,
+  USER_POST_COMMENT_MANAGE_PATH,
   USER_COMMENT_MANAGE_PATH,
   USER_REPORT_MANAGE_PATH,
   USER_FAVORITE_MANAGE_PATH,
@@ -76,14 +77,23 @@ export default [
               breadcrumb: true,
               roles: [ROLES.USER],
             }
-          }
+          },
+          {
+            path: USER_POST_COMMENT_MANAGE_PATH,
+            component: () => import('@/views/comment/user/PostCommentManage.vue'),
+            meta: {
+              title: '文章评论管理',
+              breadcrumb: true,
+              roles: [ROLES.USER],
+            }
+          },
         ]
       },
       {
         path: USER_COMMENT_MANAGE_PATH,
-        component: () => import('@/views/comment/user/CommentManage.vue'),
+        component: () => import('@/views/comment/user/UserCommentManage.vue'),
         meta: {
-          title: '评论管理',
+          title: '我的评论',
           breadcrumb: true,
           roles: [ROLES.USER],
         }

@@ -157,6 +157,11 @@ public class CommentService {
             CommentDto commentDto = CommentDto.builder()
                     .commentId(comment.getCommentId())
                     .postId(comment.getPostId())
+                    .parentId(comment.getParentCommentId())
+                    .parentContent(
+                            commentRepository.findById(comment.getParentCommentId())
+                                    .map(Comment::getContent).orElse(null)
+                    )
                     .title(post.getTitle())
                     .content(comment.getContent())
                     .userId(comment.getUserId())
@@ -184,8 +189,11 @@ public class CommentService {
         for (Comment comment : comments) {
             Post post = (Post) postRepository.findById(comment.getPostId()).orElse(new Post());
             User user = (User) userRepository.findById(comment.getUserId()).orElse(new User());
+            Comment temp = commentRepository.findById(comment.getParentCommentId()).orElse(null);
             CommentDto commentDto = CommentDto.builder()
                     .commentId(comment.getCommentId())
+                    .parentId(temp == null ? null : temp.getCommentId())
+                    .parentContent(temp == null ? null : temp.getContent())
                     .postId(comment.getPostId())
                     .title(post.getTitle())
                     .content(comment.getContent())
@@ -238,23 +246,19 @@ public class CommentService {
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
-    // @Transactional
-    // public ResponseEntity<Boolean> deleteById(Integer commentId, Integer userId)
-    // {
-    // if (!existsById(commentId).getBody() ||
-    // !userRepository.existsById(userId)) {
-    // return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
-    // }else {
-    // Comment comment =
-    // (Comment)commentRepository.findById(commentId).orElse(null);
-    // if (comment == null || !Objects.equals(comment.getUserId(), userId)){
-    // return new ResponseEntity<>(false, HttpStatus.FORBIDDEN);
-    // }else {
-    // commentRepository.deleteById(commentId);
-    // return new ResponseEntity<>(true, HttpStatus.OK);
-    // }
-    // }
-    // }
+   @Transactional
+   public ResponseEntity<Boolean> deleteBatch(List<Integer> commentIds){
+        if (commentIds == null || commentIds.isEmpty()) {
+            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+        }
+        for (Integer commentId : commentIds) {
+            if (!commentRepository.existsById(commentId)) {
+                return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+            }
+            commentRepository.deleteAllById(commentIds);
+        }
+        return new ResponseEntity<>(true, HttpStatus.OK);
+   }
 
     @Transactional
     public boolean isUnderAuthorPost(Integer commentId, Integer userId) {
@@ -269,6 +273,16 @@ public class CommentService {
                 return true;
             }
         }
+    }
+
+    @Transactional
+    public boolean isUnderAuthorPost(List<Integer> commentIds, Integer userId) {
+        for (Integer commentId : commentIds) {
+            if (!isUnderAuthorPost(commentId, userId)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Transactional
