@@ -60,6 +60,14 @@ public class Message implements Serializable {
     @Column(name = "parent_id")
     private Integer parentId;
 
+    private boolean suspicious; // 是否可疑
+
+    private Integer score; // 可疑评分
+
+    private String reason; // 可疑原因
+
+    private boolean operation = false; // 是否被处理
+
     /**
      * Transient 字段，不参与数据库的映射，仅用于业务逻辑处理
      */

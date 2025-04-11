@@ -5,6 +5,7 @@ import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
 
 import { useUserStore } from '@/stores'
+import user from '@/router/modules/user'
 
 // 更新消息
 export const update = (data) => request.put(`${userPrefix}${messagePrefix}/public/update`, data, {
@@ -84,7 +85,20 @@ export const deleteById = (id) => {
 // 搜索
 export const findMessagePage = (params) => request.get(`${userPrefix}${messagePrefix}/public/page`, { params })
 
-// Websocket相关
+/**
+ * 搜索消息
+ * @param {Object} params 搜索参数
+ * @returns {Promise} 返回搜索结果
+ */
+export const searchMessages = (params) => request.get(`${userPrefix}${messagePrefix}/admin/search`, { params });
+
+// 设置消息审核状态
+export const setMessageOperation = (messageId, operation) =>
+  request.put(`${userPrefix}${messagePrefix}/admin/operate/${messageId}/${operation}`)
+
+/**
+ * Websocket相关
+ */
 let stompClient = null
 const wsPrefix = 'http://localhost:8080'
 

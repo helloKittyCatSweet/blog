@@ -190,4 +190,24 @@ Page<Message> findMessagePage(
         @Param("userId") Integer userId,
         Pageable pageable);
 
+    @Query("SELECT m FROM Message m " +
+            "JOIN User s ON m.senderId = s.id " +
+            "JOIN User r ON m.receiverId = r.id " +
+            "WHERE (:senderName IS NULL OR s.username LIKE %:senderName%) " +
+            "AND (:receiverName IS NULL OR r.username LIKE %:receiverName%) " +
+            "AND (:content IS NULL OR m.content LIKE %:content%) " +
+            "AND (:startDate IS NULL OR m.createdAt >= :startDate) " +
+            "AND (:endDate IS NULL OR m.createdAt < :endDate) " +
+            "ORDER BY m.createdAt DESC")
+    Page<Message> searchMessages(
+            @Param("senderName") String senderName,
+            @Param("receiverName") String receiverName,
+            @Param("content") String content,
+            @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate,
+            Pageable pageable);
+
+    @Modifying
+    @Query("UPDATE Message m SET m.operation = :operation WHERE m.messageId = :messageId")
+    Integer setOperation(Integer messageId, boolean operation);
 }

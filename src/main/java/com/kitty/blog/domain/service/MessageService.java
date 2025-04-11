@@ -1,5 +1,6 @@
 package com.kitty.blog.domain.service;
 
+import com.kitty.blog.application.dto.message.MessageDto;
 import com.kitty.blog.application.dto.message.MessageStatusUpdate;
 import com.kitty.blog.application.dto.message.MessageUserInfo;
 import com.kitty.blog.domain.model.Message;
@@ -8,6 +9,7 @@ import com.kitty.blog.common.constant.MessageStatus;
 import com.kitty.blog.domain.repository.MessageRepository;
 import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+import com.kitty.blog.domain.service.contentReview.SecondaryMessageReviewerService;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,8 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,6 +48,9 @@ public class MessageService {
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
 
+    @Autowired
+    private SecondaryMessageReviewerService secondaryMessageReviewerService;
+
     @Transactional
     public ResponseEntity<Boolean> create(Message message) {
         if (!userRepository.existsById(message.getSenderId())
@@ -58,6 +65,12 @@ public class MessageService {
 
         message.setIsRead(false);
         message.setStatus(MessageStatus.SENT.name());
+
+        SecondaryMessageReviewerService.ReviewResult reviewResult =
+                secondaryMessageReviewerService.review(message.getContent());
+        message.setSuspicious(reviewResult.isSuspicious());
+        message.setScore(reviewResult.getScore());
+        message.setReason(String.join(",", reviewResult.getReasons()));
         Message savedMessage = save(message).getBody();
 
         // 发送WebSocket消息
@@ -113,6 +126,14 @@ public class MessageService {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
+
+        SecondaryMessageReviewerService.ReviewResult reviewResult =
+                secondaryMessageReviewerService.review(message.getContent());
+        assert oldMessage != null;
+        oldMessage.setSuspicious(reviewResult.isSuspicious());
+        oldMessage.setScore(reviewResult.getScore());
+        oldMessage.setReason(String.join(",", reviewResult.getReasons()));
+
         save(oldMessage);
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
@@ -317,11 +338,34 @@ public class MessageService {
     }
 
     @Transactional
-    public ResponseEntity<List<Message>> findAll() {
+    public ResponseEntity<List<MessageDto>> findAll() {
         if (messageRepository.count() == 0) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
         }
-        return new ResponseEntity<>(messageRepository.findAll(), HttpStatus.OK);
+        List<Message> all = messageRepository.findAll();
+        List<MessageDto> messageDtos = new ArrayList<>();
+        for (Message message : all) {
+            if (message.isSuspicious() || message.getScore() > 60){
+                MessageDto messageDto = MessageDto.builder()
+                        .messageId(message.getMessageId())
+                        .senderId(message.getSenderId())
+                        .senderName(userRepository.findById(message.getSenderId())
+                                .get().getUsername())
+                        .receiverId(message.getReceiverId())
+                        .receiverName(userRepository.findById(message.getReceiverId())
+                                .get().getUsername())
+                        .content(message.getContent())
+                        .createdAt(message.getCreatedAt())
+                        .suspicious(message.isSuspicious())
+                        .score(message.getScore())
+                        .reason(message.getReason())
+                        .operation(message.isOperation())
+                        .build();
+                messageDtos.add(messageDto);
+            }
+
+        }
+        return new ResponseEntity<>(messageDtos, HttpStatus.OK);
     }
 
     @Transactional
@@ -395,5 +439,45 @@ public class MessageService {
             log.error("批量删除消息失败: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    @Transactional
+    @Cacheable(key = "#senderName + #receiverName + #content + #startDate + #endDate")
+    public ResponseEntity<Page<MessageDto>> searchMessages(
+            String senderName, String receiverName, String content,
+            LocalDate startDate, LocalDate endDate, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Message> messagePage = messageRepository.searchMessages(
+                senderName, receiverName, content,
+                startDate != null ? startDate.atStartOfDay() : null,
+                endDate != null ? endDate.plusDays(1).atStartOfDay() : null,
+                pageable);
+
+        List<MessageDto> messageDtos = messagePage.getContent().stream()
+                .filter(message -> message.isSuspicious() || message.getScore() > 60)
+                .map(message -> MessageDto.builder()
+                        .messageId(message.getMessageId())
+                        .senderId(message.getSenderId())
+                        .senderName(userRepository.findById(message.getSenderId())
+                                .orElse(new User()).getUsername())
+                        .receiverId(message.getReceiverId())
+                        .receiverName(userRepository.findById(message.getReceiverId())
+                                .orElse(new User()).getUsername())
+                        .content(message.getContent())
+                        .createdAt(message.getCreatedAt())
+                        .suspicious(message.isSuspicious())
+                        .score(message.getScore())
+                        .reason(message.getReason())
+                        .build())
+                .toList();
+
+        Page<MessageDto> resultPage = new PageImpl<>(messageDtos, pageable, messagePage.getTotalElements());
+        return new ResponseEntity<>(resultPage, HttpStatus.OK);
+    }
+
+    @Transactional
+    public ResponseEntity<Boolean> setOperation(Integer messageId, boolean operation){
+        return new ResponseEntity<>(messageRepository.setOperation(messageId, operation) > 0, HttpStatus.OK);
     }
 }

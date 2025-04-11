@@ -4,7 +4,6 @@ import {
   ADMIN,
   ADMIN_CONTENT,
   ADMIN_POST_MANAGE_PATH,
-  ADMIN_POST_VERSION_MANAGE_PATH,
   ADMIN_CATEGORY_MANAGE_PATH,
   ADMIN_TAG_MANAGE_PATH,
   ADMIN_REPORT_MANAGE_PATH,
@@ -55,15 +54,6 @@ export default [
               title: '文章管理',
               breadcrumb: true,
               roles: [ROLES.POST_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
-            }
-          },
-          {
-            path: ADMIN_POST_VERSION_MANAGE_PATH,
-            component: () => import('@/views/post/admin/PostVersionManage.vue'),
-            meta: {
-              title: '版本管理',
-              breadcrumb: true,
-              roles: [ROLES.SYSTEM_ADMINISTRATOR],
             }
           },
           {

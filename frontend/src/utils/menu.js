@@ -50,17 +50,15 @@ import {
   ADMIN,
   ADMIN_CONTENT,
   ADMIN_POST_MANAGE_PATH,
-  ADMIN_POST_VERSION_MANAGE_PATH,
   ADMIN_CATEGORY_MANAGE_PATH,
   ADMIN_TAG_MANAGE_PATH,
   ADMIN_REPORT_MANAGE_PATH,
   ADMIN_ROLE,
   ADMIN_USER_MANAGE_PATH,
   ADMIN_ROLE_MANAGE_PATH,
-  ADMIN_ROLE_PERMISSION_MANAGE_PATH,
   ADMIN_MESSAGE_MANAGE_PATH
 } from '@/constants/routes/admin';
-import { icon } from "@fortawesome/fontawesome-svg-core";
+
 
 // 用户菜单配置
 export const userMenus = [
@@ -195,12 +193,6 @@ export const adminMenus = [
             title: '文章管理',
             index: ADMIN_POST_MANAGE_PATH,
             roles: [ROLES.POST_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
-          },
-          {
-            icon: Notebook,
-            title: '版本管理',
-            index: ADMIN_POST_VERSION_MANAGE_PATH,
-            roles: [ROLES.SYSTEM_ADMINISTRATOR]
           },
           {
             icon: Orange,

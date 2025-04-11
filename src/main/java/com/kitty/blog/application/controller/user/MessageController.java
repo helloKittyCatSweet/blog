@@ -1,5 +1,6 @@
 package com.kitty.blog.application.controller.user;
 
+import com.kitty.blog.application.dto.message.MessageDto;
 import com.kitty.blog.application.dto.message.MessageUserInfo;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.model.Message;
@@ -279,8 +280,8 @@ public class MessageController {
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
-    public ResponseEntity<Response<List<Message>>> findAll() {
-        ResponseEntity<List<Message>> response = messageService.findAll();
+    public ResponseEntity<Response<List<MessageDto>>> findAll() {
+        ResponseEntity<List<MessageDto>> response = messageService.findAll();
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
@@ -382,4 +383,47 @@ public class MessageController {
                 HttpStatus.OK, "删除成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "删除失败");
     }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @Operation(summary = "搜索消息", description = "根据发送者、接收者、内容和时间范围搜索消息")
+    @GetMapping("/admin/search")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "搜索成功"),
+            @ApiResponse(responseCode = "500", description = "服务器繁忙")
+    })
+    public ResponseEntity<Response<Page<MessageDto>>> searchMessages(
+            @RequestParam(required = false) String senderName,
+            @RequestParam(required = false) String receiverName,
+            @RequestParam(required = false) String content,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        ResponseEntity<Page<MessageDto>> response = messageService.searchMessages(
+                senderName, receiverName, content, startDate, endDate, page, size);
+        return Response.createResponse(response,
+                HttpStatus.OK, "搜索成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_MESSAGE_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @Operation(summary = "设置消息为已处理", description = "根据消息ID，设置消息为已处理")
+    @PutMapping("/admin/operate/{messageId}/{isOperation}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "设置成功"),
+            @ApiResponse(responseCode = "500", description = "服务器繁忙")
+    })
+    public ResponseEntity<Response<Boolean>> setOperation(
+            @PathVariable Integer messageId,
+            @PathVariable boolean isOperation
+    ){
+        ResponseEntity<Boolean> response = messageService.setOperation(messageId, isOperation);
+        return Response.createResponse(response,
+                HttpStatus.OK, "设置成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "设置失败");
+    }
+
 }
