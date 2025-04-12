@@ -10,13 +10,24 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.messaging.simp.stomp.StompCommand;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.messaging.support.MessageHeaderAccessor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
+import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -109,5 +120,43 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registry.enableSimpleBroker("/topic", "/queue");
         registry.setApplicationDestinationPrefixes("/app");
         registry.setUserDestinationPrefix("/user");
+    }
+
+    @Override
+    public void configureClientInboundChannel(ChannelRegistration registration) {
+        registration.interceptors(new ChannelInterceptor() {
+            @Override
+            public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
+                if (StompCommand.CONNECT.equals(accessor.getCommand())) {
+                    // 获取 token
+                    List<String> authorization = accessor.getNativeHeader("Authorization");
+                    if (authorization != null && !authorization.isEmpty()) {
+                        String token = authorization.get(0).replace("Bearer ", "");
+                        // 验证 token 并设置用户信息
+                        try {
+                            // 假设你有一个 jwtUtils 来验证 token
+                            if (token != null && !jwtTokenUtil.isTokenExpired(token)){
+                                String username = jwtTokenUtil.extractUsername(token);
+                                LoginResponseDto user = (LoginResponseDto) myUserDetailService.
+                                        loadUserByUsername(username);
+                                accessor.setUser(new Principal() {
+                                    @Override
+                                    public String getName() {
+                                        return user.getUsername();
+                                    }
+                                });
+                                // 确保将用户信息存储到会话属性中
+                                accessor.getSessionAttributes().put("USER_DETAILS", user);
+                            }
+
+                        } catch (Exception e) {
+                            return null;  // 认证失败
+                        }
+                    }
+                }
+                return message;
+            }
+        });
     }
 }

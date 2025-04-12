@@ -2,6 +2,7 @@ package com.kitty.blog.infrastructure.security.filter;
 
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.infrastructure.security.JwtTokenUtil;
+import com.kitty.blog.infrastructure.utils.AuthenticationUtils;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -49,30 +51,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // 如果获取到了token，进行验证
         if (jwt != null) {
-            try {
-                username = jwtService.extractUsername(jwt);
-                log.info("JWTAuthenticationFilter: JWT Token: " + jwt + " for user: " + username);
-
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    LoginResponseDto userDetails =
-                            (LoginResponseDto) this.userDetailsService.loadUserByUsername(username);
-
-                    if (!jwtService.isTokenExpired(jwt)) {
-                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
-                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authToken);
-                        log.info("User {} authenticated successfully", userDetails.getUsername());
-                    }
-                }
-            } catch (Exception e) {
-                log.error("Token validation failed: {}", e.getMessage());
+            Authentication auth = AuthenticationUtils.authenticateToken(jwt, jwtService, userDetailsService);
+            if (auth != null) {
+                ((UsernamePasswordAuthenticationToken) auth)
+                        .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(auth);
+                log.info("User {} authenticated successfully", auth.getName());
             }
         }
-
         filterChain.doFilter(request, response);
     }
 }

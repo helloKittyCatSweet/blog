@@ -153,7 +153,7 @@ const viewDetail = (row) => {
  */
 
 // 添加折叠状态控制
-const reviewCollapse = ref(true);
+const reviewCollapse = ref([]);
 // 审核考虑因素
 const reviewFactors = ref([
   {

@@ -11,7 +11,9 @@ import {
   ADMIN_USER_MANAGE_PATH,
   ADMIN_ROLE_MANAGE_PATH,
   ADMIN_ROLE_PERMISSION_MANAGE_PATH,
-  ADMIN_MESSAGE_MANAGE_PATH
+  ADMIN_MESSAGE_MANAGE_PATH,
+  ADMIN_SYSTEM_PATH,
+  ADMIN_SYSTEM_MESSAGE_PATH
 } from '@/constants/routes/admin';
 
 export default [
@@ -145,7 +147,55 @@ export default [
           breadcrumb: true,
           roles: [ROLES.SYSTEM_ADMINISTRATOR, ROLES.MESSAGE_MANAGER],
         }
-      }
+      },
+      // 系统管理
+      {
+        path: ADMIN_SYSTEM_PATH,
+        component: () => import('@/views/system/SystemManage.vue'),
+        redirect: ADMIN_SYSTEM_MESSAGE_PATH,
+        meta: {
+          title: '系统管理',
+          breadcrumb: true,
+          roles: [
+            ROLES.CATEGORY_MANAGER,
+            ROLES.PERMISSION_MANAGER,
+            ROLES.PERMISSION_MAPPING_MANAGER,
+            ROLES.TAG_MANAGER,
+            ROLES.POST_MANAGER,
+            ROLES.USER_ACTIVITY_MANAGER,
+            ROLES.USER_ROLE_MAPPING_MANAGER,
+            ROLES.COMMENT_MANAGER,
+            ROLES.MESSAGE_MANAGER,
+            ROLES.REPORT_MANAGER,
+            ROLES.ROLE_MANAGER,
+            ROLES.SYSTEM_ADMINISTRATOR
+          ],
+        },
+        children: [
+          {
+            path: ADMIN_SYSTEM_MESSAGE_PATH,
+            component: () => import('@/views/system/SystemMessageManage.vue'),
+            meta: {
+              title: '系统消息管理',
+              breadcrumb: true,
+              roles: [
+                ROLES.CATEGORY_MANAGER,
+                ROLES.PERMISSION_MANAGER,
+                ROLES.PERMISSION_MAPPING_MANAGER,
+                ROLES.TAG_MANAGER,
+                ROLES.POST_MANAGER,
+                ROLES.USER_ACTIVITY_MANAGER,
+                ROLES.USER_ROLE_MAPPING_MANAGER,
+                ROLES.COMMENT_MANAGER,
+                ROLES.MESSAGE_MANAGER,
+                ROLES.REPORT_MANAGER,
+                ROLES.ROLE_MANAGER,
+                ROLES.SYSTEM_ADMINISTRATOR
+              ],
+            }
+          }
+        ]
+      },
     ]
   }
 ]

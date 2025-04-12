@@ -60,13 +60,14 @@ public class CommentController {
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_COMMENT_MANAGER)" +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
-            " or #comment.userId == principal.id)")
+            " or #comment.userId == user.id")
     @Operation(summary = "修改评论")
     @PutMapping("/admin/update")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "修改成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
     public ResponseEntity<Response<Boolean>> update(
-            @RequestBody Comment comment) {
+            @RequestBody Comment comment,
+            @AuthenticationPrincipal LoginResponseDto user) {
         ResponseEntity<Boolean> response = commentService.update(comment);
         return Response.createResponse(response,
                 HttpStatus.OK, "修改成功",
@@ -229,14 +230,15 @@ public class CommentController {
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_COMMENT_MANAGER)" +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
-            " or #comment.userId == principal.id " +
-            " or @commentService.isUnderAuthorPost(commentId, principal.id)")
+            " or #comment.userId == user.id " +
+            " or @commentService.isUnderAuthorPost(commentId, user.id)")
     @Operation(summary = "删除评论", description = "根据评论ID删除评论")
     @DeleteMapping("/public/delete/id/{commentId}/{userId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "404", description = "该评论不存在")})
     public ResponseEntity<Response<Boolean>> deleteById(
-            @PathVariable Integer commentId) {
+            @PathVariable Integer commentId,
+            @AuthenticationPrincipal LoginResponseDto user) {
         ResponseEntity<Boolean> response = commentService.deleteById(commentId);
         return Response.createResponse(response,
                 HttpStatus.OK, "删除成功",

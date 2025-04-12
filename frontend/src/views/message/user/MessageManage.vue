@@ -8,6 +8,9 @@ import {
   findMessagePage,
   readMessage,
   unReadMessage,
+  getUserSystemMessages,
+  markSystemMessageAsRead,
+  markSystemMessageAsUnread,
 } from "@/api/user/message";
 import { useRouter } from "vue-router";
 import { USER_MESSAGE_DETAIL_PATH } from "@/constants/routes-constants";
@@ -177,6 +180,7 @@ const handleSizeChange = (size) => {
 
 onMounted(() => {
   loadMessages();
+  loadSystemMessages();
   // 移除键盘事件监听
   window.removeEventListener("keydown", handleKeydown);
 });
@@ -230,160 +234,281 @@ const handleMarkAsUnread = async (row) => {
     ElMessage.error("操作失败");
   }
 };
+
+/**
+ * 系统消息
+ */
+// 添加标签页激活状态
+const activeTab = ref("chat");
+
+// 添加系统消息列表
+const systemMessages = ref([]);
+const systemMessageLoading = ref(false);
+
+// 添加系统消息分页
+const systemPagination = ref({
+  currentPage: 1,
+  pageSize: 10,
+  total: 0,
+});
+
+// 加载系统消息
+const loadSystemMessages = async () => {
+  systemMessageLoading.value = true;
+  try {
+    const { data } = await getUserSystemMessages({
+      page: systemPagination.value.currentPage - 1,
+      size: systemPagination.value.pageSize,
+    });
+    systemMessages.value = data.data;
+    systemPagination.value.total = data.data.length; // 设置总数为数组长度
+  } catch (error) {
+    ElMessage.error("加载系统消息失败");
+  } finally {
+    systemMessageLoading.value = false;
+  }
+};
+
+// 添加系统消息已读处理函数
+const handleSystemMessageRead = async (row) => {
+  try {
+    await markSystemMessageAsRead(row.id);
+    ElMessage.success("标记已读成功");
+    loadSystemMessages(); // 重新加载系统消息列表
+  } catch (error) {
+    ElMessage.error("标记已读失败");
+  }
+};
+
+// 添加系统消息未读处理函数
+const handleSystemMessageUnread = async (row) => {
+  try {
+    await markSystemMessageAsUnread(row.id);
+    ElMessage.success("标记未读成功");
+    loadSystemMessages(); // 重新加载系统消息列表
+  } catch (error) {
+    ElMessage.error("标记未读失败");
+  }
+};
 </script>
 
 <template>
   <PageContainer title="我的消息">
     <el-card class="message-manage">
-      <!-- 搜索表单 -->
-      <el-form :model="searchForm" inline class="search-form">
-        <el-form-item label="联系人">
-          <el-input
-            v-model="searchForm.receiverName"
-            placeholder="请输入联系人姓名"
-            clearable
-            @keydown.enter="handleSearch"
-          />
-        </el-form-item>
-        <el-form-item label="消息内容">
-          <el-input
-            v-model="searchForm.content"
-            placeholder="搜索消息内容"
-            clearable
-            @keydown.enter="handleSearch"
-          />
-        </el-form-item>
-        <el-form-item label="时间范围">
-          <el-date-picker
-            v-model="searchForm.startDate"
-            type="date"
-            placeholder="开始日期"
-            @keydown.enter="handleSearch"
-          />
-          <span class="date-separator">-</span>
-          <el-date-picker
-            v-model="searchForm.endDate"
-            type="date"
-            placeholder="结束日期"
-            @keydown.enter="handleSearch"
-          />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
+      <!-- 添加标签页 -->
+      <el-tabs v-model="activeTab" class="message-tabs">
+        <el-tab-pane label="聊天消息" name="chat">
+          <!-- 搜索表单 -->
+          <el-form :model="searchForm" inline class="search-form">
+            <el-form-item label="联系人">
+              <el-input
+                v-model="searchForm.receiverName"
+                placeholder="请输入联系人姓名"
+                clearable
+                @keydown.enter="handleSearch"
+              />
+            </el-form-item>
+            <el-form-item label="消息内容">
+              <el-input
+                v-model="searchForm.content"
+                placeholder="搜索消息内容"
+                clearable
+                @keydown.enter="handleSearch"
+              />
+            </el-form-item>
+            <el-form-item label="时间范围">
+              <el-date-picker
+                v-model="searchForm.startDate"
+                type="date"
+                placeholder="开始日期"
+                @keydown.enter="handleSearch"
+              />
+              <span class="date-separator">-</span>
+              <el-date-picker
+                v-model="searchForm.endDate"
+                type="date"
+                placeholder="结束日期"
+                @keydown.enter="handleSearch"
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" :icon="Search" @click="handleSearch"
+                >搜索</el-button
+              >
+              <el-button @click="handleReset">重置</el-button>
+            </el-form-item>
+          </el-form>
 
-      <!-- 消息列表 -->
-      <el-table
-        :data="chatList"
-        v-loading="loading"
-        style="width: 100%"
-        class="chat-list-table"
-      >
-        <!-- 联系人列 -->
-        <el-table-column prop="receiver" label="联系人" min-width="200">
-          <template #default="{ row }">
-            <div class="contact-info">
-              <el-avatar :size="40" :src="row.receiverAvatar">
-                {{ row.receiverName?.charAt(0) }}
-              </el-avatar>
-              <div class="contact-detail">
-                <div class="contact-name">{{ row.receiverName }}</div>
-                <div class="contact-id">ID: {{ row.receiverId }}</div>
-              </div>
-            </div>
-          </template>
-        </el-table-column>
+          <!-- 消息列表 -->
+          <el-table
+            :data="chatList"
+            v-loading="loading"
+            style="width: 100%"
+            class="chat-list-table"
+          >
+            <!-- 联系人列 -->
+            <el-table-column prop="receiver" label="联系人" min-width="200">
+              <template #default="{ row }">
+                <div class="contact-info">
+                  <el-avatar :size="40" :src="row.receiverAvatar">
+                    {{ row.receiverName?.charAt(0) }}
+                  </el-avatar>
+                  <div class="contact-detail">
+                    <div class="contact-name">{{ row.receiverName }}</div>
+                    <div class="contact-id">ID: {{ row.receiverId }}</div>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
 
-        <!-- 最新消息列 -->
-        <el-table-column :label="isSearchMode ? '消息内容' : '最新消息'" min-width="300">
-          <template #default="{ row }">
-            <div class="message-preview">
-              <el-text class="message-content" :truncated="!isSearchMode">
-                {{ isSearchMode ? row.content : row.lastMessage }}
-              </el-text>
-              <div v-if="isSearchMode" class="message-meta">
-                <span class="message-time">{{ row.createdAt }}</span>
-                <el-tag v-if="row.isRead" size="small" type="info">已读</el-tag>
+            <!-- 最新消息列 -->
+            <el-table-column
+              :label="isSearchMode ? '消息内容' : '最新消息'"
+              min-width="300"
+            >
+              <template #default="{ row }">
+                <div class="message-preview">
+                  <el-text class="message-content" :truncated="!isSearchMode">
+                    {{ isSearchMode ? row.content : row.lastMessage }}
+                  </el-text>
+                  <div v-if="isSearchMode" class="message-meta">
+                    <span class="message-time">{{ row.createdAt }}</span>
+                    <el-tag v-if="row.isRead" size="small" type="info">已读</el-tag>
+                    <el-tag v-else size="small" type="danger">未读</el-tag>
+                  </div>
+                </div>
+              </template>
+            </el-table-column>
+
+            <!-- 未读消息数 -->
+            <el-table-column
+              v-if="!isSearchMode"
+              prop="unreadCount"
+              label="未读消息"
+              width="100"
+              align="center"
+            >
+              <template #default="{ row }">
+                <el-badge
+                  :value="row.unreadCount"
+                  :hidden="!row.unreadCount"
+                  class="unread-badge"
+                >
+                  <el-icon><Message /></el-icon>
+                </el-badge>
+              </template>
+            </el-table-column>
+
+            <!-- 最后联系时间 -->
+            <el-table-column
+              :prop="isSearchMode ? 'createdAt' : 'lastMessageTime'"
+              :label="isSearchMode ? '发送时间' : '最后联系时间'"
+              width="180"
+            />
+
+            <!-- 操作列 -->
+            <el-table-column label="操作" width="240" fixed="right">
+              <template #default="{ row }">
+                <el-button
+                  v-if="row.receiverId !== currentUserId"
+                  type="primary"
+                  :icon="ChatDotRound"
+                  link
+                  @click="handleChat(row)"
+                >
+                  聊天
+                </el-button>
+                <el-button
+                  v-if="!isSearchMode && row.unreadCount"
+                  type="info"
+                  :icon="Check"
+                  link
+                  @click="handleMarkAsRead(row)"
+                >
+                  已读
+                </el-button>
+                <el-button
+                  v-if="!isSearchMode && (!row.unreadCount || row.unreadCount === 0)"
+                  type="warning"
+                  :icon="Remove"
+                  link
+                  @click="handleMarkAsUnread(row)"
+                >
+                  未读
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <div class="pagination-container">
+            <el-pagination
+              v-model:current-page="pagination.currentPage"
+              v-model:page-size="pagination.pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="pagination.total"
+              layout="total, sizes, prev, pager, next, jumper"
+            />
+          </div>
+        </el-tab-pane>
+
+        <!-- 添加系统消息标签页 -->
+        <el-tab-pane label="系统消息" name="system">
+          <el-table
+            :data="systemMessages"
+            v-loading="systemMessageLoading"
+            style="width: 100%"
+          >
+            <el-table-column
+              prop="message"
+              label="消息内容"
+              min-width="300"
+              show-overflow-tooltip
+            />
+            <el-table-column prop="createdAt" label="发送时间" width="180" />
+            <el-table-column prop="senderName" label="发送者" width="150" />
+            <el-table-column label="状态" width="100">
+              <template #default="{ row }">
+                <el-tag v-if="row.read" size="small" type="info">已读</el-tag>
                 <el-tag v-else size="small" type="danger">未读</el-tag>
-              </div>
-            </div>
-          </template>
-        </el-table-column>
+              </template>
+            </el-table-column>
+            <el-table-column label="操作" width="120">
+              <template #default="{ row }">
+                <el-button
+                  v-if="!row.read"
+                  type="info"
+                  :icon="Check"
+                  link
+                  @click="handleSystemMessageRead(row)"
+                >
+                  标为已读
+                </el-button>
+                <el-button
+                  v-if="row.read"
+                  type="warning"
+                  :icon="Remove"
+                  link
+                  @click="handleSystemMessageUnread(row)"
+                >
+                  标为未读
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
 
-        <!-- 未读消息数 -->
-        <el-table-column
-          v-if="!isSearchMode"
-          prop="unreadCount"
-          label="未读消息"
-          width="100"
-          align="center"
-        >
-          <template #default="{ row }">
-            <el-badge
-              :value="row.unreadCount"
-              :hidden="!row.unreadCount"
-              class="unread-badge"
-            >
-              <el-icon><Message /></el-icon>
-            </el-badge>
-          </template>
-        </el-table-column>
-
-        <!-- 最后联系时间 -->
-        <el-table-column
-          :prop="isSearchMode ? 'createdAt' : 'lastMessageTime'"
-          :label="isSearchMode ? '发送时间' : '最后联系时间'"
-          width="180"
-        />
-
-        <!-- 操作列 -->
-        <el-table-column label="操作" width="240" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              v-if="row.receiverId !== currentUserId"
-              type="primary"
-              :icon="ChatDotRound"
-              link
-              @click="handleChat(row)"
-            >
-              聊天
-            </el-button>
-            <el-button
-              v-if="!isSearchMode && row.unreadCount"
-              type="info"
-              :icon="Check"
-              link
-              @click="handleMarkAsRead(row)"
-            >
-              已读
-            </el-button>
-            <el-button
-              v-if="!isSearchMode && (!row.unreadCount || row.unreadCount === 0)"
-              type="warning"
-              :icon="Remove"
-              link
-              @click="handleMarkAsUnread(row)"
-            >
-              未读
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <!-- 分页 -->
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="pagination.currentPage"
-          v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handlePageChange"
-        />
-      </div>
+          <!-- 系统消息分页 -->
+          <div class="pagination-container">
+            <el-pagination
+              v-model:current-page="systemPagination.currentPage"
+              v-model:page-size="systemPagination.pageSize"
+              :page-sizes="[10, 20, 50, 100]"
+              :total="systemPagination.total"
+              layout="total, sizes, prev, pager, next, jumper"
+            />
+          </div>
+        </el-tab-pane>
+      </el-tabs>
     </el-card>
   </PageContainer>
 </template>
@@ -466,6 +591,12 @@ const handleMarkAsUnread = async (row) => {
     margin-top: 20px;
     display: flex;
     justify-content: flex-end;
+  }
+
+  .message-tabs {
+    :deep(.el-tabs__content) {
+      padding-top: 20px;
+    }
   }
 }
 

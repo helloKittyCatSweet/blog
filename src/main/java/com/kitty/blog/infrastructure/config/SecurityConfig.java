@@ -3,27 +3,52 @@ package com.kitty.blog.infrastructure.config;
 import com.kitty.blog.common.constant.Role;
 import com.kitty.blog.infrastructure.security.filter.JwtAuthenticationEntryPoint;
 import com.kitty.blog.infrastructure.security.filter.JwtAuthenticationFilter;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.MessageChannel;
+import org.springframework.messaging.simp.stomp.StompCommand;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.messaging.support.ChannelInterceptor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.channel.ChannelProcessingFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AndRequestMatcher;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
+
+@Slf4j
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true, proxyTargetClass = true)
 public class SecurityConfig {
 
     @Autowired
@@ -89,9 +114,47 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .cors(Customizer.withDefaults());
+                .addFilterBefore(webSocketAuthFilter(), ChannelProcessingFilter.class)
+                .cors(Customizer.withDefaults())
+                // 添加WebSocket支持
+                .securityMatcher(new AndRequestMatcher(
+                        new NegatedRequestMatcher(new AntPathRequestMatcher("/ws/**")),
+                        new AntPathRequestMatcher("/**")
+                ));
+        // 添加WebSocket认证拦截器
         return http.build();
     }
+
+    @Bean
+    public Filter webSocketAuthFilter(){
+        return new OncePerRequestFilter(){
+            @Override
+            protected void doFilterInternal(HttpServletRequest request,
+                                            HttpServletResponse response,
+                                            FilterChain filterChain) throws ServletException, IOException {
+                if (request.getRequestURI().startsWith("/ws/")){
+                    // 复用 JWT 过滤器时需重置安全上下文
+                    SecurityContextHolder.clearContext();
+
+                    jwtAuthenticationFilter().doFilter(request, response, (req, res) -> {
+                        if (SecurityContextHolder.getContext().getAuthentication() != null
+                                && SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {
+                            log.debug("WebSocket 认证成功: {}",
+                                    SecurityContextHolder.getContext().getAuthentication().getName());
+                            filterChain.doFilter(request, response);
+                        } else {
+                            log.warn("WebSocket 认证失败");
+                            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                        }
+                    });
+                    return;
+                }
+                filterChain.doFilter(request, response);
+            }
+        };
+    }
+
+
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {

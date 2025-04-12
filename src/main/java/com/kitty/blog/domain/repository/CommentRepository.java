@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CommentRepository extends JpaRepository<Comment, Integer> {
+public interface CommentRepository extends BaseRepository<Comment, Integer> {
   /*
    * save(S entity)：保存实体。
    * findById(ID id)：根据主键查找实体。

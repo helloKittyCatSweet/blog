@@ -56,7 +56,9 @@ import {
   ADMIN_ROLE,
   ADMIN_USER_MANAGE_PATH,
   ADMIN_ROLE_MANAGE_PATH,
-  ADMIN_MESSAGE_MANAGE_PATH
+  ADMIN_MESSAGE_MANAGE_PATH,
+  ADMIN_SYSTEM_PATH,
+  ADMIN_SYSTEM_MESSAGE_PATH
 } from '@/constants/routes/admin';
 
 
@@ -256,6 +258,20 @@ export const adminMenus = [
         title: '消息管理',
         index: ADMIN_MESSAGE_MANAGE_PATH,
         roles: [ROLES.SYSTEM_ADMINISTRATOR, ROLES.MESSAGE_MANAGER]
+      },
+      {
+        icon: Setting,
+        title: '系统管理',
+        index: ADMIN_SYSTEM_PATH,
+        roles: [ROLES.SYSTEM_ADMINISTRATOR, ROLES.MESSAGE_MANAGER],
+        children: [
+          {
+            icon: MessageBox,
+            title: '系统消息管理',
+            index: ADMIN_SYSTEM_MESSAGE_PATH,
+            roles: [ROLES.SYSTEM_ADMINISTRATOR]
+          }
+        ]
       }
     ]
   }
