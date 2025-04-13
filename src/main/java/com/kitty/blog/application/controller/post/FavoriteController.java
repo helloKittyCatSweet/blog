@@ -166,8 +166,7 @@ public class FavoriteController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "收藏不存在")})
     public ResponseEntity<Response<Favorite>> findByUserIdAndPostId(
-            @RequestParam(value = "userId", required = true) @PathVariable Integer userId,
-            @RequestParam(value = "postId", required = true) @PathVariable Integer postId) {
+            @PathVariable Integer userId, @PathVariable Integer postId) {
         ResponseEntity<Favorite> response = favoriteService.findByUserIdAndPostId(userId, postId);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
@@ -212,9 +211,9 @@ public class FavoriteController {
                 HttpStatus.NOT_FOUND, "收藏不存在");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "删除收藏", description = "删除收藏")
-    @DeleteMapping("/admin/delete/id/{id}")
+    @DeleteMapping("/public/delete/id/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "404", description = "收藏不存在")})
     public ResponseEntity<Response<Boolean>> deleteById(@PathVariable Integer id) {

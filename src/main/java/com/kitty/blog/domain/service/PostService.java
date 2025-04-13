@@ -35,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -115,20 +116,14 @@ public class PostService {
                         savedPost.getUserId(), savedPost.getVersion()));
 
         // 添加分类
-        if (categoryId != null && categoryRepository.existsById(categoryId)) {
-            postRepository.addCategory(savedPost.getPostId(), categoryId);
+        if (categoryId != null) {
+            addCategory(savedPost.getPostId(), categoryId);
         }
 
         // 添加标签
         if (!tagIds.isEmpty()) {
             for (Integer tagId : tagIds) {
-                if (tagRepository.existsById(tagId)) {
-                    postRepository.addTag(savedPost.getPostId(), tagId);
-                    // 更新标签权重
-                    Tag tag = (Tag) tagRepository.findById(tagId).orElse(new Tag());
-                    tagWeightService.incrementUseCount(tag);
-                    tagWeightService.updateWeight(tag);
-                }
+                addTag(savedPost.getPostId(), tagId);
             }
         }
 
@@ -293,18 +288,22 @@ public class PostService {
 
     @Transactional
     public ResponseEntity<Boolean> addCategory(Integer postId, Integer categoryId) {
-        // 前端逻辑：如果Category不存在，跳转到创建Category页面
         if (!categoryRepository.existsById(categoryId) || !postRepository.existsById(postId)) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
-        } else {
-            postRepository.addCategory(postId, categoryId);
-            return new ResponseEntity<>(true, HttpStatus.OK);
         }
+
+        postRepository.addCategory(postId, categoryId);
+        // 更新分类使用次数
+        Category category = categoryRepository.findById(categoryId).orElse(new Category());
+        category.setUseCount(category.getUseCount() + 1);
+        categoryRepository.save(category);
+
+        return new ResponseEntity<>(true, HttpStatus.OK);
+
     }
 
     @Transactional
     public ResponseEntity<Boolean> addTag(Integer postId, Integer tagId) {
-        // 前端逻辑：如果Tag不存在，跳转到创建Tag页面
         if (!tagRepository.existsById(tagId) || !postRepository.existsById(postId)) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
@@ -313,6 +312,9 @@ public class PostService {
         Tag tag = (Tag) tagRepository.findById(tagId).orElse(new Tag());
         tagWeightService.incrementUseCount(tag);
         tagWeightService.updateWeight(tag);
+        tag.setLastUsedAt(LocalDateTime.now());
+        tagRepository.save(tag);
+
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
@@ -408,10 +410,18 @@ public class PostService {
 
         // 更新分类
         if (oldCategoryId != null) {
-            postRepository.deleteCategory(postId, oldCategoryId);
+            deleteCategory(postId, oldCategoryId);
+            // 减少旧分类的使用次数
+            Category oldCategory = categoryRepository.findById(oldCategoryId).orElse(new Category());
+            oldCategory.setUseCount(Math.max(0, oldCategory.getUseCount() - 1));
+            categoryRepository.save(oldCategory);
         }
         if (categoryId != null) {
-            postRepository.addCategory(postId, categoryId);
+            addCategory(postId, categoryId);
+            // 增加新分类的使用次数
+            Category newCategory = categoryRepository.findById(categoryId).orElse(new Category());
+            newCategory.setUseCount(newCategory.getUseCount() + 1);
+            categoryRepository.save(newCategory);
         }
 
         return findById(postId);
@@ -437,7 +447,7 @@ public class PostService {
         currentTags.stream()
                 .filter(tag -> !newTagIds.contains(tag.getTagId()))
                 .forEach(tag -> {
-                    postRepository.deleteTag(postId, tag.getTagId());
+                    deleteTag(postId, tag.getTagId());
                     tagWeightService.decrementUseCount(tag);
                     tagWeightService.updateWeight(tag);
                 });
@@ -447,7 +457,7 @@ public class PostService {
                 .filter(tagId -> !currentTagIds.contains(tagId))
                 .forEach(tagId -> {
                     if (tagRepository.existsById(tagId)) {
-                        postRepository.addTag(postId, tagId);
+                        addTag(postId, tagId);
                         Tag tag = tagRepository.findById(tagId).orElse(new Tag());
                         tagWeightService.incrementUseCount(tag);
                         tagWeightService.updateWeight(tag);
@@ -941,5 +951,12 @@ public class PostService {
         String summary = xunfeiService.chat(instruction + content);
         log.info("生成摘要请求：{}, 结果：{}", content, summary );
         return summary;
+    }
+
+    @Transactional
+    public void addViews(Integer postId) {
+        Post post = postRepository.findById(postId).orElse(new Post());
+        post.setViews(post.getViews() + 1);
+        postRepository.save(post);
     }
 }

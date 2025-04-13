@@ -38,6 +38,9 @@ public class Category implements Serializable {
     @Column(name = "parent_category_id")
     private Integer parentCategoryId;
 
+    @Column(name = "use_count")
+    private Integer useCount = 0; // 添加使用次数字段
+
     /**
      * Transient 注解的作用是：该字段不会被映射到数据库表的字段中，而是仅仅作为一个临时变量存在。
      */

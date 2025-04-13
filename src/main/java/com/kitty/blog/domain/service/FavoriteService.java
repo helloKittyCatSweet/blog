@@ -7,6 +7,7 @@ import com.kitty.blog.domain.repository.FavoriteRepository;
 import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @CacheConfig(cacheNames = "favorite")
 public class FavoriteService {
@@ -35,12 +37,44 @@ public class FavoriteService {
 
     @Transactional
     public ResponseEntity<Boolean> create(Favorite favorite) {
-        if (!userRepository.existsById(favorite.getUserId())
-                || !postRepository.existsById(favorite.getFavoriteId())) {
-            return new ResponseEntity<>(false,HttpStatus.NOT_FOUND);
+        // 参数验证
+        if (favorite == null || favorite.getUserId() == null || favorite.getPostId() == null) {
+            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
         }
-        favoriteRepository.save(favorite);
-        return new ResponseEntity<>(true, HttpStatus.CREATED);
+
+        // 验证用户和文章是否存在
+        if (!userRepository.existsById(favorite.getUserId()) ||
+                !postRepository.existsById(favorite.getPostId())) {
+            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+        }
+
+        // 检查是否已经收藏过
+        if (favoriteRepository.findByUserIdAndPostId(favorite.getUserId(),
+                favorite.getPostId()).isPresent()) {
+            return new ResponseEntity<>(false, HttpStatus.CONFLICT);
+        }
+
+        try {
+            // 设置默认值
+            if (favorite.getFolderName() == null || favorite.getFolderName().trim().isEmpty()) {
+                favorite.setFolderName("默认收藏夹");
+            }
+
+            // 保存收藏
+            favoriteRepository.save(favorite);
+
+            // 更新文章收藏数
+            Post post = postRepository.findById(favorite.getPostId()).orElse(null);
+            if (post != null) {
+                post.setFavorites(post.getFavorites() + 1);
+                postRepository.save(post);
+            }
+
+            return new ResponseEntity<>(true, HttpStatus.CREATED);
+        } catch (Exception e) {
+            log.error("创建收藏失败", e);
+            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Transactional

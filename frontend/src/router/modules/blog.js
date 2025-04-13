@@ -31,8 +31,8 @@ export default {
     },
     {
       path: BLOG_POST_DETAIL_PATH.slice(1),
-      name: 'PostDetail',
-      component: () => import('@/views/blog/PostDetail.vue'),
+      name: 'PostView',
+      component: () => import('@/views/blog/PostView.vue'),
       meta: {
         title: '文章详情',
         public: true

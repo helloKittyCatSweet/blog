@@ -28,9 +28,6 @@ public class UserActivityController {
     @Autowired
     private UserActivityService userActivityService;
 
-    @Autowired
-    private PostService postService;
-
     /**
      * 创建用户动态
      * @param userActivity
@@ -146,8 +143,7 @@ public class UserActivityController {
      * @param activityType
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER_ACTIVITY_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户ID、文章ID、互动类型获取用户动态")
     @GetMapping("/public/find/explicit/{userId}/{postId}/{activityType}")
     @ApiResponses(value = {

@@ -1,3 +1,26 @@
+<script setup>
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { Search } from "@element-plus/icons-vue";
+import AppFooter from "@/components/layout/AppFooter.vue";
+
+const router = useRouter();
+const searchKey = ref("");
+
+const handleSearch = () => {
+  if (searchKey.value.trim()) {
+    router.push({
+      path: "/posts",
+      query: { search: searchKey.value.trim() },
+    });
+  }
+};
+
+const goToLogin = () => {
+  router.push("/login");
+};
+</script>
+
 <template>
   <div class="blog-layout">
     <header class="blog-header">
@@ -34,42 +57,9 @@
       </router-view>
     </main>
 
-    <footer class="blog-footer">
-      <div class="footer-content">
-        <div class="footer-info">
-          <p>© 2024 Blog Name. All rights reserved.</p>
-        </div>
-        <div class="footer-links">
-          <a href="#">GitHub</a>
-          <a href="#">RSS</a>
-          <a href="#">联系我</a>
-        </div>
-      </div>
-    </footer>
+    <AppFooter />
   </div>
 </template>
-
-<script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { Search } from "@element-plus/icons-vue";
-
-const router = useRouter();
-const searchKey = ref("");
-
-const handleSearch = () => {
-  if (searchKey.value.trim()) {
-    router.push({
-      path: "/posts",
-      query: { search: searchKey.value.trim() },
-    });
-  }
-};
-
-const goToLogin = () => {
-  router.push("/login");
-};
-</script>
 
 <style scoped>
 .blog-layout {

@@ -3,9 +3,16 @@ import { ref, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import PageContainer from "@/components/PageContainer.vue";
-import { MdEditor } from "md-editor-v3";
+import PostHeader from "@/components/blog/post/PostHeader.vue";
+import PostInteraction from "@/components/blog/post/PostInteraction.vue";
+
+import { User, Clock, View, ChatLineRound, Star, Pointer } from "@element-plus/icons-vue";
+import { MdPreview } from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
+
 import { findById } from "@/api/post/post.js";
+import { findExplicit as findExplicitUserActivity } from "@/api/user/userActivity.js";
+import { useUserStore } from "@/stores/modules/user.js";
 
 const route = useRoute();
 const loading = ref(false);
@@ -45,13 +52,21 @@ const getPostDetail = async (id) => {
         isDraft: postData.post.isDraft,
         visibility: postData.post.visibility,
         version: postData.post.version,
-        category: postData.category,
-        tags: postData.tags || [],
+        category: {
+          categoryId: postData.category?.categoryId,
+          categoryName: postData.category?.name, // 修改这里，使用 name 而不是 categoryName
+          description: postData.category?.description,
+        },
+        tags:
+          postData.tags?.map((tag) => ({
+            tagId: tag.tagId,
+            tagName: tag.name, // 修改这里，使用 name 而不是 tagName
+          })) || [],
         author: postData.author,
-        summary: postData.post.summary,
-        createdTime: postData.post.createdTime,
-        updatedTime: postData.post.updatedTime,
-        viewCount: postData.post.viewCount || 0,
+        summary: postData.post.abstractContent, // 修改这里，使用 abstractContent
+        createdTime: postData.post.createdAt, // 修改这里，使用 createdAt
+        updatedTime: postData.post.updatedAt, // 修改这里，使用 updatedAt
+        viewCount: postData.post.views || 0, // 修改这里，使用 views
       };
     }
   } catch (error) {
@@ -61,10 +76,56 @@ const getPostDetail = async (id) => {
   }
 };
 
-onMounted(() => {
+const userStore = useUserStore();
+
+// 添加交互状态
+const interactionState = ref({
+  isLiked: false,
+  isFavorited: false,
+  likeActivityId: null, // 点赞获得id
+  favoriteActivityId: null, // 收藏获得id
+});
+
+onMounted(async () => {
   const postId = route.params.id;
   if (postId) {
-    getPostDetail(postId);
+    await getPostDetail(postId);
+    // 只有在用户已登录的情况下才获取状态
+    if (userStore.isLoggedIn && userStore.user.id) {
+      // 获取点赞状态
+      try {
+        const response = await findExplicitUserActivity(
+          userStore.user.id,
+          postId,
+          "LIKE"
+        );
+        const activityData = response.data.data;
+        interactionState.value.isLiked = activityData !== null;
+        if (activityData) {
+          interactionState.value.likeActivityId = activityData.activityId;
+        }
+
+        // 获取收藏状态
+        const favoriteResponse = await findExplicitUserActivity(
+          userStore.user.id,
+          postId,
+          "FAVORITE"
+        );
+        // console.log("获取用户收藏状态：", favoriteResponse.data.data);
+        const favoriteData = favoriteResponse.data.data;
+        // 只有当数据存在且至少有 activityId 时才认为是已收藏
+        interactionState.value.isFavorited = favoriteData?.activityId != null;
+        if (favoriteData?.activityId) {
+          interactionState.value.favoriteActivityId = favoriteData.activityId;
+        } else {
+          // 重置收藏状态
+          interactionState.value.isFavorited = false;
+          interactionState.value.favoriteActivityId = null;
+        }
+      } catch (error) {
+        console.error("获取点赞状态失败:", error);
+      }
+    }
   }
 });
 </script>
@@ -73,41 +134,14 @@ onMounted(() => {
   <page-container>
     <el-card v-loading="loading" class="post-view">
       <!-- 文章头部信息 -->
-      <div class="post-header">
-        <h1 class="post-title">{{ post.title }}</h1>
-        <div class="post-meta">
-          <el-space wrap>
-            <div class="meta-item">
-              <el-icon><User /></el-icon>
-              <span>{{ post.author }}</span>
-            </div>
-            <div class="meta-item">
-              <el-icon><Clock /></el-icon>
-              <span>{{ post.createdTime }}</span>
-            </div>
-            <div class="meta-item">
-              <el-icon><View /></el-icon>
-              <span>{{ post.viewCount }} 次阅读</span>
-            </div>
-          </el-space>
-        </div>
-
-        <!-- 分类和标签 -->
-        <div class="post-tags">
-          <el-tag v-if="post.category" type="success" effect="plain" class="category">
-            {{ post.category.categoryName }}
-          </el-tag>
-          <el-tag
-            v-for="tag in post.tags"
-            :key="tag.tagId"
-            class="tag"
-            effect="plain"
-            size="small"
-          >
-            {{ tag.tagName }}
-          </el-tag>
-        </div>
-      </div>
+      <post-header
+        :title="post.title"
+        :author="post.author"
+        :created-time="post.createdTime"
+        :view-count="post.viewCount"
+        :category="post.category"
+        :tags="post.tags"
+      />
 
       <!-- 文章封面 -->
       <div v-if="post.coverImage" class="post-cover">
@@ -122,12 +156,33 @@ onMounted(() => {
 
       <!-- 文章内容 -->
       <div class="post-content">
-        <md-editor
-          v-model="post.content"
-          :preview="true"
-          :previewOnly="true"
+        <md-preview
+          :modelValue="post.content"
           :showCodeRowNumber="true"
           language="zh-CN"
+        />
+      </div>
+
+      <!-- 在文章内容后添加交互区域 -->
+      <!-- 只在用户登录时显示交互区域 -->
+      <post-interaction
+        v-if="userStore.isLoggedIn"
+        v-model:is-liked="interactionState.isLiked"
+        v-model:is-favorited="interactionState.isFavorited"
+        :post-id="post.postId"
+        :title="post.title"
+        :like-activity-id="interactionState.likeActivityId"
+        :favorite-activity-id="interactionState.favoriteActivityId"
+        @refresh="getPostDetail(post.postId)"
+      />
+
+      <!-- 未登录时显示提示 -->
+      <div v-else class="post-interaction">
+        <el-alert
+          title="登录后即可点赞、收藏和评论"
+          type="info"
+          :closable="false"
+          center
         />
       </div>
 
@@ -143,38 +198,6 @@ onMounted(() => {
 .post-view {
   max-width: 900px;
   margin: 0 auto;
-}
-
-.post-header {
-  margin-bottom: 24px;
-}
-
-.post-title {
-  font-size: 2em;
-  font-weight: bold;
-  margin: 0 0 16px;
-  color: var(--el-text-color-primary);
-}
-
-.post-meta {
-  margin-bottom: 16px;
-  color: var(--el-text-color-secondary);
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.post-tags {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.category {
-  margin-right: 8px;
 }
 
 .post-cover {
@@ -210,7 +233,8 @@ onMounted(() => {
   margin-bottom: 24px;
 }
 
-.post-content :deep(.md-editor) {
+.post-content :deep(.md-preview) {
+  background-color: transparent;
   border: none;
 }
 
@@ -223,5 +247,12 @@ onMounted(() => {
 
 .update-time {
   text-align: right;
+}
+
+.post-interaction {
+  margin: 24px 0;
+  padding: 16px;
+  border-radius: 8px;
+  background-color: var(--el-fill-color-lighter);
 }
 </style>

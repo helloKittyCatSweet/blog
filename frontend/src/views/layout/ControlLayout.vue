@@ -24,6 +24,7 @@ import { ROLES } from "@/constants/role-constants";
 
 import UserDropdown from "@/components/UserDropdown.vue";
 import { USER_PROFILE_PATH, USER_PASSWORD_PATH } from "@/constants/routes/user";
+import AppFooter from "@/components/layout/AppFooter.vue";
 
 const userStore = useUserStore();
 onMounted(() => {
@@ -121,7 +122,7 @@ const handleUserCommand = async (command) => {
         <el-main>
           <router-view></router-view>
         </el-main>
-        <el-footer>FreeShare ©2025 Created by helloKittyCatSweet</el-footer>
+        <AppFooter />
       </el-container>
     </div>
   </div>

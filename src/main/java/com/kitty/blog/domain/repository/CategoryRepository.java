@@ -3,6 +3,7 @@ package com.kitty.blog.domain.repository;
 import com.kitty.blog.domain.model.category.Category;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -103,4 +104,11 @@ public interface CategoryRepository extends BaseRepository<Category, Integer> {
             "JOIN PostCategory pc ON c.categoryId = pc.id.categoryId " +
             "WHERE pc.id.postId = :postId")
     Optional<Category> findByPostId(Integer postId);
+
+    @Query("SELECT COUNT(pc.id.postId) FROM PostCategory pc WHERE pc.id.categoryId = :categoryId")
+    Integer countPostsByCategoryId(@Param("categoryId") Integer categoryId);
+
+    @Modifying
+    @Query("UPDATE Category c SET c.useCount = :count WHERE c.categoryId = :categoryId")
+    void updateUseCount(@Param("categoryId") Integer categoryId, @Param("count") Integer count);
 }

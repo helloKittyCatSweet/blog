@@ -169,3 +169,6 @@ export const updateCategory = (postId, categoryId) =>
 // 更新文章标签
 export const updateTags = (postId, tags) =>
   request.put(`${postPrefix}/public/update/tags/${postId}`, tags)
+
+// 查看文章
+export const addViews = (postId) => request.put(`${postPrefix}/public/add/views/${postId}`)

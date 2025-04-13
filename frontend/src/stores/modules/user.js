@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 export const useUserStore = defineStore("free-share-user", () => {
   const user = ref({
@@ -11,6 +11,9 @@ export const useUserStore = defineStore("free-share-user", () => {
     authorities: [],
   });
 
+  // 登录计算属性
+  const isLoggedIn = computed(() => !!user.value.token || !user.value.id);
+
   // Getter 方法
   const getId = () => user.value.id;
   const getUsername = () => user.value.username;
@@ -20,7 +23,7 @@ export const useUserStore = defineStore("free-share-user", () => {
   const getAuthorities = () => user.value.authorities;
   const getUser = () => user.value;
 
-  // 权限检查
+
   // 权限检查
   const hasRole = (role) => user.value.roles.some(r => r.authority === role);
   const hasAnyRoles = (roles) => user.value.roles.some(r => roles.includes(r.authority));
@@ -60,6 +63,7 @@ export const useUserStore = defineStore("free-share-user", () => {
   // 正确的返回结构
   return {
     user,
+    isLoggedIn,
     getUser,
     setUser,
     hasRole,

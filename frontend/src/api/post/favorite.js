@@ -46,4 +46,4 @@ export const findAll = () => request.get(`${postPrefix}${favoritePrefix}/admin/f
 export const exists = (id) => request.get(`${postPrefix}${favoritePrefix}/admin/exists/id/${id}`)
 
 // 删除收藏
-export const deleteById = (id) => request.delete(`${postPrefix}${favoritePrefix}/admin/delete/id/${id}`)
+export const deleteById = (id) => request.delete(`${postPrefix}${favoritePrefix}/public/delete/id/${id}`)

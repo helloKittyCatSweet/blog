@@ -218,4 +218,10 @@ public interface PostRepository extends JpaRepository<Post, Integer>, JpaSpecifi
     @Query("UPDATE PostCategory pc SET pc.id.categoryId = :categoryId WHERE " +
             "pc.id.postId = :postId AND pc.id.categoryId = :oldCategoryId")
     void updatePostCategory(Integer postId, Integer categoryId, Integer oldCategoryId);
+
+    @Query("UPDATE Post p SET p.likes = p.likes + :count WHERE p.postId = :postId")
+    void addLikes(Integer postId, Integer count);
+
+    @Query("UPDATE Post p SET p.favorites = p.favorites + :count WHERE p.postId = :postId")
+    void addFavorites(Integer postId, Integer count);
 }

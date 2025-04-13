@@ -27,7 +27,10 @@ const loading = ref(false);
 
 // 表单数据
 const formRef = ref(null);
-const form = ref({
+
+// 解决从 编辑->新建 时，内容不变的问题
+// 添加默认的表单初始值
+const defaultForm = {
   postId: null,
   title: "",
   content: "",
@@ -41,7 +44,24 @@ const form = ref({
   tags: [],
   author: "",
   summary: "",
-});
+};
+// 初始化表单数据
+const form = ref({ ...defaultForm });
+
+// 监听路由变化
+watch(
+  () => route.path,
+  (newPath) => {
+    if (newPath.includes("/create")) {
+      // 重置表单数据
+      form.value = { ...defaultForm };
+      postSummary.value = "";
+      fileList.value = [];
+      selectedVersion.value = null;
+      editorKey.value += 1; // 强制重新渲染编辑器
+    }
+  }
+);
 
 // 表单校验规则
 const rules = {
@@ -209,7 +229,11 @@ const handleSave = async (isDraft = true) => {
     if (valid) {
       loading.value = true;
       try {
-        // console.log("category:", form.value.category, "-----", form.value.categoryId);
+        // 确保摘要不为空，如果没有手动输入或生成的摘要，则从内容中截取
+        const summary =
+          postSummary.value ||
+          form.value.summary ||
+          form.value.content.substring(0, 200) + "...";
 
         const postData = {
           post: {
@@ -222,7 +246,7 @@ const handleSave = async (isDraft = true) => {
             isPublished: !isDraft,
             visibility: form.value.visibility,
             version: form.value.version,
-            abstractContent: postSummary.value || form.value.summary,
+            abstractContent: summary,
           },
           category: form.value.category || null,
           tags: form.value.tags || [],

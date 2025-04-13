@@ -48,6 +48,13 @@ public class UserActivityService {
         // 默认假删字段为false
         userActivity.setDeleted(false);
         userActivityRepository.save(userActivity);
+
+        // 点赞、收藏
+        if (ActivityType.LIKE.equals(userActivity.getActivityType())) {
+            postRepository.addLikes(userActivity.getPostId(), 1);
+        } else if (ActivityType.FAVORITE.equals(userActivity.getActivityType())) {
+            postRepository.addFavorites(userActivity.getPostId(),1);
+        }
         return new ResponseEntity<>(true, HttpStatus.CREATED);
     }
 
@@ -180,6 +187,13 @@ public class UserActivityService {
                     .orElse(null);
             if (userActivity == null) {
                 return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+            }
+
+            // 点赞、收藏
+            if (ActivityType.LIKE.equals(userActivity.getActivityType())) {
+                postRepository.addLikes(userActivity.getPostId(), -1);
+            } else if (ActivityType.FAVORITE.equals(userActivity.getActivityType())) {
+                postRepository.addFavorites(userActivity.getPostId(),-1);
             }
 
             if(!Objects.equals(userActivity.getUserId(), userId)){

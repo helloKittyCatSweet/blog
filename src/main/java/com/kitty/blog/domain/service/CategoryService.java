@@ -221,6 +221,14 @@ public class CategoryService {
     @Transactional
     public ResponseEntity<List<TreeDto>> findAll() {
         List<Category> allCategories = categoryRepository.findAll();
+
+        // 更新所有分类的使用次数
+        allCategories.forEach(category -> {
+            Integer count = categoryRepository.countPostsByCategoryId(category.getCategoryId());
+            category.setUseCount(count);
+            categoryRepository.updateUseCount(category.getCategoryId(),count);
+        });
+
         if (allCategories.isEmpty()) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
         }
