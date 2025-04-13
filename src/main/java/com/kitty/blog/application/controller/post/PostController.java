@@ -5,6 +5,7 @@ import com.kitty.blog.application.dto.post.PostAttachmentDto;
 import com.kitty.blog.application.dto.post.PostDto;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.model.*;
+import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.model.tag.PostTag;
 import com.kitty.blog.domain.repository.post.PostSearchCriteria;
@@ -65,8 +66,9 @@ public class PostController {
      * @param postDto
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)" +
-            " and (#postDto.post.userId == #user.id)")
+    @PreAuthorize("(hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER) and #postDto.post.userId == #user.id) " +
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_POST_MANAGER) " +
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "更新文章")
     @PutMapping("/public/update")
     @ApiResponses(value = {
@@ -678,15 +680,15 @@ public class PostController {
      * 查询所有文章
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE)")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "查询所有文章")
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Post>>> findAll(){
-        ResponseEntity<List<Post>> response = postService.findAll();
+    public ResponseEntity<Response<List<PostDto>>> findAll(){
+        ResponseEntity<List<PostDto>> response = postService.findAll();
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -816,7 +818,9 @@ public class PostController {
     public ResponseEntity<Response<List<PostDto>>> search(
             @RequestBody PostSearchCriteria criteria,
             @AuthenticationPrincipal LoginResponseDto user) {
-        criteria.setUserId(user.getId());
+        if (criteria.isPrivate()){
+            criteria.setUserId(user.getId());
+        }
         List<PostDto> posts = postService.searchPostsByMultipleCriteria(criteria);
         return Response.createResponse(
                 new ResponseEntity<>(posts, HttpStatus.OK),
@@ -846,5 +850,31 @@ public class PostController {
                 HttpStatus.OK, "生成成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "生成失败");
     }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
+            "ROLE_POST_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+            " or @postService.isAuthorOfOpenPost(#username, #user.id)")
+    @PutMapping("/public/update/category/{postId}/{categoryId}")
+    public ResponseEntity<Response<PostDto>> updateCategory
+            (@PathVariable Integer postId, @PathVariable Integer categoryId) {
+        ResponseEntity<PostDto> response = postService.updateCategory(postId, categoryId);
+        return Response.createResponse(response,
+                HttpStatus.OK, "更新成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "更新失败");
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
+            "ROLE_POST_MANAGER)" +
+            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
+            " or @postService.isAuthorOfOpenPost(#username, #user.id)")
+    @PutMapping("/public/update/tags/{postId}")
+    public ResponseEntity<Response<PostDto>> updateTags
+            (@PathVariable Integer postId, @RequestBody List<Integer> tags) {
+        ResponseEntity<PostDto> response = postService.updateTags(postId, tags);
+        return Response.createResponse(response,
+                HttpStatus.OK, "更新成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "更新失败");
+            }
 
 }

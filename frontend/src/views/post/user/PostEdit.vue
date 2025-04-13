@@ -71,9 +71,9 @@ const getPostDetail = async (id) => {
         categoryId: postData.category?.categoryId || null,
         tags: postData.tags || [],
         author: postData.author,
-        summary: postData.post.summary || "", // 加载文章摘要
+        summary: postData.post.abstractContent || "", // 加载文章摘要
       };
-      postSummary.value = postData.post.summary || ""; // 更新显示的摘要
+      postSummary.value = postData.post.abstractContent || ""; // 更新显示的摘要
       fileList.value =
         postData.attachments?.map((att) => ({
           name: att.attachmentName,
@@ -222,7 +222,7 @@ const handleSave = async (isDraft = true) => {
             isPublished: !isDraft,
             visibility: form.value.visibility,
             version: form.value.version,
-            summary: postSummary.value || form.value.summary,
+            abstractContent: postSummary.value || form.value.summary,
           },
           category: form.value.category || null,
           tags: form.value.tags || [],

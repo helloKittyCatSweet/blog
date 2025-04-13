@@ -160,16 +160,19 @@ public class PostService {
             return new ResponseEntity<>(new PostDto(), HttpStatus.NOT_FOUND);
         }
 
-        // 内容审核
-        String s = baiduContentService.checkText(post.getContent());
-        if (!s.equals("合规")) {
-            return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
-        }
-
         // 获取现有文章
         Post existingPost = (Post) postRepository.findById(post.getPostId()).orElse(null);
         if (existingPost == null) {
             return new ResponseEntity<>(new PostDto(), HttpStatus.NOT_FOUND);
+        }
+
+        // 如果内容有变化才进行审核
+        if (post.getContent() != null && !post.getContent().equals(existingPost.getContent())){
+            // 内容审核
+            String s = baiduContentService.checkText(post.getContent());
+            if (!s.equals("合规")) {
+                return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
+            }
         }
 
         // 更新文章字段
@@ -182,32 +185,12 @@ public class PostService {
         // 保存更新后的文章
         Post updatedPost = (Post) postRepository.save(existingPost);
 
-        Integer oldCategoryId = categoryRepository.findByPostId(existingPost.getPostId()).
-                orElse(new Category()).getCategoryId();
-        // 如果更换了分类
-        if (!Objects.equals(oldCategoryId, categoryId)) {
-            // 如果现在的分类存在
-            if (categoryId != null && categoryRepository.existsById(categoryId)) {
-                log.info("postRepository.addCategory:{} ", categoryId);
-                postRepository.updatePostCategory(post.getPostId(), categoryId, oldCategoryId);
-            }
+        // 更新分类和标签
+        if (categoryId != null) {
+            updateCategory(post.getPostId(), categoryId);
         }
-
-        // 获取现有标签
-        List<Tag> currentTags = tagRepository.findByPostId(updatedPost.getPostId()).
-                orElse(new ArrayList<>());
-        // 删除现有标签
-        for (Tag tag : currentTags) {
-            postRepository.deleteTag(updatedPost.getPostId(), tag.getTagId());
-        }
-        // 添加新标签
-        for (Integer tagId : tagIds) {
-            if (tagRepository.existsById(tagId)) {
-                postRepository.addTag(updatedPost.getPostId(), tagId);
-                Tag tag = (Tag) tagRepository.findById(tagId).orElse(new Tag());
-                tagWeightService.incrementUseCount(tag);
-                tagWeightService.updateWeight(tag);
-            }
+        if (!tagIds.isEmpty()) {
+            updateTags(post.getPostId(), tagIds);
         }
 
         // 同步版本管理
@@ -399,6 +382,79 @@ public class PostService {
         }
         postVersionRepository.deleteById(versionId);
         return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
+    @Transactional
+    @CacheEvict(allEntries = true)
+    public ResponseEntity<PostDto> updateCategory(Integer postId, Integer categoryId) {
+        // 检查文章是否存在
+        Post existingPost = postRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
+
+        // 获取当前分类ID
+        Integer oldCategoryId = categoryRepository.findByPostId(postId)
+                .orElse(new Category()).getCategoryId();
+
+        // 如果分类没有变化，直接返回
+        if (Objects.equals(categoryId, oldCategoryId)) {
+            return findById(postId);
+        }
+
+        // 检查新分类是否存在
+        if (categoryId != null && !categoryRepository.existsById(categoryId)) {
+            log.warn("Attempted to update to non-existent category: {}", categoryId);
+            return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
+        }
+
+        // 更新分类
+        if (oldCategoryId != null) {
+            postRepository.deleteCategory(postId, oldCategoryId);
+        }
+        if (categoryId != null) {
+            postRepository.addCategory(postId, categoryId);
+        }
+
+        return findById(postId);
+    }
+
+    @Transactional
+    @CacheEvict(allEntries = true)
+    public ResponseEntity<PostDto> updateTags(Integer postId, List<Integer> tagIds) {
+        // 检查文章是否存在
+        Post existingPost = postRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("文章不存在"));
+
+        // 获取当前标签
+        List<Tag> currentTags = tagRepository.findByPostId(postId)
+                .orElse(new ArrayList<>());
+
+        Set<Integer> currentTagIds = currentTags.stream()
+                .map(Tag::getTagId)
+                .collect(Collectors.toSet());
+        Set<Integer> newTagIds = new HashSet<>(tagIds);
+
+        // 删除需要移除的标签
+        currentTags.stream()
+                .filter(tag -> !newTagIds.contains(tag.getTagId()))
+                .forEach(tag -> {
+                    postRepository.deleteTag(postId, tag.getTagId());
+                    tagWeightService.decrementUseCount(tag);
+                    tagWeightService.updateWeight(tag);
+                });
+
+        // 添加新标签
+        tagIds.stream()
+                .filter(tagId -> !currentTagIds.contains(tagId))
+                .forEach(tagId -> {
+                    if (tagRepository.existsById(tagId)) {
+                        postRepository.addTag(postId, tagId);
+                        Tag tag = tagRepository.findById(tagId).orElse(new Tag());
+                        tagWeightService.incrementUseCount(tag);
+                        tagWeightService.updateWeight(tag);
+                    }
+                });
+
+        return findById(postId);
     }
 
     @Transactional
@@ -624,15 +680,21 @@ public class PostService {
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public ResponseEntity<List<Post>> findAll() {
-        if (postRepository.count() == 0) {
-            {
-                return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
-            }
+    public ResponseEntity<List<PostDto>> findAll() {
+        // 创建搜索条件
+        PostSearchCriteria criteria = PostSearchCriteria.builder()
+                .isPublished(true)
+                .visibility("PUBLIC")
+                .build();
+
+        // 使用已有的搜索方法获取公开文章
+        List<PostDto> postDtos = searchPostsByMultipleCriteria(criteria);
+
+        if (postDtos.isEmpty()) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
         }
-        return new ResponseEntity<>(
-                (List<Post>) postRepository.findAll(),
-                HttpStatus.OK);
+
+        return new ResponseEntity<>(postDtos, HttpStatus.OK);
     }
 
     @Transactional
@@ -774,6 +836,17 @@ public class PostService {
     public List<PostDto> searchPostsByMultipleCriteria(PostSearchCriteria searchCriteria) {
         // 构建搜索条件
         PostSearchCriteria.PostSearchCriteriaBuilder builder = PostSearchCriteria.builder();
+        if (!searchCriteria.isPrivate()){
+            builder.visibility("PUBLIC");
+            builder.isPublished(true);
+        }else {
+            Optional.ofNullable(searchCriteria.getIsPublished())
+                    .ifPresent(builder::isPublished);
+
+            Optional.ofNullable(searchCriteria.getVisibility())
+                    .filter(visibility -> !visibility.trim().isEmpty())
+                    .ifPresent(builder::visibility);
+        }
 
         // 动态添加搜索条件
         Optional.ofNullable(searchCriteria.getTitle())
@@ -787,13 +860,6 @@ public class PostService {
         Optional.ofNullable(searchCriteria.getUserId())
                 .ifPresent(builder::userId);
 
-        Optional.ofNullable(searchCriteria.getIsPublished())
-                .ifPresent(builder::isPublished);
-
-        Optional.ofNullable(searchCriteria.getVisibility())
-                .filter(visibility -> !visibility.trim().isEmpty())
-                .ifPresent(builder::visibility);
-
         Optional.ofNullable(searchCriteria.getCategoryId())
                 .ifPresent(builder::categoryId);
 
@@ -806,6 +872,8 @@ public class PostService {
         Optional.ofNullable(searchCriteria.getEndDate())
                 .ifPresent(builder::endDate);
 
+        Optional.of(false).ifPresent(builder::isDeleted);
+
         // 执行搜索
         List<Post> posts = searchPosts(builder.build());
 
@@ -815,7 +883,9 @@ public class PostService {
                     PostDto dto = new PostDto();
                     dto.setPost(post);
                     dto.setCategory(categoryRepository.findByPostId(post.getPostId()).orElse(new Category()));
-                    dto.setTags(tagRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
+                    // 获取标签
+                    List<Tag> tags = tagRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>());
+                    dto.setTags(new ArrayList<>(tags));
                     dto.setComments(commentRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
 
                     User author = userRepository.findById(post.getUserId()).orElse(null);

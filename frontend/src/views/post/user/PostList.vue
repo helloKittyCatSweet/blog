@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed, onUnmounted, watch } from "vue";
+import { ref, onMounted, computed, onUnmounted, watch, nextTick } from "vue";
 import { ElMessage, ElMessageBox, ElDialog } from "element-plus";
 import {
   Search,
@@ -9,6 +9,8 @@ import {
   View,
   Document,
   Download,
+  ArrowDown,
+  ArrowUp,
 } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
 import PageContainer from "@/components/PageContainer.vue";
@@ -47,6 +49,8 @@ const searchForm = ref({
   tagId: null,
   currentPage: 1,
   pageSize: 10,
+  startDate: null,
+  endDate: null,
 });
 
 // 状态选项
@@ -60,6 +64,7 @@ const tags = ref([]);
 
 // 处理日期范围变化
 const handleDateRangeChange = (val) => {
+  dateRange.value = val; // 更新日期范围
   if (val) {
     searchForm.value.startDate = val[0];
     searchForm.value.endDate = val[1];
@@ -229,7 +234,7 @@ const handleSearch = async () => {
   try {
     const response = await searchPosts({
       ...searchForm.value,
-      userId: userStore.user.id, // 添加用户ID
+      isPrivate: true,
     });
     if (response.data.status === 200) {
       tableData.value = response.data.data.map((item) => ({
@@ -393,13 +398,41 @@ const handleSortChange = ({ prop, order }) => {
 const chartRef = ref(null);
 let chart = null;
 
+// 添加图表显示状态控制
+const isChartVisible = ref(false);
+
 // 初始化图表
-const initChart = () => {
+const initChart = async () => {
   if (!chartRef.value) return;
 
-  chart = echarts.init(chartRef.value);
-  updateChart();
+  // 销毁旧的图表实例
+  if (chart) {
+    chart.dispose();
+  }
+
+  // 等待 DOM 更新完成
+  await nextTick();
+
+  // 确保容器可见时才初始化
+  if (isChartVisible.value) {
+    chart = echarts.init(chartRef.value);
+    updateChart();
+  }
 };
+
+// 监听图表显示状态变化
+watch(isChartVisible, async (visible) => {
+  if (visible) {
+    await initChart();
+  }
+});
+
+// 监听数据变化更新图表
+watch(tableData, () => {
+  if (isChartVisible.value && chart) {
+    updateChart();
+  }
+});
 
 // 更新图表数据
 const updateChart = () => {
@@ -477,7 +510,6 @@ watch(tableData, () => {
 onMounted(() => {
   getPostList();
   fetchCategoriesAndTags();
-  initChart();
 });
 
 // 在组件卸载时销毁图表
@@ -487,6 +519,24 @@ onUnmounted(() => {
     chart = null;
   }
 });
+
+// 添加图表导出方法
+const handleExportChart = () => {
+  if (!chart) return;
+
+  const dataURL = chart.getDataURL({
+    type: "png",
+    pixelRatio: 2,
+    backgroundColor: "#fff",
+  });
+
+  const link = document.createElement("a");
+  link.download = `文章统计图表_${
+    userStore.user.username
+  }_${new Date().toLocaleDateString()}.png`;
+  link.href = dataURL;
+  link.click();
+};
 </script>
 
 <template>
@@ -496,6 +546,7 @@ onUnmounted(() => {
       <post-search-form
         v-model="searchForm"
         :tags="tags"
+        v-model:date-range="dateRange"
         @search="handleSearch"
         @reset="handleReset"
         @date-range-change="handleDateRangeChange"
@@ -625,7 +676,28 @@ onUnmounted(() => {
 
     <!-- 数据分析图表 -->
     <el-card class="chart-card">
-      <div class="chart-container" ref="chartRef"></div>
+      <template #header>
+        <div class="chart-header">
+          <span>数据统计</span>
+          <div>
+            <el-button
+              type="primary"
+              :icon="Download"
+              size="small"
+              @click="handleExportChart"
+            >
+              导出图表
+            </el-button>
+            <el-button
+              :icon="isChartVisible ? ArrowUp : ArrowDown"
+              @click="isChartVisible = !isChartVisible"
+            />
+          </div>
+        </div>
+      </template>
+      <div v-show="isChartVisible">
+        <div class="chart-container" ref="chartRef"></div>
+      </div>
     </el-card>
 
     <!-- 版本预览对话框 -->
@@ -723,5 +795,17 @@ onUnmounted(() => {
   justify-content: space-around; /* 或者使用 space-between */
   align-items: center;
   gap: 8px;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chart-container {
+  height: 400px;
+  width: 100%;
+  margin: 10px 0;
 }
 </style>

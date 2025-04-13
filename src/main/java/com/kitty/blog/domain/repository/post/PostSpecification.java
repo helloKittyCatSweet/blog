@@ -1,4 +1,4 @@
-package     com.kitty.blog.domain.repository.post;
+package com.kitty.blog.domain.repository.post;
 
 import com.kitty.blog.domain.model.Post;
 import com.kitty.blog.domain.model.category.PostCategory;
@@ -11,6 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PostSpecification {
+    /**
+     * 个人文章查询方法
+     */
     public static Specification<Post> createSpecification(PostSearchCriteria criteria) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -59,6 +62,9 @@ public class PostSpecification {
             if (criteria.getEndDate() != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("createdAt"), criteria.getEndDate()));
             }
+
+            // 删除状态
+            predicates.add(cb.isFalse(root.get("isDeleted"))); // 默认不返回已删除
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };

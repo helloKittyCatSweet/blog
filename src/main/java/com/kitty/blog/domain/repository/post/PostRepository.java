@@ -217,5 +217,5 @@ public interface PostRepository extends JpaRepository<Post, Integer>, JpaSpecifi
 
     @Query("UPDATE PostCategory pc SET pc.id.categoryId = :categoryId WHERE " +
             "pc.id.postId = :postId AND pc.id.categoryId = :oldCategoryId")
-    boolean updatePostCategory(Integer postId, Integer categoryId, Integer oldCategoryId);
+    void updatePostCategory(Integer postId, Integer categoryId, Integer oldCategoryId);
 }

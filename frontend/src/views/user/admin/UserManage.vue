@@ -506,17 +506,39 @@ const showUserDetail = (row) => {
         <el-table-column prop="user.lastLoginLocation" label="登录地点" width="140" />
         <el-table-column prop="user.createdAt" label="注册时间" width="180" />
         <el-table-column prop="user.lastLoginTime" label="最后登录" width="180" />
+        <!-- 角色列 -->
         <el-table-column label="角色" width="200">
           <template #default="scope">
-            <el-tag
-              v-for="role in scope.row.roles"
-              :key="role.roleId"
-              class="mx-1"
-              size="small"
-              :type="getRoleTagType(role.administratorName)"
-            >
-              {{ role.roleName }}
-            </el-tag>
+            <el-popover placement="top" trigger="hover" :width="300" :show-after="100">
+              <template #reference>
+                <div class="role-tags-container">
+                  <el-tag
+                    v-for="role in scope.row.roles"
+                    :key="role.roleId"
+                    class="mx-1"
+                    size="small"
+                    :type="getRoleTagType(role.administratorName)"
+                  >
+                    {{ role.roleName }}
+                  </el-tag>
+                </div>
+              </template>
+              <!-- 弹出框中显示完整的角色列表 -->
+              <div class="role-popover-content">
+                <h4>所有角色：</h4>
+                <div class="role-tags-full">
+                  <el-tag
+                    v-for="role in scope.row.roles"
+                    :key="role.roleId"
+                    class="mx-1 mb-1"
+                    size="small"
+                    :type="getRoleTagType(role.administratorName)"
+                  >
+                    {{ role.roleName }}
+                  </el-tag>
+                </div>
+              </div>
+            </el-popover>
           </template>
         </el-table-column>
         <el-table-column prop="user.isActive" label="状态" width="100">
@@ -527,7 +549,7 @@ const showUserDetail = (row) => {
           </template>
         </el-table-column>
         <!-- 操作列 -->
-        <!-- 修改操作列的内容 -->
+
         <el-table-column label="操作" width="120" fixed="right">
           <template #default="scope">
             <el-dropdown trigger="click">
@@ -801,5 +823,32 @@ const showUserDetail = (row) => {
 
 :deep(.import-error-dialog .el-message-box__status) {
   font-size: 24px;
+}
+
+.role-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  min-height: 24px;
+}
+
+.role-popover-content {
+  padding: 8px;
+}
+
+.role-popover-content h4 {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  color: #606266;
+}
+
+.role-tags-full {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mb-1 {
+  margin-bottom: 4px;
 }
 </style>

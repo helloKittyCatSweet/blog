@@ -37,12 +37,19 @@ public class TagWeightService {
         return Math.pow(TIME_DECAY, daysAgo);
     }
 
-    // 更新标签使用次数
+    // 增加标签使用次数
     public void incrementUseCount(Tag tag) {
         tag.setUseCount(tag.getUseCount() + 1);
         tag.setLastUsedAt(LocalDateTime.now());
         updateWeight(tag);
     }
+
+    // 减少标签使用次数
+    public void decrementUseCount(Tag tag){
+        tag.setUseCount(tag.getUseCount() - 1);
+        updateWeight(tag);
+    }
+
 
     // 更新标签点击次数
     public void incrementClickCount(Tag tag) {

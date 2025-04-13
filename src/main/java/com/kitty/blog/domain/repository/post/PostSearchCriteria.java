@@ -7,6 +7,9 @@ import java.time.LocalDate;
 @Data
 @Builder
 public class PostSearchCriteria {
+
+    private boolean isPrivate;
+
     private String title;
     private String content;
     private Integer userId;
@@ -16,4 +19,5 @@ public class PostSearchCriteria {
     private Integer tagId;
     private LocalDate startDate;
     private LocalDate endDate;
+    private boolean isDeleted;
 }

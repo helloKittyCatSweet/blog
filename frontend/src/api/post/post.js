@@ -161,3 +161,11 @@ export const generateSummary = (content) =>
       'Content-Type': 'application/json'
     }
   })
+
+// 更新文章分类
+export const updateCategory = (postId, categoryId) =>
+  request.put(`${postPrefix}/public/update/category/${postId}/${categoryId}`)
+
+// 更新文章标签
+export const updateTags = (postId, tags) =>
+  request.put(`${postPrefix}/public/update/tags/${postId}`, tags)

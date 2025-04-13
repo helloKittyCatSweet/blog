@@ -1,6 +1,7 @@
 package com.kitty.blog.domain.model.tag;
 
 import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.Data;
 import lombok.ToString;
 import org.hibernate.annotations.DynamicInsert;
@@ -18,7 +19,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "fs_tags")
-@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "tagId")
+@JsonDeserialize(using = TagDeserializer.class)
 @DynamicInsert
 @DynamicUpdate
 public class Tag implements Serializable {
