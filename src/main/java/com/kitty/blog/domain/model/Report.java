@@ -1,6 +1,7 @@
 package com.kitty.blog.domain.model;
 
 import com.fasterxml.jackson.annotation.*;
+import com.kitty.blog.common.constant.ReportReason;
 import com.kitty.blog.common.constant.ReportStatus;
 import lombok.Data;
 
@@ -38,8 +39,11 @@ public class Report implements Serializable {
     @Column(name = "user_id")
     private Integer userId;
 
-    @Column(nullable = false)
-    private String reason;
+    @Enumerated(EnumType.STRING)
+    private ReportReason reason;
+
+    @Column
+    private String description;
 
     // 禁止手动加入，禁止更新
     @Column(name = "created_at",

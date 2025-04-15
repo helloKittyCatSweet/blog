@@ -296,12 +296,18 @@
             <artifactId>spring-security-messaging</artifactId>
         </dependency>
 
-    <!-- 添加 Flowable 相关依赖 -->
-    <dependency>
-        <groupId>org.flowable</groupId>
-        <artifactId>flowable-spring-boot-starter</artifactId>
-        <version>7.0.0</version>
-    </dependency>
+        <!-- 添加 Flowable 相关依赖 -->
+        <dependency>
+            <groupId>org.flowable</groupId>
+            <artifactId>flowable-spring-boot-starter</artifactId>
+            <version>7.0.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.flowable</groupId>
+            <artifactId>flowable-spring-boot-starter-process</artifactId>
+            <version>7.0.0</version>
+        </dependency>
 
         <!-- 审计功能 -->
         <dependency>
@@ -335,6 +341,15 @@
             <version>5.8.0</version>
         </dependency>
 
+        <!-- OAuth 2 -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-oauth2-jose</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

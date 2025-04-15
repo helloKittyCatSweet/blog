@@ -2,12 +2,14 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
+import { Warning } from "@element-plus/icons-vue";
 
 import PageContainer from "@/components/PageContainer.vue";
 import PostHeader from "@/components/blog/post/PostHeader.vue";
 import PostInteraction from "@/components/blog/post/PostInteraction.vue";
 import PostComment from "@/components/blog/post/PostComment.vue";
 import PostExport from "@/components/blog/post/PostExport.vue";
+import PostReport from "@/components/blog/post/PostReport.vue";
 
 import { MdPreview } from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
@@ -209,15 +211,20 @@ const displayedComments = computed(() => {
       <div class="post-interaction">
         <!-- 登录则可互动 -->
         <template v-if="userStore.isLoggedIn">
-          <post-interaction
-            v-model:is-liked="interactionState.isLiked"
-            v-model:is-favorited="interactionState.isFavorited"
-            :post-id="post.postId"
-            :title="post.title"
-            :like-activity-id="interactionState.likeActivityId"
-            :favorite-activity-id="interactionState.favoriteActivityId"
-            @refresh="getPostDetail(post.postId)"
-          />
+          <div class="interaction-container">
+            <post-interaction
+              v-model:is-liked="interactionState.isLiked"
+              v-model:is-favorited="interactionState.isFavorited"
+              :post-id="post.postId"
+              :title="post.title"
+              :like-activity-id="interactionState.likeActivityId"
+              :favorite-activity-id="interactionState.favoriteActivityId"
+              @refresh="getPostDetail(post.postId)"
+            />
+          </div>
+          <div v-if="post.postId" class="report-container">
+            <post-report :post-id="post.postId" :title="post.title" />
+          </div>
         </template>
         <!-- 未登录时显示提示 -->
         <template v-else>
@@ -368,5 +375,15 @@ const displayedComments = computed(() => {
 
 :deep(.el-drawer__body) {
   padding: 0 24px;
+}
+
+.interaction-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.report-container {
+  margin-left: auto;
 }
 </style>

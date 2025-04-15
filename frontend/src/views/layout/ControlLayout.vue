@@ -89,7 +89,11 @@ const handleUserCommand = async (command) => {
       <el-aside width="200px" class="sidebar-container">
         <!-- 侧边栏头部区域 -->
         <div class="sidebar-header">
-          <div :class="!isCollapse ? 'logo-container' : 'logo-container collapsed'">
+          <div
+            :class="!isCollapse ? 'logo-container' : 'logo-container collapsed'"
+            @click="router.push('/')"
+            style="cursor: pointer"
+          >
             <img
               :src="!isCollapse ? logo : logoCherry"
               :alt="!isCollapse ? 'Logo' : 'Collapsed Logo'"
@@ -99,7 +103,7 @@ const handleUserCommand = async (command) => {
               <el-button
                 :icon="isCollapse ? ExpandIcon : FoldIcon"
                 circle
-                @click="isCollapse = !isCollapse"
+                @click.stop="isCollapse = !isCollapse"
                 class="toggle-btn"
               />
             </el-tooltip>

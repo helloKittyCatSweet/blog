@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Search, View, Delete } from "@element-plus/icons-vue";
+import { Search, View, Delete, InfoFilled } from "@element-plus/icons-vue";
 import PageContainer from "@/components/PageContainer.vue";
 import { review, findAll, searchReports, deleteById } from "@/api/post/report";
 import * as XLSX from "xlsx";
@@ -142,12 +142,15 @@ onMounted(() => {
 /**
  * 搜索
  */
+const reasonFilter = ref("");
+
 const handleSearch = async () => {
   loading.value = true;
   try {
     const params = {
       keyword: searchKey.value.trim(),
       status: statusFilter.value,
+      reason: reasonFilter.value,
       isAdmin: true,
       page: currentPage.value,
       pageSize: pageSize.value,
@@ -169,6 +172,7 @@ const handleSearch = async () => {
 const resetSearch = () => {
   searchKey.value = "";
   statusFilter.value = "";
+  reasonFilter.value = "";
   getReportList();
 };
 
@@ -204,6 +208,16 @@ const deleteReport = async (row) => {
 
 const batchDelete = async () => {
   if (multipleSelection.value.length === 0) return;
+
+  // 检查选中项的状态
+  const invalidItems = multipleSelection.value.filter(
+    (item) => !["APPROVED", "REJECTED"].includes(item.status)
+  );
+
+  if (invalidItems.length > 0) {
+    ElMessage.warning("只能删除已通过或已驳回的举报");
+    return;
+  }
 
   ElMessageBox.confirm(
     `确定要删除这${multipleSelection.value.length}条举报吗？`,
@@ -249,6 +263,7 @@ const exportExcel = () => {
     index: index + 1,
     createdAt: item.createdAt,
     status: getStatusLabel(item.status),
+    reason: getReasonLabel(item.reason),
   }));
 
   const fileName = `举报数据_${new Date().toLocaleDateString()}`; // 添加日期后缀
@@ -262,14 +277,37 @@ const multipleSelection = ref([]);
 const handleSelectionChange = (val) => {
   multipleSelection.value = val;
 };
+
+/**
+ * 详情
+ */
+const detailDialogVisible = ref(false);
+const currentDetail = ref(null);
+
+const showDetail = (row) => {
+  detailDialogVisible.value = true;
+  currentDetail.value = row;
+};
+
+const getReasonLabel = (reason) => {
+  const map = {
+    SPAM: "垃圾广告",
+    INAPPROPRIATE: "不当内容",
+    PLAGIARISM: "抄袭内容",
+    ILLEGAL: "违法内容",
+    OTHER: "其他原因",
+  };
+  return map[reason] || reason;
+};
 </script>
 
 <template>
   <page-container title="举报管理">
     <!-- 搜索栏 -->
+
     <el-card class="search-card">
       <el-row :gutter="20">
-        <el-col :span="6">
+        <el-col :span="5">
           <el-input
             v-model="searchKey"
             placeholder="搜索举报内容"
@@ -284,7 +322,7 @@ const handleSelectionChange = (val) => {
             </template>
           </el-input>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="4">
           <el-select v-model="statusFilter" placeholder="状态筛选" clearable>
             <el-option label="待处理" value="PENDING" />
             <el-option label="审核中" value="REVIEWING" />
@@ -292,9 +330,18 @@ const handleSelectionChange = (val) => {
             <el-option label="已驳回" value="REJECTED" />
           </el-select>
         </el-col>
-        <el-col :span="12" style="text-align: right">
+        <el-col :span="4">
+          <el-select v-model="reasonFilter" placeholder="举报原因" clearable>
+            <el-option label="垃圾广告" value="SPAM" />
+            <el-option label="不当内容" value="INAPPROPRIATE" />
+            <el-option label="抄袭内容" value="PLAGIARISM" />
+            <el-option label="违法内容" value="ILLEGAL" />
+            <el-option label="其他原因" value="OTHER" />
+          </el-select>
+        </el-col>
+        <el-col :span="11" style="text-align: right">
           <el-button type="primary" :icon="Search" @click="getReportList">搜索</el-button>
-          <el-button @click="resetSearch"> 重置 </el-button>
+          <el-button @click="resetSearch">重置</el-button>
           <el-button type="success" @click="exportExcel">导出为 Excel</el-button>
           <el-button
             v-if="multipleSelection.length > 0"
@@ -319,15 +366,22 @@ const handleSelectionChange = (val) => {
         <template #empty>
           <el-empty description="暂无举报数据" />
         </template>
-        <el-table-column type="selection" width="55" />
+        <el-table-column type="selection" width="55">
+          <template #default="{ row }">
+            <el-checkbox
+              v-model="row.isSelected"
+              :disabled="!['APPROVED', 'REJECTED'].includes(row.status)"
+              @change="(val) => handleSelectionChange(row, val)"
+            />
+          </template>
+        </el-table-column>
         <el-table-column type="index" label="序号" width="80" align="center" />
         <el-table-column prop="username" label="用户名称" width="120" />
-        <el-table-column
-          prop="reason"
-          label="举报原因"
-          show-overflow-tooltip
-          width="120"
-        />
+        <el-table-column prop="reason" label="举报原因" show-overflow-tooltip width="120">
+          <template #default="{ row }">
+            {{ getReasonLabel(row.reason) }}
+          </template>
+        </el-table-column>
         <el-table-column
           prop="postTitle"
           label="被举报文章"
@@ -368,6 +422,13 @@ const handleSelectionChange = (val) => {
         <el-table-column label="操作" width="180" align="center" fixed="right">
           <template #default="{ row }">
             <el-button
+              type="info"
+              :icon="InfoFilled"
+              circle
+              @click="showDetail(row)"
+              title="查看详情"
+            />
+            <el-button
               v-if="row.status === 'PENDING'"
               type="primary"
               :icon="View"
@@ -401,13 +462,51 @@ const handleSelectionChange = (val) => {
       </div>
     </el-card>
 
+    <!-- 详情对话框 -->
+    <el-dialog v-model="detailDialogVisible" title="举报详情" width="500px">
+      <div v-if="currentDetail" class="report-detail">
+        <div class="detail-item">
+          <span class="label">被举报文章：</span>
+          <el-link type="primary" @click="viewPost(currentDetail.postId)">
+            {{ currentDetail.postTitle || "文章已删除" }}
+          </el-link>
+        </div>
+        <div class="detail-item">
+          <span class="label">举报原因：</span>
+          <span>{{ getReasonLabel(currentDetail.reason) }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">详细说明：</span>
+          <div class="description">{{ currentDetail.description || "无" }}</div>
+        </div>
+        <!-- 添加处理结果和处理意见 -->
+        <template v-if="currentDetail.status !== 'PENDING'">
+          <div class="detail-item">
+            <span class="label">处理结果：</span>
+            <el-tag :type="currentDetail.status === 'APPROVED' ? 'success' : 'danger'">
+              {{ currentDetail.status === "APPROVED" ? "已通过" : "已驳回" }}
+            </el-tag>
+          </div>
+          <div class="detail-item">
+            <span class="label">处理意见：</span>
+            <div class="description">{{ currentDetail.comment || "无" }}</div>
+          </div>
+        </template>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="detailDialogVisible = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
     <!-- 审核对话框 -->
     <el-dialog v-model="reviewDialogVisible" title="举报审核" width="500px">
       <el-form ref="formRef" :model="reviewForm" :rules="rules" label-width="100px">
         <el-form-item label="审核结果">
           <el-radio-group v-model="reviewForm.approved">
-            <el-radio :label="true">通过</el-radio>
-            <el-radio :label="false">驳回</el-radio>
+            <el-radio :value="true">通过</el-radio>
+            <el-radio :value="false">驳回</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="审核意见" prop="comment">
@@ -445,5 +544,28 @@ const handleSelectionChange = (val) => {
 
 .dialog-footer {
   text-align: right;
+}
+
+.report-detail {
+  padding: 20px;
+}
+
+.detail-item {
+  margin-bottom: 20px;
+}
+
+.detail-item .label {
+  font-weight: bold;
+  margin-right: 10px;
+  color: var(--el-text-color-regular);
+}
+
+.detail-item .description {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: var(--el-fill-color-lighter);
+  border-radius: 4px;
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 </style>

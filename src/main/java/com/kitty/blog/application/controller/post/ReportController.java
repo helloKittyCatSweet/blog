@@ -1,6 +1,7 @@
 package com.kitty.blog.application.controller.post;
 
 import com.kitty.blog.application.dto.report.ReportDto;
+import com.kitty.blog.common.constant.ReportReason;
 import com.kitty.blog.common.constant.ReportStatus;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.model.Report;
@@ -30,9 +31,6 @@ public class ReportController {
 
     @Autowired
     private ReportService reportService;
-
-    @Autowired
-    private ReportWorkflowService reportWorkflowService;
 
     /**
      * 创建报告
@@ -87,9 +85,9 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "用户不存在")
     })
-    public ResponseEntity<Response<List<Report>>> findByUserId
+    public ResponseEntity<Response<List<ReportDto>>> findByUserId
             (@AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<List<Report>> response = reportService.findByUserId(user.getId());
+        ResponseEntity<List<ReportDto>> response = reportService.findByUserId(user.getId());
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND, "用户不存在");
@@ -138,42 +136,6 @@ public class ReportController {
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
-
-//    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)ROLE_MESSAGE_MANAGER)" +
-//            " or hasRole(T(com.kitty.blog.common.constant.Role)ROLE_SYSTEM_ADMINISTRATOR)" +
-//            " ")
-//    @Operation(summary = "根据原因和文章ID查询报告列表", description = "根据原因和文章ID查询报告列表")
-//    @GetMapping("/public/find/reason/post/{reason}/{postId}")
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200", description = "查询成功"),
-//            @ApiResponse(responseCode = "500", description = "服务器内部错误")
-//    })
-//    public ResponseEntity<Response<List<Report>>> findByReasonForPost
-//            (@PathVariable(value = "reason") String reason,
-//             @PathVariable(value = "postId") Integer postId) {
-//        ResponseEntity<List<Report>> response = reportService.findByReasonForPost(reason, postId);
-//        return Response.createResponse(response,
-//                HttpStatus.OK, "查询成功",
-//                HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
-//    }
-//    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_MESSAGE_MANAGER)" +
-//        " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
-//    @Operation(summary = "修改报告状态")
-//    @PutMapping("/admin/change/status/{id}/{status}")
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200", description = "修改成功"),
-//            @ApiResponse(responseCode = "400", description = "请求参数错误"),
-//            @ApiResponse(responseCode = "404", description = "报告不存在"),
-//            @ApiResponse(responseCode = "500", description = "服务器内部错误")
-//    })
-//    public ResponseEntity<Response<Boolean>> changeStatus
-//            (@PathVariable(value = "id") Integer reportId,
-//             @PathVariable(value = "status") String status) {
-//        ResponseEntity<Boolean> response = reportService.changeStatus(reportId, status);
-//        return Response.createResponse(response,
-//                HttpStatus.OK, "修改成功",
-//                HttpStatus.BAD_REQUEST, "请求参数错误");
-//    }
 
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_MESSAGE_MANAGER)" +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
@@ -320,8 +282,14 @@ public class ReportController {
             @RequestParam boolean approved,
             @RequestParam String comment) {
         try {
-            reportWorkflowService.completeReviewTask(reportId, approved, comment);
-            return Response.ok(true, "审核完成");
+            // 改用 reportService 的方法
+            ResponseEntity<Boolean> result = approved ?
+                    reportService.approve(reportId, comment) :
+                    reportService.reject(reportId, comment);
+
+            return Response.createResponse(result,
+                    HttpStatus.OK, "审核完成",
+                    HttpStatus.INTERNAL_SERVER_ERROR, "审核失败");
         } catch (Exception e) {
             log.error("审核失败", e);
             return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "审核失败: " + e.getMessage());
@@ -333,23 +301,23 @@ public class ReportController {
     @PostMapping("/public/submit")
     public ResponseEntity<Response<Boolean>> submitReport(@RequestBody Report report) {
         try {
-            ResponseEntity<Report> savedReport = reportService.save(report);
-            if (savedReport.getStatusCode() == HttpStatus.OK && savedReport.getBody() != null) {
-                reportWorkflowService.startReportProcess(savedReport.getBody());
-                return Response.ok(true, "举报提交成功");
-            }
-            return Response.error(HttpStatus.BAD_REQUEST, "举报提交失败");
+            // 直接使用 reportService.create
+            ResponseEntity<Boolean> result = reportService.create(report);
+            return Response.createResponse(result,
+                    HttpStatus.OK, "举报提交成功",
+                    HttpStatus.BAD_REQUEST, "举报提交失败");
         } catch (Exception e) {
             log.error("举报提交失败", e);
             return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "举报提交失败: " + e.getMessage());
         }
     }
 
+
     /**
      * 搜索举报信息
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
-    @Operation(summary = "搜索举报信息", description = "根据关键字和状态搜索举报信息")
+    @Operation(summary = "搜索举报信息", description = "根据关键字、状态和原因搜索举报信息")
     @GetMapping("/public/search")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
@@ -358,12 +326,14 @@ public class ReportController {
     public ResponseEntity<Response<List<ReportDto>>> searchReports(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) ReportStatus status,
+            @RequestParam(required = false) ReportReason reason,
             @RequestParam(required = true) boolean isAdmin,
             @AuthenticationPrincipal LoginResponseDto user) {
         ResponseEntity<List<ReportDto>> response = reportService.searchReports(
                 user.getId(),
                 keyword != null ? keyword : "",
                 status,
+                reason,
                 isAdmin
         );
         return Response.createResponse(response,

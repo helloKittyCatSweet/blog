@@ -7,7 +7,7 @@ import { ElMessageBox } from "element-plus";
 import AppFooter from "@/components/layout/AppFooter.vue";
 import UserDropdown from "@/components/user/UserDropdown.vue";
 import { USER_PROFILE_PATH, USER_PASSWORD_PATH } from "@/constants/routes/user.js";
-import { LOGIN_PATH } from "@/constants/routes/base.js";
+import { LOGIN_PATH, CONTROL_PANEL_PATH } from "@/constants/routes/base.js";
 
 const router = useRouter();
 const route = useRoute();
@@ -76,6 +76,7 @@ const handleUserCommand = async (command) => {
           <router-link to="/categories">分类</router-link>
           <router-link to="/tags">标签</router-link>
           <router-link to="/about">关于</router-link>
+          <router-link :to="CONTROL_PANEL_PATH">控制台</router-link>
         </nav>
         <div class="header-actions">
           <el-input

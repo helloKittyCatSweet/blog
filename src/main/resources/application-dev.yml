@@ -68,13 +68,18 @@ spring:
     db-history-used: true
     history-level: full
     async-executor-activate: false
-    process-definition-location-prefix: classpath:/processes/
+    # 修改流程定义文件路径
+    process-definition-location-prefix: classpath*:/
+    process-definition-location-suffixes: .bpmn20.xml
     check-process-definitions: true
-    # 字体配置
+    # 修正字体配置格式
     font:
-      activity: 宋体
-      label: 宋体
-      annotation: 宋体s/
+      activity-font-name: 宋体
+      label-font-name: 宋体
+      annotation-font-name: 宋体
+    # 添加数据库配置
+    database-schema: flowable
+    database-table-prefix: flowable_
 
   #    #druid相关配置
   #    druid:

@@ -1,5 +1,6 @@
 package com.kitty.blog.domain.repository;
 
+import com.kitty.blog.common.constant.ReportReason;
 import com.kitty.blog.common.constant.ReportStatus;
 import com.kitty.blog.domain.model.Report;
 import org.springframework.data.jpa.repository.Modifying;
@@ -101,22 +102,30 @@ public interface ReportRepository extends BaseRepository<Report, Integer> {
     Optional<List<Report>> findByStatus(ReportStatus status);
 
     /**
-     * 管理员搜索所有举报信息
+     * 管理员根据状态和文章id查找举报信息
+     * @param keyword
+     * @param status
+     * @param reason
+     * @return
      */
     @Query("SELECT r FROM Report r WHERE " +
-            "(:keyword IS NULL OR r.reason LIKE %:keyword%) AND " +
-            "(:status IS NULL OR r.status = :status)")
-    List<Report> searchReportsForAdmin(@Param("keyword") String keyword,
-                                       @Param("status") ReportStatus status);
+            "(:keyword IS NULL OR r.description LIKE %:keyword%) AND " +
+            "(:status IS NULL OR r.status = :status) AND " +
+            "(:reason IS NULL OR r.reason = :reason)")
+    List<Report> searchReportsForAdmin(
+            @Param("keyword") String keyword,
+            @Param("status") ReportStatus status,
+            @Param("reason") ReportReason reason
+    );
 
-    /**
-     * 用户搜索自己的举报信息
-     */
-    @Query("SELECT r FROM Report r WHERE " +
-            "r.userId = :userId AND " +
-            "(:keyword IS NULL OR r.reason LIKE %:keyword%) AND " +
-            "(:status IS NULL OR r.status = :status)")
-    List<Report> searchReportsForUser(@Param("userId") Integer userId,
-                                      @Param("keyword") String keyword,
-                                      @Param("status") ReportStatus status);
+    @Query("SELECT r FROM Report r WHERE r.userId = :userId AND " +
+            "(:keyword IS NULL OR r.description LIKE %:keyword%) AND " +
+            "(:status IS NULL OR r.status = :status) AND " +
+            "(:reason IS NULL OR r.reason = :reason)")
+    List<Report> searchReportsForUser(
+            @Param("userId") Integer userId,
+            @Param("keyword") String keyword,
+            @Param("status") ReportStatus status,
+            @Param("reason") ReportReason reason
+    );
 }

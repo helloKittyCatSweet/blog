@@ -1,9 +1,12 @@
 <script setup>
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Search, Edit, Delete } from "@element-plus/icons-vue";
+import { Search, Edit, Delete, InfoFilled } from "@element-plus/icons-vue";
 import PageContainer from "@/components/PageContainer.vue";
 import { findByUserList, update, searchReports, deleteById } from "@/api/post/report";
+
+const router = useRouter();
 
 // 表格数据
 const loading = ref(false);
@@ -91,6 +94,11 @@ const submitForm = async () => {
   });
 };
 
+/**
+ * 搜索
+ */
+const reasonFilter = ref("");
+
 // 搜索
 const handleSearch = async () => {
   loading.value = true;
@@ -103,6 +111,7 @@ const handleSearch = async () => {
       params.status = statusFilter.value;
     }
     params.isAdmin = false;
+    params.reason = reasonFilter.value;
     console.log("搜索参数：", params); // 调试用
     const res = await searchReports(params);
     if (res.data.status === 200) {
@@ -120,7 +129,32 @@ const handleSearch = async () => {
 const resetSearch = () => {
   searchKey.value = "";
   statusFilter.value = "";
+  reasonFilter.value = "";
   getReportList(); // 重置后调用获取列表接口
+};
+
+/**
+ * 详情对话框
+ */
+const detailDialogVisible = ref(false);
+const currentDetail = ref(null);
+
+// 添加查看详情方法
+const showDetail = (row) => {
+  detailDialogVisible.value = true;
+  currentDetail.value = row;
+};
+
+// 添加获取原因标签方法
+const getReasonLabel = (reason) => {
+  const map = {
+    SPAM: "垃圾广告",
+    INAPPROPRIATE: "不当内容",
+    PLAGIARISM: "抄袭内容",
+    ILLEGAL: "违法内容",
+    OTHER: "其他原因",
+  };
+  return map[reason] || reason;
 };
 
 // 分页处理也需要修改
@@ -136,8 +170,7 @@ const handleCurrentChange = (val) => {
 
 // 查看文章
 const viewPost = (postId) => {
-  // 实现查看文章逻辑，可以跳转到文章详情页
-  window.open(`/post/${postId}`, "_blank");
+  router.push(`/post/${postId}`);
 };
 
 onMounted(() => {
@@ -172,9 +205,10 @@ const handleDelete = (row) => {
 <template>
   <page-container title="我的举报">
     <!-- 搜索栏 -->
+
     <el-card class="search-card">
       <el-row :gutter="20">
-        <el-col :span="6">
+        <el-col :span="5">
           <el-input
             v-model="searchKey"
             placeholder="搜索举报内容"
@@ -188,7 +222,7 @@ const handleDelete = (row) => {
             </template>
           </el-input>
         </el-col>
-        <el-col :span="6">
+        <el-col :span="4">
           <el-select v-model="statusFilter" placeholder="状态筛选" clearable>
             <el-option label="待处理" value="PENDING" />
             <el-option label="审核中" value="REVIEWING" />
@@ -196,7 +230,16 @@ const handleDelete = (row) => {
             <el-option label="已驳回" value="REJECTED" />
           </el-select>
         </el-col>
-        <el-col :span="12" style="text-align: right">
+        <el-col :span="4">
+          <el-select v-model="reasonFilter" placeholder="举报原因" clearable>
+            <el-option label="垃圾广告" value="SPAM" />
+            <el-option label="不当内容" value="INAPPROPRIATE" />
+            <el-option label="抄袭内容" value="PLAGIARISM" />
+            <el-option label="违法内容" value="ILLEGAL" />
+            <el-option label="其他原因" value="OTHER" />
+          </el-select>
+        </el-col>
+        <el-col :span="11" style="text-align: right">
           <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
           <el-button @click="resetSearch">重置</el-button>
         </el-col>
@@ -210,12 +253,20 @@ const handleDelete = (row) => {
           <el-empty description="暂无举报数据" />
         </template>
         <el-table-column type="index" label="序号" width="80" align="center" />
-        <el-table-column prop="reason" label="举报原因" show-overflow-tooltip />
-        <el-table-column prop="post.title" label="被举报文章" show-overflow-tooltip>
+        <el-table-column prop="reason" label="举报原因" show-overflow-tooltip>
           <template #default="{ row }">
-            <el-link type="primary" @click="viewPost(row.postId)">
-              {{ row.post?.title || "文章已删除" }}
-            </el-link>
+            {{ getReasonLabel(row.reason) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="postTitle" label="被举报文章" show-overflow-tooltip>
+          <template #default="{ row }">
+            <router-link
+              :to="`/post/${row.postId}`"
+              target="_blank"
+              class="el-link el-link--primary"
+            >
+              {{ row.postTitle || "文章已删除" }}
+            </router-link>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="举报时间" width="180">
@@ -233,6 +284,13 @@ const handleDelete = (row) => {
         <el-table-column prop="comment" label="处理意见" show-overflow-tooltip />
         <el-table-column label="操作" width="150" align="center">
           <template #default="{ row }">
+            <el-button
+              type="info"
+              :icon="InfoFilled"
+              circle
+              @click="showDetail(row)"
+              title="查看详情"
+            />
             <el-button
               v-if="row.status === 'PENDING'"
               type="primary"
@@ -265,6 +323,43 @@ const handleDelete = (row) => {
         />
       </div>
     </el-card>
+
+    <!-- 添加详情对话框 -->
+    <el-dialog v-model="detailDialogVisible" title="举报详情" width="500px">
+      <div v-if="currentDetail" class="report-detail">
+        <div class="detail-item">
+          <span class="label">被举报文章：</span>
+          <el-link type="primary" @click="viewPost(currentDetail.postId)">
+            {{ currentDetail.post?.title || "文章已删除" }}
+          </el-link>
+        </div>
+        <div class="detail-item">
+          <span class="label">举报原因：</span>
+          <span>{{ getReasonLabel(currentDetail.reason) }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="label">详细说明：</span>
+          <div class="description">{{ currentDetail.description || "无" }}</div>
+        </div>
+        <template v-if="currentDetail.status !== 'PENDING'">
+          <div class="detail-item">
+            <span class="label">处理结果：</span>
+            <el-tag :type="currentDetail.status === 'APPROVED' ? 'success' : 'danger'">
+              {{ getStatusLabel(currentDetail.status) }}
+            </el-tag>
+          </div>
+          <div class="detail-item">
+            <span class="label">处理意见：</span>
+            <div class="description">{{ currentDetail.comment || "无" }}</div>
+          </div>
+        </template>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="detailDialogVisible = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
 
     <!-- 编辑对话框 -->
     <el-dialog v-model="dialogVisible" title="修改举报" width="500px">
@@ -300,5 +395,28 @@ const handleDelete = (row) => {
 .pagination {
   margin-top: 20px;
   text-align: right;
+}
+
+.report-detail {
+  padding: 20px;
+}
+
+.detail-item {
+  margin-bottom: 20px;
+}
+
+.detail-item .label {
+  font-weight: bold;
+  margin-right: 10px;
+  color: var(--el-text-color-regular);
+}
+
+.detail-item .description {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: var(--el-fill-color-lighter);
+  border-radius: 4px;
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 </style>

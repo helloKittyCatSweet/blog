@@ -23,6 +23,7 @@ public class ReportDto implements java.io.Serializable {
     private ReportStatus status;
     private String processInstanceId;
     private String comment;
+    private String description;
 
     private String username;
     private String postTitle;

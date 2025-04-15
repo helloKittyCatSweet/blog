@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://flowable.org/processes">
+
+    <process id="reportReviewProcess" name="举报审核流程">
+        <startEvent id="start" name="开始"/>
+        <sequenceFlow id="flow1" sourceRef="start" targetRef="reviewTask"/>
+        
+        <userTask id="reviewTask" name="审核举报" flowable:candidateGroups="managers">
+            <documentation>审核举报内容</documentation>
+        </userTask>
+        
+        <sequenceFlow id="flow2" sourceRef="reviewTask" targetRef="approvalGateway"/>
+        
+        <exclusiveGateway id="approvalGateway" name="审核决定"/>
+        
+        <sequenceFlow id="flow3" sourceRef="approvalGateway" targetRef="approved">
+            <conditionExpression><![CDATA[${approved == true}]]></conditionExpression>
+        </sequenceFlow>
+        
+        <sequenceFlow id="flow4" sourceRef="approvalGateway" targetRef="rejected">
+            <conditionExpression><![CDATA[${approved == false}]]></conditionExpression>
+        </sequenceFlow>
+        
+        <endEvent id="approved" name="举报通过"/>
+        <endEvent id="rejected" name="举报驳回"/>
+    </process>
+</definitions>
