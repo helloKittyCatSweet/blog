@@ -595,7 +595,7 @@ public class PostService {
             userActivityService.create(new UserActivity(post.getUserId(), ActivityType.LIKE.name(),
                     post.getPostId(), count));
         } else {
-            UserActivity userActivity = userActivityService.findExplicit(post.getUserId(), post.getPostId(),
+            UserActivity userActivity = userActivityService.findPostActivityExplicit(post.getUserId(), post.getPostId(),
                     ActivityType.LIKE.name()).getBody();
             if (!Objects.equals(userActivity, new UserActivity())) {
                 assert userActivity != null;
@@ -625,7 +625,7 @@ public class PostService {
             Favorite favorite = favoriteService.findByUserIdAndPostId(userId, postId).getBody();
             assert favorite != null;
             favoriteService.deleteById(favorite.getFavoriteId());
-            UserActivity userActivity = userActivityService.findExplicit(userId, postId,
+            UserActivity userActivity = userActivityService.findPostActivityExplicit(userId, postId,
                     ActivityType.FAVORITE.name()).getBody();
             assert userActivity != null;
             userActivityService.deleteById(userActivity.getActivityId(), userActivity.getUserId());

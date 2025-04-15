@@ -73,7 +73,18 @@ public interface UserActivityRepository extends BaseRepository<UserActivity, Int
      */
     @Query("SELECT ua FROM UserActivity ua WHERE ua.userId = ?1 AND ua.postId = ?2 " +
             "AND ua.activityType = ?3 AND ua.isDeleted = false")
-    Optional<UserActivity> findExplicit(Integer userId, Integer postId, String activityType);
+    Optional<UserActivity> findPostActivityExplicit(Integer userId, Integer postId, String activityType);
+
+    /**
+     * 根据用户ID、评论ID、类型查找用户活动
+     * @param userId
+     * @param commentId
+     * @param activityType
+     * @return
+     */
+    @Query("SELECT ua FROM UserActivity ua WHERE ua.userId = ?1 AND ua.commentId = ?2 " +
+            "AND ua.activityType = ?3 AND ua.isDeleted = false")
+    Optional<UserActivity> findCommentActivityExplicit(Integer userId, Integer commentId, String activityType);
 
     // 查询其他用户对当前用户文章的有效互动记录
     @Query(value = """

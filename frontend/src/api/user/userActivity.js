@@ -10,9 +10,15 @@ export const create = (data) =>
   request.post(`${userPrefix}${userActivityPrefix}/public/create`, data);
 
 // 根据用户id、文章id、互动类型获取用户动态
-export const findExplicit = (userId, postId, activityType) =>
+export const findPostExplicit = (userId, postId, activityType) =>
   request.get(
-    `${userPrefix}${userActivityPrefix}/public/find/explicit/${userId}/${postId}/${activityType}`
+    `${userPrefix}${userActivityPrefix}/public/find/post/explicit/${userId}/${postId}/${activityType}`
+  );
+
+// 根据用户id、评论id、互动类型获取用户动态
+export const findCommentExplicit = (userId, commentId, activityType) =>
+  request.get(
+    `${userPrefix}${userActivityPrefix}/public/find/comment/explicit/${userId}/${commentId}/${activityType}`
   );
 
 // 根据用户id获取用户动态列表

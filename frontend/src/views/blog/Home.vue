@@ -2,11 +2,14 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { View, Star, ArrowRight, Folder } from "@element-plus/icons-vue";
+
 import { formatDate } from "@/utils/date";
 import { findAll as getAllPosts, addViews } from "@/api/post/post.js";
 import { findAll as getAllCategories } from "@/api/common/category.js";
 import { findAll as getAllTags } from "@/api/common/tag.js";
+
 import PostStats from "@/components/post/PostStats.vue";
+
 import {
   BLOG_POST_DETAIL_PATH,
   BLOG_POSTS_PATH,

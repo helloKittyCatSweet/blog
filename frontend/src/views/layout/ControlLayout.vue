@@ -22,7 +22,7 @@ import MenuRenderer from "@/components/MenuRenderer.vue";
 import { generateMenus } from "@/utils/menu";
 import { ROLES } from "@/constants/role-constants";
 
-import UserDropdown from "@/components/UserDropdown.vue";
+import UserDropdown from "@/components/user/UserDropdown.vue";
 import { USER_PROFILE_PATH, USER_PASSWORD_PATH } from "@/constants/routes/user";
 import AppFooter from "@/components/layout/AppFooter.vue";
 
@@ -118,7 +118,11 @@ const handleUserCommand = async (command) => {
       </el-aside>
 
       <el-container>
-        <UserDropdown @command="handleUserCommand" />
+        <el-header>
+          <div class="header-right">
+            <UserDropdown @command="handleUserCommand" />
+          </div>
+        </el-header>
         <el-main>
           <router-view></router-view>
         </el-main>
@@ -276,14 +280,23 @@ const handleUserCommand = async (command) => {
     overflow: visible; // 不单独滚动
 
     .el-header {
+      height: 60px;
+      padding: 0 20px;
       background-color: #fff;
+      border-bottom: 1px solid #eee;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-end;
       position: sticky;
       top: 0;
-      z-index: 10;
-      flex-shrink: 0;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+
+      .header-right {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
 
       .el-dropdown__box {
         display: flex;

@@ -221,7 +221,7 @@ public class CategoryController {
      * 查询所有分类
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    // 前台展示界面
     @Operation(summary = "查询所有分类")
     @GetMapping("/public/find/all")
     @ApiResponses(value = {

@@ -90,3 +90,25 @@ export const importUserData = (file) => {
     }
   });
 };
+
+// 获取签名
+export const getSignature = (userId) => request.get(`${userPrefix}/public/signature/${userId}`)
+
+// 生成默认签名
+export const generateDefaultSignature = (userId) => request.post(`${userPrefix}/public/signature/generate/${userId}`)
+
+/**
+ * 上传用户签名
+ * @param {FormData} formData 包含签名文件和用户ID的表单数据
+ * @returns {Promise} 上传结果
+ */
+export function uploadSignature(formData) {
+  return request({
+    url: `${userPrefix}/public/upload/signature`,
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
+}

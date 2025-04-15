@@ -183,3 +183,7 @@ xunfei:
   apiSecret: "MWEwMTNkY2YyZjMzZDc0NWVkZTgyMTg3"
   patchId: "1905925166225440768"
   domain: "xdeepseekr1qwen7b"
+
+tesseract:
+  data:
+    path: D:/program_25/tesseract/tessdata

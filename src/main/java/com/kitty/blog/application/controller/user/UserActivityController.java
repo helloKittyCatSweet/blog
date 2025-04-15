@@ -138,6 +138,7 @@ public class UserActivityController {
 
     /**
      * 根据用户ID、文章ID、互动类型获取用户动态
+     *
      * @param userId
      * @param postId
      * @param activityType
@@ -145,17 +146,42 @@ public class UserActivityController {
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户ID、文章ID、互动类型获取用户动态")
-    @GetMapping("/public/find/explicit/{userId}/{postId}/{activityType}")
+    @GetMapping("/public/find/post/explicit/{userId}/{postId}/{activityType}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "获取成功"),
             @ApiResponse(responseCode = "404", description = "动态不存在")
     })
-    public ResponseEntity<Response<UserActivity>> findExplicit
+    public ResponseEntity<Response<UserActivity>> findPostActivityExplicit
+    (@PathVariable(name = "userId") Integer userId,
+     @PathVariable(name = "postId") Integer postId,
+     @PathVariable(name = "activityType") String activityType) {
+        ResponseEntity<UserActivity> response =
+                userActivityService.findPostActivityExplicit(userId, postId, activityType);
+        return Response.createResponse(response,
+                HttpStatus.OK, "获取成功",
+                HttpStatus.NOT_FOUND, "动态不存在");
+    }
+
+    /**
+     * 根据用户ID、评论ID、互动类型获取用户动态
+     * @param userId
+     * @param commentId
+     * @param activityType
+     * @return
+     */
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "根据用户ID、评论ID、互动类型获取用户动态")
+    @GetMapping("/public/find/comment/explicit/{userId}/{commentId}/{activityType}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取成功"),
+            @ApiResponse(responseCode = "404", description = "动态不存在")
+    })
+    public ResponseEntity<Response<UserActivity>> findCommentActivityExplicit
             (@PathVariable(name = "userId") Integer userId,
-             @PathVariable(name = "postId") Integer postId,
+             @PathVariable(name = "commentId") Integer commentId,
              @PathVariable(name = "activityType") String activityType) {
         ResponseEntity<UserActivity> response =
-                userActivityService.findExplicit(userId, postId, activityType);
+                userActivityService.findCommentActivityExplicit(userId, commentId, activityType);
         return Response.createResponse(response,
                 HttpStatus.OK, "获取成功",
                 HttpStatus.NOT_FOUND, "动态不存在");

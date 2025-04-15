@@ -53,6 +53,7 @@ blog/
 - Flowable 工作流
 - WebSocket STOMP基于文本的简单协议 实现实时通讯
 - MapStruct
+- OCR: Tesseract OCR
 
 ### 前端
 - Vue 3 (Composition API)

@@ -113,7 +113,7 @@ export const getLatestVersion = (postId) => request.get(`${postPrefix}/admin/get
 export const findById = (postId) => request.get(`${postPrefix}/public/find/id/${postId}`)
 
 // 查询所有文章
-export const findAll = () => request.get(`${postPrefix}/admin/find/all`)
+export const findAll = () => request.get(`${postPrefix}/public/find/all`)
 
 // 根据id查询文章是否存在
 export const existById = (postId) => request.get(`${postPrefix}/admin/exists/id/${postId}`)

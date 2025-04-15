@@ -12,7 +12,7 @@ export const useUserStore = defineStore("free-share-user", () => {
   });
 
   // 登录计算属性
-  const isLoggedIn = computed(() => !!user.value.token || !user.value.id);
+  const isLoggedIn = computed(() => Boolean(user.value.token && user.value.id));
 
   // Getter 方法
   const getId = () => user.value.id;

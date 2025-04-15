@@ -92,6 +92,10 @@ public class User implements Serializable {
     @Column(name = "last_login_location")
     private String lastLoginLocation;
 
+    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Lob
+    private String signature;
+
     /**
      * Transient区域，用于存放一些不希望被序列化的字段
      */

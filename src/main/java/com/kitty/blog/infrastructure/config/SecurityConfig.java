@@ -96,6 +96,14 @@ public class SecurityConfig {
 
                         // 公开登录注册接口
                         .requestMatchers("/api/user/auth/**").permitAll()
+                        // 静态资源可以直接访问
+                        // 文章资源、分类资源、标签资源
+                        .requestMatchers("/api/post/public/find/all",
+                                "/api/post/public/find/id/**",
+                                "/api/post/public/add/views/**",
+                                "/api/comment/public/find/*/list",
+                                "/api/category/public/find/all",
+                                "/api/tag/public/find/all").permitAll()
                         // Swagger 开放访问
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
                                 "/swagger-ui.html").permitAll()

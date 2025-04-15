@@ -538,7 +538,7 @@ public class PostController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    // 前台展示
     @Operation(summary = "根据文章ID查询文章详情")
     @GetMapping("/public/find/id/{postId}")
     @ApiResponses(value = {
@@ -700,9 +700,9 @@ public class PostController {
      *
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    // 前台展示界面
     @Operation(summary = "查询所有文章")
-    @GetMapping("/admin/find/all")
+    @GetMapping("/public/find/all")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
@@ -900,7 +900,7 @@ public class PostController {
                 HttpStatus.INTERNAL_SERVER_ERROR, "更新失败");
     }
 
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    // 前台展示功能
     @Operation(summary = "点击文章")
     @PutMapping("/public/add/views/{postId}")
     public ResponseEntity<Response<Boolean>> addViews(@PathVariable Integer postId) {

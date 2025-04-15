@@ -10,13 +10,11 @@ import com.kitty.blog.domain.model.userRole.UserRoleId;
 import com.kitty.blog.domain.repository.RoleRepository;
 import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.domain.repository.UserRoleRepository;
+import com.kitty.blog.domain.service.SignatureService;
 import com.kitty.blog.domain.service.UserRoleService;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
-import com.kitty.blog.infrastructure.utils.AliyunOSSUploader;
+import com.kitty.blog.infrastructure.utils.*;
 import com.kitty.blog.infrastructure.security.JwtTokenUtil;
-import com.kitty.blog.infrastructure.utils.IpUtil;
-import com.kitty.blog.infrastructure.utils.RequestUtil;
-import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -71,6 +69,9 @@ public class UserService {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private SignatureService userSignatureService;
+
     @Transactional
     public ResponseEntity<Boolean> register(User user) {
         User ifExists = userRepository.findByUsername(user.getUsername()).orElse(null);
@@ -98,6 +99,8 @@ public class UserService {
 
         // 普通用户by default
         userRoleService.save(new UserRole(new UserRoleId(user.getUserId(), 1)));
+
+        checkUserSignature(user);
 
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
@@ -187,6 +190,8 @@ public class UserService {
             user.get().setLastLoginIp(ip);
             user.get().setLastLoginLocation(location);
         }
+
+        checkUserSignature(user.get());
 
         // 生成token
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
@@ -497,6 +502,78 @@ public class UserService {
         } catch (Exception e) {
             log.error("单元格读取失败", e);
             return "";
+        }
+    }
+
+    private void checkUserSignature(User user) {
+        if (user.getSignature() == null || user.getSignature().isEmpty()) {
+            try {
+                String signatureUrl = userSignatureService.generateSignature(user.getUserId(), user.getUsername());
+                user.setSignature(signatureUrl);
+                save(user);
+            } catch (Exception e) {
+                log.error("生成用户签名失败: {}", e.getMessage());
+            }
+        }
+    }
+
+    @Transactional
+    public ResponseEntity<String> getSignatureUrl(Integer userId) {
+        try {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            }
+
+            // 如果用户没有签名，自动生成一个
+            if (user.getSignature() == null || user.getSignature().isEmpty()) {
+                String signatureUrl = userSignatureService.generateSignature(userId, user.getUsername());
+                user.setSignature(signatureUrl);
+                save(user);
+            }
+
+            return new ResponseEntity<>(user.getSignature(), HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("获取签名失败: {}", e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Transactional
+    public ResponseEntity<String> generateDefaultSignature(Integer userId) {
+        try {
+            User user = userRepository.findById(userId).orElse(null);
+            if (user == null) {
+                return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            }
+
+            String signatureUrl = userSignatureService.generateSignature(userId, user.getUsername());
+            user.setSignature(signatureUrl);
+            save(user);
+
+            return new ResponseEntity<>(signatureUrl, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("生成默认签名失败: {}", e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Transactional
+    public ResponseEntity<Boolean> uploadSignature(FileDto fileDto) {
+        try {
+            if (!userRepository.existsById(fileDto.getSomeId())) {
+                return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+            }
+
+            String signatureUrl = aliyunOSSUploader.uploadSignature(fileDto.getFile(), fileDto.getSomeId());
+            User user = userRepository.findById(fileDto.getSomeId()).get();
+            user.setSignature(signatureUrl);
+            save(user);
+
+            return new ResponseEntity<>(true, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("上传签名失败: {}", e.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

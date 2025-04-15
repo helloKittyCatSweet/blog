@@ -138,11 +138,21 @@ public class UserActivityService {
 
     @Transactional
     @Cacheable(key = "#userId + #postId + #activityType")
-    public ResponseEntity<UserActivity> findExplicit(Integer userId, Integer postId,
+    public ResponseEntity<UserActivity> findPostActivityExplicit(Integer userId, Integer postId,
                                                      String activityType){
         return new ResponseEntity<>(
-                userActivityRepository.findExplicit
+                userActivityRepository.findPostActivityExplicit
                         (userId, postId, activityType).orElse(new UserActivity()),
+                HttpStatus.OK);
+    }
+
+    @Transactional
+    @Cacheable(key = "#userId + #commentId + #activityType")
+    public ResponseEntity<UserActivity> findCommentActivityExplicit(Integer userId, Integer commentId,
+                                                     String activityType){
+        return new ResponseEntity<>(
+                userActivityRepository.findCommentActivityExplicit
+                        (userId, commentId, activityType).orElse(new UserActivity()),
                 HttpStatus.OK);
     }
 

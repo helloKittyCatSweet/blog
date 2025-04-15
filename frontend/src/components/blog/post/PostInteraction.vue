@@ -26,9 +26,10 @@ const props = defineProps({
 const emit = defineEmits(["update:isLiked", "update:isFavorited", "refresh"]);
 
 const userStore = useUserStore();
-const commentContent = ref("");
-const showCommentInput = ref(false);
 
+/**
+ * 点赞
+ */
 // 处理点赞
 const handleLike = async () => {
   try {
@@ -51,39 +52,6 @@ const handleLike = async () => {
     emit("refresh");
   } catch (error) {
     ElMessage.error(props.isLiked ? "取消点赞失败" : "点赞失败");
-  }
-};
-
-// 提交评论
-const submitComment = async () => {
-  if (!commentContent.value.trim()) {
-    ElMessage.warning("评论内容不能为空");
-    return;
-  }
-
-  try {
-    // 创建评论活动
-    await createUserActivity({
-      activityType: "COMMENT",
-      postId: post.value.postId,
-      activityDetail: commentContent.value,
-    });
-
-    // 创建评论
-    await createComment({
-      postId: post.value.postId,
-      content: commentContent.value,
-      parentCommentId: 0,
-    });
-
-    // 重新获取文章数据
-    await getPostDetail(post.value.postId);
-
-    ElMessage.success("评论成功");
-    commentContent.value = "";
-    showCommentInput.value = false;
-  } catch (error) {
-    ElMessage.error("评论失败");
   }
 };
 
@@ -201,10 +169,6 @@ const confirmFavorite = async () => {
         <el-icon><Star /></el-icon>
         {{ isFavorited ? "已收藏" : "收藏" }}
       </el-button>
-      <el-button @click="showCommentInput = true">
-        <el-icon><ChatLineRound /></el-icon>
-        评论
-      </el-button>
     </div>
 
     <!-- 收藏夹选择对话框 -->
@@ -275,5 +239,11 @@ const confirmFavorite = async () => {
 
 .liked-button:hover::before {
   transform: translate(-50%, -50%) scale(1);
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
 }
 </style>

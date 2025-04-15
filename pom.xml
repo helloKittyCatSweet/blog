@@ -18,8 +18,10 @@
         <license/>
     </licenses>
     <developers>
-        <developer>Kitty</developer>
-        <developer/>
+        <developer>
+            <name>Kitty</name>
+            <email>1448185924@qq.com</email>
+        </developer>
     </developers>
     <scm>
         <connection/>
@@ -324,6 +326,13 @@
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
             <version>5.2.3</version>
+        </dependency>
+
+        <!-- OCR -->
+        <dependency>
+            <groupId>net.sourceforge.tess4j</groupId>
+            <artifactId>tess4j</artifactId>
+            <version>5.8.0</version>
         </dependency>
 
     </dependencies>

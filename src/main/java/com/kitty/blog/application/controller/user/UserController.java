@@ -520,4 +520,101 @@ public class UserController {
             return Response.error("导入失败：\n" + errorMessage);
         }
     }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "获取用户签名URL")
+    @GetMapping("/public/signature/{userId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取成功"),
+            @ApiResponse(responseCode = "500", description = "获取失败")
+    })
+    public ResponseEntity<Response<String>> getSignatureUrl(@PathVariable("userId") Integer userId) {
+        ResponseEntity<String> responseEntity = userService.getSignatureUrl(userId);
+        return Response.createResponse(responseEntity,
+                HttpStatus.OK, "获取成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "获取失败");
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "生成默认签名")
+    @PostMapping("/public/signature/generate/{userId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "生成成功"),
+            @ApiResponse(responseCode = "404", description = "用户不存在"),
+            @ApiResponse(responseCode = "500", description = "生成失败")
+    })
+    public ResponseEntity<Response<String>> generateDefaultSignature(@PathVariable Integer userId) {
+        ResponseEntity<String> result = userService.generateDefaultSignature(userId);
+        return switch (result.getStatusCode().value()) {
+            case 200 -> Response.ok(result.getBody(), "默认签名生成成功");
+            case 404 -> Response.error(HttpStatus.NOT_FOUND, "用户不存在");
+            default -> Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "默认签名生成失败");
+        };
+    }
+
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    @Operation(summary = "上传签名", description = "上传用户签名图片，支持jpg、png、jpeg格式")
+    @PostMapping(value = "/public/upload/signature", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "上传成功"),
+            @ApiResponse(responseCode = "400", description = "文件格式不正确"),
+            @ApiResponse(responseCode = "404", description = "用户不存在"),
+            @ApiResponse(responseCode = "500", description = "上传失败")
+    })
+    public ResponseEntity<Response<Boolean>> uploadSignature(
+            @Parameter(description = "签名文件", required = true)
+            @RequestPart(value = "file") MultipartFile file,
+            @Parameter(description = "用户ID", required = true)
+            @RequestParam Integer userId) {
+
+        // 检查文件是否为空
+        if (file.isEmpty()) {
+            return Response.error(HttpStatus.BAD_REQUEST, "文件为空");
+        }
+
+        // 检查文件类型
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return Response.error(HttpStatus.BAD_REQUEST, "文件格式不正确");
+        }
+
+        // 检查文件大小（限制为2MB）
+        if (file.getSize() > 2 * 1024 * 1024) {
+            return Response.error(HttpStatus.BAD_REQUEST, "文件大小超出限制");
+        }
+
+        try {
+            // 创建临时文件
+            File tempFile = File.createTempFile("signature-", "-" + file.getOriginalFilename());
+            file.transferTo(tempFile);
+
+            // 构建文件传输对象
+            FileDto fileDto = new FileDto();
+            fileDto.setFile(tempFile);
+            fileDto.setSomeId(userId);
+            fileDto.setIdType("signature");
+
+            // 调用服务层处理上传
+            ResponseEntity<Boolean> result = userService.uploadSignature(fileDto);
+
+            // 删除临时文件
+            if (!tempFile.delete()) {
+                log.warn("临时文件删除失败: {}", tempFile.getAbsolutePath());
+            }
+
+            // 处理响应
+            return switch (result.getStatusCode().value()) {
+                case 200 -> Response.ok(true);
+                case 404 -> Response.error(HttpStatus.NOT_FOUND, "用户不存在");
+                default -> Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "签名上传失败");
+            };
+
+        } catch (IOException e) {
+            log.error("文件处理失败", e);
+            return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "文件处理失败");
+        } catch (Exception e) {
+            log.error("上传失败", e);
+            return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "上传失败");
+        }
+    }
 }

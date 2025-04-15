@@ -2,11 +2,11 @@ import request from '@/utils/request'
 import { commentPrefix } from '@/constants/api-constants'
 
 // 点赞
-export const likeComment = ({ commentId, count }) =>
-  request.put(`${commentPrefix}/public/add/${commentId}/like`, { count })
+export const likeComment = (commentId, count) =>
+  request.put(`${commentPrefix}/public/add/${commentId}/like?count=${count}`)
 
 // 修改评论
-export const update = (data) => request.put(`${commentPrefix}/admin/update`, data)
+export const update = (data) => request.put(`${commentPrefix}/public/update`, data)
 
 // 新增评论
 export const create = (data) => request.post(`${commentPrefix}/public/create`, data)

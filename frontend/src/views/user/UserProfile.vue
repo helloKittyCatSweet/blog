@@ -3,7 +3,14 @@ import { useUserStore } from "@/stores";
 import { ref, onMounted } from "vue";
 import { ElMessage } from "element-plus";
 import PageContainer from "@/components/PageContainer.vue";
-import { update, findUserById, uploadAvatar } from "@/api/user/user.js";
+import {
+  update,
+  findUserById,
+  uploadAvatar,
+  getSignature,
+  uploadSignature,
+  generateDefaultSignature,
+} from "@/api/user/user.js";
 import { Clock, Timer } from "@element-plus/icons-vue";
 import { GENDER_OPTIONS } from "@/constants/user-constants";
 import { Upload } from "@element-plus/icons-vue";
@@ -27,6 +34,7 @@ const userInfo = ref({
   introduction: bio || "",
   lastLoginTime: "",
   tags: [], // 用户标签
+  signature: "", // 签名字段
 });
 
 /**
@@ -69,6 +77,16 @@ const loadUserInfo = async () => {
         tags: data.data.tags || [],
       };
       Object.assign(userInfo.value, userData);
+
+      // 加载签名
+      try {
+        const signatureResponse = await getSignature(userStore.user.id);
+        if (signatureResponse.data.status === 200) {
+          userInfo.value.signature = signatureResponse.data.data;
+        }
+      } catch (error) {
+        console.error("获取签名失败:", error);
+      }
       console.log("当前用户信息：", userInfo.value); // 添加这行来查看数据
     }
   } catch (error) {
@@ -153,6 +171,65 @@ const handleEmailChange = async (newEmail) => {
     ElMessage.error("邮箱更新失败");
   }
 };
+
+/**
+ * 签名上传
+ */
+const handleSignatureClick = () => {
+  const input = document.createElement("input");
+  input.type = "file";
+  input.accept = "image/jpeg,image/png,image/jpg";
+  input.onchange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        ElMessage.warning("签名图片大小不能超过2MB");
+        return;
+      }
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("userId", userStore.user.id);
+        const { data } = await uploadSignature(formData);
+        if (data.status === 200) {
+          // 重新获取签名
+          const signatureResponse = await getSignature(userStore.user.id);
+          if (signatureResponse.data.status === 200) {
+            // 添加时间戳以避免缓存
+            userInfo.value.signature = `${
+              signatureResponse.data.data
+            }?t=${new Date().getTime()}`;
+          }
+          ElMessage.success("签名更新成功");
+        }
+      } catch (error) {
+        console.error(error);
+        ElMessage.error("签名上传失败");
+      }
+    }
+  };
+  input.click();
+};
+
+// 添加生成默认签名的方法
+const generateSignature = async () => {
+  try {
+    const { data } = await generateDefaultSignature(userStore.user.id);
+    if (data.status === 200) {
+      // 重新获取签名并添加时间戳
+      const signatureResponse = await getSignature(userStore.user.id);
+      if (signatureResponse.data.status === 200) {
+        userInfo.value.signature = `${
+          signatureResponse.data.data
+        }?t=${new Date().getTime()}`;
+      }
+      ElMessage.success("默认签名生成成功");
+    }
+  } catch (error) {
+    console.error(error);
+    ElMessage.error("默认签名生成失败");
+  }
+};
 </script>
 
 <template>
@@ -178,7 +255,7 @@ const handleEmailChange = async (newEmail) => {
                 <el-radio
                   v-for="option in GENDER_OPTIONS"
                   :key="option.value"
-                  :label="option.value"
+                  :value="option.value"
                 >
                   {{ option.label }}
                 </el-radio>
@@ -280,6 +357,33 @@ const handleEmailChange = async (newEmail) => {
               <el-icon><Timer /></el-icon>
               <span class="label">上次登录</span>
               <span class="value">{{ userInfo.lastLoginTime || "-" }}</span>
+            </div>
+            <div class="signature-container">
+              <h4 class="signature-title">个人签名</h4>
+              <div class="signature-content">
+                <template v-if="userInfo.signature">
+                  <img
+                    :src="userInfo.signature"
+                    alt="个人签名"
+                    class="signature-image"
+                    @click="handleSignatureClick"
+                  />
+                  <div class="signature-actions">
+                    <el-button type="primary" link @click="handleSignatureClick"
+                      >更换签名</el-button
+                    >
+                    <el-button type="primary" link @click="generateSignature"
+                      >重新生成</el-button
+                    >
+                  </div>
+                </template>
+                <div v-else class="signature-placeholder">
+                  <el-button type="primary" @click="handleSignatureClick"
+                    >上传签名</el-button
+                  >
+                  <el-button @click="generateSignature">使用默认签名</el-button>
+                </div>
+              </div>
             </div>
           </div>
         </el-card>
@@ -406,5 +510,78 @@ const handleEmailChange = async (newEmail) => {
   width: 240px;
   margin-left: 8px;
   vertical-align: bottom;
+}
+
+.signature-container {
+  margin-top: 20px;
+  cursor: pointer;
+
+  .signature-title {
+    font-size: 14px;
+    color: var(--el-text-color-secondary);
+    margin-bottom: 10px;
+  }
+
+  .signature-content {
+    border: 1px dashed var(--el-border-color);
+    border-radius: 4px;
+    padding: 10px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+
+    &:hover {
+      border-color: var(--el-color-primary);
+      background-color: var(--el-color-primary-light-9);
+    }
+  }
+
+  .signature-image {
+    max-width: 100%;
+    max-height: 100px;
+    object-fit: contain;
+  }
+
+  .signature-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: var(--el-text-color-secondary);
+
+    .el-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+  }
+}
+
+.signature-content {
+  position: relative;
+
+  .signature-actions {
+    display: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px;
+    text-align: center;
+  }
+
+  &:hover .signature-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+  }
+}
+
+.signature-placeholder {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: center;
 }
 </style>

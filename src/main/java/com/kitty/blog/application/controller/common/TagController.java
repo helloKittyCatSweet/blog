@@ -156,7 +156,7 @@ public class TagController {
      * 查询所有标签
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    // 前台展示界面
     @Operation(summary = "查询所有标签")
     @GetMapping("/public/find/all")
     @ApiResponses(value = {

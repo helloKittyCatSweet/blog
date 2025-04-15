@@ -188,4 +188,61 @@ public class AliyunOSSUploader {
             throw new IllegalArgumentException("无效的OSS文件URL");
         }
     }
+
+    /**
+     * 上传用户签名
+     */
+    public String uploadSignature(File file, Integer userId) {
+        String objectName = "signature/" + userId + "/signature.png";
+        OSS ossClient = null;
+        try {
+            ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+
+            // 如果已存在则先删除
+            if (ossClient.doesObjectExist(bucketName, objectName)) {
+                ossClient.deleteObject(bucketName, objectName);
+            }
+
+            // 创建上传请求
+            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, objectName, file);
+            ossClient.putObject(putObjectRequest);
+
+            return generateFileUrl(objectName);
+        } catch (Exception e) {
+            throw new RuntimeException("签名上传失败: " + e.getMessage(), e);
+        } finally {
+            if (ossClient != null) {
+                ossClient.shutdown();
+            }
+        }
+    }
+
+    /**
+     * 获取签名URL
+     */
+    public String getSignatureUrl(Integer userId) {
+        String objectName = "signature/" + userId + "/signature.png";
+        if (doesSignatureExist(userId)) {
+            return generateFileUrl(objectName);
+        }
+        return null;
+    }
+
+    /**
+     * 检查用户签名是否存在
+     */
+    public boolean doesSignatureExist(Integer userId) {
+        String objectName = "signature/" + userId + "/signature.png";
+        OSS ossClient = null;
+        try {
+            ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+            return ossClient.doesObjectExist(bucketName, objectName);
+        } catch (Exception e) {
+            throw new RuntimeException("检查用户签名失败: " + e.getMessage(), e);
+        } finally {
+            if (ossClient != null) {
+                ossClient.shutdown();
+            }
+        }
+    }
 }

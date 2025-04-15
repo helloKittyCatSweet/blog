@@ -37,6 +37,9 @@ public class UserActivity {
     @Column(name = "post_id")
     private Integer postId;
 
+    @Column(name = "comment_id")
+    private Integer commentId;
+
     @Column(name = "activity_detail")
     private String activityDetail;
 

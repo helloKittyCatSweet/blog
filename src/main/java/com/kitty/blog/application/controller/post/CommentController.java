@@ -1,7 +1,6 @@
 package com.kitty.blog.application.controller.post;
 
 import com.kitty.blog.application.dto.comment.CommentDto;
-import com.kitty.blog.application.dto.comment.TreeDto;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.model.Comment;
 import com.kitty.blog.domain.service.CommentService;
@@ -39,9 +38,9 @@ public class CommentController {
     @PostMapping("/public/create")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "新增成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
-    public ResponseEntity<Response<Boolean>> create(
+    public ResponseEntity<Response<Comment>> create(
             @RequestBody Comment comment) {
-        ResponseEntity<Boolean> response = commentService.create(comment);
+        ResponseEntity<Comment> response = commentService.create(comment);
         if (Boolean.FALSE.equals(response.getBody())){
             if (response.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR){
                 return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
@@ -49,7 +48,7 @@ public class CommentController {
                 return Response.error(HttpStatus.BAD_REQUEST, "含有敏感信息，请谨慎发言");
             }
         }
-        return Response.ok(false,"创建成功");
+        return Response.ok(response.getBody(),"创建成功");
     }
 
     /**
@@ -62,7 +61,7 @@ public class CommentController {
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or #comment.userId == user.id")
     @Operation(summary = "修改评论")
-    @PutMapping("/admin/update")
+    @PutMapping("/public/update")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "修改成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
     public ResponseEntity<Response<Boolean>> update(
@@ -101,14 +100,14 @@ public class CommentController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    // 前台展示功能
     @Operation(summary = "获取评论列表")
     @GetMapping("/public/find/{postId}/list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "获取成功"),
             @ApiResponse(responseCode = "500", description = "获取失败")})
-    public ResponseEntity<Response<List<TreeDto>>> findByPostId(
+    public ResponseEntity<Response<List<CommentDto>>> findByPostId(
             @PathVariable Integer postId) {
-        ResponseEntity<List<TreeDto>> response = commentService.findByPostId(postId);
+        ResponseEntity<List<CommentDto>> response = commentService.findByPostId(postId);
         return Response.createResponse(response,
                 HttpStatus.OK, "获取成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
@@ -215,8 +214,8 @@ public class CommentController {
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "获取成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
-    public ResponseEntity<Response<List<TreeDto>>> findAll() {
-        ResponseEntity<List<TreeDto>> response = commentService.findAll();
+    public ResponseEntity<Response<List<CommentDto>>> findAll() {
+        ResponseEntity<List<CommentDto>> response = commentService.findAll();
         return Response.createResponse(response,
                 HttpStatus.OK, "获取成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");

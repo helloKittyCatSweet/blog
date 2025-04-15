@@ -1,20 +1,24 @@
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { ref, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
+
 import PageContainer from "@/components/PageContainer.vue";
 import PostHeader from "@/components/blog/post/PostHeader.vue";
 import PostInteraction from "@/components/blog/post/PostInteraction.vue";
+import PostComment from "@/components/blog/post/PostComment.vue";
+import PostExport from "@/components/blog/post/PostExport.vue";
 
-import { User, Clock, View, ChatLineRound, Star, Pointer } from "@element-plus/icons-vue";
 import { MdPreview } from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
 
 import { findById } from "@/api/post/post.js";
-import { findExplicit as findExplicitUserActivity } from "@/api/user/userActivity.js";
+import { findPostExplicit } from "@/api/user/userActivity.js";
 import { useUserStore } from "@/stores/modules/user.js";
+import { LOGIN_PATH } from "@/constants/routes/base.js";
 
 const route = useRoute();
+const router = useRouter();
 const loading = ref(false);
 
 // 文章数据
@@ -45,6 +49,7 @@ const getPostDetail = async (id) => {
       const postData = response.data.data;
       post.value = {
         postId: postData.post.postId,
+        userId: postData.post.userId,
         title: postData.post.title,
         content: postData.post.content,
         coverImage: postData.post.coverImage,
@@ -60,13 +65,13 @@ const getPostDetail = async (id) => {
         tags:
           postData.tags?.map((tag) => ({
             tagId: tag.tagId,
-            tagName: tag.name, // 修改这里，使用 name 而不是 tagName
+            tagName: tag.name,
           })) || [],
         author: postData.author,
-        summary: postData.post.abstractContent, // 修改这里，使用 abstractContent
-        createdTime: postData.post.createdAt, // 修改这里，使用 createdAt
-        updatedTime: postData.post.updatedAt, // 修改这里，使用 updatedAt
-        viewCount: postData.post.views || 0, // 修改这里，使用 views
+        summary: postData.post.abstractContent,
+        createdTime: postData.post.createdAt,
+        updatedTime: postData.post.updatedAt,
+        viewCount: postData.post.views || 0,
       };
     }
   } catch (error) {
@@ -90,49 +95,86 @@ onMounted(async () => {
   const postId = route.params.id;
   if (postId) {
     await getPostDetail(postId);
-    // 只有在用户已登录的情况下才获取状态
-    if (userStore.isLoggedIn && userStore.user.id) {
-      // 获取点赞状态
+    await refreshPost();
+
+    // 设置默认的交互状态
+    interactionState.value = {
+      isLiked: false,
+      isFavorited: false,
+      likeActivityId: null,
+      favoriteActivityId: null,
+    };
+
+    // 只在登录状态下获取交互数据
+    if (userStore.isLoggedIn) {
       try {
-        const response = await findExplicitUserActivity(
-          userStore.user.id,
-          postId,
-          "LIKE"
-        );
+        const response = await findPostExplicit(userStore.user.id, postId, "LIKE");
         const activityData = response.data.data;
         interactionState.value.isLiked = activityData !== null;
         if (activityData) {
           interactionState.value.likeActivityId = activityData.activityId;
         }
 
-        // 获取收藏状态
-        const favoriteResponse = await findExplicitUserActivity(
+        const favoriteResponse = await findPostExplicit(
           userStore.user.id,
           postId,
           "FAVORITE"
         );
-        // console.log("获取用户收藏状态：", favoriteResponse.data.data);
         const favoriteData = favoriteResponse.data.data;
-        // 只有当数据存在且至少有 activityId 时才认为是已收藏
         interactionState.value.isFavorited = favoriteData?.activityId != null;
         if (favoriteData?.activityId) {
           interactionState.value.favoriteActivityId = favoriteData.activityId;
-        } else {
-          // 重置收藏状态
-          interactionState.value.isFavorited = false;
-          interactionState.value.favoriteActivityId = null;
         }
       } catch (error) {
-        console.error("获取点赞状态失败:", error);
+        console.error("获取交互状态失败:", error);
+        // 出错时保持默认值
       }
     }
   }
+});
+
+/**
+ * 登录跳转
+ */
+const goToLogin = () => {
+  // 将当前路由信息保存到 query 参数中
+  router.push({
+    path: LOGIN_PATH,
+    query: {
+      redirect: route.fullPath,
+    },
+  });
+};
+
+/**
+ * 评论
+ */
+
+// 刷新文章和评论
+const refreshPost = async () => {
+  if (post.value.postId) {
+    await getPostDetail(post.value.postId);
+  }
+};
+
+/**
+ * 抽屉和评论数量
+ */
+// 添加抽屉相关状态
+const drawerVisible = ref(false);
+const showAllComments = ref(false);
+
+// 添加计算属性来控制显示的评论数量
+const displayedComments = computed(() => {
+  return showAllComments.value ? null : 5;
 });
 </script>
 
 <template>
   <page-container>
     <el-card v-loading="loading" class="post-view">
+      <!-- 添加导出按钮 -->
+      <post-export v-if="userStore.isLoggedIn" :post="post" :author="post.author" />
       <!-- 文章头部信息 -->
       <post-header
         :title="post.title"
@@ -164,27 +206,65 @@ onMounted(async () => {
       </div>
 
       <!-- 在文章内容后添加交互区域 -->
-      <!-- 只在用户登录时显示交互区域 -->
-      <post-interaction
-        v-if="userStore.isLoggedIn"
-        v-model:is-liked="interactionState.isLiked"
-        v-model:is-favorited="interactionState.isFavorited"
-        :post-id="post.postId"
-        :title="post.title"
-        :like-activity-id="interactionState.likeActivityId"
-        :favorite-activity-id="interactionState.favoriteActivityId"
-        @refresh="getPostDetail(post.postId)"
-      />
-
-      <!-- 未登录时显示提示 -->
-      <div v-else class="post-interaction">
-        <el-alert
-          title="登录后即可点赞、收藏和评论"
-          type="info"
-          :closable="false"
-          center
-        />
+      <div class="post-interaction">
+        <!-- 登录则可互动 -->
+        <template v-if="userStore.isLoggedIn">
+          <post-interaction
+            v-model:is-liked="interactionState.isLiked"
+            v-model:is-favorited="interactionState.isFavorited"
+            :post-id="post.postId"
+            :title="post.title"
+            :like-activity-id="interactionState.likeActivityId"
+            :favorite-activity-id="interactionState.favoriteActivityId"
+            @refresh="getPostDetail(post.postId)"
+          />
+        </template>
+        <!-- 未登录时显示提示 -->
+        <template v-else>
+          <div class="interaction-login-tip">
+            <el-tooltip content="请登录后操作" placement="top" effect="light">
+              <div class="interaction-buttons">
+                <el-button type="primary" plain @click="goToLogin">
+                  登录后即可点赞、收藏和评论
+                </el-button>
+              </div>
+            </el-tooltip>
+          </div>
+        </template>
       </div>
+
+      <!-- 评论组件区域 -->
+      <div class="post-comments-section">
+        <post-comment
+          v-if="post.postId"
+          :post-id="post.postId"
+          :title="post.title"
+          :user-id="post.userId"
+          :display-limit="displayedComments"
+          :show-view-more="true"
+          @refresh="refreshPost"
+        />
+
+        <!-- 添加查看更多按钮 -->
+        <div class="view-more-comments" v-if="!showAllComments">
+          <el-button type="primary" text @click="drawerVisible = true">
+            查看全部评论
+          </el-button>
+        </div>
+      </div>
+
+      <!-- 添加评论抽屉 -->
+      <el-drawer v-model="drawerVisible" title="全部评论" direction="rtl" size="60%">
+        <post-comment
+          v-if="post.postId"
+          :post-id="post.postId"
+          :title="post.title"
+          :user-id="post.userId"
+          :display-limit="null"
+          :show-view-more="false"
+          @refresh="refreshPost"
+        />
+      </el-drawer>
 
       <!-- 文章底部信息 -->
       <div class="post-footer">
@@ -254,5 +334,39 @@ onMounted(async () => {
   padding: 16px;
   border-radius: 8px;
   background-color: var(--el-fill-color-lighter);
+}
+
+.interaction-login-tip {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.interaction-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.post-comments-section {
+  margin: 24px 0;
+}
+
+.view-more-comments {
+  text-align: center;
+  margin-top: 16px;
+  padding: 8px 0;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+
+/* 自定义抽屉样式 */
+:deep(.el-drawer__header) {
+  margin-bottom: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+:deep(.el-drawer__body) {
+  padding: 0 24px;
 }
 </style>

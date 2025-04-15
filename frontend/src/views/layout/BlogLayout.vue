@@ -1,10 +1,16 @@
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
+import { useUserStore } from "@/stores/modules/user.js";
 import { Search } from "@element-plus/icons-vue";
+import { ElMessageBox } from "element-plus";
 import AppFooter from "@/components/layout/AppFooter.vue";
+import UserDropdown from "@/components/user/UserDropdown.vue";
+import { USER_PROFILE_PATH, USER_PASSWORD_PATH } from "@/constants/routes/user.js";
+import { LOGIN_PATH } from "@/constants/routes/base.js";
 
 const router = useRouter();
+const route = useRoute();
 const searchKey = ref("");
 
 const handleSearch = () => {
@@ -16,8 +22,42 @@ const handleSearch = () => {
   }
 };
 
+const userStore = useUserStore();
+
 const goToLogin = () => {
-  router.push("/login");
+  // 将当前路由信息保存到 query 参数中
+  router.push({
+    path: LOGIN_PATH,
+    query: {
+      redirect: route.fullPath,
+    },
+  });
+};
+
+// 用户下拉菜单处理函数
+const handleUserCommand = async (command) => {
+  switch (command) {
+    case "profile":
+      router.push(USER_PROFILE_PATH);
+      break;
+    case "password":
+      router.push(USER_PASSWORD_PATH);
+      break;
+    case "logout":
+      try {
+        await ElMessageBox.confirm("确认要退出登录吗？", "提示", {
+          confirmButtonText: "确认",
+          cancelButtonText: "取消",
+          type: "warning",
+        });
+        userStore.removeToken();
+        userStore.setUser({});
+        router.push("/login");
+      } catch {
+        // 用户取消操作
+      }
+      break;
+  }
 };
 </script>
 
@@ -44,7 +84,12 @@ const goToLogin = () => {
             prefix-icon="Search"
             @keyup.enter="handleSearch"
           />
-          <el-button type="primary" @click="goToLogin">登录</el-button>
+          <template v-if="userStore.isLoggedIn">
+            <UserDropdown @command="handleUserCommand" />
+          </template>
+          <template v-else>
+            <el-button type="primary" @click="goToLogin">登录</el-button>
+          </template>
         </div>
       </div>
     </header>

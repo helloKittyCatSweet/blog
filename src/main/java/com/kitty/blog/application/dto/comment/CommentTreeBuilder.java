@@ -9,26 +9,26 @@ import java.util.Map;
 
 public class CommentTreeBuilder {
 
-    public static List<TreeDto> buildTree(List<Comment> comments) {
-        Map<Integer, TreeDto> commentTreeMap = new HashMap<>();
-        List<TreeDto> rootComments = new ArrayList<>();
+    public static List<CommentDto> buildCommentTree(List<CommentDto> comments) {
+        List<CommentDto> rootComments = new ArrayList<>();
 
-        // 初始化所有 Comment 的 TreeDto
-        for (Comment comment : comments) {
-            TreeDto treeDto = new TreeDto();
-            treeDto.setComment(comment);
-            commentTreeMap.put(comment.getCommentId(), treeDto);
+        // 创建评论ID到评论对象的映射
+        Map<Integer, CommentDto> commentMap = new HashMap<>();
+        for (CommentDto comment : comments) {
+            commentMap.put(comment.getCommentId(), comment);
         }
 
-        // 构建树状结构
-        for (Comment comment : comments) {
-            TreeDto treeDto = commentTreeMap.get(comment.getCommentId());
-            if (comment.getParentCommentId() == 0) {
-                rootComments.add(treeDto);
+        // 构建树形结构
+        for (CommentDto comment : comments) {
+            if (comment.getParentId() == null || comment.getParentId() == 0) {
+                rootComments.add(comment);
             } else {
-                TreeDto parentTreeDto = commentTreeMap.get(comment.getParentCommentId());
-                if (parentTreeDto != null) {
-                    parentTreeDto.getChildren().add(treeDto);
+                CommentDto parentComment = commentMap.get(comment.getParentId());
+                if (parentComment != null) {
+                    if (parentComment.getChildren() == null) {
+                        parentComment.setChildren(new ArrayList<>());
+                    }
+                    parentComment.getChildren().add(comment);
                 }
             }
         }
