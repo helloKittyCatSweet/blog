@@ -495,7 +495,7 @@ const handleUserClick = async (userId) => {
 
           <el-timeline v-if="posts.length > 0">
             <el-timeline-item
-              v-for="post in posts"
+              v-for="post in filteredPosts"
               :key="post.postId"
               :timestamp="post.createdAt"
               placement="top"
