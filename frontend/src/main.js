@@ -16,9 +16,13 @@ import { faEnvelope } from '@fortawesome/free-solid-svg-icons'
 
 import { permissionDirective } from '@/directives/permission'
 
+// Github icon
+import { faGithub } from '@fortawesome/free-brands-svg-icons';
+
 import '@/styles/themes.css'
 
 library.add(faEnvelope);
+library.add(faGithub);
 
 const app = createApp(App)
 

@@ -96,6 +96,8 @@ public class SecurityConfig {
 
                         // 公开登录注册接口
                         .requestMatchers("/api/user/auth/**").permitAll()
+                        // OAuth2认证
+                        .requestMatchers("/api/auth/oauth2/**").permitAll()
                         // 静态资源可以直接访问
                         // 文章资源、分类资源、标签资源
                         .requestMatchers("/api/post/public/find/all",

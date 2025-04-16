@@ -350,6 +350,12 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-jose</artifactId>
         </dependency>
+
+        <!-- ElasticSearch -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

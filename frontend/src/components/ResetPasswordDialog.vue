@@ -1,10 +1,9 @@
 <script setup>
-import { ref, onMounted, onUnmounted, defineProps, defineEmits, nextTick } from "vue";
+import { ref, defineProps, defineEmits, computed, onMounted, onUnmounted } from "vue";
 import { ElMessage } from "element-plus";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import { verify, send } from "@/api/user/security/emailVerification";
 import { resetPassword, existsByEmail, findUserByEmail } from "@/api/user/user";
-import user from "@/router/modules/user";
 
 const props = defineProps({
   modelValue: {
@@ -13,7 +12,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["update:modelValue", "success"]);
+const emit = defineEmits(["update:modelValue"]);
 
 const resetStep = ref(1);
 const resetForm = ref({
@@ -25,7 +24,7 @@ const resetForm = ref({
 
 const resetFormRef = ref();
 
-// 复用倒计时相关逻辑
+// 倒计时相关
 const countdown = ref(0);
 const buttonStatus = ref("发送验证码");
 const buttonDisabled = ref(false);
@@ -90,7 +89,6 @@ const sendCodeToEmail = async () => {
     return;
   }
   try {
-    // 先检查邮箱是否存在
     const existsResponse = await existsByEmail(resetForm.value.email);
     if (!existsResponse.data) {
       ElMessage.error("该邮箱未注册，请先注册");
@@ -115,26 +113,27 @@ const handleResetPassword = async () => {
     await resetFormRef.value.validate();
 
     if (resetStep.value === 1) {
-      const verifyResult = await verify({
-        email: resetForm.value.email,
-        code: resetForm.value.code,
-      });
+      try {
+        const verifyResult = await verify({
+          email: resetForm.value.email,
+          code: resetForm.value.code,
+        });
 
-      if (verifyResult.data === true) {
-        resetStep.value = 2;
-        ElMessage.success("邮箱验证成功");
-      } else {
-        ElMessage.error("验证码错误");
-      }
-    } else {
-      // 获取用户id
-      const userResponse = await findUserByEmail(resetForm.value.email);
-      if (!userResponse.data || !userResponse.data.data) {
-        ElMessage.error("用户信息获取失败");
+        if (verifyResult.data === true) {
+          resetStep.value = 2;
+          ElMessage.success("邮箱验证成功");
+        } else {
+          throw new Error("验证码错误");
+        }
+      } catch (error) {
+        ElMessage.error(error.message || "邮箱验证失败");
         return;
       }
-      console.log("id:", userResponse.data.data.userId);
-      console.log("newPassword:", resetForm.value.newPassword);
+    } else {
+      const userResponse = await findUserByEmail(resetForm.value.email);
+      if (!userResponse.data?.data?.userId) {
+        throw new Error("用户信息获取失败");
+      }
 
       const response = await resetPassword({
         userId: userResponse.data.data.userId,
@@ -146,12 +145,12 @@ const handleResetPassword = async () => {
         emit("success");
         handleClose();
       } else {
-        ElMessage.error(response.data.message || "密码重置失败");
+        throw new Error(response.data.message || "密码重置失败");
       }
     }
   } catch (error) {
-    console.error("重置密码错误:", error);
-    ElMessage.error(error.response?.data?.message || "操作失败");
+    console.error("操作失败:", error);
+    ElMessage.error(error.message || "操作失败");
   }
 };
 
@@ -163,52 +162,24 @@ const handleClose = () => {
     newPassword: "",
     confirmPassword: "",
   };
+  if (resetFormRef.value) {
+    resetFormRef.value.resetFields();
+  }
   emit("update:modelValue", false);
 };
 
-// 修改挂载方式，将事件监听器添加到对话框元素上
-const dialog = ref(null);
-const dialogContent = ref(null); // 新增对话框内容区域引用
-
-// 修改后的回车键处理
-const handleKeydown = (event) => {
-  if (event.key === "Enter") {
-    event.stopImmediatePropagation(); // 使用 stopImmediatePropagation 更彻底
-    event.preventDefault();
-    handleResetPassword();
-  }
-};
-
-// 修改挂载方式
-onMounted(() => {
-  nextTick(() => {
-    if (dialog.value) {
-      // 正确获取 Element Plus 对话框的内容区域
-      const dialogEl = dialog.value;
-      const contentEl =
-        dialogEl.$el?.querySelector?.(".el-dialog__body") ||
-        dialogEl.$el?.querySelector?.(".el-dialog") ||
-        dialogEl.$el;
-
-      if (contentEl) {
-        dialogContent.value = contentEl;
-        contentEl.addEventListener("keydown", handleKeydown, { capture: true });
-      }
-    }
-  });
+const getDialogTitle = computed(() => {
+  return resetStep.value === 1 ? "验证邮箱" : "重置密码";
 });
 
-onUnmounted(() => {
-  if (dialogContent.value) {
-    dialogContent.value.removeEventListener("keydown", handleKeydown, { capture: true });
-  }
+const getButtonText = computed(() => {
+  return resetStep.value === 1 ? "下一步" : "确认重置";
 });
 </script>
 
 <template>
   <el-dialog
-    ref="dialog"
-    :title="resetStep === 1 ? '验证邮箱' : '重置密码'"
+    :title="getDialogTitle"
     :model-value="modelValue"
     @update:model-value="(val) => emit('update:modelValue', val)"
     width="520px"
@@ -230,7 +201,6 @@ onUnmounted(() => {
               placeholder="请输入邮箱地址"
               class="flex-grow"
               size="large"
-              @keydown.enter.stop.prevent="handleResetPassword"
             >
               <template #prefix>
                 <font-awesome-icon :icon="['fas', 'envelope']" />
@@ -252,7 +222,6 @@ onUnmounted(() => {
             v-model="resetForm.code"
             placeholder="请输入验证码"
             size="large"
-            @keydown.enter.stop.prevent="handleResetPassword"
           ></el-input>
         </el-form-item>
       </template>
@@ -265,7 +234,6 @@ onUnmounted(() => {
             show-password
             placeholder="请输入新密码"
             size="large"
-            @keydown.enter.stop.prevent="handleResetPassword"
           ></el-input>
         </el-form-item>
         <el-form-item label="确认密码" prop="confirmPassword">
@@ -275,7 +243,6 @@ onUnmounted(() => {
             show-password
             placeholder="请再次输入新密码"
             size="large"
-            @keydown.enter.stop.prevent="handleResetPassword"
           ></el-input>
         </el-form-item>
       </template>
@@ -285,7 +252,7 @@ onUnmounted(() => {
       <span class="dialog-footer">
         <el-button @click="handleClose" size="large">取消</el-button>
         <el-button type="primary" @click="handleResetPassword" size="large">
-          {{ resetStep === 1 ? "下一步" : "确认重置" }}
+          {{ getButtonText }}
         </el-button>
       </span>
     </template>
@@ -294,30 +261,29 @@ onUnmounted(() => {
 
 <style lang="scss" scoped>
 .reset-password-dialog {
-  :deep(.el-dialog__body) {
-    outline: none; // 移除焦点轮廓
-  }
-
   :deep(.el-dialog) {
-    border-radius: 8px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 
     .el-dialog__header {
       margin: 0;
-      padding: 20px 20px 10px;
+      padding: 24px 24px 12px;
       text-align: center;
+      border-bottom: 1px solid #f0f0f0;
 
       .el-dialog__title {
         font-size: 24px;
-        font-weight: 500;
+        font-weight: 600;
+        color: #303133;
       }
     }
 
     .el-dialog__body {
-      padding: 30px 40px;
+      padding: 32px 40px;
     }
 
     .el-form-item {
-      margin-bottom: 25px;
+      margin-bottom: 28px;
     }
   }
 }
@@ -325,17 +291,19 @@ onUnmounted(() => {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 10px 0;
+  gap: 16px;
+  padding: 12px 0;
 
   .el-button {
-    min-width: 100px;
+    min-width: 120px;
+    height: 40px;
+    font-weight: 500;
   }
 }
 
 .flex-input-button {
   display: flex;
-  gap: 12px;
+  gap: 16px;
 
   .flex-grow {
     flex: 1;
@@ -343,21 +311,44 @@ onUnmounted(() => {
 
   .flex-shrink {
     flex-shrink: 0;
-    width: 120px; // 固定发送验证码按钮的宽度
+    width: 130px;
   }
 }
 
-// 添加输入框样式
 :deep(.el-input) {
   .el-input__wrapper {
-    padding: 1px 15px;
-    height: 42px;
-    line-height: 42px;
+    padding: 0 16px;
+    height: 44px;
+    line-height: 44px;
+    box-shadow: 0 0 0 1px #dcdfe6;
+    transition: all 0.3s;
+
+    &:hover {
+      box-shadow: 0 0 0 1px #c0c4cc;
+    }
+
+    &.is-focus {
+      box-shadow: 0 0 0 1px var(--el-color-primary) !important;
+    }
   }
 
   .el-input__inner {
-    height: 42px;
-    line-height: 42px;
+    height: 44px;
+    line-height: 44px;
+    font-size: 15px;
+  }
+}
+
+:deep(.el-button) {
+  transition: all 0.3s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
   }
 }
 </style>

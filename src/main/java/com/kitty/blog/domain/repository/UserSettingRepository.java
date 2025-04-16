@@ -25,11 +25,7 @@ public interface UserSettingRepository extends BaseRepository<UserSetting, Integ
      * find
      */
 
-    /**
-     *
-     * @param userId
-     * @return UserSetting
-     */
-    @Query("select u from UserSetting u where u.userId =?1")
     Optional<UserSetting> findByUserId(Integer userId);
+
+    Optional<UserSetting> findByGithubAccount(String githubAccount);
 }

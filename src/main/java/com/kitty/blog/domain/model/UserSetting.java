@@ -1,9 +1,7 @@
 package com.kitty.blog.domain.model;
 
 import com.fasterxml.jackson.annotation.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -19,7 +17,9 @@ import java.io.Serializable;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "settingId")
 @DynamicInsert
 @DynamicUpdate
+@Builder
 @NoArgsConstructor
+@AllArgsConstructor
 public class UserSetting implements Serializable {
 
     @Serial
@@ -33,17 +33,17 @@ public class UserSetting implements Serializable {
     private Integer userId;
 
     @Column
-    private String theme;
+    private String theme = "light";
 
     @Column
-    private Boolean notifications;
+    private Boolean notifications = true;
 
     @Column(name = "github_account")
-    private String githubAccount;
+    private String githubAccount = null;
 
-    private String CSDNAccount;
+    private String CSDNAccount = null;
 
-    private String BiliBiliAccount;
+    private String BiliBiliAccount = null;
 
     /**
      * Transient 字段，不参与数据库的映射，仅用于业务逻辑
@@ -79,5 +79,9 @@ public class UserSetting implements Serializable {
                 ", theme='" + theme + '\'' +
                 ", notifications=" + notifications +
                 '}';
+    }
+
+    public UserSetting(Integer userId){
+        this.userId = userId;
     }
 }

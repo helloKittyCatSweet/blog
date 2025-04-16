@@ -3,9 +3,7 @@ package com.kitty.blog.domain.model;
 import com.fasterxml.jackson.annotation.*;
 import com.kitty.blog.infrastructure.converter.EncryptedAttributeConverter;
 import com.kitty.blog.domain.model.userRole.UserRole;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -25,8 +23,10 @@ import java.util.List;
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "userId")
 @DynamicInsert
 @DynamicUpdate
-@NoArgsConstructor
 @Audited
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class User implements Serializable {
 
     @Serial

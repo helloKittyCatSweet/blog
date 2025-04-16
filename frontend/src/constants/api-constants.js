@@ -20,3 +20,7 @@ export const userActivityPrefix = '/activity'
 export const commentPrefix = '/api/comment'
 export const categoryPrefix = '/api/category'
 export const tagPrefix = '/api/tag'
+
+// 权限模块下面的api
+export const authPrefix = '/api/auth'
+export const oauth2 = '/oauth2'

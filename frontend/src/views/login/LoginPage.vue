@@ -6,6 +6,8 @@ import { useUserStore, useSettingsStore } from "@/stores";
 import { useRouter, useRoute } from "vue-router";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import ResetPasswordDialog from "@/components/ResetPasswordDialog.vue";
+import OAuthPasswordDialog from "@/components/OAuthPasswordDialog.vue";
+
 import { findByUserId } from "@/api/user/userSetting.js";
 
 // api
@@ -17,6 +19,7 @@ import {
 import { login, register } from "@/api/user/user";
 import { verify, send } from "@/api/user/security/emailVerification";
 import { CONTROL_PANEL_PATH } from "@/constants/routes/base";
+import { getGithubLoginUrl, handleGithubCallback } from "@/api/auth/oauth";
 
 const isRegister = ref(false);
 
@@ -148,8 +151,42 @@ const verifyCaptcha = async () => {
 let captchaTimer;
 // 添加记住登录状态的响应式变量
 const rememberMe = ref(false);
+const githubLoading = ref(false);
 
 onMounted(async () => {
+  // 检查是否是GitHub回调
+  const code = new URLSearchParams(window.location.search).get("code");
+  if (code) {
+    try {
+      // 先尝试直接登录（针对已注册用户）
+      oauthLoading.value = true; // 显示加载动画
+      ElMessage({
+        message: "正在处理GitHub登录...",
+        type: "info",
+        offset: 200,
+      });
+      const res = await handleGithubCallback(code);
+      if (res.data.status === 200) {
+        const userData = res.data.data;
+        if (userData.isNewUser) {
+          // 新用户需要设置密码
+          oauthData.value = {
+            code,
+            email: userData.email || "",
+            username: userData.username || "",
+          };
+          oauthDialogVisible.value = true;
+        } else {
+          // 已注册用户直接登录
+          await handleOAuthLogin(userData);
+        }
+      }
+    } catch (error) {
+      console.error("GitHub登录回调处理失败:", error);
+      ElMessage.error("GitHub登录失败");
+    }
+  }
+
   // 初始生成验证码
   generateCaptcha();
 
@@ -169,6 +206,27 @@ onMounted(async () => {
     setTimeout(autoLogin, 0);
   }
 });
+
+const oauthDialogVisible = ref(false);
+const oauthData = ref({});
+
+const handleOAuthLogin = async (userData) => {
+  try {
+    userStore.setToken(userData.token);
+    userStore.setUser({
+      id: userData.id,
+      username: userData.username,
+      avatar: userData.avatar,
+      roles: userData.roles,
+      authorities: userData.authorities,
+    });
+    await router.replace(CONTROL_PANEL_PATH);
+    ElMessage.success("登录成功");
+  } catch (error) {
+    console.error("登录失败:", error);
+    ElMessage.error("登录失败");
+  }
+};
 
 // 组件卸载时清除定时器
 onUnmounted(() => {
@@ -540,6 +598,55 @@ const registerUser = async () => {
 
 // 添加重置密码的响应式变量
 const resetDialogVisible = ref(false);
+
+/**
+ * Github
+ */
+// 添加加载状态控制
+const oauthLoading = ref(false);
+
+// 添加 GitHub 登录相关逻辑
+const handleGithubLogin = async () => {
+  try {
+    githubLoading.value = true;
+    oauthLoading.value = true; // 显示加载动画
+    ElMessage({
+      message: "正在跳转到 GitHub 授权页面...",
+      type: "info",
+      duration: 2000,
+    });
+
+    const res = await getGithubLoginUrl();
+    if (res.data.status === 200) {
+      window.location.href = res.data.data;
+    } else {
+      ElMessage.error("获取GitHub登录地址失败");
+    }
+  } catch (error) {
+    console.error("GitHub登录失败:", error);
+    ElMessage.error("获取GitHub登录地址失败");
+  } finally {
+    githubLoading.value = false;
+  }
+};
+
+// 添加处理密码设置成功的回调
+const handlePasswordSet = async (userData) => {
+  try {
+    if (userData) {
+      ElMessage({
+        message: "正在处理登录信息...",
+        type: "info",
+        duration: 2000,
+      });
+      await handleOAuthLogin(userData);
+      oauthDialogVisible.value = false;
+    }
+  } catch (error) {
+    console.error("处理密码设置失败:", error);
+    ElMessage.error("设置密码后登录失败");
+  }
+};
 </script>
 
 <template>
@@ -561,6 +668,12 @@ const resetDialogVisible = ref(false);
       （3）表单元素 =>  v-model="ruleForm.xxx" 给表单元素绑定form的子属性
        (4) el-form-item => prop配置生效的是哪个校验规则（和rules中的字段对应）
   -->
+  <!-- 在最外层添加加载遮盖层 -->
+  <div class="loading-overlay" v-if="oauthLoading">
+    <img src="@/assets/loading.gif" alt="加载中..." class="loading-gif" />
+    <p class="loading-text">正在处理您的登录请求...</p>
+  </div>
+
   <el-row class="login-page">
     <el-col :span="12" class="bg"></el-col>
     <el-col :span="7" :offset="2" class="form">
@@ -730,10 +843,35 @@ const resetDialogVisible = ref(false);
             >
             <ResetPasswordDialog
               v-model="resetDialogVisible"
-              @success="resetDialogVisible = false"
+              @success="handlePasswordSet"
             />
           </div>
         </el-form-item>
+
+        <!-- 添加分割线和社交登录区域 -->
+        <el-divider>社交账号登录</el-divider>
+
+        <el-form-item class="social-login">
+          <div class="github-container">
+            <el-button
+              @click="handleGithubLogin"
+              class="github-button"
+              type="default"
+              auto-insert-space
+              :loading="githubLoading"
+            >
+              <font-awesome-icon :icon="['fab', 'github']" />
+              GitHub 登录
+            </el-button>
+          </div>
+
+          <OAuthPasswordDialog
+            v-model="oauthDialogVisible"
+            :oauth-data="oauthData"
+            @success="handlePasswordSet"
+          />
+        </el-form-item>
+
         <!-- 登录 -->
         <el-form-item>
           <el-button @click="loginUser" class="button" type="primary" auto-insert-space
@@ -802,6 +940,60 @@ const resetDialogVisible = ref(false);
         margin-left: 20px; /* *按钮距离输入框的距离*/
       }
     }
+  }
+
+  .social-login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    width: 100%;
+
+    .github-container {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .github-button {
+      width: 60%; // 设置按钮宽度为父容器的60%
+      padding: 12px 24px; // 增加内边距使按钮更大
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px; // 图标和文字之间的间距
+
+      .fa-github {
+        font-size: 18px; // 增大图标尺寸
+      }
+    }
+  }
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+
+  .loading-gif {
+    width: 120px;
+    height: 120px;
+    margin-bottom: 20px;
+  }
+
+  .loading-text {
+    font-size: 16px;
+    color: #606266;
+    margin-top: 16px;
   }
 }
 </style>

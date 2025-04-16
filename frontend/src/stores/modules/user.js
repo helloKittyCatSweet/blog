@@ -60,6 +60,7 @@ export const useUserStore = defineStore("free-share-user", () => {
     };
   };
 
+
   // 正确的返回结构
   return {
     user,
@@ -81,7 +82,7 @@ export const useUserStore = defineStore("free-share-user", () => {
     setRoles,
     getAuthorities,
     setAuthorities,
-    clear
+    clear,
   };
 }, {
   persist: {

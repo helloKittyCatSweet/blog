@@ -5,12 +5,12 @@ import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.application.dto.userRole.WholeUserInfo;
 import com.kitty.blog.domain.model.Role;
 import com.kitty.blog.domain.model.User;
+import com.kitty.blog.domain.model.UserSetting;
 import com.kitty.blog.domain.model.userRole.UserRole;
 import com.kitty.blog.domain.model.userRole.UserRoleId;
 import com.kitty.blog.domain.repository.RoleRepository;
 import com.kitty.blog.domain.repository.UserRepository;
-import com.kitty.blog.domain.repository.UserRoleRepository;
-import com.kitty.blog.domain.service.SignatureService;
+import com.kitty.blog.domain.repository.UserSettingRepository;
 import com.kitty.blog.domain.service.UserRoleService;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.infrastructure.utils.*;
@@ -72,6 +72,16 @@ public class UserService {
     @Autowired
     private SignatureService userSignatureService;
 
+    @Autowired
+    private UserSettingRepository userSettingRepository;
+
+    @Transactional
+    public boolean setPassword(User user, String password) {
+        user.setPassword(passwordEncoder.encode(password));
+        save(user);
+        return true;
+    }
+
     @Transactional
     public ResponseEntity<Boolean> register(User user) {
         User ifExists = userRepository.findByUsername(user.getUsername()).orElse(null);
@@ -89,7 +99,7 @@ public class UserService {
         }
 
         // 密码加密
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        setPassword(user, user.getPassword());
         user.setIsActive(true);
         user.setGender(2); // 默认保密
         user.setDeleted(false);
@@ -99,6 +109,7 @@ public class UserService {
 
         // 普通用户by default
         userRoleService.save(new UserRole(new UserRoleId(user.getUserId(), 1)));
+        userSettingRepository.save(new UserSetting(user.getUserId()));
 
         checkUserSignature(user);
 

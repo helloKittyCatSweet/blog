@@ -4,15 +4,10 @@ import com.kitty.blog.application.dto.message.MessageStatusUpdate;
 import com.kitty.blog.application.dto.message.SystemMessageDto;
 import com.kitty.blog.application.dto.message.SystemMessageRequest;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
-import com.kitty.blog.common.constant.MessageStatus;
-import com.kitty.blog.common.constant.Role;
 import com.kitty.blog.domain.model.Message;
-import com.kitty.blog.domain.model.SystemMessage;
-import com.kitty.blog.domain.repository.SystemMessageRepository;
 import com.kitty.blog.domain.service.MessageService;
 import com.kitty.blog.domain.service.WebSocketService;
-import com.kitty.blog.domain.service.user.MyUserDetailService;
-import com.kitty.blog.domain.service.user.UserService;
+import com.kitty.blog.domain.service.auth.MyUserDetailService;
 import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -22,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
@@ -30,17 +24,11 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SendToUser;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.messaging.simp.user.SimpUser;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Tag(name = "WebSocket", description = "WebSocket相关接口")

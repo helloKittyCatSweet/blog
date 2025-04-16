@@ -209,24 +209,28 @@ const displayedComments = computed(() => {
 
       <!-- 在文章内容后添加交互区域 -->
       <div class="post-interaction">
-        <!-- 登录则可互动 -->
         <template v-if="userStore.isLoggedIn">
-          <div class="interaction-container">
-            <post-interaction
-              v-model:is-liked="interactionState.isLiked"
-              v-model:is-favorited="interactionState.isFavorited"
-              :post-id="post.postId"
-              :title="post.title"
-              :like-activity-id="interactionState.likeActivityId"
-              :favorite-activity-id="interactionState.favoriteActivityId"
-              @refresh="getPostDetail(post.postId)"
-            />
-          </div>
-          <div v-if="post.postId" class="report-container">
-            <post-report :post-id="post.postId" :title="post.title" />
+          <div class="interaction-wrapper">
+            <div class="interaction-left">
+              <post-interaction
+                v-model:is-liked="interactionState.isLiked"
+                v-model:is-favorited="interactionState.isFavorited"
+                :post-id="post.postId"
+                :title="post.title"
+                :like-activity-id="interactionState.likeActivityId"
+                :favorite-activity-id="interactionState.favoriteActivityId"
+                @refresh="getPostDetail(post.postId)"
+              />
+            </div>
+            <div class="interaction-right">
+              <post-report
+                v-if="post.postId"
+                :post-id="post.postId"
+                :title="post.title"
+              />
+            </div>
           </div>
         </template>
-        <!-- 未登录时显示提示 -->
         <template v-else>
           <div class="interaction-login-tip">
             <el-tooltip content="请登录后操作" placement="top" effect="light">
@@ -377,13 +381,56 @@ const displayedComments = computed(() => {
   padding: 0 24px;
 }
 
-.interaction-container {
+.post-interaction {
+  margin: 24px 0;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: var(--el-fill-color-lighter);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.post-interaction:hover {
+  box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.1);
+}
+
+.interaction-wrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
 }
 
-.report-container {
-  margin-left: auto;
+.interaction-left {
+  flex-grow: 1;
+}
+
+.interaction-right {
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+  border-left: 1px solid var(--el-border-color-lighter);
+}
+
+.interaction-login-tip {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+}
+
+.interaction-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.interaction-buttons .el-button {
+  transition: all 0.3s ease;
+}
+
+.interaction-buttons .el-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 </style>

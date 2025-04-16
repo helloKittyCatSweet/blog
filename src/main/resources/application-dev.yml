@@ -134,6 +134,23 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: Ov23liY8AiP9uI5DsZCR  # 你的 GitHub OAuth App client id
+            client-secret: bef4b57011303aaa891724856954bc050b3d8c4a  # 你的 GitHub OAuth App client secret
+            scope: user:email, read:user
+            redirect-uri: http://localhost:5173/login
+        provider:
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
+            user-name-attribute: login
+
 logging:
   file:
     name: logs/blog.log

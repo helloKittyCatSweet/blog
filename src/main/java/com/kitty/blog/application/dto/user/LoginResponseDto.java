@@ -1,7 +1,11 @@
 package com.kitty.blog.application.dto.user;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,6 +18,9 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LoginResponseDto implements Serializable, UserDetails {
 
     @Serial
@@ -26,6 +33,8 @@ public class LoginResponseDto implements Serializable, UserDetails {
     private String password;
 
     private String token;
+
+    private boolean isNewUser;
 
     private Collection<? extends GrantedAuthority> roles;
 
