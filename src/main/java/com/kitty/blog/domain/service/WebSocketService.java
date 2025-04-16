@@ -282,4 +282,22 @@ public class WebSocketService {
                 "/topic/system-message/" + message.getTargetRole(),
                 message);
     }
+
+    @Transactional
+    public void sendUserNotification(Integer userId, String message, String type, String data) {
+        try {
+            // 直接发送到用户的私人队列
+            simpMessagingTemplate.convertAndSendToUser(
+                    userId.toString(),
+                    "/queue/notifications",
+                    Map.of(
+                            "message", message,
+                            "type", type,
+                            "data", data
+                    )
+            );
+        } catch (Exception e) {
+            log.error("Failed to send notification to user {}: {}", userId, e.getMessage());
+        }
+    }
 }

@@ -3,7 +3,6 @@ package com.kitty.blog.application.controller.user;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.application.dto.userActivity.UserActivityDto;
 import com.kitty.blog.domain.model.UserActivity;
-import com.kitty.blog.domain.service.PostService;
 import com.kitty.blog.domain.service.UserActivityService;
 import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;

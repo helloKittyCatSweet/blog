@@ -103,6 +103,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/post/public/find/all",
                                 "/api/post/public/find/id/**",
                                 "/api/post/public/add/views/**",
+                                "/api/post/public/find/*/list",
                                 "/api/comment/public/find/*/list",
                                 "/api/category/public/find/all",
                                 "/api/tag/public/find/all").permitAll()

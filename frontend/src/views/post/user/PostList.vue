@@ -15,7 +15,7 @@ import {
 import { useRouter } from "vue-router";
 import PageContainer from "@/components/PageContainer.vue";
 import {
-  findByUsername,
+  findByUserId,
   deleteById,
   searchPosts,
   findByKeysInTitle,
@@ -104,7 +104,7 @@ const getPostList = async () => {
       }
     } else {
       // 没有关键词时使用用户名查询
-      response = await findByUsername(userStore.user.username);
+      response = await findByUserId(userStore.user.id);
       if (response.data.status === 200 && searchForm.value.status) {
         // 如果选择了状态，进行过滤
         response.data.data = response.data.data.filter((item) =>

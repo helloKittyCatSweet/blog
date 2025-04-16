@@ -5,11 +5,10 @@ import com.kitty.blog.application.dto.post.PostAttachmentDto;
 import com.kitty.blog.application.dto.post.PostDto;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.model.*;
-import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.model.tag.PostTag;
 import com.kitty.blog.domain.repository.post.PostSearchCriteria;
-import com.kitty.blog.domain.service.PostService;
+import com.kitty.blog.domain.service.post.PostService;
 import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -404,19 +403,18 @@ public class PostController {
     /**
      * 根据用户名查询文章列表
      *
-     * @param username
+     * @param userId
      * @return
      */
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户名查询文章列表")
-    @GetMapping("/public/find/user/{username}")
+    @GetMapping("/public/find/user/{userId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<PostDto>>> findByUsername
-    (@PathVariable String username) {
-        ResponseEntity<List<PostDto>> response = postService.findByUsername(username);
+    public ResponseEntity<Response<List<PostDto>>> findByUserId(@PathVariable Integer userId) {
+        ResponseEntity<List<PostDto>> response = postService.findByUserId(userId);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -467,26 +465,18 @@ public class PostController {
     /**
      * 根据用户ID和发布状态查询文章列表
      *
-     * @param isPublished
-     * @param username
+     * @param userId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role)." +
-            "ROLE_POST_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
-            " or @postService.isAuthorOfOpenPost(#username, #user.id)")
+    // 前台展示界面
     @Operation(summary = "根据用户名和发布状态查询文章列表")
-    @GetMapping("/public/find/{username}/{isPublished}")
+    @GetMapping("/public/find/{userId}/list")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Post>>> findByUsernameIsPublished
-    (@PathVariable Boolean isPublished,
-     @PathVariable String username,
-     @AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<List<Post>> response =
-                postService.findByUsernameIsPublished(isPublished, username);
+    public ResponseEntity<Response<List<PostDto>>> findByUsernameIsPublished(@PathVariable Integer userId) {
+        ResponseEntity<List<PostDto>> response = postService.findByUsernameIsPublished(userId);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");

@@ -480,4 +480,29 @@ public class MessageService {
     public ResponseEntity<Boolean> setOperation(Integer messageId, boolean operation){
         return new ResponseEntity<>(messageRepository.setOperation(messageId, operation) > 0, HttpStatus.OK);
     }
+
+    @Transactional
+    @Cacheable(key = "'lastMessage:' + #senderId + ':' + #receiverId")
+    public ResponseEntity<Message> findLastMessageBetweenUsers(Integer senderId, Integer receiverId) {
+        try {
+            if (!userRepository.existsById(senderId) || !userRepository.existsById(receiverId)) {
+                return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+            }
+
+            // 查找两个用户之间的最后一条消息
+            Message lastMessage = messageRepository.
+                    findFirstBySenderIdAndReceiverIdOrReceiverIdAndSenderIdOrderByCreatedAtDesc(
+                            senderId, receiverId, senderId, receiverId)
+                    .orElse(null);
+
+            if (lastMessage == null) {
+                return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
+            }
+
+            return new ResponseEntity<>(lastMessage, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("获取最后一条消息失败: {}", e.getMessage());
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

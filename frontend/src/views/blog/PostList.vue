@@ -7,6 +7,7 @@ import { formatDateTime } from "@/utils/format";
 import { findAll as getAllTags } from "@/api/common/tag";
 import { findAll as getAllCategories } from "@/api/common/category";
 import { searchPosts, findByKeysInTitle } from "@/api/post/post";
+import { BLOG_USER_DETAIL_PATH } from "@/constants/routes/blog";
 
 const route = useRoute();
 const router = useRouter();
@@ -62,14 +63,20 @@ const fetchPosts = async () => {
         content: item.post.content,
         cover: item.post.coverImage,
         excerpt: item.post.content.substring(0, 200) + "...",
-        category: item.category?.name || "未分类",
-        categoryId: item.category?.categoryId,
-        tags: item.tags?.map((tag) => tag.name) || [],
+        category: item.category?.categoryId
+          ? {
+              categoryId: item.category.categoryId,
+              name: item.category.name,
+            }
+          : null,
+        tags:
+          item.tags?.filter((tag) => tag.tagId && tag.name).map((tag) => tag.name) || [],
         views: item.post.views || 0,
         likes: item.post.likes || 0,
         comments: item.post.comments || 0,
         createTime: item.post.createdTime,
         author: item.author,
+        userId: item.post.userId,
       }));
       total.value = response.data.total || posts.value.length;
     }
@@ -90,10 +97,12 @@ const fetchCategoriesAndTags = async () => {
     ]);
 
     if (categoriesRes.data?.status === 200) {
-      categories.value = categoriesRes.data.data;
+      categories.value = categoriesRes.data.data.filter(
+        (category) => category.categoryId && category.name
+      );
     }
     if (tagsRes.data?.status === 200) {
-      tags.value = tagsRes.data.data;
+      tags.value = tagsRes.data.data.filter((tag) => tag.tagId && tag.name);
     }
   } catch (error) {
     console.error("获取分类和标签失败:", error);
@@ -127,6 +136,21 @@ onMounted(() => {
   fetchCategoriesAndTags();
   fetchPosts();
 });
+
+/**
+ * 处理作者点击
+ */
+const handleAuthorClick = (event, userId) => {
+  event.stopPropagation(); // 阻止事件冒泡，避免触发文章卡片的点击
+  if (userId) {
+    router.push({
+      path: BLOG_USER_DETAIL_PATH.replace(":id", userId),
+      query: {
+        redirect: route.fullPath,
+      },
+    });
+  }
+};
 </script>
 
 <template>
@@ -180,30 +204,36 @@ onMounted(() => {
     <div class="posts-list" v-loading="loading">
       <el-empty v-if="posts.length === 0" description="暂无文章" />
 
-      <el-card
-        v-else
-        v-for="post in posts"
-        :key="post.id"
-        class="post-card"
-        @click="goToPost(post.id)"
-      >
+      <el-card v-else v-for="post in posts" :key="post.id" class="post-card">
         <div class="post-layout">
           <!-- 文章封面 -->
-          <div class="post-cover" v-if="post.cover">
-            <el-image :src="post.cover" :alt="post.title" fit="cover" loading="lazy" />
+          <div class="post-cover" v-if="post.cover" @click="goToPost(post.id)">
+            <el-image :src="post.cover" :alt="post.cover" fit="cover" loading="lazy" />
           </div>
 
           <!-- 文章内容 -->
           <div class="post-content">
             <div class="post-header">
-              <h2 class="post-title">{{ post.title }}</h2>
+              <h2 class="post-title clickable" @click="goToPost(post.id)">
+                {{ post.title }}
+              </h2>
               <div class="post-meta">
-                <el-tag size="small" type="success">{{ post.category }}</el-tag>
+                <el-tag v-if="post.category?.categoryId" size="small" type="success">
+                  {{ post.category.name }}
+                </el-tag>
+                <span
+                  class="post-author clickable"
+                  @click="(e) => handleAuthorClick(e, post.userId)"
+                >
+                  {{ post.author }}
+                </span>
                 <span class="post-date">{{ formatDateTime(post.createTime) }}</span>
               </div>
             </div>
 
-            <p class="post-excerpt">{{ post.excerpt }}</p>
+            <p class="post-excerpt clickable" @click="goToPost(post.id)">
+              {{ post.excerpt }}
+            </p>
 
             <div class="post-footer">
               <div class="post-tags">
@@ -281,7 +311,6 @@ onMounted(() => {
 
 .post-card {
   margin-bottom: 20px;
-  cursor: pointer;
   transition: all 0.3s ease;
 }
 
@@ -404,5 +433,28 @@ onMounted(() => {
     flex: none;
     height: 200px;
   }
+}
+
+.post-author {
+  color: var(--el-color-primary);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.post-author:hover {
+  color: var(--el-color-primary-light-3);
+  text-decoration: underline;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.post-title.clickable:hover {
+  color: var(--el-color-primary);
+}
+
+.post-excerpt.clickable:hover {
+  color: var(--el-text-color-primary);
 }
 </style>

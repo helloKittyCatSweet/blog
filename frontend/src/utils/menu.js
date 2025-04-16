@@ -43,7 +43,8 @@ import {
   USER_PASSWORD_PATH,
   USER_SETTING_PATH,
   USER_MESSAGE_DETAIL_PATH,
-  USER_LIKE_REPORT
+  USER_LIKE_REPORT,
+  USER_FOLLOW_MANAGE_PATH
 } from '@/constants/routes/user';
 
 import {
@@ -171,6 +172,12 @@ export const userMenus = [
         icon: Connection,
         title: '个人设置',
         index: USER_SETTING_PATH,
+        roles: [ROLES.USER]
+      },
+      {
+        icon: UserFilled,
+        title: '关注管理',
+        index: USER_FOLLOW_MANAGE_PATH,
         roles: [ROLES.USER]
       }
     ]

@@ -4,7 +4,8 @@ import {
   BLOG_POST_DETAIL_PATH,
   BLOG_CATEGORIES_PATH,
   BLOG_TAGS_PATH,
-  BLOG_ABOUT_PATH
+  BLOG_ABOUT_PATH,
+  BLOG_USER_DETAIL_PATH
 } from '@/constants/routes-constants.js'
 
 export default {
@@ -62,6 +63,15 @@ export default {
       component: () => import('@/views/blog/About.vue'),
       meta: {
         title: '关于',
+        public: true
+      }
+    },
+    {
+      path: BLOG_USER_DETAIL_PATH.slice(1),
+      name: 'UserDetail',
+      component: () => import('@/views/blog/UserDetail.vue'),
+      meta: {
+        title: '用户详情',
         public: true
       }
     }

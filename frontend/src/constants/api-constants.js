@@ -15,6 +15,7 @@ export const rolePermissionPrefix = '/rolePermission'
 export const userRolePrefix = '/userRole'
 export const userSettingPrefix = '/setting'
 export const userActivityPrefix = '/activity'
+export const userFollowPrefix = '/follow'
 
 // comment模块下面的api
 export const commentPrefix = '/api/comment'

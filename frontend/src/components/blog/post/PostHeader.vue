@@ -1,5 +1,6 @@
 <script setup>
 import { User, Clock, View } from "@element-plus/icons-vue";
+import { defineProps, defineEmits } from "vue";
 
 defineProps({
   title: String,
@@ -8,7 +9,10 @@ defineProps({
   viewCount: Number,
   category: Object,
   tags: Array,
+  userId: Number,
 });
+
+defineEmits(["click-author"]);
 </script>
 
 <template>
@@ -16,7 +20,7 @@ defineProps({
     <h1 class="post-title">{{ title }}</h1>
     <div class="post-meta">
       <el-space wrap>
-        <div class="meta-item">
+        <div class="meta-item clickable" @click="$emit('click-author', userId)">
           <el-icon><User /></el-icon>
           <span>{{ author }}</span>
         </div>
@@ -79,5 +83,14 @@ defineProps({
 
 .category {
   margin-right: 8px;
+}
+
+.clickable {
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.clickable:hover {
+  color: var(--el-color-primary);
 }
 </style>

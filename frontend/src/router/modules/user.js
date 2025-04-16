@@ -17,7 +17,8 @@ import {
   USER_MESSAGE,
   USER_PROFILE,
   USER_MESSAGE_DETAIL_PATH,
-  USER_LIKE_REPORT
+  USER_LIKE_REPORT,
+  USER_FOLLOW_MANAGE_PATH
 } from '@/constants/routes-constants.js'
 
 export default [
@@ -195,6 +196,15 @@ export default [
               title: '个人设置',
               breadcrumb: true,
               roles: [ROLES.USER],
+            }
+          },
+          {
+            path: USER_FOLLOW_MANAGE_PATH,
+            component: () => import('@/views/user/UserFollowManage.vue'),
+            meta: {
+              title: '关注管理',
+              requiresAuth: true,
+              roles: ['ROLE_USER']
             }
           }
         ]

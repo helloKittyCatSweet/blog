@@ -317,7 +317,8 @@ export const disconnectWebSocket = () => {
 // 通过WebSocket发送消息
 export const sendMessageWs = (message) => {
   return new Promise((resolve, reject) => {
-    if (!stompClient) {
+    if (!stompClient || !stompClient.connected) {
+      console.log('WebSocket未连接，返回false');
       resolve(false);
       return;
     }
@@ -325,38 +326,31 @@ export const sendMessageWs = (message) => {
     const userStore = useUserStore();
     const token = userStore.user.token;
 
-    // 检查连接状态并等待连接
-    const waitForConnection = (callback) => {
-      if (stompClient.connected) {
-        callback();
-      } else {
-        setTimeout(() => {
-          if (stompClient.connected) {
-            callback();
-          } else {
-            waitForConnection(callback);
-          }
-        }, 100);
-      }
-    };
+    try {
+      stompClient.publish({
+        destination: '/app/chat',
+        body: JSON.stringify(message),
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'priority': '9',
+          'Content-Type': 'application/json'
+        }
+      });
 
-    waitForConnection(() => {
-      try {
-        stompClient.publish({
-          destination: '/app/chat',
-          body: JSON.stringify(message),
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'priority': '9',
-            'Content-Type': 'application/json'
-          }
-        });
-        resolve(true);
-      } catch (error) {
-        console.error('WebSocket发送消息失败:', error);
-        resolve(false);
-      }
-    }, 100);
+      // 添加延时检查
+      setTimeout(() => {
+        if (stompClient.connected) {
+          resolve(true);
+        } else {
+          console.log('WebSocket连接已断开，返回false');
+          resolve(false);
+        }
+      }, 500);
+
+    } catch (error) {
+      console.error('WebSocket发送消息失败:', error);
+      resolve(false);
+    }
   });
 };
 

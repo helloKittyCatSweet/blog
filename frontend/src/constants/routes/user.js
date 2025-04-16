@@ -29,3 +29,4 @@ export const USER_PROFILE = `${USER}/profile`
 export const USER_PROFILE_PATH = `${USER_PROFILE}/info`
 export const USER_PASSWORD_PATH = `${USER_PROFILE}/password`
 export const USER_SETTING_PATH = `${USER_PROFILE}/setting`
+export const USER_FOLLOW_MANAGE_PATH = `${USER_PROFILE}/follow/manage`;

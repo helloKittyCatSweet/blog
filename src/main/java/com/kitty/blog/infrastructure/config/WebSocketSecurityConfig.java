@@ -34,7 +34,7 @@ import java.util.Objects;
 
 @Configuration
 @EnableWebSocketMessageBroker
-public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer{
+public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer {
 
     @Autowired
     private ApplicationEventPublisher applicationEventPublisher;
@@ -76,9 +76,10 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
                                     Authentication auth = securityContext.getAuthentication();
 
                                     boolean hasRole = auth.getAuthorities().stream()
-                                            .anyMatch(authority ->
-                                                    authority.getAuthority().equals("ROLE_" + Role.ROLE_MESSAGE_MANAGER) ||
-                                                            authority.getAuthority().equals("ROLE_" + Role.ROLE_SYSTEM_ADMINISTRATOR));
+                                            .anyMatch(authority -> authority.getAuthority()
+                                                    .equals("ROLE_" + Role.ROLE_MESSAGE_MANAGER) ||
+                                                    authority.getAuthority()
+                                                            .equals("ROLE_" + Role.ROLE_SYSTEM_ADMINISTRATOR));
                                     System.out.println("系统消息权限验证结果: " + auth.getAuthorities());
                                     return new AuthorizationDecision(hasRole);
                                 }
@@ -106,6 +107,11 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
                         }))
                 .simpSubscribeDestMatchers("/topic/**").authenticated()
                 .simpMessageDestMatchers("/app/**").authenticated()
+                // 放行错误消息和系统消息
+                .simpDestMatchers("/user/queue/errors", "/user/queue/reply", "/user/queue/notifications").permitAll()
+
+                // 允许订阅个人通知
+                .simpSubscribeDestMatchers("/user/queue/notifications").authenticated()
                 // 默认允许已认证的消息
                 .anyMessage().authenticated()
                 .build();
@@ -144,8 +150,7 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
                                     LoginResponseDto userDetails = (LoginResponseDto) userDetailsService
                                             .loadUserByUsername(username);
                                     if (!jwtService.isTokenExpired(jwt)) {
-                                        UsernamePasswordAuthenticationToken authToken = new
-                                                UsernamePasswordAuthenticationToken(
+                                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                                                 userDetails,
                                                 null,
                                                 userDetails.getAuthorities());
@@ -172,11 +177,10 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
                         }
                         // 恢复用户详情到认证对象中
                         if (accessor.getSessionAttributes() != null &&
-                                accessor.getSessionAttributes().containsKey("USER_DETAILS")){
+                                accessor.getSessionAttributes().containsKey("USER_DETAILS")) {
                             LoginResponseDto userDetails = (LoginResponseDto) accessor.getSessionAttributes()
-                                   .get("USER_DETAILS");
-                            UsernamePasswordAuthenticationToken authToken = new
-                                    UsernamePasswordAuthenticationToken(
+                                    .get("USER_DETAILS");
+                            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                                     userDetails,
                                     null,
                                     userDetails.getAuthorities());
@@ -221,6 +225,5 @@ public class WebSocketSecurityConfig implements WebSocketMessageBrokerConfigurer
         registry.setApplicationDestinationPrefixes("/app");
         registry.setUserDestinationPrefix("/user");
     }
-
 
 }

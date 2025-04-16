@@ -38,9 +38,16 @@ const receiverId = computed(
 );
 
 const receiverInfo = ref({});
-const receiverName = computed(
-  () => messageStore.currentReceiver.receiverName || receiverInfo.value.username
-);
+const receiverName = computed(() => {
+  if (!receiverId.value) {
+    return "请选择联系人";
+  }
+  return (
+    messageStore.currentReceiver.receiverName ||
+    receiverInfo.value.username ||
+    "请选择联系人"
+  );
+});
 const receiverAvatar = computed(
   () => messageStore.currentReceiver.receiverAvatar || receiverInfo.value.avatar
 );
@@ -53,11 +60,12 @@ const loadReceiverInfo = async () => {
 
   try {
     const { data } = await findUserById(receiverId.value);
-    if (data.code === 200 && data.data) {
+    if (data.status === 200 && data.data) {
       receiverInfo.value = data.data;
+      // 更新 messageStore 中的当前接收者信息
       messageStore.setCurrentReceiver({
         receiverId: data.data.id,
-        receiverName: data.data.username,
+        receiverName: data.data.nickname || data.data.username,
         receiverAvatar: data.data.avatar,
       });
     }
@@ -129,6 +137,8 @@ const sendMessage = async () => {
       });
 
       messageStore.updateContactMessage(receiverId.value, newMessage.value);
+      // 重新加载联系人列表
+      await loadContactList();
       nextTick(() => scrollToBottom());
     }
 
@@ -272,13 +282,14 @@ const handleClickOutside = (event) => {
 };
 
 // 在组件挂载时添加点击事件监听
-onMounted(() => {
+onMounted(async () => {
+  // 如果路由中有 receiverId，优先加载该用户信息
+  if (receiverId.value) {
+    await loadReceiverInfo();
+    await loadConversation();
+  }
   // 加载联系人列表
   loadContactList();
-  // 加载用户信息
-  loadReceiverInfo();
-  // 加载聊天记录
-  loadConversation();
 
   // 连接 WebSocket
   connectWebSocket({
@@ -448,10 +459,6 @@ const handleBack = () => {
   // 清空消息列表
   messages.value = [];
 };
-
-/**
- * 搜索
- */
 </script>
 
 <template>
@@ -500,7 +507,7 @@ const handleBack = () => {
             返回
           </el-button>
           <div class="receiver-info">
-            <span class="receiver-name">{{ receiverName || "请选择聊天对象" }}</span>
+            <span class="receiver-name">{{ receiverName }}</span>
           </div>
         </div>
 

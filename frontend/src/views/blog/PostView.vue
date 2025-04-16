@@ -18,6 +18,7 @@ import { findById } from "@/api/post/post.js";
 import { findPostExplicit } from "@/api/user/userActivity.js";
 import { useUserStore } from "@/stores/modules/user.js";
 import { LOGIN_PATH } from "@/constants/routes/base.js";
+import { BLOG_USER_DETAIL_PATH } from "@/constants/routes/blog";
 
 const route = useRoute();
 const router = useRouter();
@@ -59,16 +60,20 @@ const getPostDetail = async (id) => {
         isDraft: postData.post.isDraft,
         visibility: postData.post.visibility,
         version: postData.post.version,
-        category: {
-          categoryId: postData.category?.categoryId,
-          categoryName: postData.category?.name, // 修改这里，使用 name 而不是 categoryName
-          description: postData.category?.description,
-        },
+        category: postData.category?.categoryId
+          ? {
+              categoryId: postData.category.categoryId,
+              categoryName: postData.category.name,
+              description: postData.category.description,
+            }
+          : null,
         tags:
-          postData.tags?.map((tag) => ({
-            tagId: tag.tagId,
-            tagName: tag.name,
-          })) || [],
+          postData.tags
+            ?.filter((tag) => tag.tagId && tag.name)
+            .map((tag) => ({
+              tagId: tag.tagId,
+              tagName: tag.name,
+            })) || [],
         author: postData.author,
         summary: postData.post.abstractContent,
         createdTime: postData.post.createdAt,
@@ -170,6 +175,20 @@ const showAllComments = ref(false);
 const displayedComments = computed(() => {
   return showAllComments.value ? null : 5;
 });
+
+/**
+ * 用户名点击处理函数
+ */
+const handleAuthorClick = (userId) => {
+  if (userId) {
+    router.push({
+      path: BLOG_USER_DETAIL_PATH.replace(":id", userId),
+      query: {
+        redirect: route.fullPath, // 添加当前页面路径作为返回地址
+      },
+    });
+  }
+};
 </script>
 
 <template>
@@ -183,8 +202,10 @@ const displayedComments = computed(() => {
         :author="post.author"
         :created-time="post.createdTime"
         :view-count="post.viewCount"
-        :category="post.category"
-        :tags="post.tags"
+        :category="post.category?.categoryId ? post.category : null"
+        :tags="post.tags.length > 0 ? post.tags : null"
+        :user-id="post.userId"
+        @click-author="handleAuthorClick"
       />
 
       <!-- 文章封面 -->

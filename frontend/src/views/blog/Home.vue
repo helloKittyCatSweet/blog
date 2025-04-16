@@ -42,9 +42,14 @@ const getPostList = async () => {
         favorites: item.post.favorites,
         createdAt: item.post.createdAt,
         updatedAt: item.post.updatedAt,
-        category: item.category,
+        category: item.category?.categoryId
+          ? {
+              categoryId: item.category.categoryId,
+              name: item.category.name,
+            }
+          : null,
+        tags: item.tags?.filter((tag) => tag.tagId && tag.name) || [],
         author: item.author,
-        tags: item.tags || [],
         excerpt: item.post.abstractContent || item.post.content.substring(0, 200) + "...",
       }));
 
@@ -202,7 +207,7 @@ const handlePostClick = async (postId) => {
                 </div>
                 <div class="post-tags">
                   <el-tag
-                    v-if="post.category"
+                    v-if="post.category?.categoryId"
                     size="small"
                     type="success"
                     effect="light"

@@ -210,4 +210,8 @@ Page<Message> findMessagePage(
     @Modifying
     @Query("UPDATE Message m SET m.operation = :operation WHERE m.messageId = :messageId")
     Integer setOperation(Integer messageId, boolean operation);
+
+    Optional<Message> findFirstBySenderIdAndReceiverIdOrReceiverIdAndSenderIdOrderByCreatedAtDesc(
+            Integer senderId1, Integer receiverId1,
+            Integer senderId2, Integer receiverId2);
 }
