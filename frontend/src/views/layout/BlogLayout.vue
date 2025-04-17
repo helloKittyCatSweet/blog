@@ -8,19 +8,10 @@ import AppFooter from "@/components/layout/AppFooter.vue";
 import UserDropdown from "@/components/user/UserDropdown.vue";
 import { USER_PROFILE_PATH, USER_PASSWORD_PATH } from "@/constants/routes/user.js";
 import { LOGIN_PATH, CONTROL_PANEL_PATH } from "@/constants/routes/base.js";
+import SearchBar from "@/components/blog/search/SearchBar.vue";
 
 const router = useRouter();
 const route = useRoute();
-const searchKey = ref("");
-
-const handleSearch = () => {
-  if (searchKey.value.trim()) {
-    router.push({
-      path: "/posts",
-      query: { search: searchKey.value.trim() },
-    });
-  }
-};
 
 const userStore = useUserStore();
 
@@ -71,20 +62,29 @@ const handleUserCommand = async (command) => {
           </router-link>
         </div>
         <nav class="nav-menu">
-          <router-link to="/">首页</router-link>
-          <router-link to="/posts">文章</router-link>
-          <router-link to="/categories">分类</router-link>
-          <router-link to="/tags">标签</router-link>
-          <router-link to="/about">关于</router-link>
-          <router-link :to="CONTROL_PANEL_PATH">控制台</router-link>
+          <router-link to="/" :class="{ active: route.path === '/' }">首页</router-link>
+          <router-link to="/posts" :class="{ active: route.path.startsWith('/posts') }"
+            >文章</router-link
+          >
+          <router-link
+            to="/categories"
+            :class="{ active: route.path.startsWith('/categories') }"
+            >分类</router-link
+          >
+          <router-link to="/tags" :class="{ active: route.path.startsWith('/tags') }"
+            >标签</router-link
+          >
+          <router-link to="/about" :class="{ active: route.path.startsWith('/about') }"
+            >关于</router-link
+          >
+          <router-link
+            :to="CONTROL_PANEL_PATH"
+            :class="{ active: route.path.startsWith('/control') }"
+            >控制台</router-link
+          >
         </nav>
         <div class="header-actions">
-          <el-input
-            v-model="searchKey"
-            placeholder="搜索文章..."
-            prefix-icon="Search"
-            @keyup.enter="handleSearch"
-          />
+          <SearchBar class="search-bar" />
           <template v-if="userStore.isLoggedIn">
             <UserDropdown @command="handleUserCommand" />
           </template>
@@ -227,5 +227,18 @@ const handleUserCommand = async (command) => {
   margin: 0;
   font-size: 1.5rem;
   color: var(--el-text-color-primary);
+}
+
+.nav-menu a.active {
+  color: var(--el-color-primary);
+  font-weight: 500;
+}
+
+.nav-menu a:hover {
+  color: var(--el-color-primary-light-3);
+}
+
+.header-actions .search-bar {
+  width: 300px;
 }
 </style>

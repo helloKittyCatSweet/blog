@@ -151,6 +151,10 @@ spring:
             user-info-uri: https://api.github.com/user
             user-name-attribute: login
 
+  elasticsearch:
+    host: localhost
+    port: 9201
+
 logging:
   file:
     name: logs/blog.log
@@ -209,3 +213,4 @@ xunfei:
 tesseract:
   data:
     path: D:/program_25/tesseract/tessdata
+

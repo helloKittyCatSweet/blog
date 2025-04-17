@@ -831,7 +831,7 @@ public class PostController {
     public ResponseEntity<Response<List<PostDto>>> search(
             @RequestBody PostSearchCriteria criteria,
             @AuthenticationPrincipal LoginResponseDto user) {
-        if (criteria.isPrivate()) {
+        if (criteria.getIsPrivate()) {
             criteria.setUserId(user.getId());
         }
         List<PostDto> posts = postService.searchPostsByMultipleCriteria(criteria);

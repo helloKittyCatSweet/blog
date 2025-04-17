@@ -20,6 +20,7 @@ import com.kitty.blog.domain.service.FavoriteService;
 import com.kitty.blog.domain.service.UserActivityService;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.domain.service.post.abstractContent.XunfeiService;
+import com.kitty.blog.domain.service.search.SearchService;
 import com.kitty.blog.domain.service.tag.TagWeightService;
 import com.kitty.blog.domain.service.user.UserFollowService;
 import com.kitty.blog.infrastructure.utils.AliyunOSSUploader;
@@ -89,6 +90,9 @@ public class PostService {
     @Autowired
     private UserFollowService userFollowService;
 
+    @Autowired
+    private SearchService searchService;
+
     @Transactional
     public ResponseEntity<PostDto> create(PostDto input) {
         Post post = input.getPost();
@@ -143,6 +147,9 @@ public class PostService {
 
         // 构建返回的 PostDto
         PostDto postDto = convertToPostDto(savedPost);
+
+        // 同步到es
+        searchService.syncPostToEs(postDto);
 
         return new ResponseEntity<>(postDto, HttpStatus.CREATED);
     }
@@ -209,6 +216,9 @@ public class PostService {
 
         // 构建返回的 PostDto
         PostDto postDto = convertToPostDto(updatedPost);
+
+        // 同步到es
+        searchService.syncPostToEs(postDto);
 
         return new ResponseEntity<>(postDto, HttpStatus.OK);
     }
@@ -675,6 +685,9 @@ public class PostService {
         postRepository.findById(postId).orElse(new Post()).setDeleted(true);
 
 //        postRepository.deleteById(postId);
+        // 同步到es
+        searchService.deletePostFromEs(postId);
+
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
@@ -790,7 +803,7 @@ public class PostService {
     public List<PostDto> searchPostsByMultipleCriteria(PostSearchCriteria searchCriteria) {
         // 构建搜索条件
         PostSearchCriteria.PostSearchCriteriaBuilder builder = PostSearchCriteria.builder();
-        if (!searchCriteria.isPrivate()) {
+        if (searchCriteria.getIsPrivate() != null && !searchCriteria.getIsPrivate()) {
             builder.visibility("PUBLIC");
             builder.isPublished(true);
         } else {

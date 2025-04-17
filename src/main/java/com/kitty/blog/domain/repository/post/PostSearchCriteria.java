@@ -1,14 +1,19 @@
 package com.kitty.blog.domain.repository.post;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PostSearchCriteria {
 
-    private boolean isPrivate;
+    private Boolean isPrivate;
 
     private String title;
     private String content;
@@ -19,5 +24,5 @@ public class PostSearchCriteria {
     private Integer tagId;
     private LocalDate startDate;
     private LocalDate endDate;
-    private boolean isDeleted;
+    private Boolean isDeleted;
 }

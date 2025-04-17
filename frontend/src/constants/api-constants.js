@@ -25,3 +25,6 @@ export const tagPrefix = '/api/tag'
 // 权限模块下面的api
 export const authPrefix = '/api/auth'
 export const oauth2 = '/oauth2'
+
+// 搜索模块下面的api
+export const searchPrefix = '/api/search'

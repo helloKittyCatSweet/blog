@@ -1,6 +1,7 @@
 package com.kitty.blog.domain.repository.post;
 
 import com.kitty.blog.domain.model.Post;
+import com.kitty.blog.domain.repository.BaseRepository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface PostRepository extends JpaRepository<Post, Integer>, JpaSpecificationExecutor<Post> {
+public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecificationExecutor<Post> {
     /*
      * save(S entity)：保存实体。
      * findById(ID id)：根据主键查找实体。

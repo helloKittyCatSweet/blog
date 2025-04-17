@@ -12,7 +12,7 @@ import { findUserById } from "@/api/user/user.js";
 import { findByUserList } from "@/api/post/post.js";
 import { GENDER_OPTIONS } from "@/constants/user-constants";
 import { USER_MESSAGE_DETAIL_PATH } from "@/constants/routes/user.js";
-import { useUserStore, useMessageStore } from "@/stores";
+import { useUserStore, useMessageStore, useSettingsStore } from "@/stores";
 import {
   followUser,
   unfollowUser,
@@ -63,6 +63,7 @@ provide(THEME_KEY, "light");
 const route = useRoute();
 const router = useRouter();
 const userStore = useUserStore();
+const settingsStore = useSettingsStore();
 
 const userInfo = ref({
   username: "",
@@ -357,6 +358,42 @@ const handleUserClick = async (userId) => {
               <p class="introduction">
                 {{ userInfo.introduction || "这个用户很懒，还没有写简介" }}
               </p>
+
+              <!-- 添加社交账号展示 -->
+              <div class="social-accounts" v-if="settingsStore.settings">
+                <a
+                  v-if="settingsStore.settings.githubAccount"
+                  :href="`https://github.com/${settingsStore.settings.githubAccount}`"
+                  target="_blank"
+                  class="social-link"
+                >
+                  <el-icon><GithubFilled /></el-icon>
+                  {{ settingsStore.settings.githubAccount }}
+                </a>
+                <a
+                  v-if="settingsStore.settings.csdnAccount"
+                  :href="`https://blog.csdn.net/${settingsStore.settings.csdnAccount}`"
+                  target="_blank"
+                  class="social-link"
+                >
+                  <img src="@/assets/icons/csdn.svg" class="social-icon" alt="CSDN" />
+                  {{ settingsStore.settings.csdnAccount }}
+                </a>
+                <a
+                  v-if="settingsStore.settings.bilibiliAccount"
+                  :href="`https://space.bilibili.com/${settingsStore.settings.bilibiliAccount}`"
+                  target="_blank"
+                  class="social-link"
+                >
+                  <img
+                    src="@/assets/icons/bilibili.svg"
+                    class="social-icon"
+                    alt="bilibili"
+                  />
+                  {{ settingsStore.settings.bilibiliAccount }}
+                </a>
+              </div>
+
               <div class="tags-container">
                 <el-tag
                   v-for="tag in userInfo.tags"
@@ -738,6 +775,36 @@ const handleUserClick = async (userId) => {
           color: var(--el-text-color-secondary);
         }
       }
+    }
+  }
+}
+
+.social-accounts {
+  display: flex;
+  gap: 16px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+
+  .social-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--el-text-color-regular);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background-color: var(--el-fill-color-lighter);
+    transition: all 0.3s ease;
+
+    &:hover {
+      color: var(--el-color-primary);
+      background-color: var(--el-fill-color-light);
+    }
+
+    .social-icon {
+      width: 16px;
+      height: 16px;
     }
   }
 }

@@ -75,5 +75,14 @@ public class SwaggerConfig {
                 .pathsToMatch("/api/admin/logs/**")
                 .build();
     }
+
+    // 全文搜索API
+    @Bean
+    public GroupedOpenApi searchApi() {
+        return GroupedOpenApi.builder()
+                .group("全文搜索") // Swagger UI 下拉框中显示的名字
+                .pathsToMatch("/api/search/**")
+                .build();
+    }
 }
    

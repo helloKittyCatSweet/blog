@@ -5,7 +5,8 @@ import {
   BLOG_CATEGORIES_PATH,
   BLOG_TAGS_PATH,
   BLOG_ABOUT_PATH,
-  BLOG_USER_DETAIL_PATH
+  BLOG_USER_DETAIL_PATH,
+  BLOG_SEARCH_PATH,
 } from '@/constants/routes-constants.js'
 
 export default {
@@ -74,6 +75,6 @@ export default {
         title: '用户详情',
         public: true
       }
-    }
+    },
   ]
 }
