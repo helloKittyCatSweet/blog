@@ -104,6 +104,7 @@ public class SecurityConfig {
                                 "/api/post/public/find/id/**",
                                 "/api/post/public/add/views/**",
                                 "/api/post/public/find/*/list",
+                                "/api/post/public/find/category/**",
                                 "/api/comment/public/find/*/list",
                                 "/api/category/public/find/all",
                                 "/api/tag/public/find/all",

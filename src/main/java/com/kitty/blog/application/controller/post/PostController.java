@@ -488,7 +488,7 @@ public class PostController {
      * @param category
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    // 前台展示界面
     @Operation(summary = "根据分类查询文章列表")
     @GetMapping("/public/find/category/{category}")
     @ApiResponses(value = {

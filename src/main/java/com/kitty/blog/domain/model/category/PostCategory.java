@@ -17,7 +17,11 @@ import java.io.Serializable;
 
 @Data
 @Entity
-@Table(name = "fs_post_categories")
+@Table(name = "fs_post_categories", indexes = {
+        @Index(name = "idx_post_id", columnList = "post_id"),
+        @Index(name = "idx_category_id", columnList = "category_id"),
+        @Index(name = "idx_post_category", columnList = "post_id, category_id", unique = true)
+})
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @DynamicUpdate
 @DynamicInsert
@@ -44,8 +48,10 @@ public class PostCategory implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         PostCategory that = (PostCategory) o;
         return id.equals(that.id);
     }
@@ -64,4 +70,3 @@ public class PostCategory implements Serializable {
                 '}';
     }
 }
-

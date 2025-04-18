@@ -15,10 +15,14 @@ import java.io.Serializable;
 
 @Data
 @Entity
-@Table(name = "fs_post_tags")
+@Table(name = "fs_post_tags", indexes = {
+        @Index(name = "idx_post_id", columnList = "post_id"),
+        @Index(name = "idx_tag_id", columnList = "tag_id"),
+        @Index(name = "idx_post_tag", columnList = "post_id,tag_id")
+})
 @DynamicUpdate
 @DynamicInsert
-public class PostTag implements Serializable{
+public class PostTag implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;

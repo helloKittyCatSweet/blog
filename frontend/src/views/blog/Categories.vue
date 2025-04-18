@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
-import { Search, View, Star } from "@element-plus/icons-vue";
+import { ElMessage, ElLoading } from "element-plus";
+import { Search, View, Star, Reading } from "@element-plus/icons-vue";
 import {
   findAll,
   findCategoryByNameLike,
@@ -17,18 +17,14 @@ const categoriesTree = ref([]);
 const selectedCategory = ref(null);
 const categoryPosts = ref([]);
 const sortBy = ref("newest");
-
-const defaultProps = {
-  children: "children",
-  label: "name",
-};
+const loading = ref(false);
 
 // 加载所有分类
 const loadCategories = async () => {
+  loading.value = true;
   try {
     const response = await findAll();
     if (response.data?.status === 200) {
-      // 使用相同的数据结构
       categoriesTree.value = response.data.data.map((item) => ({
         ...item,
         label: item.category.name,
@@ -40,6 +36,8 @@ const loadCategories = async () => {
     }
   } catch (error) {
     ElMessage.error("加载分类失败");
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -48,7 +46,6 @@ const buildCategoryTree = (categories) => {
   const tree = [];
   const map = {};
 
-  // 首先创建所有节点的映射
   categories.forEach((category) => {
     map[category.id] = {
       ...category,
@@ -56,7 +53,6 @@ const buildCategoryTree = (categories) => {
     };
   });
 
-  // 构建树结构
   categories.forEach((category) => {
     const node = map[category.id];
     if (category.parentId) {
@@ -75,25 +71,28 @@ const buildCategoryTree = (categories) => {
 // 处理分类点击
 const handleCategoryClick = async (data) => {
   selectedCategory.value = data.category;
-  await loadCategoryPosts(data.category.categoryId);
+  await loadCategoryPosts(data.category.name);
 };
 
 // 加载分类下的文章
-const loadCategoryPosts = async (categoryId) => {
+const loadCategoryPosts = async (categoryName) => {
+  loading.value = true;
   try {
-    const response = await findByCategory(categoryId);
+    const response = await findByCategory(categoryName);
     if (response.data?.status === 200) {
       categoryPosts.value = response.data.data;
     }
   } catch (error) {
     ElMessage.error("加载文章失败");
+  } finally {
+    loading.value = false;
   }
 };
 
 // 查看文章列表
 const viewPosts = (data) => {
   selectedCategory.value = data.category;
-  loadCategoryPosts(data.category.categoryId);
+  loadCategoryPosts(data.category.name);
 };
 
 // 搜索处理
@@ -102,6 +101,7 @@ const handleSearch = async () => {
     await loadCategories();
     return;
   }
+  loading.value = true;
   try {
     const response = await findCategoryByNameLike(searchQuery.value);
     if (response.data?.status === 200) {
@@ -109,6 +109,8 @@ const handleSearch = async () => {
     }
   } catch (error) {
     ElMessage.error("搜索失败");
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -118,20 +120,23 @@ onMounted(() => {
 </script>
 
 <template>
-  <page-container class="categories-container">
-    <el-row :gutter="20" class="full-height">
-      <!-- 分类概览卡片 -->
-      <el-col :span="6" class="left-sidebar">
-        <el-card shadow="never" class="category-overview">
+  <div class="app-container">
+    <div class="categories-wrapper">
+      <!-- 左侧分类和搜索 -->
+      <div class="left-sidebar">
+        <el-card shadow="hover" class="category-card">
           <template #header>
             <div class="card-header">
-              <h3>分类概览</h3>
+              <h3>
+                <el-icon><Reading /></el-icon> 分类浏览
+              </h3>
               <el-input
                 v-model="searchQuery"
-                placeholder="搜索分类"
+                placeholder="搜索分类..."
                 class="search-input"
                 clearable
                 @input="handleSearch"
+                size="large"
               >
                 <template #prefix>
                   <el-icon><Search /></el-icon>
@@ -140,7 +145,6 @@ onMounted(() => {
             </div>
           </template>
 
-          <!-- 分类树形展示 -->
           <div class="categories-tree-container">
             <el-tree
               :data="categoriesTree"
@@ -151,35 +155,46 @@ onMounted(() => {
               node-key="category.categoryId"
               :expand-on-click-node="false"
               @node-click="handleCategoryClick"
+              v-loading="loading"
             >
               <template #default="{ node, data }">
                 <div class="custom-tree-node">
                   <div class="node-content">
-                    <span class="category-name">{{ data.category.name }}</span>
-                    <span class="post-count">({{ data.category.postCount || 0 }})</span>
+                    <el-tag size="small" effect="plain" class="category-tag">
+                      {{ data.category.name }}
+                    </el-tag>
+                    <span class="post-count">{{ data.category.useCount || 0 }}</span>
                   </div>
                   <div class="node-actions">
-                    <el-button-group>
-                      <el-button type="primary" link @click.stop="viewPosts(data)">
-                        查看文章
-                      </el-button>
-                    </el-button-group>
+                    <el-button type="primary" link @click.stop="viewPosts(data)">
+                      查看
+                    </el-button>
                   </div>
                 </div>
               </template>
             </el-tree>
           </div>
         </el-card>
-      </el-col>
+      </div>
 
-      <!-- 分类文章列表 -->
-      <el-col :span="18" class="main-content">
-        <el-card v-if="selectedCategory" shadow="never" class="posts-list">
+      <!-- 右侧文章列表 -->
+      <div class="right-content">
+        <el-card shadow="hover" class="posts-card" v-if="selectedCategory">
           <template #header>
-            <div class="card-header">
-              <h3>{{ selectedCategory.name }} 的文章</h3>
-              <div class="header-actions">
-                <el-select v-model="sortBy" placeholder="排序方式" size="small">
+            <div class="posts-header">
+              <div class="category-header">
+                <h2 class="category-title">
+                  {{ selectedCategory.name }}
+                </h2>
+                <span class="posts-total">{{ categoryPosts.length }} 篇文章</span>
+              </div>
+              <div class="sort-options">
+                <el-select
+                  v-model="sortBy"
+                  placeholder="排序方式"
+                  size="large"
+                  style="width: 140px"
+                >
                   <el-option label="最新发布" value="newest" />
                   <el-option label="最多浏览" value="views" />
                   <el-option label="最多点赞" value="likes" />
@@ -188,204 +203,419 @@ onMounted(() => {
             </div>
           </template>
 
-          <el-empty v-if="categoryPosts.length === 0" description="暂无文章" />
+          <el-empty
+            v-if="categoryPosts.length === 0"
+            description="暂无文章"
+            :image-size="120"
+          />
 
           <div v-else class="posts-grid">
-            <el-card
+            <div
               v-for="post in categoryPosts"
               :key="post.id"
               class="post-card"
-              shadow="hover"
               @click="router.push(`/post/${post.id}`)"
             >
               <div class="post-cover" v-if="post.cover">
-                <el-image :src="post.cover" fit="cover" />
+                <el-image :src="post.cover" fit="cover" class="cover-image" />
               </div>
               <div class="post-info">
-                <h4 class="post-title">{{ post.title }}</h4>
+                <h3 class="post-title">{{ post.title }}</h3>
                 <p class="post-summary">{{ post.summary }}</p>
-                <div class="post-meta">
+                <div class="post-footer">
                   <span class="post-date">{{ formatDate(post.createdAt) }}</span>
                   <div class="post-stats">
-                    <span title="浏览量">
+                    <span class="stat-item" title="浏览量">
                       <el-icon><View /></el-icon>
                       {{ post.views }}
                     </span>
-                    <span title="点赞数">
+                    <span class="stat-item" title="点赞数">
                       <el-icon><Star /></el-icon>
                       {{ post.likes }}
                     </span>
                   </div>
                 </div>
               </div>
-            </el-card>
+            </div>
           </div>
         </el-card>
-        <el-empty v-else description="请选择一个分类" />
-      </el-col>
-    </el-row>
-  </page-container>
+
+        <el-card shadow="hover" class="welcome-card" v-else>
+          <template #header>
+            <h2>
+              <el-icon><Reading /></el-icon> 欢迎使用分类浏览
+            </h2>
+          </template>
+          <div class="welcome-content">
+            <el-empty description="请从左侧选择一个分类" :image-size="150">
+              <p class="welcome-tip">点击分类查看相关文章，或使用搜索框查找特定分类</p>
+            </el-empty>
+          </div>
+        </el-card>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>
-.category-overview {
-  margin-bottom: 20px;
-
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    h3 {
-      margin: 0;
-      font-size: 18px;
-    }
-
-    .search-input {
-      width: 250px;
-    }
-  }
-}
-
-.custom-tree-node {
-  flex: 1;
+.app-container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-right: 8px;
+  justify-content: center;
+  padding: 30px;
+  background-color: #f8fafc;
+  min-height: calc(100vh - 60px);
+}
 
-  .node-content {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.categories-wrapper {
+  width: 100%;
+  width: 1000px;
+  display: flex;
+  gap: 24px;
+}
 
-    .category-name {
-      font-size: 14px;
+.left-sidebar {
+  width: 320px;
+  min-width: 320px;
+
+  .category-card {
+    height: 100%;
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    :deep(.el-card__header) {
+      background: linear-gradient(135deg, #f6f8fa, #e9ecef);
+      border-bottom: 1px solid #e0e3e8;
+      padding: 20px;
+      border-radius: 12px 12px 0 0;
     }
 
-    .post-count {
-      color: var(--el-text-color-secondary);
-      font-size: 12px;
+    :deep(.el-card__body) {
+      padding: 0;
+      height: calc(100% - 68px);
+      overflow: auto;
+    }
+
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: auto;
+
+      h3 {
+        margin: 0;
+        font-size: 20px;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+
+        .el-icon {
+          color: #409eff;
+          font-size: 24px;
+        }
+      }
+
+      .search-input {
+        width: 100%;
+
+        :deep(.el-input__wrapper) {
+          border-radius: 20px;
+          padding: 0 15px;
+          height: 40px;
+        }
+      }
+    }
+
+    .categories-tree-container {
+      padding: 15px;
+
+      :deep(.custom-tree-node) {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 0;
+        width: 100%;
+
+        .node-content {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+
+          .category-tag {
+            font-size: 14px;
+            border-radius: 6px;
+            background-color: #f0f7ff;
+            border-color: #d0e3ff;
+            color: #409eff;
+            padding: 6px 12px;
+            height: auto;
+            line-height: 1.4;
+          }
+
+          .post-count {
+            background-color: #f0f2f5;
+            color: #7a8ba9;
+            font-size: 13px;
+            padding: 4px 12px;
+            border-radius: 10px;
+            font-weight: 500;
+          }
+        }
+
+        .node-actions {
+          .el-button {
+            padding: 4px 8px;
+            font-size: 13px;
+          }
+        }
+      }
+
+      // 移除之前的固定 margin
+      :deep(.custom-tree-node > .node-content) {
+        padding: 4px 0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      // 添加树节点之间的间距
+      :deep(.el-tree-node) {
+        margin-bottom: 8px; // 增加节点之间的间距
+
+        &:last-child {
+          margin-bottom: 0; // 最后一个节点不需要底部间距
+        }
+      }
     }
   }
 }
 
-.posts-list {
-  .card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.right-content {
+  flex: 1;
+  min-width: 0;
 
-    h3 {
-      margin: 0;
-      font-size: 18px;
+  .posts-card,
+  .welcome-card {
+    height: 100%;
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    :deep(.el-card__header) {
+      background: linear-gradient(135deg, #f6f8fa, #e9ecef);
+      border-bottom: 1px solid #e0e3e8;
+      padding: 20px;
+      border-radius: 12px 12px 0 0;
     }
-  }
 
-  .posts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    padding: 20px 0;
+    :deep(.el-card__body) {
+      height: calc(100% - 68px);
+      overflow: auto;
+      padding: 24px;
+    }
 
-    .post-card {
-      cursor: pointer;
-      transition: all 0.3s ease;
+    .posts-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
 
-      &:hover {
-        transform: translateY(-5px);
-      }
+      .category-header {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
 
-      .post-cover {
-        height: 160px;
-        overflow: hidden;
-
-        .el-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-      }
-
-      .post-info {
-        padding: 12px;
-
-        .post-title {
-          margin: 0 0 8px;
-          font-size: 16px;
-          font-weight: 500;
-          line-height: 1.4;
-        }
-
-        .post-summary {
-          margin: 0 0 12px;
-          font-size: 14px;
-          color: var(--el-text-color-secondary);
-          line-height: 1.5;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
+        .category-title {
+          margin: 0;
+          font-size: 24px;
+          color: #2c3e50;
+          font-weight: 600;
+          white-space: nowrap;
           overflow: hidden;
+          text-overflow: ellipsis;
+          max-width: 500px;
         }
 
-        .post-meta {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 12px;
-          color: var(--el-text-color-secondary);
+        .posts-total {
+          font-size: 16px;
+          color: #7a8ba9;
+          font-weight: 500;
+          flex-shrink: 0;
+        }
+      }
 
-          .post-stats {
+      .sort-options {
+        .el-select {
+          :deep(.el-input__wrapper) {
+            border-radius: 20px;
+            height: 40px;
+          }
+        }
+      }
+    }
+
+    .posts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 20px;
+
+      .post-card {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 1px solid #eaeef2;
+
+        &:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+          border-color: #d0e3ff;
+
+          .post-title {
+            color: #409eff;
+          }
+        }
+
+        .post-cover {
+          height: 180px;
+          overflow: hidden;
+
+          .cover-image {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.3s;
+          }
+        }
+
+        &:hover .cover-image {
+          transform: scale(1.05);
+        }
+
+        .post-info {
+          padding: 18px;
+
+          .post-title {
+            margin: 0 0 12px;
+            font-size: 18px;
+            font-weight: 600;
+            line-height: 1.4;
+            color: #2c3e50;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            transition: color 0.2s;
+          }
+
+          .post-summary {
+            margin: 0 0 14px;
+            font-size: 15px;
+            color: #5e6d82;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+
+          .post-footer {
             display: flex;
-            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #7a8ba9;
 
-            span {
+            .post-stats {
               display: flex;
-              align-items: center;
-              gap: 4px;
+              gap: 16px;
+
+              .stat-item {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+
+                .el-icon {
+                  font-size: 16px;
+                  color: #99a9bf;
+                }
+              }
             }
           }
         }
       }
     }
   }
-}
 
-.categories-container {
-  height: calc(100vh - 180px);
-  margin: -2rem;
-  padding: 2rem;
-}
-
-.full-height {
-  height: 100%;
-}
-
-.left-sidebar {
-  height: 100%;
-  .category-overview {
-    height: 100%;
+  .welcome-card {
     display: flex;
     flex-direction: column;
 
-    :deep(.el-card__body) {
+    :deep(.el-card__header) {
+      h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0;
+        font-size: 24px;
+
+        .el-icon {
+          color: #409eff;
+          font-size: 28px;
+        }
+      }
+    }
+
+    .welcome-content {
       flex: 1;
-      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 0;
+
+      .welcome-tip {
+        margin-top: 20px;
+        color: #7a8ba9;
+        font-size: 16px;
+        text-align: center;
+        max-width: 400px;
+        line-height: 1.6;
+      }
     }
   }
 }
 
-.main-content {
-  height: 100%;
-  .posts-list {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+@media (max-width: 1200px) {
+  .categories-wrapper {
+    max-width: 100%;
+    padding: 0 20px;
+  }
+}
 
-    :deep(.el-card__body) {
-      flex: 1;
-      overflow: auto;
-    }
+@media (max-width: 992px) {
+  .app-container {
+    padding: 20px;
+  }
+
+  .categories-wrapper {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .left-sidebar {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .right-content {
+    width: 100%;
+  }
+
+  .posts-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
   }
 }
 </style>

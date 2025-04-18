@@ -10,6 +10,9 @@ export const getCaptcha = async () => {
     withCredentials: true,
     headers: {
       'Access-Control-Expose-Headers': 'Session-Id',
+      'ngrok-skip-browser-warning': 'true',
+      'Cache-Control': 'no-cache',  // 添加这行
+      'Pragma': 'no-cache'  // 添加这行
     }
   });
   // 保存从响应头中获取的 sessionId
@@ -32,6 +35,7 @@ export const checkCaptcha = (code) => {
       code,
       sessionId: currentSessionId
     },
+
     withCredentials: true,
   });
 };

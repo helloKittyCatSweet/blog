@@ -48,7 +48,7 @@ const formModel = ref({
 const rules = {
   username: [
     { required: true, message: "请输入用户名", trigger: "blur" },
-    { min: 5, max: 10, message: "用户名必须是5-10位的字符", trigger: "blur" },
+    { min: 5, max: 20, message: "用户名必须是5-20位的字符", trigger: "blur" },
   ], // 失焦的时候检验
   password: [
     { required: true, message: "请输入密码", trigger: "blur" },

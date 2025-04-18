@@ -8,11 +8,14 @@ const baseURL = 'http://localhost:8080'
 const instance = axios.create({
   baseURL,
   timeout: 100000,
-  withCredentials: true
+  withCredentials: true,
+  // headers: {
+  //   'ngrok-skip-browser-warning': 'true',
+  // }
 })
 
 // 请求拦截器
-instance.interceptors.request.use(config => {
+instance.interceptors.request.use(async config => {
   const userStore = useUserStore()
   // 直接从user对象中取token
   const token = userStore.user?.token
@@ -33,16 +36,16 @@ instance.interceptors.response.use(response => response, error => {
     const currentPath = router.currentRoute.value.fullPath
     router.push({
       path: '/login',
-      query:{
+      query: {
         redirect: currentPath
       }
     })
   } else if (error.response?.status === 403) {
     // 处理权限不足的情况
     ElMessage({
-      message:'权限不足，请联系管理员',
+      message: '权限不足，请联系管理员',
       type: 'error',
-      offset:80
+      offset: 80
     })
     router.push('/403')
   }
