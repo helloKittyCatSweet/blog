@@ -84,6 +84,9 @@ export const addCategory = (data) =>
 // 根据标签查询文章列表
 export const findByTag = (tag) => request.get(`${postPrefix}/public/find/tag/${tag}`);
 
+// 根据标签列表查询文章列表
+export const findByTags = (tags) => request.post(`${postPrefix}/public/find/tags`,  tags );
+
 // 根据分类查询文章列表
 export const findByCategory = (category) =>
   request.get(`${postPrefix}/public/find/category/${category}`);

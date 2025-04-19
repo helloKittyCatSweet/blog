@@ -406,7 +406,7 @@ public class PostController {
      * @param userId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    // 前台展示
     @Operation(summary = "根据用户名查询文章列表")
     @GetMapping("/public/find/user/{userId}")
     @ApiResponses(value = {
@@ -495,8 +495,8 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Post>>> findByCategory(@PathVariable String category) {
-        ResponseEntity<List<Post>> response = postService.findByCategory(category);
+    public ResponseEntity<Response<List<PostDto>>> findByCategory(@PathVariable String category) {
+        ResponseEntity<List<PostDto>> response = postService.findByCategory(category);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -508,15 +508,28 @@ public class PostController {
      * @param tag
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    // 前端展示
     @Operation(summary = "根据标签查询文章列表")
     @GetMapping("/public/find/tag/{tag}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Post>>> findByTagId(@PathVariable String tag) {
-        ResponseEntity<List<Post>> response = postService.findByTag(tag);
+    public ResponseEntity<Response<List<PostDto>>> findByTag(@PathVariable String tag) {
+        ResponseEntity<List<PostDto>> response = postService.findByTag(tag);
+        return Response.createResponse(response,
+                HttpStatus.OK, "查询成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
+    }
+
+    @Operation(summary = "根据标签查询文章列表")
+    @PostMapping("/public/find/tags")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    public ResponseEntity<Response<List<PostDto>>> findByTags(@RequestBody List<String> tags){
+        ResponseEntity<List<PostDto>> response = postService.findByTags(tags);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");

@@ -381,6 +381,25 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
             <version>2.18.3</version>
         </dependency>
+
+        <!-- Apache Commons-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+        </dependency>
+
+        <!-- Elasticsearch + Logstash + Kibana 日志监控-->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>7.4</version>
+        </dependency>
+
+        <!-- Spring Boot Admin -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
     </dependencies>
 
     <build>

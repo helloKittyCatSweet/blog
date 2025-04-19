@@ -1,6 +1,7 @@
-server:
-  port: 8080
 spring:
+  application:
+    name: FreeShare - Your Dream Platform
+
   # datasource配置
   datasource:
     name: blog
@@ -153,14 +154,28 @@ spring:
 
   elasticsearch:
     host: localhost
-    port: 9201
+    port: 9201    # 修改为 Docker 中 ES 的默认端口
+    uris: http://localhost:9201  # 添加完整的URI配置
 
+  # 添加 Logstash 配置
+  logstash:
+    host: localhost
+    port: 5000
+
+# 修改日志配置，支持 ELK
 logging:
   file:
     name: logs/blog.log
   level:
     root: INFO
     com.kitty.blog: DEBUG
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 7
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
 
 #mybatis:
 #  mapper-locations: classpath:mapper/*.xml

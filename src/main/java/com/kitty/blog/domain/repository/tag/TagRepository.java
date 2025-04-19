@@ -54,6 +54,9 @@ public interface TagRepository extends BaseRepository<Tag, Integer>,
     @Query(value = "SELECT t FROM Tag t WHERE t.name =?1")
     Optional<Tag> findByName(String name);
 
+    // 根据标签名称集合查询标签
+    Optional<List<Tag>> findByNameIn(List<String> tagNames);
+
     /**
      * 通过文章ID查找标签列表
      * @param postId 文章ID

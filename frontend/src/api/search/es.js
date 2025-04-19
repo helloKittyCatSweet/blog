@@ -6,5 +6,13 @@ export const searchPosts = (keyword, page = 0, size = 10) =>
   request.get(`${searchPrefix}/public/posts`, { params: { keyword, page, size } })
 
 // 搜索建议
-export const searchSuggestions = (keyword) =>
-  request.get(`${searchPrefix}/public/suggest`, { params: { keyword } })
+export const searchPostSuggestions = (keyword) =>
+  request.get(`${searchPrefix}/public/suggest/post`, { params: { keyword } })
+
+// 分类搜索建议
+export const searchCategorySuggestions = (keyword) =>
+  request.get(`${searchPrefix}/public/suggest/category`, { params: { keyword } })
+
+// 标签搜索建议
+export const searchTagSuggestions = (keyword) =>
+  request.get(`${searchPrefix}/public/suggest/tag`, { params: { keyword } })

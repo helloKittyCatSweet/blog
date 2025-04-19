@@ -1,18 +1,27 @@
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, computed } from "vue";
 import { ElMessage } from "element-plus";
-import { Search, View, Star } from "@element-plus/icons-vue";
+import { Search, CircleClose, Star } from "@element-plus/icons-vue";
 import { findAll, findByName } from "@/api/common/tag";
-import { findByTag } from "@/api/post/post";
-import { formatDate } from "@/utils/date";
+import PostListItem from "@/components/blog/post/PostListItem.vue";
+import { searchTagSuggestions, searchPosts } from "@/api/search/es.js";
+import { findByTags } from "@/api/post/post";
 
-const router = useRouter();
 const searchQuery = ref("");
 const tags = ref([]);
-const selectedTag = ref(null);
+const selectedTags = ref([]);
 const tagPosts = ref([]);
 const sortBy = ref("newest");
+
+// 添加计算属性用于过滤标签
+const filteredTags = computed(() => {
+  if (!searchQuery.value) {
+    return tags.value;
+  }
+  return tags.value.filter((tag) =>
+    tag.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
 
 // 加载所有标签
 const loadTags = async () => {
@@ -20,6 +29,11 @@ const loadTags = async () => {
     const response = await findAll();
     if (response.data?.status === 200) {
       tags.value = response.data.data;
+      // 如果有标签且当前没有选中的标签，自动选中第一个
+      if (tags.value.length > 0 && selectedTags.value.length === 0) {
+        selectedTags.value = [tags.value[0].tagId];
+        await loadTagPosts();
+      }
     }
   } catch (error) {
     ElMessage.error("加载标签失败");
@@ -27,21 +41,82 @@ const loadTags = async () => {
 };
 
 // 处理标签点击
-const handleTagClick = async (tag) => {
-  selectedTag.value = tag;
-  await loadTagPosts(tag.name);
+const handleTagClick = (tag) => {
+  console.log("Tag clicked:", tag);
+  // Use tag.tagId instead of tag.id
+  const index = selectedTags.value.indexOf(tag.tagId);
+  if (index > -1) {
+    // If already selected, remove it
+    selectedTags.value.splice(index, 1);
+  } else {
+    // If not selected, add it
+    selectedTags.value.push(tag.tagId);
+  }
+  console.log("Selected tags:", selectedTags.value);
+  loadTagPosts();
+};
+
+const selectedTagObjects = computed(() => {
+  // Use tag.tagId instead of tag.id
+  return tags.value.filter((tag) => selectedTags.value.includes(tag.tagId));
+});
+
+const transformPostData = (rawData) => {
+  if (!Array.isArray(rawData)) {
+    console.warn("rawData is not an array, returning empty array");
+    return [];
+  }
+  return rawData.map((item) => ({
+    id: item.post.postId,
+    title: item.post.title,
+    content: item.post.content,
+    cover: item.post.coverImage,
+    excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
+    category: item.category?.categoryId
+      ? {
+          categoryId: item.category.categoryId,
+          name: item.category.name,
+        }
+      : null,
+    tags: item.tags?.map((tag) => tag.name) || [],
+    views: item.post.views || 0,
+    likes: item.post.likes || 0,
+    comments: item.comments?.length || 0,
+    createTime: item.post.createdAt,
+    author: item.author,
+    userId: item.post.userId,
+
+    highlightTitle: item.post.title,
+    highlightContent: item.post.content,
+  }));
 };
 
 // 加载标签下的文章
-const loadTagPosts = async (tagName) => {
+const loadTagPosts = async () => {
+  if (selectedTags.value.length === 0) {
+    tagPosts.value = [];
+    return;
+  }
+
   try {
-    const response = await findByTag(tagName);
+    // Changed: Use findByTags API with tag names array
+    const tagNames = selectedTagObjects.value.map((tag) => tag.name);
+    const response = await findByTags(tagNames);
+
     if (response.data?.status === 200) {
-      tagPosts.value = response.data.data;
+      tagPosts.value = transformPostData(response.data.data);
+      console.log("loadTagPosts: Tag posts loaded:", tagPosts.value);
     }
   } catch (error) {
+    console.error("loadTagPosts error:", error);
     ElMessage.error("加载文章失败");
   }
+};
+
+// 添加移除标签的处理函数
+const removeTag = (tagId) => {
+  selectedTags.value = selectedTags.value.filter((id) => id !== tagId);
+  loadTagPosts();
 };
 
 // 获取标签类型
@@ -53,17 +128,41 @@ const getTagType = (weight) => {
 };
 
 // 搜索处理
-const handleSearch = async () => {
-  if (!searchQuery.value) {
+const handleSearch = async (selectedItem) => {
+  // 统一获取查询内容（支持从建议项选择或直接输入）
+  const query =
+    typeof selectedItem === "string"
+      ? selectedItem
+      : selectedItem?.value || searchQuery.value;
+
+  if (!query) {
     await loadTags();
     return;
   }
+
   try {
-    const response = await findByName(searchQuery.value);
-    if (response.data?.status === 200) {
-      tags.value = [response.data.data];
+    // 检查是否是标签
+    const isTag = tags.value.some((tag) => tag.name === query);
+
+    if (isTag) {
+      // 标签搜索逻辑
+      const matchedTag = tags.value.find((tag) => tag.name === query);
+      if (matchedTag && !selectedTags.value.includes(matchedTag.tagId)) {
+        selectedTags.value.push(matchedTag.tagId);
+        await loadTagPosts();
+      }
+    } else {
+      // 非标签内容，执行全文搜索
+      const response = await searchPosts(query, 0, 10);
+      console.log("response:", response);
+      if (response.data?.status === 200) {
+        tagPosts.value = transformPostData(response.data.data.content);
+        console.log("Tag posts loaded:", tagPosts.value);
+        selectedTags.value = []; // 清空标签选择状态
+      }
     }
   } catch (error) {
+    console.error("搜索失败:", error);
     ElMessage.error("搜索失败");
   }
 };
@@ -71,267 +170,444 @@ const handleSearch = async () => {
 onMounted(() => {
   loadTags();
 });
+
+// 添加标签搜索建议函数
+const querySearchAsync = async (queryString, cb) => {
+  if (queryString) {
+    try {
+      const response = await searchTagSuggestions(queryString); // 专门获取标签建议
+      if (response.data?.status === 200) {
+        const suggestions = response.data.data.map((tagName) => ({
+          value: tagName,
+          label: tagName,
+        }));
+        cb(suggestions);
+      }
+    } catch (error) {
+      console.error("获取标签建议失败:", error);
+      ElMessage.error("获取搜索建议失败");
+      cb([]);
+    }
+  } else {
+    cb([]);
+  }
+};
+/**
+ * 清空标签
+ */
+const clearSelectedTags = () => {
+  selectedTags.value = [];
+  loadTagPosts();
+};
 </script>
 
 <template>
-  <page-container class="tag-container">
-    <el-row :gutter="20" class="full-height">
-      <!-- 标签云卡片 -->
-      <el-col :span="6" class="left-sidebar">
-        <el-card shadow="never" class="tags-cloud">
+  <!-- 模板部分保持不变 -->
+  <div class="app-container">
+    <div class="tags-wrapper">
+      <!-- 左侧标签云 -->
+      <div class="left-sidebar">
+        <el-card shadow="hover" class="tags-card">
           <template #header>
             <div class="card-header">
-              <h3>标签云</h3>
-              <el-input
-                v-model="searchQuery"
-                placeholder="搜索标签"
-                class="search-input"
-                clearable
-                @input="handleSearch"
-              >
-                <template #prefix>
-                  <el-icon><Search /></el-icon>
-                </template>
-              </el-input>
+              <h3>
+                <el-icon><Collection /></el-icon> 标签云
+              </h3>
+              <div style="display: flex; gap: 10px">
+                <el-autocomplete
+                  v-model="searchQuery"
+                  :fetch-suggestions="querySearchAsync"
+                  placeholder="搜索标签..."
+                  class="search-input"
+                  clearable
+                  @select="handleSearch"
+                  @keyup.enter="handleSearch"
+                  size="large"
+                >
+                  <template #prefix>
+                    <el-icon><Search /></el-icon>
+                  </template>
+                </el-autocomplete>
+                <el-button @click="handleSearch" type="primary" size="large">
+                  搜索
+                </el-button>
+              </div>
             </div>
           </template>
 
-          <div class="tags-wrapper">
+          <div class="tags-container">
             <el-empty v-if="tags.length === 0" description="暂无标签" />
-            <template v-else>
-              <el-tag
-                v-for="tag in tags"
-                :key="tag.id"
-                :type="getTagType(tag.weight)"
-                :effect="selectedTag?.id === tag.id ? 'dark' : 'light'"
+            <div class="tags-group">
+              <div
+                v-for="tag in filteredTags"
+                :key="tag.tagId"
                 class="tag-item"
                 @click="handleTagClick(tag)"
               >
-                {{ tag.name }}
-                <template #suffix>
-                  <span class="tag-count">({{ tag.postCount || 0 }})</span>
-                </template>
-              </el-tag>
-            </template>
+                <el-tag
+                  :type="getTagType(tag.weight)"
+                  :effect="selectedTags.includes(tag.tagId) ? 'dark' : 'light'"
+                  size="large"
+                >
+                  {{ tag.name }}
+                  <span class="tag-count">{{ tag.useCount || 0 }}</span>
+                </el-tag>
+              </div>
+            </div>
           </div>
         </el-card>
-      </el-col>
+      </div>
 
-      <!-- 标签文章列表 -->
-      <el-col :span="18" class="main-content">
-        <el-card v-if="selectedTag" shadow="never" class="posts-list">
+      <!-- 右侧文章列表 -->
+      <div class="right-content">
+        <el-card shadow="hover" class="posts-card" v-if="selectedTags.length > 0 || tagPosts.length > 0">
           <template #header>
-            <div class="card-header">
-              <h3>{{ selectedTag.name }} 的文章</h3>
-              <div class="header-actions">
-                <el-select v-model="sortBy" placeholder="排序方式" size="small">
-                  <el-option label="最新发布" value="newest" />
-                  <el-option label="最多浏览" value="views" />
-                  <el-option label="最多点赞" value="likes" />
-                </el-select>
+            <div class="posts-header">
+              <div class="tags-header">
+                <h2 class="tags-title">
+                  <el-tag
+                    v-for="tag in selectedTagObjects"
+                    :key="tag.tagId"
+                    :type="getTagType(tag.weight)"
+                    size="large"
+                    closable
+                    @close="removeTag(tag.tagId)"
+                  >
+                    {{ tag.name }}
+                  </el-tag>
+                </h2>
+                <span class="posts-total">{{ tagPosts.length }} 篇文章</span>
+              </div>
+              <div class="header-controls">
+                <div class="sort-options">
+                  <el-select
+                    v-model="sortBy"
+                    placeholder="排序方式"
+                    size="large"
+                    style="width: 140px"
+                  >
+                    <el-option label="最新发布" value="newest" />
+                    <el-option label="最多浏览" value="views" />
+                    <el-option label="最多点赞" value="likes" />
+                  </el-select>
+                </div>
+                <el-button
+                  type="danger"
+                  @click="clearSelectedTags"
+                  :icon="CircleClose"
+                  plain
+                  size="large"
+                >
+                  清空标签
+                </el-button>
               </div>
             </div>
           </template>
 
-          <el-empty v-if="tagPosts.length === 0" description="暂无文章" />
+          <PostListItem :posts="tagPosts" :show-keyword="false" />
+        </el-card>
 
-          <div v-else class="posts-grid">
-            <el-card
-              v-for="post in tagPosts"
-              :key="post.id"
-              class="post-card"
-              shadow="hover"
-              @click="router.push(`/post/${post.id}`)"
-            >
-              <div class="post-cover" v-if="post.cover">
-                <el-image :src="post.cover" fit="cover" />
-              </div>
-              <div class="post-info">
-                <h4 class="post-title">{{ post.title }}</h4>
-                <p class="post-summary">{{ post.summary }}</p>
-                <div class="post-meta">
-                  <span class="post-date">{{ formatDate(post.createdAt) }}</span>
-                  <div class="post-stats">
-                    <span title="浏览量">
-                      <el-icon><View /></el-icon>
-                      {{ post.views }}
-                    </span>
-                    <span title="点赞数">
-                      <el-icon><Star /></el-icon>
-                      {{ post.likes }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </el-card>
+        <el-card shadow="hover" class="welcome-card" v-else>
+          <template #header>
+            <h2>
+              <el-icon><Collection /></el-icon> 欢迎使用标签浏览
+            </h2>
+          </template>
+          <div class="welcome-content">
+            <el-empty description="请从左侧选择标签" :image-size="150">
+              <p class="welcome-tip">点击标签查看相关文章，可多选标签筛选文章</p>
+            </el-empty>
           </div>
         </el-card>
-        <el-empty v-else description="请选择一个标签" />
-      </el-col>
-    </el-row>
-  </page-container>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style lang="scss" scoped>
-.tags-cloud {
-  margin-bottom: 20px;
+.app-container {
+  display: flex;
+  justify-content: center;
+  padding: 30px;
+  background-color: #f8fafc;
+  min-height: calc(100vh - 60px);
+}
 
-  .card-header {
+.tags-wrapper {
+  width: 100%;
+  width: 1200px;
+  display: flex;
+  gap: 24px;
+}
+
+.left-sidebar {
+  width: 320px;
+  min-width: 320px;
+
+  .tags-card {
+    height: 100%;
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
 
-    h3 {
-      margin: 0;
-      font-size: 18px;
+    :deep(.el-card__header) {
+      background: linear-gradient(135deg, #f6f8fa, #e9ecef);
+      border-bottom: 1px solid #e0e3e8;
+      padding: 20px;
+      border-radius: 12px 12px 0 0;
+      flex-shrink: 0;
     }
 
-    .search-input {
-      width: 250px;
+    :deep(.el-card__body) {
+      flex: 1;
+      padding: 0;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
     }
-  }
 
-  .tags-wrapper {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    padding: 20px 0;
+    .card-header {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+
+      h3 {
+        margin: 0;
+        font-size: 20px;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 600;
+
+        .el-icon {
+          color: #409eff;
+          font-size: 24px;
+        }
+      }
+
+      .search-input {
+        width: 100%;
+
+        :deep(.el-input__wrapper) {
+          border-radius: 20px;
+          padding: 0 15px;
+          height: 40px;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+      }
+    }
+
+    .tags-container {
+      padding: 16px;
+      flex: 1;
+      overflow: auto;
+
+      .el-empty {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+    }
+
+    .tags-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-content: flex-start;
+    }
 
     .tag-item {
       cursor: pointer;
-      font-size: 14px;
-      padding: 8px 16px;
-
-      .tag-count {
-        margin-left: 4px;
-        font-size: 12px;
-        opacity: 0.8;
-      }
+      transition: all 0.2s ease;
 
       &:hover {
         transform: translateY(-2px);
-        transition: transform 0.2s ease;
+      }
+
+      .el-tag {
+        transition: all 0.3s ease;
+        padding: 8px 16px;
+        font-size: 14px;
+        border-radius: 16px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+
+        &:hover {
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .tag-count {
+          margin-left: 4px;
+          font-size: 12px;
+          opacity: 0.8;
+          background-color: rgba(255, 255, 255, 0.3);
+          padding: 2px 6px;
+          border-radius: 8px;
+        }
       }
     }
   }
 }
 
-.posts-list {
-  .card-header {
+.right-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+
+  .posts-card,
+  .welcome-card {
+    height: 100%;
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
 
-    h3 {
-      margin: 0;
-      font-size: 18px;
+    :deep(.el-card__header) {
+      background: linear-gradient(135deg, #f6f8fa, #e9ecef);
+      border-bottom: 1px solid #e0e3e8;
+      padding: 20px;
+      border-radius: 12px 12px 0 0;
+      flex-shrink: 0;
     }
-  }
 
-  .posts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    padding: 20px 0;
+    :deep(.el-card__body) {
+      flex: 1;
+      overflow: auto;
+      padding: 24px;
+    }
 
-    .post-card {
-      cursor: pointer;
-      transition: all 0.3s ease;
+    .posts-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
 
-      &:hover {
-        transform: translateY(-5px);
-      }
+      .tags-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
 
-      .post-cover {
-        height: 160px;
-        overflow: hidden;
-
-        .el-image {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-      }
-
-      .post-info {
-        padding: 12px;
-
-        .post-title {
-          margin: 0 0 8px;
-          font-size: 16px;
-          font-weight: 500;
-          line-height: 1.4;
-        }
-
-        .post-summary {
-          margin: 0 0 12px;
-          font-size: 14px;
-          color: var(--el-text-color-secondary);
-          line-height: 1.5;
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-
-        .post-meta {
+        .tags-title {
+          margin: 0;
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          font-size: 12px;
-          color: var(--el-text-color-secondary);
+          gap: 8px;
+          flex-wrap: wrap;
 
-          .post-stats {
-            display: flex;
-            gap: 12px;
+          .el-tag {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-radius: 16px;
+            padding: 8px 16px;
 
-            span {
-              display: flex;
-              align-items: center;
-              gap: 4px;
+            &:hover {
+              opacity: 0.9;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
             }
+          }
+        }
+
+        .posts-total {
+          font-size: 16px;
+          color: #7a8ba9;
+          font-weight: 500;
+          flex-shrink: 0;
+        }
+      }
+
+      .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .sort-options {
+        .el-select {
+          :deep(.el-input__wrapper) {
+            border-radius: 20px;
+            height: 40px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
           }
         }
       }
     }
   }
-}
 
-.tags-container {
-  height: calc(100vh - 180px);
-  margin: -2rem;
-  padding: 2rem;
-}
+  .welcome-card {
+    :deep(.el-card__header) {
+      h2 {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0;
+        font-size: 24px;
 
-.full-height {
-  height: 100%;
-}
+        .el-icon {
+          color: #409eff;
+          font-size: 28px;
+        }
+      }
+    }
 
-.left-sidebar {
-  height: 100%;
-  .tags-cloud {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-
-    :deep(.el-card__body) {
+    .welcome-content {
       flex: 1;
-      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 0;
+
+      .el-empty {
+        :deep(.el-empty__description) {
+          font-size: 16px;
+          color: #5e6d82;
+        }
+      }
+
+      .welcome-tip {
+        margin-top: 20px;
+        color: #7a8ba9;
+        font-size: 16px;
+        text-align: center;
+        max-width: 400px;
+        line-height: 1.6;
+      }
     }
   }
 }
 
-.main-content {
-  height: 100%;
-  .posts-list {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
+@media (max-width: 1200px) {
+  .tags-wrapper {
+    max-width: 100%;
+    padding: 0 20px;
+  }
+}
 
-    :deep(.el-card__body) {
-      flex: 1;
-      overflow: auto;
-    }
+@media (max-width: 992px) {
+  .app-container {
+    padding: 20px;
+  }
+
+  .tags-wrapper {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .left-sidebar {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .right-content {
+    width: 100%;
   }
 }
 </style>

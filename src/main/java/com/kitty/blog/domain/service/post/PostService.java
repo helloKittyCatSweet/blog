@@ -522,30 +522,56 @@ public class PostService {
 
     @Transactional
     @Cacheable(key = "#postId")
-    public ResponseEntity<List<Post>> findByCategory(String category) {
+    public ResponseEntity<List<PostDto>> findByCategory(String category) {
         Category targetCategory = categoryRepository.findByName(category).orElse(new Category());
         if (!categoryRepository.existsById(targetCategory.getCategoryId())) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         } else {
-            return new ResponseEntity<>(
-                    postRepository.findByCategoryId(targetCategory.getCategoryId())
-                            .orElse(new ArrayList<>()),
-                    HttpStatus.OK);
+            List<Post> posts =
+                    postRepository.findByCategoryId(targetCategory.getCategoryId()).orElse(new ArrayList<>());
+            return new ResponseEntity<>(posts.stream().map(this::convertToPostDto).toList(), HttpStatus.OK);
         }
     }
 
     @Transactional
     @Cacheable(key = "#postId")
-    public ResponseEntity<List<Post>> findByTag(String tag) {
+    public ResponseEntity<List<PostDto>> findByTag(String tag) {
         Tag targetTag = tagRepository.findByName(tag).orElse(new Tag());
         if (!tagRepository.existsById(targetTag.getTagId())) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         } else {
-            return new ResponseEntity<>(
-                    postRepository.findByTagId(targetTag.getTagId()).orElse(new ArrayList<>()),
-                    HttpStatus.OK);
+            List<Post> posts = postRepository.findByTagId(targetTag.getTagId()).orElse(new ArrayList<>());
+            return new ResponseEntity<>(posts.stream().map(this::convertToPostDto).toList(), HttpStatus.OK);
         }
     }
+
+    @Transactional
+    @Cacheable(key = "#tags")
+    public ResponseEntity<List<PostDto>> findByTags(List<String> tags) {
+        // 查询所有标签
+        List<Tag> targetTags = tagRepository.findByNameIn(tags).orElse(new ArrayList<>());
+
+        // 如果没有找到任何标签，直接返回空列表
+        if (targetTags.isEmpty()) {
+            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+        }
+
+        // 提取所有标签的 ID
+        Set<Integer> tagIds = targetTags.stream()
+                .map(Tag::getTagId)
+                .collect(Collectors.toSet());
+
+        // 根据标签 ID 查询文章
+        List<Post> posts = postRepository.findByTagsIn(tagIds).orElse(new ArrayList<>());
+
+        // 转换为 DTO 并返回
+        List<PostDto> postDtos = posts.stream()
+                .map(this::convertToPostDto)
+                .toList();
+
+        return new ResponseEntity<>(postDtos, HttpStatus.OK);
+    }
+
 
     @Transactional
     @Cacheable(key = "#postId")

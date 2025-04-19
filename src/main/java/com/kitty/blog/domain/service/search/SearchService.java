@@ -1,16 +1,21 @@
 package com.kitty.blog.domain.service.search;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.Highlight;
 import co.elastic.clients.elasticsearch.core.search.HighlightField;
 import com.kitty.blog.application.dto.post.PostDto;
 import com.kitty.blog.domain.model.Post;
+import com.kitty.blog.domain.model.category.Category;
+import com.kitty.blog.domain.model.search.CategoryIndex;
 import com.kitty.blog.domain.model.search.PostIndex;
+import com.kitty.blog.domain.model.search.TagIndex;
 import com.kitty.blog.domain.model.tag.Tag;
 import com.kitty.blog.domain.repository.search.PostIndexRepository;
 import com.kitty.blog.domain.service.post.PostService;
@@ -23,6 +28,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -47,6 +53,14 @@ public class SearchService {
             if (!indexExists) {
                 client.indices().create(c -> c.index("posts"));
             }
+            indexExists = client.indices().exists(e -> e.index("categories")).value();
+            if (!indexExists) {
+                client.indices().create(c -> c.index("categories"));
+            }
+            indexExists = client.indices().exists(e -> e.index("tags")).value();
+            if (!indexExists) {
+                client.indices().create(c -> c.index("tags"));
+            }
             log.info("Elasticsearch index check completed");
         } catch (Exception e) {
             log.error("Failed to initialize Elasticsearch index", e);
@@ -68,12 +82,43 @@ public class SearchService {
         }
     }
 
+    public void syncCategoryToEs(Category category) {
+        try {
+            CategoryIndex categoryIndex = CategoryIndex.builder()
+                    .id(category.getCategoryId()).name(category.getName()).build();
+            client.index(i -> i
+                    .index("categories")
+                    .id(categoryIndex.getId().toString())
+                    .document(categoryIndex)
+                    .refresh(Refresh.True) // 添加立即刷新选项
+            );
+            log.info("Synced category to ES: {}", category);
+        } catch (Exception e) {
+            log.error("Failed to sync category to ES: {}", category, e);
+        }
+    }
+
+    public void syncTagToEs(Tag tag) {
+        try {
+            TagIndex tagIndex = TagIndex.builder()
+                    .id(tag.getTagId()).name(tag.getName()).build();
+            client.index(i -> i
+                    .index("tags")
+                    .id(tagIndex.getId().toString())
+                    .document(tagIndex)
+                    .refresh(Refresh.True) // 添加立即刷新选项
+            );
+            log.info("Synced tag to ES: {}", tag);
+        } catch (Exception e) {
+            log.error("Failed to sync tag to ES: {}", tag, e);
+        }
+    }
+
     public void deletePostFromEs(Integer postId) {
         try {
             client.delete(d -> d
                     .index("posts")
-                    .id(postId.toString())
-            );
+                    .id(postId.toString()));
             log.info("Deleted post from ES: {}", postId);
         } catch (Exception e) {
             log.error("Failed to delete post from ES: {}", postId, e);
@@ -86,83 +131,114 @@ public class SearchService {
 
     public Page<PostDto> searchPosts(String keyword, int page, int size) {
         try {
+            // 解析特殊语法
+            String tags;
+            String category;
+
+            // # -> tags
+            if (keyword.contains("#")) {
+                String[] parts = keyword.split("#");
+                keyword = parts[0].trim();
+                tags = parts.length > 1 ? parts[1].trim() : null;
+            } else {
+                tags = null;
+            }
+
+            // @ -> category
+            if (keyword.contains("@")) {
+                String[] parts = keyword.split("@");
+                keyword = parts[0].trim();
+                category = parts.length > 1 ? parts[1].trim() : null;
+            } else {
+                category = null;
+            }
+
+            String finalKeyword = keyword;
+
+            // create base queries
+            List<Query> queries = new ArrayList<>();
+
             // 标题搜索：使用模糊匹配和通配符
-            Query titleQuery = Query.of(q -> q
+            queries.add(Query.of(q -> q
                     .bool(b -> b
                             .should(s -> s
                                     .match(m -> m
                                             .field("title")
-                                            .query(keyword)
-                                            .boost(3.0f)
-                                    ))
+                                            .query(finalKeyword)
+                                            .boost(3.0f)))
                             .should(s -> s
                                     .wildcard(w -> w
                                             .field("title")
-                                            .value("*" + keyword + "*")
-                                            .boost(2.0f)
-                                    ))
+                                            .value("*" + finalKeyword + "*")
+                                            .boost(2.0f)))
                             .should(s -> s
                                     .fuzzy(f -> f
                                             .field("title")
-                                            .value(keyword)
-                                            .boost(1.5f)
-                                    ))
-                    )
-            );
+                                            .value(finalKeyword)
+                                            .boost(1.5f))))));
+
+            // Tag query(when tags specified)
+            if (tags != null && !tags.isEmpty()) {
+                queries.add(Query.of(q -> q
+                        .terms(t -> t
+                                .field("tags")
+                                .terms(ts -> ts.value(
+                                                Arrays.stream(tags.split(","))
+                                                        // 使用FieldValue.of创建值
+                                                        .map(tsv -> FieldValue.of(tsv.trim()))
+                                                        .collect(Collectors.toList())
+                                        )
+                                )
+                                .boost(5.0f)
+                        )));
+            } else {
+                queries.add(Query.of(q -> q
+                        .match(m -> m
+                                .field("tags")
+                                .query(finalKeyword))));
+            }
+
+            // Category query(when category specified)
+            if (category != null && !category.isEmpty()) {
+                queries.add(Query.of(q -> q
+                        .match(m -> m
+                                .field("category")
+                                .query(category)
+                                .boost(4.0f))));
+            } else {
+                queries.add(Query.of(q -> q
+                        .match(m -> m
+                                .field("category")
+                                .query(finalKeyword))));
+            }
 
             // 摘要搜索：使用模糊匹配
-            Query summaryQuery = Query.of(q -> q
+            queries.add(Query.of(q -> q
                     .bool(b -> b
                             .should(s -> s
                                     .match(m -> m
                                             .field("summary")
-                                            .query(keyword)
-                                            .boost(2.0f)
-                                    ))
+                                            .query(finalKeyword)
+                                            .boost(2.0f)))
                             .should(s -> s
                                     .fuzzy(f -> f
                                             .field("summary")
-                                            .value(keyword)
-                                    ))
-                    )
-            );
+                                            .value(finalKeyword))))));
 
             // 内容搜索：使用模糊匹配
-            Query contentQuery = Query.of(q -> q
+            queries.add(Query.of(q -> q
                     .bool(b -> b
                             .should(s -> s
                                     .match(m -> m
                                             .field("content")
-                                            .query(keyword)
-                                    ))
+                                            .query(finalKeyword)))
                             .should(s -> s
                                     .fuzzy(f -> f
                                             .field("content")
-                                            .value(keyword)
-                                    ))
-                    )
-            );
-
-            Query tagsQuery = Query.of(q -> q
-                    .match(m -> m
-                            .field("tags")
-                            .query(keyword)
-                    )
-            );
-
-            Query categoryQuery = Query.of(q -> q
-                    .match(m -> m
-                            .field("category")
-                            .query(keyword)
-                    )
-            );
+                                            .value(finalKeyword))))));
 
             BoolQuery boolQuery = BoolQuery.of(b -> b
-                    .should(titleQuery)
-                    .should(summaryQuery)
-                    .should(contentQuery)
-                    .should(tagsQuery)
-                    .should(categoryQuery)
+                    .should(queries)
                     .minimumShouldMatch("1") // 至少匹配1个条件
             );
 
@@ -172,39 +248,32 @@ public class SearchService {
                             .highlight(h -> h
                                     .fields("title", HighlightField.of(f -> f
                                             .preTags("<em class=\"highlight\">")
-                                            .postTags("</em>")
-                                    ))
+                                            .postTags("</em>")))
                                     .fields("content", HighlightField.of(f -> f
                                             .preTags("<em class=\"highlight\">")
                                             .postTags("</em>")
                                             .numberOfFragments(3)
-                                            .fragmentSize(150)
-                                    ))
+                                            .fragmentSize(150)))
                                     .fields("summary", HighlightField.of(f -> f
                                             .preTags("<em class=\"highlight\">")
-                                            .postTags("</em>")
-                                    ))
+                                            .postTags("</em>")))
                                     .fields("tags", HighlightField.of(f -> f
                                             .preTags("<em class=\"highlight\">")
-                                            .postTags("</em>")
-                                    ))
+                                            .postTags("</em>")))
                                     .fields("category", HighlightField.of(f -> f
                                             .preTags("<em class=\"highlight\">")
-                                            .postTags("</em>")
-                                    ))
-                            )
+                                            .postTags("</em>"))))
                             .from(page * size)
                             .size(size),
-                    PostIndex.class
-            );
+                    PostIndex.class);
 
-            List<PostDto> postDtos =  new ArrayList<>();
+            List<PostDto> postDtos = new ArrayList<>();
             for (Hit<PostIndex> hit : response.hits().hits()) {
                 PostIndex post = hit.source();
                 if (post != null) {
                     // 获取完整的postDto
                     PostDto postDto = getPostService().findById(post.getId()).getBody();
-                    if (postDto != null){
+                    if (postDto != null) {
                         // 处理高亮
                         Map<String, List<String>> highlights = hit.highlight();
                         if (highlights != null) {
@@ -212,7 +281,8 @@ public class SearchService {
                                 post.setTitle(highlights.get("title").get(0));
                             }
                             if (highlights.containsKey("content")) {
-                                post.setContent(String.join("...", highlights.get("content")));
+                                post.setContent(String.join("...",
+                                        highlights.get("content")));
                             }
                             if (highlights.containsKey("summary")) {
                                 post.setSummary(highlights.get("summary").get(0));
@@ -233,48 +303,110 @@ public class SearchService {
             return new PageImpl<>(
                     postDtos,
                     PageRequest.of(page, size),
-                    response.hits().total().value()
-            );
+                    response.hits().total().value());
         } catch (Exception e) {
             log.error("Search posts error: {}", e.getMessage());
             return Page.empty();
         }
     }
 
-    public List<String> suggestSearch(String keyword) {
+    public List<String> suggestPostSearch(String keyword) {
         try {
             // 构建多字段匹配查询
             Query titlePrefixQuery = Query.of(q -> q
                     .prefix(p -> p
                             .field("title")
                             .value(keyword)
-                            .boost(2.0f)
-                    )
-            );
+                            .boost(2.0f)));
 
             Query titleWildcardQuery = Query.of(q -> q
                     .wildcard(w -> w
                             .field("title")
-                            .value("*" + keyword + "*")
-                    )
-            );
+                            .value("*" + keyword + "*")));
 
             BoolQuery boolQuery = BoolQuery.of(b -> b
                     .should(titlePrefixQuery)
-                    .should(titleWildcardQuery)
-            );
+                    .should(titleWildcardQuery));
 
             SearchResponse<PostIndex> response = client.search(s -> s
                             .index("posts")
                             .query(q -> q.bool(boolQuery))
                             .size(10),
-                    PostIndex.class
-            );
+                    PostIndex.class);
 
             return response.hits().hits().stream()
                     .map(Hit::source)
                     .filter(Objects::nonNull)
                     .map(PostIndex::getTitle)
+                    .distinct()
+                    .toList();
+        } catch (Exception e) {
+            log.error("Suggest search error: {}", e.getMessage());
+            return Collections.emptyList();
+        }
+    }
+
+    public List<String> suggestCategorySearch(String keyword) {
+        try {
+            Query categoryPrefixQuery = Query.of(q -> q
+                    .prefix(p -> p
+                            .field("name")
+                            .value(keyword)
+                            .boost(2.0f)));
+
+            Query categoryWildcardQuery = Query.of(q -> q
+                    .wildcard(w -> w
+                            .field("name")
+                            .value("*" + keyword + "*")));
+
+            BoolQuery boolQuery = BoolQuery.of(b -> b
+                    .should(categoryPrefixQuery)
+                    .should(categoryWildcardQuery));
+
+            SearchResponse<CategoryIndex> response = client.search(s -> s
+                            .index("categories")
+                            .query(q -> q.bool(boolQuery))
+                            .size(10),
+                    CategoryIndex.class);
+            return response.hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(Objects::nonNull)
+                    .map(CategoryIndex::getName)
+                    .distinct()
+                    .toList();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public List<String> suggestTagSearch(String keyword) {
+        try {
+            Query tagPrefixQuery = Query.of(q -> q
+                    .prefix(p -> p
+                            .field("name")
+                            .value(keyword)
+                            .boost(2.0f)));
+
+            Query tagWildcardQuery = Query.of(q -> q
+                    .wildcard(w -> w
+                            .field("name")
+                            .value("*" + keyword + "*")));
+
+            BoolQuery boolQuery = BoolQuery.of(b -> b
+                    .should(tagPrefixQuery)
+                    .should(tagWildcardQuery));
+
+            SearchResponse<TagIndex> response = client.search(s -> s
+                            .index("tags")
+                            .query(q -> q.bool(boolQuery))
+                            .size(10),
+                    TagIndex.class);
+
+            return response.hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(Objects::nonNull)
+                    .map(TagIndex::getName)
+                    .flatMap(tags -> Arrays.stream(tags.split(",")))
                     .distinct()
                     .toList();
         } catch (Exception e) {
@@ -294,9 +426,10 @@ public class SearchService {
                 .createTime(postDto.getPost().getCreatedAt())
                 .viewCount(postDto.getPost().getViews())
                 .likeCount(postDto.getPost().getLikes())
-                .tags(postDto.getTags() != null ?
-                        postDto.getTags().stream().map(Tag::getName).collect(Collectors.joining(",")) :
-                        "")
+                .tags(postDto.getTags() != null
+                        ? postDto.getTags().stream().map(Tag::getName)
+                        .collect(Collectors.joining(","))
+                        : "")
                 .category(postDto.getCategory() != null ? postDto.getCategory().getName() : "")
                 .build();
     }
@@ -307,8 +440,7 @@ public class SearchService {
             SearchResponse<PostIndex> response = client.search(s -> s
                             .index("posts")
                             .size(1),
-                    PostIndex.class
-            );
+                    PostIndex.class);
             log.info("Index total documents: {}", response.hits().total().value());
         } catch (Exception e) {
             log.error("Failed to check index content: {}", e.getMessage());

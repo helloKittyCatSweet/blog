@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecificationExecutor<Post> {
@@ -168,6 +169,10 @@ public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecif
      */
     @Query("SELECT p FROM Post p JOIN p.postTags pt WHERE pt.id.tagId = ?1 and p.isDeleted = false")
     Optional<List<Post>> findByTagId(Integer tagId);
+
+    // 根据标签Id集合查询文章
+    @Query("SELECT p FROM Post p JOIN p.postTags pt WHERE pt.id.tagId IN ?1 and p.isDeleted = false")
+    Optional<List<Post>> findByTagsIn(Set<Integer> tags);
 
     /**
      * 根据文章ID查询最新版本号

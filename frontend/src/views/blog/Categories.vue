@@ -1,17 +1,13 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { ElMessage, ElLoading } from "element-plus";
+import { ElMessage, ElLoading, ElAutocomplete } from "element-plus";
 import { Search, View, Star, Reading } from "@element-plus/icons-vue";
-import {
-  findAll,
-  findCategoryByNameLike,
-  findDescendantsByParentName,
-} from "@/api/common/category";
-import { findByCategory } from "@/api/post/post";
-import { formatDate } from "@/utils/date";
+import { findAll, findCategoryByNameLike } from "@/api/common/category";
+import { findByCategory, findAll as findAllPosts } from "@/api/post/post";
+import { searchCategorySuggestions } from "@/api/search/es";
+import PostListItem from "@/components/blog/post/PostListItem.vue";
 
-const router = useRouter();
 const searchQuery = ref("");
 const categoriesTree = ref([]);
 const selectedCategory = ref(null);
@@ -33,6 +29,12 @@ const loadCategories = async () => {
           label: child.category.name,
         })),
       }));
+
+      // 如果有分类且当前没有选中的分类，自动选中第一个
+      if (categoriesTree.value.length > 0 && !selectedCategory.value) {
+        selectedCategory.value = categoriesTree.value[0].category;
+        await loadPosts();
+      }
     }
   } catch (error) {
     ElMessage.error("加载分类失败");
@@ -71,28 +73,13 @@ const buildCategoryTree = (categories) => {
 // 处理分类点击
 const handleCategoryClick = async (data) => {
   selectedCategory.value = data.category;
-  await loadCategoryPosts(data.category.name);
-};
-
-// 加载分类下的文章
-const loadCategoryPosts = async (categoryName) => {
-  loading.value = true;
-  try {
-    const response = await findByCategory(categoryName);
-    if (response.data?.status === 200) {
-      categoryPosts.value = response.data.data;
-    }
-  } catch (error) {
-    ElMessage.error("加载文章失败");
-  } finally {
-    loading.value = false;
-  }
+  await loadPosts();
 };
 
 // 查看文章列表
 const viewPosts = (data) => {
   selectedCategory.value = data.category;
-  loadCategoryPosts(data.category.name);
+  loadPosts();
 };
 
 // 搜索处理
@@ -114,6 +101,68 @@ const handleSearch = async () => {
   }
 };
 
+// 补全搜索建议
+const querySearchAsync = async (queryString, cb) => {
+  if (queryString) {
+    try {
+      const response = await searchCategorySuggestions(queryString);
+      if (response.data?.status === 200) {
+        const suggestions = response.data.data.map((item) => ({
+          value: item.category.name,
+          ...item,
+        }));
+        cb(suggestions);
+      }
+    } catch (error) {
+      ElMessage.error("获取搜索建议失败");
+      cb([]);
+    }
+  } else {
+    cb([]);
+  }
+};
+
+// 加载文章，根据是否有选中分类决定加载分类文章还是全部文章
+const loadPosts = async () => {
+  loading.value = true;
+  try {
+    let response;
+    if (selectedCategory.value) {
+      response = await findByCategory(selectedCategory.value.name);
+    } else {
+      response = await findAllPosts();
+    }
+    if (response.data?.status === 200) {
+      // 确保数据格式与 PostListItem 组件期望的一致
+      categoryPosts.value = response.data.data.map((item) => ({
+        id: item.post.postId,
+        title: item.post.title,
+        content: item.post.content,
+        cover: item.post.coverImage,
+        excerpt:
+          item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
+        category: item.category?.categoryId
+          ? {
+              categoryId: item.category.categoryId,
+              name: item.category.name,
+            }
+          : null,
+        tags: item.tags?.map((tag) => tag.name) || [],
+        views: item.post.views || 0,
+        likes: item.post.likes || 0,
+        comments: item.comments?.length || 0,
+        createTime: item.post.createdAt,
+        author: item.author,
+        userId: item.post.userId,
+      }));
+    }
+  } catch (error) {
+    ElMessage.error("加载文章失败");
+  } finally {
+    loading.value = false;
+  }
+};
+
 onMounted(() => {
   loadCategories();
 });
@@ -130,18 +179,19 @@ onMounted(() => {
               <h3>
                 <el-icon><Reading /></el-icon> 分类浏览
               </h3>
-              <el-input
+              <el-autocomplete
                 v-model="searchQuery"
+                :fetch-suggestions="querySearchAsync"
                 placeholder="搜索分类..."
                 class="search-input"
                 clearable
-                @input="handleSearch"
+                @select="handleSearch"
                 size="large"
               >
                 <template #prefix>
                   <el-icon><Search /></el-icon>
                 </template>
-              </el-input>
+              </el-autocomplete>
             </div>
           </template>
 
@@ -209,34 +259,8 @@ onMounted(() => {
             :image-size="120"
           />
 
-          <div v-else class="posts-grid">
-            <div
-              v-for="post in categoryPosts"
-              :key="post.id"
-              class="post-card"
-              @click="router.push(`/post/${post.id}`)"
-            >
-              <div class="post-cover" v-if="post.cover">
-                <el-image :src="post.cover" fit="cover" class="cover-image" />
-              </div>
-              <div class="post-info">
-                <h3 class="post-title">{{ post.title }}</h3>
-                <p class="post-summary">{{ post.summary }}</p>
-                <div class="post-footer">
-                  <span class="post-date">{{ formatDate(post.createdAt) }}</span>
-                  <div class="post-stats">
-                    <span class="stat-item" title="浏览量">
-                      <el-icon><View /></el-icon>
-                      {{ post.views }}
-                    </span>
-                    <span class="stat-item" title="点赞数">
-                      <el-icon><Star /></el-icon>
-                      {{ post.likes }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div v-else class="posts-list">
+            <PostListItem :posts="categoryPosts" :show-keyword="false" />
           </div>
         </el-card>
 
@@ -268,7 +292,7 @@ onMounted(() => {
 
 .categories-wrapper {
   width: 100%;
-  width: 1000px;
+  width: 1200px;
   display: flex;
   gap: 24px;
 }
@@ -330,12 +354,21 @@ onMounted(() => {
     .categories-tree-container {
       padding: 15px;
 
+      :deep(.el-tree-node) {
+        margin: 12px 0; // 增加节点间距
+      }
+
+      :deep(.el-tree-node__content) {
+        min-height: 30px; // 设置最小高度
+        padding: 8px 0; // 增加内部padding
+      }
+
       :deep(.custom-tree-node) {
         flex: 1;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 8px 0;
+        padding: 8px; // 增加内部padding
         width: 100%;
 
         .node-content {
@@ -349,7 +382,7 @@ onMounted(() => {
             background-color: #f0f7ff;
             border-color: #d0e3ff;
             color: #409eff;
-            padding: 6px 12px;
+            padding: 8px 16px; // 增加标签内部间距
             height: auto;
             line-height: 1.4;
           }
@@ -358,34 +391,10 @@ onMounted(() => {
             background-color: #f0f2f5;
             color: #7a8ba9;
             font-size: 13px;
-            padding: 4px 12px;
+            padding: 6px 14px; // 增加计数器内部间距
             border-radius: 10px;
             font-weight: 500;
           }
-        }
-
-        .node-actions {
-          .el-button {
-            padding: 4px 8px;
-            font-size: 13px;
-          }
-        }
-      }
-
-      // 移除之前的固定 margin
-      :deep(.custom-tree-node > .node-content) {
-        padding: 4px 0;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      // 添加树节点之间的间距
-      :deep(.el-tree-node) {
-        margin-bottom: 8px; // 增加节点之间的间距
-
-        &:last-child {
-          margin-bottom: 0; // 最后一个节点不需要底部间距
         }
       }
     }

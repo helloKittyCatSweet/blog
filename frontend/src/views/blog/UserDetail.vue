@@ -367,7 +367,7 @@ const handleUserClick = async (userId) => {
                   target="_blank"
                   class="social-link"
                 >
-                  <el-icon><GithubFilled /></el-icon>
+                  <font-awesome-icon :icon="['fab', 'github']" />
                   {{ settingsStore.settings.githubAccount }}
                 </a>
                 <a

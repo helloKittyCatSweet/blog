@@ -400,7 +400,7 @@ public class UserController {
      * @param userId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
+    // 前台用户展示
     @Operation(summary = "根据用户ID查询用户")
     @GetMapping("/public/find/id/{userId}")
     @ApiResponses(value = {

@@ -5,9 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
+import org.springframework.data.elasticsearch.annotations.*;
 
 import java.time.LocalDate;
 
@@ -23,7 +21,13 @@ public class PostIndex {
     @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
     private String title;
 
-    @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
+    @MultiField(
+            mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word",
+                    searchAnalyzer = "ik_smart"),
+            otherFields = {
+                    @InnerField(suffix = "english", type = FieldType.Text, analyzer = "english")
+            }
+    )
     private String content;
 
     @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")

@@ -54,6 +54,8 @@ blog/
 - WebSocket STOMP基于文本的简单协议 实现实时通讯
 - MapStruct
 - OCR: Tesseract OCR
+- Elasticsearch + Kibana + Logstash 日志监控
+- Elasticsearch 全文搜索
 
 ### 前端
 - Vue 3 (Composition API)

@@ -105,9 +105,18 @@ public class SecurityConfig {
                                 "/api/post/public/add/views/**",
                                 "/api/post/public/find/*/list",
                                 "/api/post/public/find/category/**",
+                                "/api/post/public/find/tag/**",
+                                "/api/post/public/find/tags/**",
+                                "/api/post/public/find/user/**",
+
+                                "/api/user/public/find/id/**",
+
                                 "/api/comment/public/find/*/list",
+
                                 "/api/category/public/find/all",
+
                                 "/api/tag/public/find/all",
+
                                 "/api/search/**").permitAll()
                         // Swagger 开放访问
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",

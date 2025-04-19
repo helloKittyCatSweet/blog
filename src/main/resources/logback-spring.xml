@@ -1,37 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
-    <property name="FILE_PATH" value="logs"/>
-
     <!-- 控制台输出 -->
-    <appender name="Console" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <!-- 文件输出 -->
-    <appender name="File" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${FILE_PATH}/blog.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${FILE_PATH}/blog-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
-            <maxHistory>30</maxHistory>
-            <totalSizeCap>3GB</totalSizeCap>
-        </rollingPolicy>
-        <encoder>
-            <pattern>${LOG_PATTERN}</pattern>
+    <!-- Logstash输出 -->
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>localhost:5000</destination>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"application":"blog"}</customFields>
         </encoder>
     </appender>
 
-    <!-- 项目日志级别 -->
-    <logger name="com.kitty.blog" level="DEBUG" additivity="false">
-        <appender-ref ref="Console"/>
-        <appender-ref ref="File"/>
-    </logger>
-
-    <!-- 根日志级别 -->
     <root level="INFO">
-        <appender-ref ref="Console"/>
-        <appender-ref ref="File"/>
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="LOGSTASH" />
     </root>
-</configuration> 
+</configuration>

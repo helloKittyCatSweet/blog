@@ -13,12 +13,14 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestClientAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 
 @Configuration
 @EnableAutoConfiguration(exclude = {
         ElasticsearchRestClientAutoConfiguration.class
 })
-public class ElasticsearchConfig {
+@EnableElasticsearchRepositories(basePackages = "com.kitty.blog.domain.repository.search")
+public class ElasticsearchConfig{
 
     @Value("${spring.elasticsearch.host}")
     private String host;

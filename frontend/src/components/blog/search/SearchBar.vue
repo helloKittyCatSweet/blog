@@ -1,7 +1,7 @@
 <script>
 import { ref, watch } from "vue";
 import { useRouter } from "vue-router";
-import { searchSuggestions } from "@/api/search/es";
+import { searchPostSuggestions } from "@/api/search/es";
 import { Search, CircleClose } from "@element-plus/icons-vue";
 import { BLOG_POSTS_PATH } from "@/constants/routes/blog";
 
@@ -64,7 +64,7 @@ export default {
         return;
       }
       try {
-        const response = await searchSuggestions(queryString);
+        const response = await searchPostSuggestions(queryString);
         if (response.data?.status === 200) {
           const suggestions = response.data.data.map((item) => ({
             value: item,
