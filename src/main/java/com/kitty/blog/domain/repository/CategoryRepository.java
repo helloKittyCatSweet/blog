@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface CategoryRepository extends BaseRepository<Category, Integer> {
@@ -111,4 +112,6 @@ public interface CategoryRepository extends BaseRepository<Category, Integer> {
     @Modifying
     @Query("UPDATE Category c SET c.useCount = :count WHERE c.categoryId = :categoryId")
     void updateUseCount(@Param("categoryId") Integer categoryId, @Param("count") Integer count);
+
+    List<Category> findByCategoryIdIn(Set<Integer> categoryIds);
 }

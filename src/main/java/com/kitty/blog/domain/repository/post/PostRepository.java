@@ -1,7 +1,9 @@
 package com.kitty.blog.domain.repository.post;
 
 import com.kitty.blog.domain.model.Post;
+import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.repository.BaseRepository;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -230,4 +232,11 @@ public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecif
 
     @Query("UPDATE Post p SET p.favorites = p.favorites + :count WHERE p.postId = :postId")
     void addFavorites(Integer postId, Integer count);
+
+    List<Post> findByPostIdIn(Set<Integer> postIds);
+
+    List<Post> findByPostIdNotIn(Set<Integer> postIds);
+
+    @Query("SELECT pc FROM PostCategory pc WHERE pc.id.postId IN ?1")
+    List<PostCategory> findPostCategoryMappingByPostIdsIn(Set<Integer> postIds);
 }

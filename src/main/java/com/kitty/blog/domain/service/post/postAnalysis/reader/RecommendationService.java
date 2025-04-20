@@ -1,18 +1,36 @@
 package com.kitty.blog.domain.service.post.postAnalysis.reader;
 
+import com.kitty.blog.application.dto.user.LoginResponseDto;
+import com.kitty.blog.domain.model.Comment;
 import com.kitty.blog.domain.model.Post;
 
 import com.kitty.blog.common.constant.ActivityType;
 import com.kitty.blog.domain.model.UserActivity;
 import com.kitty.blog.domain.model.category.Category;
+import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.repository.CategoryRepository;
+import com.kitty.blog.domain.repository.CommentRepository;
 import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.UserActivityRepository;
+import com.kitty.blog.domain.repository.post.PostSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static java.time.LocalTime.now;
+import static java.time.temporal.ChronoUnit.DAYS;
 
 @Service
 public class RecommendationService {
@@ -26,47 +44,191 @@ public class RecommendationService {
     @Autowired
     private CategoryRepository categoryRepository;
 
+    @Autowired
+    private CacheManager cacheManager;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    @Value("${recommend.weights.like:0.1}")
+    private double likeWeight;
+
+    @Value("${recommend.weights.favorite:0.2}")
+    private double favoriteWeight;
+
+    @Value("${recommend.weights.comment:0.15}")
+    private double commentWeight;
+
+    @Value("${recommend.weights.like_comment:0.25}")
+    private double likeCommentWeight;
+
+    @Value("${recommend.weights.view:0.05}")
+    private double viewWeight;
+
     /**
-     * 基于用户行为推荐文章
-     * 
+     * 混合推荐（基于用户兴趣 + 协同过滤 + 热门降级）
+     *
      * @param userId 用户ID
      * @param limit  推荐数量
      * @return 推荐的文章列表
      */
+    @Cacheable(value = "userRecommendPosts", key = "#userId")
     public List<Post> recommendPosts(Integer userId, int limit) {
         // 1. 获取用户的历史行为
         List<UserActivity> userActivities = userActivityRepository.findByUserId(userId).orElse(new ArrayList<>());
+        // 降级策略
+        if (userActivities.isEmpty()) {
+            return getHotPosts(limit);
+        }
 
-        // 2. 分析用户兴趣
-        Map<Integer, Double> categoryScores = analyzeUserInterests(userActivities);
-
-        // 3. 获取用户已读文章
-        Set<Integer> readPostIds = userActivities.stream()
+        // 2. 批量查询相关数据（减少DB查询）
+        Set<Integer> postIds = userActivities.stream()
                 .map(UserActivity::getPostId)
                 .collect(Collectors.toSet());
+        Map<Integer, Post> postsMap = postRepository.findByPostIdIn(postIds).stream()
+                .collect(Collectors.toMap(Post::getPostId, Function.identity()));
+        Map<Integer, Category> categoriesMap = getPostCategoriesMap(postIds);
 
-        // 4. 根据兴趣分数推荐文章
-        return recommendPostsByInterests(categoryScores, readPostIds, limit);
+        // 3. 计算用户兴趣模型
+        Map<Integer, Double> categoryScores = analyzeUserInterests(userActivities, postsMap, categoriesMap);
+
+        // 4. 获取候选文章（排除已读）
+        Set<Integer> readPostIds = new HashSet<>(postIds);
+        List<Post> candidatePosts = postRepository.findByPostIdNotIn(readPostIds);
+
+        // 5. 混合推荐（内容 + 协同过滤）
+        return hybridRecommend(candidatePosts, categoryScores, limit);
+    }
+
+    private Map<Integer, Category> getPostCategoriesMap(Set<Integer> postIds) {
+        List<PostCategory> relations = postRepository.findPostCategoryMappingByPostIdsIn(postIds);
+
+        Set<Integer> categoryIds = relations.stream()
+                .map(pc -> pc.getId().getCategoryId())
+                .collect(Collectors.toSet());
+
+        Map<Integer, Category> categoriesMap = categoryRepository.findByCategoryIdIn(categoryIds).stream()
+                .collect(Collectors.toMap(
+                        Category::getCategoryId,
+                        Function.identity()
+                ));
+
+        return relations.stream()
+                .collect(Collectors.toMap(
+                        pc -> pc.getId().getPostId(),
+                        pc -> categoriesMap.get(pc.getId().getCategoryId()),
+                        (existing, replacement) -> existing
+                ));
     }
 
     /**
-     * 分析用户兴趣
+     * 分析用户兴趣（优化版）
      */
-    private Map<Integer, Double> analyzeUserInterests(List<UserActivity> activities) {
+    private Map<Integer, Double> analyzeUserInterests(
+            List<UserActivity> activities,
+            Map<Integer, Post> postsMap,
+            Map<Integer, Category> categoriesMap) {
+
         Map<Integer, Double> categoryScores = new HashMap<>();
-
         for (UserActivity activity : activities) {
-            if (postRepository.existsById(activity.getPostId())){
-                Post post = postRepository.findById(activity.getPostId()).orElse(null);
-                assert post != null;
-                Category category = categoryRepository.findByPostId(post.getPostId()).orElse(new Category());
-                double score = calculateActivityScore(activity);
-                categoryScores.merge(category.getCategoryId(), score, Double::sum);
-
+            Post post = postsMap.get(activity.getPostId());
+            if (post != null) {
+                Category category = categoriesMap.get(post.getPostId());
+                if (category != null) {
+                    double score = calculateActivityScore(activity);
+                    categoryScores.merge(category.getCategoryId(), score, Double::sum);
+                }
             }
         }
+        return normalizeScores(categoryScores); // 归一化
+    }
 
-        return categoryScores;
+    // 归一化分数
+    private Map<Integer, Double> normalizeScores(Map<Integer, Double> scores) {
+        if (scores.isEmpty()) return scores;
+
+        double maxScore = Collections.max(scores.values());
+        double minScore = Collections.min(scores.values());
+        double range = maxScore - minScore;
+
+        // 处理全零分数和相同分数的情况
+        if (range == 0) {
+            return scores.keySet().stream()
+                    .collect(Collectors.toMap(k -> k, k -> 0.5)); // 统一中值
+        }
+
+        return scores.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> (e.getValue() - minScore) / range  // Min-Max归一化
+                ));
+    }
+
+    /**
+     * 混合推荐策略
+     */
+    private List<Post> hybridRecommend(
+            List<Post> candidates,
+            Map<Integer, Double> categoryScores,
+            int limit) {
+        // 获取当前用户行为数据量
+        int userActivityCount = userActivityRepository.countByUserId(getCurrentUserId());
+
+        // 计算动态权重
+        double cfWeight = userActivityCount > 10 ? 0.7 : 0.3; // 动态权重
+        double hotWeight = candidates.size() > 100 ? 0.1 : 0.0; // 热门降级权重
+        double contentWeight = 1.0 - cfWeight - hotWeight; // 内容权重
+
+        // 计算各维度权重
+        Map<Post, Double> contentScores = candidates.stream()
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        post -> calculateContentScore(post, categoryScores)
+                ));
+        Map<Post, Double> cfScores = calculateHybridCFScores(candidates,getCurrentUserId());
+        Map<Post, Double> hotScores = candidates.stream()
+                .collect(Collectors.toMap(
+                         Function.identity(),
+                         this::calculateHotnessScore
+                ));
+
+        // 混合排序
+        return candidates.stream()
+                .sorted(Comparator.comparingDouble(post ->
+                        contentWeight * contentScores.getOrDefault(post, 0.0) +
+                                cfWeight * cfScores.getOrDefault(post, 0.0) +
+                                hotWeight * hotScores.getOrDefault(post, 0.0)
+                ).reversed())
+                .limit(limit)
+                .collect(Collectors.toList());
+    }
+
+    private Integer getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            return ((LoginResponseDto) authentication.getPrincipal()).getId();
+        }
+        return null; // 或抛出异常
+    }
+
+    /**
+     * 计算文章内容推荐分数
+     */
+    private double calculateContentScore(Post post, Map<Integer, Double> categoryScores) {
+        Category category = categoryRepository.
+                findByPostId(post.getPostId()).orElse(null);
+        double categoryScore = (category != null) ?
+                categoryScores.getOrDefault(category.getCategoryId(), 0.0) : 0.0;
+
+        categoryScore += calculateHotnessScore(post);
+
+        // 时间衰减（30天半衰期）
+        double timeDecay = Math.exp(-DAYS.between(
+                post.getCreatedAt(), LocalDate.now()) / 30.0);
+
+        return categoryScore * timeDecay +
+                (post.getLikes() != null ? post.getLikes() * likeWeight : 0) +
+                (post.getViews() != null ? post.getViews() * 0.05 : 0);
     }
 
     /**
@@ -75,86 +237,273 @@ public class RecommendationService {
     private double calculateActivityScore(UserActivity activity) {
         // 如果字符串是小写的，转换为大写
         String activityType = activity.getActivityType().toUpperCase();
-        switch (ActivityType.valueOf(activityType)) {
-            case LIKE:
-                return 1.0;
-            case FAVORITE:
-                return 2.0;
-            case COMMENT:
-                return 1.5;
-            case SHARE:
-                return 1.8;
-            default:
-                return 0.5;
-        }
+        return switch (ActivityType.valueOf(activityType)) {
+            case LIKE -> likeWeight;
+            case FAVORITE -> favoriteWeight;
+            case COMMENT -> commentWeight;
+            case LIKE_COMMENT -> likeCommentWeight;
+            default -> 0.5;
+        };
     }
 
     /**
-     * 根据兴趣分数推荐文章
+     * 基于文章的协调过滤
      */
-    private List<Post> recommendPostsByInterests(
-            Map<Integer, Double> categoryScores,
-            Set<Integer> readPostIds,
-            int limit) {
+    private Map<Post, Double> calculateItemCFScores
+    (List<Post> candidates, Integer userId) {
+        // 1. 获取所有用户的交互数据（用户ID -> 该用户交互过的文章ID集合）
+        Map<Integer, Set<Integer>> userInteractions = userActivityRepository.findAll().stream()
+                .collect(Collectors.groupingBy(
+                        UserActivity::getUserId,
+                        Collectors.mapping(UserActivity::getPostId, Collectors.toSet())
+                ));
 
-        // 1. 获取所有文章
-        List<Post> allPosts = postRepository.findAll();
+        // 2. 构建文章共现矩阵（文章A -> {文章B -> 共现次数}）
+        Map<Integer, Map<Integer, Integer>> coOccurrenceMatrix =
+                buildCoOccurrenceMatrix(userInteractions);
 
-        // 2. 计算每篇文章的推荐分数
-        Map<Post, Double> postScores = new HashMap<>();
-        for (Post post : allPosts) {
-            Category category = categoryRepository.findByPostId(post.getPostId()).orElse(new Category());
-            if (!readPostIds.contains(post.getPostId()) && category.getCategoryId()!= 0) {
-                Double categoryScore = categoryScores.getOrDefault(category.getCategoryId(), 0.0);
+        // 3. 获取目标用户的历史交互文章
+        Set<Integer> userInteractedPosts =
+                userInteractions.getOrDefault(userId, Collections.emptySet());
 
-                // 考虑文章的其他因素
-                double finalScore = calculatePostScore(post, categoryScore);
-                postScores.put(post, finalScore);
+        // 4. 计算候选文章的CF分数
+        return candidates.stream()
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        post -> calculateItemCFScore(post.getPostId(),
+                                userInteractedPosts, coOccurrenceMatrix)
+                ));
+    }
+
+    // 构建共现矩阵
+    private Map<Integer, Map<Integer, Integer>> buildCoOccurrenceMatrix
+    (Map<Integer, Set<Integer>> userInteractions) {
+        Map<Integer, Map<Integer, Integer>> matrix = new HashMap<>();
+        userInteractions.values().forEach(interactedPosts -> {
+            List<Integer> posts = new ArrayList<>(interactedPosts);
+            for (int i = 0; i < posts.size(); i++) {
+                for (int j = i + 1; j < posts.size(); j++) {
+                    int postA = posts.get(i), postB = posts.get(j);
+                    matrix.computeIfAbsent
+                            (
+                                    postA,
+                                    k -> new HashMap<>()).merge(postB, 1, Integer::sum
+                    );
+                    matrix.computeIfAbsent
+                            (
+                                    postB,
+                                    k -> new HashMap<>()).merge(postA, 1, Integer::sum
+                    );
+                }
             }
+        });
+        return matrix;
+    }
+
+    // 计算单个文章的ItemCF分数
+    private double calculateItemCFScore(Integer postId, Set<Integer> userInteractedPosts,
+                                        Map<Integer, Map<Integer, Integer>> coOccurrenceMatrix) {
+        double rawScore =  userInteractedPosts.stream()
+                .mapToDouble(interactedPost ->
+                        coOccurrenceMatrix.getOrDefault(interactedPost, Collections.emptyMap())
+                                .getOrDefault(postId, 0)
+                )
+                .sum();
+        return rawScore / (userInteractedPosts.size() + 1); // 控制到[0,1]附近
+    }
+
+    /**
+     * 基于用户的协同过滤
+     */
+    /**
+     * 计算所有用户之间的相似度矩阵
+     *
+     * @return Map<用户A, Map < 用户B, 相似度>>
+     */
+    private Map<Integer, Map<Integer, Double>> calculateUserSimilarities() {
+        // 1. 获取所有用户的行为数据（用户ID -> 交互过的文章ID集合）
+        Map<Integer, Set<Integer>> userInteractions = userActivityRepository.findAll().stream()
+                .collect(Collectors.groupingBy(
+                        UserActivity::getUserId,
+                        Collectors.mapping(UserActivity::getPostId, Collectors.toSet())
+                ));
+
+        // 2. 转换为用户向量（用于余弦相似度计算）
+        // 所有文章ID列表
+        List<Integer> allPostIds = postRepository.findAll().stream().map(Post::getPostId).toList();
+        Map<Integer, double[]> userVectors = new HashMap<>();
+
+        userInteractions.forEach((userId, postIds) -> {
+            double[] vector = new double[allPostIds.size()];
+            for (int i = 0; i < allPostIds.size(); i++) {
+                vector[i] = postIds.contains(allPostIds.get(i)) ? 1.0 : 0.0; // 二进制向量
+            }
+            userVectors.put(userId, vector);
+        });
+
+        // 3. 计算用户间余弦相似度
+        Map<Integer, Map<Integer, Double>> similarityMatrix = new HashMap<>();
+        List<Integer> userIds = new ArrayList<>(userVectors.keySet());
+
+        for (int i = 0; i < userIds.size(); i++) {
+            Integer userA = userIds.get(i);
+            double[] vectorA = userVectors.get(userA);
+            Map<Integer, Double> similarities = new HashMap<>();
+
+            for (int j = 0; j < userIds.size(); j++) {
+                if (i == j) continue; // 跳过自己
+
+                Integer userB = userIds.get(j);
+                double[] vectorB = userVectors.get(userB);
+                similarities.put(userB, cosineSimilarity(vectorA, vectorB));
+            }
+            similarityMatrix.put(userA, similarities);
         }
 
-        // 3. 按分数排序并返回推荐结果
-        return postScores.entrySet().stream()
-                .sorted(Map.Entry.<Post, Double>comparingByValue().reversed())
-                .limit(limit)
+        return similarityMatrix;
+    }
+
+    // 余弦相似度计算
+    private double cosineSimilarity(double[] vectorA, double[] vectorB) {
+        double dotProduct = 0.0;
+        double normA = 0.0;
+        double normB = 0.0;
+
+        for (int i = 0; i < vectorA.length; i++) {
+            dotProduct += vectorA[i] * vectorB[i];
+            normA += Math.pow(vectorA[i], 2);
+            normB += Math.pow(vectorB[i], 2);
+        }
+
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+
+    private Map<Post, Double> calculateUserCFScores(List<Post> candidates, Integer userId) {
+        // 1. 计算用户相似度矩阵
+        Map<Integer, Map<Integer, Double>> userSimilarities = calculateUserSimilarities();
+
+        // 2. 找出Top20相似用户
+        List<Integer> similarUsers = userSimilarities
+                .getOrDefault(userId, Collections.emptyMap()).entrySet().stream()
+                .sorted(Map.Entry.<Integer, Double>comparingByValue().reversed())
+                .limit(20)
                 .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+                .toList();
+
+        // 3. 统计带权重的文章分数（考虑用户相似度）
+        Map<Integer, Double> postScores = new HashMap<>();
+        similarUsers.forEach(similarUser -> {
+            double similarity = userSimilarities.get(userId).get(similarUser); // 获取相似度
+            userActivityRepository.findByUserId(similarUser).ifPresent(activities -> {
+                activities.forEach(activity -> {
+                    // 用相似度加权而不仅仅是+1.0
+                    postScores.merge(activity.getPostId(), similarity, Double::sum);
+                });
+            });
+        });
+
+        // 4. 归一化处理
+        if (!postScores.isEmpty()) {
+            double maxScore = Collections.max(postScores.values());
+            double minScore = Collections.min(postScores.values());
+            double range = maxScore - minScore;
+
+            // 处理所有分数相同的情况
+            final double finalRange = (range == 0) ? 1.0 : range;
+            final double finalMinScore = minScore;
+
+            return candidates.stream()
+                    .collect(Collectors.toMap(
+                            Function.identity(),
+                            post -> postScores.containsKey(post.getPostId())
+                                    ? (postScores.get(post.getPostId()) - finalMinScore) / finalRange
+                                    : 0.0
+                    ));
+        }
+
+        return candidates.stream()
+                .collect(Collectors.toMap(Function.identity(), post -> 0.0));
     }
 
-    /**
-     * 计算文章推荐分数
-     */
-    private double calculatePostScore(Post post, double categoryScore) {
-        // 基础分数：类别匹配度
-        double score = categoryScore;
+    private Map<Post, Double> calculateHybridCFScores(List<Post> candidates, Integer userId) {
+        Map<Post, Double> itemCFScores = calculateItemCFScores(candidates, userId);
+        Map<Post, Double> userCFScores = calculateUserCFScores(candidates, userId);
 
-        // 考虑文章的其他因素
-        if (post.getLikes() != null) {
-            score += post.getLikes() * 0.1; // 点赞数权重
-        }
-        if (post.getViews() != null) {
-            score += post.getViews() * 0.05; // 浏览量权重
-        }
-        if (post.getCreatedAt() != null) {
-            // 时间衰减因子
-            long daysOld = java.time.temporal.ChronoUnit.DAYS.between(
-                    post.getCreatedAt(), java.time.LocalDate.now());
-            score *= Math.exp(-daysOld / 30.0); // 30天半衰期
-        }
-
-        return score;
+        return candidates.stream()
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        post -> 0.6 * itemCFScores.getOrDefault(post, 0.0) +
+                                0.4 * userCFScores.getOrDefault(post, 0.0)
+                ));
     }
 
+
+
     /**
-     * 获取热门文章推荐
+     * 计算热门文章（与用户无关）
+     * @param limit 返回的热门文章数量
+     * @return 热门文章列表
      */
+    @Cacheable(value = "hotPosts", key = "#limit")
     public List<Post> getHotPosts(int limit) {
-        return postRepository.findAll().stream()
-                .sorted(Comparator
-                        .comparing(Post::getLikes, Comparator.nullsLast(Integer::compareTo))
-                        .thenComparing(Post::getViews, Comparator.nullsLast(Integer::compareTo))
-                        .reversed())
+        // 1. 获取所有文章
+        Pageable pageable = PageRequest.of(0, limit);
+        List<Post> allPosts = postRepository.findAll(
+                PostSpecification.hotPostsSpec(),
+                pageable
+        ).getContent();
+
+        // 2. 计算每篇文章的热度分数
+        Map<Post, Double> hotnessScores = allPosts.stream()
+                .collect(Collectors.toMap(
+                        Function.identity(),
+                        this::calculateHotnessScore
+                ));
+
+        // 3. 对文章按热度分数降序排序并返回前 limit 篇
+        return allPosts.stream()
+                .sorted(Comparator.comparingDouble(post ->
+                        hotnessScores.getOrDefault(post, 0.0)).reversed())
                 .limit(limit)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * 计算单篇文章的热度分数
+     * @param post 文章对象
+     * @return 热度分数
+     */
+    private double calculateHotnessScore(Post post) {
+        double score = 0.0;
+
+        // 点赞数权重
+        if (post.getLikes() != null) {
+            score += post.getLikes() * likeWeight;
+        }
+
+        // 浏览量权重
+        if (post.getViews() != null) {
+            score += post.getViews() * viewWeight; // 浏览量权重可以适当调整
+        }
+
+        // 评论数权重
+        List<Comment> comments = commentRepository.findByPostId(post.getPostId()).
+                orElse(Collections.emptyList());
+        score += comments.size() * commentWeight;
+
+
+        // 收藏权重
+        if (post.getFavorites() != null){
+            score += post.getFavorites() * favoriteWeight;
+        }
+
+        // 时间衰减（30天半衰期）
+        // 分段衰减函数示例
+        long daysOld = DAYS.between(post.getCreatedAt(), LocalDate.now());
+        double timeDecay = daysOld > 7
+                ? 0.8 * Math.exp(-(daysOld - 7) / 60.0)
+                : Math.exp(-daysOld / 30.0);
+
+        return score * timeDecay;
     }
 }

@@ -2,11 +2,16 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { View, Star, ArrowRight, Folder } from "@element-plus/icons-vue";
+import { useUserStore } from "@/stores/modules/user";
 
 import { formatDate } from "@/utils/date";
 import { findAll as getAllPosts, addViews } from "@/api/post/post.js";
 import { findAll as getAllCategories } from "@/api/common/category.js";
 import { findAll as getAllTags } from "@/api/common/tag.js";
+import {
+  getHotArticleRecommendation,
+  getPersonalizedRecommendation,
+} from "@/api/post/recommendation";
 
 import PostStats from "@/components/post/PostStats.vue";
 import UserRecommendCard from "@/components/blog/recommend/UserRecommendCard.vue";
@@ -20,6 +25,7 @@ import {
 
 const router = useRouter();
 const loading = ref(false);
+const userStore = useUserStore();
 
 // 文章数据
 const featuredPosts = ref([]);
@@ -55,7 +61,7 @@ const getPostList = async () => {
       }));
 
       // 按照浏览量排序获取推荐文章
-      featuredPosts.value = [...posts].sort((a, b) => b.views - a.views).slice(0, 3);
+      // featuredPosts.value = [...posts].sort((a, b) => b.views - a.views).slice(0, 3);
 
       // 按照创建时间排序获取最新文章
       latestPosts.value = [...posts]
@@ -115,6 +121,25 @@ const getTags = async () => {
 };
 
 onMounted(() => {
+  // 检查用户是否登录
+  if (!userStore.isLoggedIn) {
+    getHotArticleRecommendation()
+      .then((res) => {
+        featuredPosts.value = res.data.data;
+        console.log("faeturedPosts:", featuredPosts.value);
+      })
+      .catch((error) => {
+        console.error("获取热门文章推荐失败:", error);
+      });
+  } else {
+    getPersonalizedRecommendation()
+      .then((res) => {
+        featuredPosts.value = res.data.data;
+      })
+      .catch((error) => {
+        console.error("获取个性化文章推荐失败:", error);
+      });
+  }
   getPostList();
   getCategories();
   getTags();
@@ -250,7 +275,7 @@ const handlePostClick = async (postId) => {
 
     <!-- 右侧分类和标签 -->
     <aside class="right-sidebar">
-    <UserRecommendCard/>
+      <UserRecommendCard v-if="userStore.isLoggedIn" />
       <el-card class="category-card">
         <template #header>
           <div class="card-header">

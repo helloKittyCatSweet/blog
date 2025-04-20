@@ -108,6 +108,7 @@ public class SecurityConfig {
                                 "/api/post/public/find/tag/**",
                                 "/api/post/public/find/tags/**",
                                 "/api/post/public/find/user/**",
+                                "/api/post/recommendations/public/hot",
 
                                 "/api/user/public/find/id/**",
 

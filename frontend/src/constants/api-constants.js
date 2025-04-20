@@ -2,7 +2,7 @@
 export const postPrefix = '/api/post'
 export const favoritePrefix = '/favorite'
 export const reportPrefix = '/report'
-export const recommendationPrefix = '/recommendation'
+export const recommendationPrefix = '/recommendations'
 export const postVersionPrefix = '/postVersion'
 
 // 用户模块下面的api

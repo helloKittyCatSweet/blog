@@ -162,6 +162,15 @@ spring:
     host: localhost
     port: 5000
 
+  cache:
+    type: redis # 主缓存使用Redis
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=1h # 本地二级缓存
+    redis:
+      time-to-live: 24h # Redis缓存过期时间
+      key-prefix: "cache::"
+      use-key-prefix: true
+
 # 修改日志配置，支持 ELK
 logging:
   file:

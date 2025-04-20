@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface UserActivityRepository extends BaseRepository<UserActivity, Integer>{
@@ -48,6 +49,8 @@ public interface UserActivityRepository extends BaseRepository<UserActivity, Int
      */
     @Query("SELECT ua FROM UserActivity ua WHERE ua.userId = ?1")
     Optional<List<UserActivity>> findByUserId(Integer userId);
+
+    int countByUserId(Integer userId);
 
     /**
      * 根据活动类型和用户ID搜索互动记录
@@ -96,4 +99,6 @@ public interface UserActivityRepository extends BaseRepository<UserActivity, Int
        ORDER BY ua.created_at DESC
        """, nativeQuery = true)
     List<UserActivity> findPostInteractions(@Param("authorId") Integer authorId);
+
+    List<UserActivity> findByPostIdIn(List<Integer> postIds);
 }

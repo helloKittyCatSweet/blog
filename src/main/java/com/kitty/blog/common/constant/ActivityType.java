@@ -16,7 +16,8 @@ public enum ActivityType {
     FAVORITE("favorite"),
     FOLLOW("follow"),
     UNFOLLOW("unfollow"),
-    SHARE("share");
+    LIKE_COMMENT("like_comment"),
+    REPLY("reply");
 
     public final String type;
 
@@ -39,8 +40,7 @@ public enum ActivityType {
                 COMMENT.getType(),
                 FAVORITE.getType(),
                 FOLLOW.getType(),
-                UNFOLLOW.getType(),
-                SHARE.getType()
+                UNFOLLOW.getType()
         );
     }
 
