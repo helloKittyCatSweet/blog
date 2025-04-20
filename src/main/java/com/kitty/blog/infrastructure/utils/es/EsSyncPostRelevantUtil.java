@@ -1,16 +1,13 @@
-package com.kitty.blog.infrastructure.utils;
+package com.kitty.blog.infrastructure.utils.es;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
-import com.kitty.blog.application.dto.category.TreeDto;
 import com.kitty.blog.application.dto.post.PostDto;
 import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.model.tag.Tag;
 import com.kitty.blog.domain.repository.CategoryRepository;
 import com.kitty.blog.domain.repository.tag.TagRepository;
-import com.kitty.blog.domain.service.CategoryService;
 import com.kitty.blog.domain.service.post.PostService;
 import com.kitty.blog.domain.service.search.SearchService;
-import com.kitty.blog.domain.service.tag.TagService;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +17,7 @@ import java.util.List;
 
 @Slf4j
 @Component
-public class EsSyncUtil {
+public class EsSyncPostRelevantUtil {
 
     @Autowired
     private PostService postService;

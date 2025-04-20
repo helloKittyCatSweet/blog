@@ -9,6 +9,7 @@ import UserDropdown from "@/components/user/UserDropdown.vue";
 import { USER_PROFILE_PATH, USER_PASSWORD_PATH } from "@/constants/routes/user.js";
 import { LOGIN_PATH, CONTROL_PANEL_PATH } from "@/constants/routes/base.js";
 import SearchBar from "@/components/blog/search/SearchBar.vue";
+import FavoriteDropdown from "@/components/blog/favorite/FavoriteDropdown.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -74,12 +75,14 @@ const handleUserCommand = async (command) => {
           <router-link to="/tags" :class="{ active: route.path.startsWith('/tags') }"
             >标签</router-link
           >
+          <FavoriteDropdown v-if="userStore.isLoggedIn"/>
           <router-link to="/about" :class="{ active: route.path.startsWith('/about') }"
             >关于</router-link
           >
           <router-link
             :to="CONTROL_PANEL_PATH"
             :class="{ active: route.path.startsWith('/control') }"
+            v-if="userStore.isLoggedIn"
             >控制台</router-link
           >
         </nav>

@@ -9,6 +9,7 @@ import { findAll as getAllCategories } from "@/api/common/category.js";
 import { findAll as getAllTags } from "@/api/common/tag.js";
 
 import PostStats from "@/components/post/PostStats.vue";
+import UserRecommendCard from "@/components/blog/recommend/UserRecommendCard.vue";
 
 import {
   BLOG_POST_DETAIL_PATH,
@@ -249,6 +250,7 @@ const handlePostClick = async (postId) => {
 
     <!-- 右侧分类和标签 -->
     <aside class="right-sidebar">
+    <UserRecommendCard/>
       <el-card class="category-card">
         <template #header>
           <div class="card-header">

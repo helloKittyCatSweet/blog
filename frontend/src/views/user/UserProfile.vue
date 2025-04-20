@@ -47,20 +47,30 @@ const handleTagClose = (tag) => {
 };
 
 const handleTagInput = () => {
-  const value = tagInputValue.value?.trim(); // 添加 trim 处理
-  if (!value) return; // 空值直接返回
+  const value = tagInputValue.value?.trim();
+  if (!value) return;
 
-  if (!userInfo.value.tags?.includes(value)) {
-    if ((userInfo.value.tags?.length || 0) >= 5) {
+  // 确保 tags 是数组
+  if (!Array.isArray(userInfo.value.tags)) {
+    userInfo.value.tags = [];
+  }
+
+  // 验证标签长度
+  if (value.length > 10) {
+    ElMessage.warning("标签长度不能超过10个字符");
+    return;
+  }
+
+  if (!userInfo.value.tags.includes(value)) {
+    if (userInfo.value.tags.length >= 5) {
       ElMessage.warning("最多添加5个标签");
       return;
     }
-    // 确保 tags 是数组
-    if (!Array.isArray(userInfo.value.tags)) {
-      userInfo.value.tags = [];
-    }
+
     userInfo.value.tags.push(value);
     tagInputValue.value = "";
+  } else {
+    ElMessage.warning("该标签已存在");
   }
 };
 
@@ -74,7 +84,7 @@ const loadUserInfo = async () => {
       // 确保 tags 是数组
       const userData = {
         ...data.data,
-        tags: data.data.tags || [],
+        tags: Array.isArray(data.data.tags) ? data.data.tags : []
       };
       Object.assign(userInfo.value, userData);
 

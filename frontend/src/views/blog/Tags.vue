@@ -1,8 +1,8 @@
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { Search, CircleClose, Star } from "@element-plus/icons-vue";
-import { findAll, findByName } from "@/api/common/tag";
+import { findAll } from "@/api/common/tag";
 import PostListItem from "@/components/blog/post/PostListItem.vue";
 import { searchTagSuggestions, searchPosts } from "@/api/search/es.js";
 import { findByTags } from "@/api/post/post";
@@ -12,6 +12,7 @@ const tags = ref([]);
 const selectedTags = ref([]);
 const tagPosts = ref([]);
 const sortBy = ref("newest");
+const loading = ref(false);
 
 // 添加计算属性用于过滤标签
 const filteredTags = computed(() => {
@@ -25,6 +26,7 @@ const filteredTags = computed(() => {
 
 // 加载所有标签
 const loadTags = async () => {
+  loading.value = true;
   try {
     const response = await findAll();
     if (response.data?.status === 200) {
@@ -37,6 +39,8 @@ const loadTags = async () => {
     }
   } catch (error) {
     ElMessage.error("加载标签失败");
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -98,18 +102,28 @@ const loadTagPosts = async () => {
     return;
   }
 
+  loading.value = true;
   try {
     // Changed: Use findByTags API with tag names array
     const tagNames = selectedTagObjects.value.map((tag) => tag.name);
-    const response = await findByTags(tagNames);
+    const response = await findByTags(tagNames, currentPage.value - 1, pageSize.value);
 
     if (response.data?.status === 200) {
-      tagPosts.value = transformPostData(response.data.data);
-      console.log("loadTagPosts: Tag posts loaded:", tagPosts.value);
+      const data = response.data.data;
+      // 如果是分页数据
+      if (data.content) {
+        tagPosts.value = transformPostData(data.content);
+        total.value = data.totalElements; // 设置总数
+      } else {
+        tagPosts.value = transformPostData(data);
+        total.value = data.length; // 如果是普通数组，使用长度作为总数
+      }
     }
   } catch (error) {
     console.error("loadTagPosts error:", error);
     ElMessage.error("加载文章失败");
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -136,10 +150,15 @@ const handleSearch = async (selectedItem) => {
       : selectedItem?.value || searchQuery.value;
 
   if (!query) {
-    await loadTags();
+    if (selectedTags.value.length > 0) {
+      await loadTagPosts();
+    } else {
+      await loadTags();
+    }
     return;
   }
 
+  loading.value = true;
   try {
     // 检查是否是标签
     const isTag = tags.value.some((tag) => tag.name === query);
@@ -152,13 +171,25 @@ const handleSearch = async (selectedItem) => {
         await loadTagPosts();
       }
     } else {
+      let finalQuery = query;
+      // 如果已选择标签，在搜索内容前面加上标签搜索条件
+      if (selectedTags.value.length > 0 && !query.includes("#")) {
+        const tagNames = selectedTagObjects.value.map((tag) => tag.name);
+        finalQuery = `#${tagNames.join(",")}# ${query}`;
+      }
+      // 如果输入的是纯分类(以#开头)，保持原样
+      else if (query.startsWith("#")) {
+        finalQuery = query;
+      }
+
+      console.log("Final query:", finalQuery);
+
       // 非标签内容，执行全文搜索
-      const response = await searchPosts(query, 0, 10);
+      const response = await searchPosts(finalQuery, 0, 10);
       console.log("response:", response);
       if (response.data?.status === 200) {
         tagPosts.value = transformPostData(response.data.data.content);
         console.log("Tag posts loaded:", tagPosts.value);
-        selectedTags.value = []; // 清空标签选择状态
       }
     }
   } catch (error) {
@@ -198,13 +229,56 @@ const querySearchAsync = async (queryString, cb) => {
 const clearSelectedTags = () => {
   selectedTags.value = [];
   loadTagPosts();
+  handleSearch();
 };
+
+/**
+ * 搜索框监视器
+ */
+watch(searchQuery, (newVal) => {
+  if (!newVal || newVal.trim() === "") {
+    if (selectedTags.value.length > 0) {
+      // 有选中的标签，获取对应文章
+      loadTagPosts();
+    } else {
+      // 没有选中的标签，重新加载所有标签
+      loadTags();
+    }
+  }
+});
+
+/**
+ * 排序计算属性
+ */
+const sortedPosts = computed(() => {
+  if (!tagPosts.value.length) return [];
+
+  return [...tagPosts.value].sort((a, b) => {
+    switch (sortBy.value) {
+      case "newest":
+        return new Date(b.createTime) - new Date(a.createTime);
+      case "views":
+        return b.views - a.views;
+      case "likes":
+        return b.likes - a.likes;
+      default:
+        return 0;
+    }
+  });
+});
+
+/**
+ * 分页
+ */
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
 </script>
 
 <template>
   <!-- 模板部分保持不变 -->
   <div class="app-container">
-    <div class="tags-wrapper">
+    <div class="tags-wrapper" v-loading="loading">
       <!-- 左侧标签云 -->
       <div class="left-sidebar">
         <el-card shadow="hover" class="tags-card">
@@ -222,6 +296,7 @@ const clearSelectedTags = () => {
                   clearable
                   @select="handleSearch"
                   @keyup.enter="handleSearch"
+                  @clear="handleSearch"
                   size="large"
                 >
                   <template #prefix>
@@ -260,7 +335,11 @@ const clearSelectedTags = () => {
 
       <!-- 右侧文章列表 -->
       <div class="right-content">
-        <el-card shadow="hover" class="posts-card" v-if="selectedTags.length > 0 || tagPosts.length > 0">
+        <el-card
+          shadow="hover"
+          class="posts-card"
+          v-if="selectedTags.length > 0 || tagPosts.length > 0"
+        >
           <template #header>
             <div class="posts-header">
               <div class="tags-header">
@@ -304,7 +383,18 @@ const clearSelectedTags = () => {
             </div>
           </template>
 
-          <PostListItem :posts="tagPosts" :show-keyword="false" />
+          <PostListItem :posts="sortedPosts" :show-keyword="false" />
+
+          <el-pagination
+            v-if="total > 0"
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :total="total"
+            :page-sizes="[10, 20, 50]"
+            layout="total, sizes, prev, pager, next"
+            @size-change="loadTagPosts"
+            @current-change="loadTagPosts"
+          />
         </el-card>
 
         <el-card shadow="hover" class="welcome-card" v-else>
@@ -608,6 +698,14 @@ const clearSelectedTags = () => {
 
   .right-content {
     width: 100%;
+  }
+}
+
+.posts-list {
+  .pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
   }
 }
 </style>

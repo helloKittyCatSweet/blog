@@ -3,6 +3,8 @@ package com.kitty.blog.domain.model;
 import com.fasterxml.jackson.annotation.*;
 import com.kitty.blog.infrastructure.converter.EncryptedAttributeConverter;
 import com.kitty.blog.domain.model.userRole.UserRole;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
@@ -15,6 +17,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.security.Timestamp;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -81,6 +84,8 @@ public class User implements Serializable {
     private LocalDate lastLoginTime;
 
     @Column
+    @Size(max = 5, message = "标签数量不能超过5个")
+    @Valid
     private List<String> tags;
 
     @Column(name = "is_deleted")
@@ -163,5 +168,10 @@ public class User implements Serializable {
                 ", introduction='" + introduction + '\'' +
                 ", lastLoginTime=" + lastLoginTime +
                 '}';
+    }
+
+    // 添加 getter 和 setter
+    public List<String> getTags() {
+        return tags == null ? new ArrayList<>() : tags;
     }
 }

@@ -16,6 +16,7 @@ export const userRolePrefix = '/userRole'
 export const userSettingPrefix = '/setting'
 export const userActivityPrefix = '/activity'
 export const userFollowPrefix = '/follow'
+export const userRecommendPrefix = '/recommend'
 
 // comment模块下面的api
 export const commentPrefix = '/api/comment'

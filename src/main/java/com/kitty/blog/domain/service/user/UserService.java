@@ -12,6 +12,7 @@ import com.kitty.blog.domain.repository.RoleRepository;
 import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.domain.repository.UserSettingRepository;
 import com.kitty.blog.domain.service.UserRoleService;
+import com.kitty.blog.domain.service.auth.UserTokenManager;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.infrastructure.utils.*;
 import com.kitty.blog.infrastructure.security.JwtTokenUtil;
@@ -35,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,6 +76,9 @@ public class UserService {
 
     @Autowired
     private UserSettingRepository userSettingRepository;
+
+    @Autowired
+    private UserTokenManager userTokenManager;
 
     @Transactional
     public boolean setPassword(User user, String password) {
@@ -116,6 +121,16 @@ public class UserService {
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
+    private void validateTags(List<String> tags) {
+        if (tags != null) {
+            for (String tag : tags) {
+                if (tag.length() > 10) {
+                    throw new IllegalArgumentException("标签长度不能超过10个字符");
+                }
+            }
+        }
+    }
+
     @Transactional
     @CacheEvict(allEntries = true)
     public ResponseEntity<Boolean> update(User user) {
@@ -135,6 +150,10 @@ public class UserService {
         } catch (IllegalAccessException e) {
             throw new RuntimeException(e);
         }
+
+        // 处理标签数据
+        validateTags(user.getTags());
+
         save(user);
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
@@ -207,6 +226,8 @@ public class UserService {
         // 生成token
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
         String token = jwtTokenUtil.generateToken(userDetails);
+        // 保存用户token
+        userTokenManager.saveUserToken(user.get().getUserId(), token);
 
         // 创建响应对象
         LoginResponseDto response = new LoginResponseDto();

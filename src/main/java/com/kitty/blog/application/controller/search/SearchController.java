@@ -1,10 +1,9 @@
 package com.kitty.blog.application.controller.search;
 
 import com.kitty.blog.application.dto.post.PostDto;
-import com.kitty.blog.domain.model.search.PostIndex;
 import com.kitty.blog.domain.service.search.SearchService;
 import com.kitty.blog.infrastructure.converter.StringConverter;
-import com.kitty.blog.infrastructure.utils.EsSyncUtil;
+import com.kitty.blog.infrastructure.utils.es.EsSyncPostRelevantUtil;
 import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,7 +25,7 @@ public class SearchController {
     private SearchService searchService;
 
     @Autowired
-    private EsSyncUtil esSyncUtil;
+    private EsSyncPostRelevantUtil esSyncPostRelevantUtil;
 
     @Operation(summary = "搜索文章")
     @GetMapping("/public/posts")
@@ -35,7 +34,7 @@ public class SearchController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         try {
-            keyword = StringConverter.convertUpperCaseToLowerCase(keyword);
+//            keyword = StringConverter.convertUpperCaseToLowerCase(keyword);
             Page<PostDto> results = searchService.searchPosts(keyword, page, size);
             return Response.ok(results);
         } catch (Exception e) {
@@ -83,7 +82,7 @@ public class SearchController {
     @GetMapping("/admin/check-index")
     public ResponseEntity<Response<String>> checkIndex() {
         try {
-            long count = esSyncUtil.checkIndexContent();
+            long count = esSyncPostRelevantUtil.checkIndexContent();
             return Response.ok(String.format("检查完成，索引中共有 %d 条数据", count));
         } catch (Exception e) {
             log.error("Check index failed", e);

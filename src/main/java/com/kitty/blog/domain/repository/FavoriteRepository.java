@@ -2,6 +2,7 @@ package com.kitty.blog.domain.repository;
 
 import com.kitty.blog.domain.model.Favorite;
 import org.springframework.data.domain.Example;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -49,6 +50,7 @@ public interface FavoriteRepository extends BaseRepository<Favorite, Integer> {
      * @param userId
      * @return
      */
+    @EntityGraph(attributePaths = {"post"})
     @Query("select f from Favorite f where f.userId = ?1")
     Optional<List<Favorite>> findByUserId(Integer userId);
 
@@ -82,18 +84,21 @@ public interface FavoriteRepository extends BaseRepository<Favorite, Integer> {
      * @param postId
      * @return
      */
+    @EntityGraph(attributePaths = {"post"})
     @Query("select f from Favorite f where f.userId = ?1 and f.postId = ?2")
     Optional<Favorite> findByUserIdAndPostId(Integer userId, Integer postId);
 
     /**
      * 获取用户的所有收藏夹名称
      */
+    @EntityGraph(attributePaths = {"post"})
     @Query("SELECT DISTINCT f.folderName FROM Favorite f WHERE f.userId = ?1")
     List<String> findFolderNamesByUserId(Integer userId);
 
     /**
      * 获取用户特定收藏夹中的收藏
      */
+    @EntityGraph(attributePaths = {"post"})
     @Query("SELECT f FROM Favorite f WHERE f.userId = ?1 AND f.folderName = ?2")
     Optional<List<Favorite>> findByUserIdAndFolderName(Integer userId, String folderName);
 

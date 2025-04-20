@@ -1,11 +1,10 @@
 <script setup>
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, watch, computed } from "vue";
 import { ElMessage, ElLoading, ElAutocomplete } from "element-plus";
 import { Search, View, Star, Reading } from "@element-plus/icons-vue";
-import { findAll, findCategoryByNameLike } from "@/api/common/category";
+import { findAll } from "@/api/common/category";
 import { findByCategory, findAll as findAllPosts } from "@/api/post/post";
-import { searchCategorySuggestions } from "@/api/search/es";
+import { searchCategorySuggestions, searchPosts } from "@/api/search/es";
 import PostListItem from "@/components/blog/post/PostListItem.vue";
 
 const searchQuery = ref("");
@@ -31,43 +30,21 @@ const loadCategories = async () => {
       }));
 
       // 如果有分类且当前没有选中的分类，自动选中第一个
-      if (categoriesTree.value.length > 0 && !selectedCategory.value) {
-        selectedCategory.value = categoriesTree.value[0].category;
-        await loadPosts();
+      if (categoriesTree.value.length > 0) {
+        if (!selectedCategory.value) {
+          selectedCategory.value = categoriesTree.value[0].category;
+        }
+        await loadPosts(); // 无论是否选中新分类，都重新加载文章
+      } else {
+        ElMessage.warning("暂无分类数据");
       }
     }
   } catch (error) {
+    console.error("加载分类失败:", error);
     ElMessage.error("加载分类失败");
   } finally {
     loading.value = false;
   }
-};
-
-// 构建分类树
-const buildCategoryTree = (categories) => {
-  const tree = [];
-  const map = {};
-
-  categories.forEach((category) => {
-    map[category.id] = {
-      ...category,
-      children: [],
-    };
-  });
-
-  categories.forEach((category) => {
-    const node = map[category.id];
-    if (category.parentId) {
-      const parent = map[category.parentId];
-      if (parent) {
-        parent.children.push(node);
-      }
-    } else {
-      tree.push(node);
-    }
-  });
-
-  return tree;
 };
 
 // 处理分类点击
@@ -82,19 +59,98 @@ const viewPosts = (data) => {
   loadPosts();
 };
 
+// 提取的数据转换方法
+const transformPostData = (rawData) => {
+  if (!Array.isArray(rawData)) {
+    console.warn("rawData is not an array, returning empty array");
+    return [];
+  }
+  return rawData.map((item) => ({
+    id: item.post.postId,
+    title: item.post.title,
+    content: item.post.content,
+    cover: item.post.coverImage,
+    excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
+    category: item.category?.categoryId
+      ? {
+          categoryId: item.category.categoryId,
+          name: item.category.name,
+        }
+      : null,
+    tags: item.tags?.map((tag) => tag.name) || [],
+    views: item.post.views || 0,
+    likes: item.post.likes || 0,
+    comments: item.comments?.length || 0,
+    createTime: item.post.createdAt,
+    author: item.author,
+    userId: item.post.userId,
+
+    highlightTitle: item.post.title,
+    highlightContent: item.post.content,
+  }));
+};
+
 // 搜索处理
-const handleSearch = async () => {
-  if (!searchQuery.value) {
-    await loadCategories();
+const handleSearch = async (selectedItem) => {
+  // 统一获取查询内容
+  let query =
+    typeof selectedItem === "string"
+      ? selectedItem
+      : selectedItem?.value || searchQuery.value;
+
+  if (!query) {
+    if (selectedCategory.value) {
+      await loadPosts();
+    } else {
+      await loadCategories();
+    }
     return;
   }
+
   loading.value = true;
   try {
-    const response = await findCategoryByNameLike(searchQuery.value);
-    if (response.data?.status === 200) {
-      categoriesTree.value = buildCategoryTree(response.data.data);
+    // 检查是否是分类（自动补全选择时）
+    const isCategorySuggestion = categoriesTree.value.some(
+      (item) =>
+        item.category.name === query ||
+        item.children?.some((child) => child.category.name === query)
+    );
+
+    if (isCategorySuggestion) {
+      // 处理分类选择
+      const matchedCategory = categoriesTree.value.find(
+        (item) =>
+          item.category.name === query ||
+          item.children?.some((child) => child.category.name === query)
+      );
+      if (matchedCategory) {
+        selectedCategory.value = matchedCategory.category;
+        await loadPosts();
+      }
+    } else {
+      // 处理手动输入的搜索（构建完整查询）
+      let finalQuery = query;
+
+      // 如果已选分类但查询中未指定@分类，自动附加分类条件
+      if (selectedCategory.value && !query.includes("@")) {
+        finalQuery = `@${selectedCategory.value.name}@ ${query}`;
+      }
+      // 如果输入的是纯标签（以#开头），保持原样
+      else if (query.startsWith("#")) {
+        finalQuery = query;
+      }
+      // 其他情况直接使用原查询
+
+      console.log("Final search query:", finalQuery); // 调试用
+
+      const response = await searchPosts(finalQuery, 0, 10);
+      if (response.data?.status === 200) {
+        categoryPosts.value = transformPostData(response.data.data.content);
+        // 保持当前分类选中状态
+      }
     }
   } catch (error) {
+    console.error("搜索失败:", error);
     ElMessage.error("搜索失败");
   } finally {
     loading.value = false;
@@ -124,40 +180,50 @@ const querySearchAsync = async (queryString, cb) => {
 
 // 加载文章，根据是否有选中分类决定加载分类文章还是全部文章
 const loadPosts = async () => {
+  if (!selectedCategory.value?.categoryId) {
+    categoryPosts.value = [];
+    total.value = 0;
+    return;
+  }
+
   loading.value = true;
   try {
     let response;
-    if (selectedCategory.value) {
-      response = await findByCategory(selectedCategory.value.name);
+    // 组合搜索：当前分类 + 搜索关键词
+    if (searchQuery.value) {
+      response = await searchPosts(
+        `@${selectedCategory.value.name}@ ${searchQuery.value}`,
+        currentPage.value - 1,
+        pageSize.value
+      );
     } else {
-      response = await findAllPosts();
+      // 仅按分类搜索
+      response = await findByCategory(
+        selectedCategory.value.name,
+        currentPage.value - 1,
+        pageSize.value
+      );
     }
+
     if (response.data?.status === 200) {
-      // 确保数据格式与 PostListItem 组件期望的一致
-      categoryPosts.value = response.data.data.map((item) => ({
-        id: item.post.postId,
-        title: item.post.title,
-        content: item.post.content,
-        cover: item.post.coverImage,
-        excerpt:
-          item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
-        category: item.category?.categoryId
-          ? {
-              categoryId: item.category.categoryId,
-              name: item.category.name,
-            }
-          : null,
-        tags: item.tags?.map((tag) => tag.name) || [],
-        views: item.post.views || 0,
-        likes: item.post.likes || 0,
-        comments: item.comments?.length || 0,
-        createTime: item.post.createdAt,
-        author: item.author,
-        userId: item.post.userId,
-      }));
+      const data = response.data.data;
+      if (data.content) {
+        categoryPosts.value = transformPostData(data.content);
+        total.value = data.totalElements;
+      } else {
+        categoryPosts.value = transformPostData(data);
+        total.value = data.length;
+      }
+
+      if (categoryPosts.value.length === 0) {
+        ElMessage.info("该分类下暂无文章");
+      }
     }
   } catch (error) {
+    console.error("加载文章失败:", error);
     ElMessage.error("加载文章失败");
+    categoryPosts.value = [];
+    total.value = 0;
   } finally {
     loading.value = false;
   }
@@ -166,11 +232,53 @@ const loadPosts = async () => {
 onMounted(() => {
   loadCategories();
 });
+
+/**
+ * 搜索框监视器
+ */
+watch(searchQuery, (newVal) => {
+  if (!newVal || newVal.trim() === "") {
+    if (selectedCategory?.categoryId) {
+      // 有选中的分类，获取对应文章
+      loadPosts();
+    } else {
+      // 没有选中的分类，重新加载所有分类
+      loadCategories();
+    }
+  }
+});
+
+/**
+ * 排序计算属性
+ */
+const sortedPosts = computed(() => {
+  if (!categoryPosts.value.length) return [];
+
+  return [...categoryPosts.value].sort((a, b) => {
+    switch (sortBy.value) {
+      case "newest":
+        return new Date(b.createTime) - new Date(a.createTime);
+      case "views":
+        return b.views - a.views;
+      case "likes":
+        return b.likes - a.likes;
+      default:
+        return 0;
+    }
+  });
+});
+
+/**
+ * 分页
+ */
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
 </script>
 
 <template>
   <div class="app-container">
-    <div class="categories-wrapper">
+    <div class="categories-wrapper" v-loading="loading">
       <!-- 左侧分类和搜索 -->
       <div class="left-sidebar">
         <el-card shadow="hover" class="category-card">
@@ -179,19 +287,26 @@ onMounted(() => {
               <h3>
                 <el-icon><Reading /></el-icon> 分类浏览
               </h3>
-              <el-autocomplete
-                v-model="searchQuery"
-                :fetch-suggestions="querySearchAsync"
-                placeholder="搜索分类..."
-                class="search-input"
-                clearable
-                @select="handleSearch"
-                size="large"
-              >
-                <template #prefix>
-                  <el-icon><Search /></el-icon>
-                </template>
-              </el-autocomplete>
+              <div style="display: flex; gap: 10px">
+                <el-autocomplete
+                  v-model="searchQuery"
+                  :fetch-suggestions="querySearchAsync"
+                  placeholder="搜索分类..."
+                  class="search-input"
+                  clearable
+                  @select="handleSearch"
+                  @keyup.enter="handleSearch"
+                  @clear="handleSearch"
+                  size="large"
+                >
+                  <template #prefix>
+                    <el-icon><Search /></el-icon>
+                  </template>
+                </el-autocomplete>
+                <el-button @click="handleSearch" type="primary" size="large"
+                  >搜索</el-button
+                >
+              </div>
             </div>
           </template>
 
@@ -229,12 +344,16 @@ onMounted(() => {
 
       <!-- 右侧文章列表 -->
       <div class="right-content">
-        <el-card shadow="hover" class="posts-card" v-if="selectedCategory">
+        <el-card
+          shadow="hover"
+          class="posts-card"
+          v-if="selectedCategory?.categoryId || categoryPosts.length > 0"
+        >
           <template #header>
             <div class="posts-header">
               <div class="category-header">
                 <h2 class="category-title">
-                  {{ selectedCategory.name }}
+                  {{ selectedCategory?.name }}
                 </h2>
                 <span class="posts-total">{{ categoryPosts.length }} 篇文章</span>
               </div>
@@ -260,7 +379,18 @@ onMounted(() => {
           />
 
           <div v-else class="posts-list">
-            <PostListItem :posts="categoryPosts" :show-keyword="false" />
+            <PostListItem :posts="sortedPosts" :show-keyword="false" />
+
+            <el-pagination
+              v-if="total > 0"
+              v-model:current-page="currentPage"
+              v-model:page-size="pageSize"
+              :total="total"
+              :page-sizes="[10, 20, 50]"
+              layout="total, sizes, prev, pager, next"
+              @size-change="loadPosts"
+              @current-change="loadPosts"
+            />
           </div>
         </el-card>
 
@@ -625,6 +755,13 @@ onMounted(() => {
 
   .posts-grid {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+  }
+}
+.posts-list {
+  .pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
   }
 }
 </style>

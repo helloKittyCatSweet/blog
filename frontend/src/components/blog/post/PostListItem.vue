@@ -59,14 +59,15 @@ const handleImageError = (event) => {
   event.target.src = getRandomCover();
 };
 
+const defaultCoverImages = [
+  "/covers/book_cover.jpg",
+  "/covers/frame_cover.jpg",
+  "/covers/picture_cover.jpg",
+  "/covers/shell_cover.jpg",
+  "/covers/star_cover.jpg",
+];
+
 const getRandomCover = () => {
-  const defaultCoverImages = [
-    "/covers/book_cover.jpg",
-    "/covers/frame_cover.jpg",
-    "/covers/picture_cover.jpg",
-    "/covers/shell_cover.jpg",
-    "/covers/star_cover.jpg",
-  ];
   const randomIndex = Math.floor(Math.random() * defaultCoverImages.length);
   return defaultCoverImages[randomIndex];
 };
@@ -136,7 +137,7 @@ const handlePostClick = (post) => {
             </div>
           </div>
         </div>
-        <div class="post-thumbnail" v-if="post.cover">
+        <div class="post-thumbnail">
           <el-image
             :src="post.cover || getRandomCover()"
             :alt="post.title"

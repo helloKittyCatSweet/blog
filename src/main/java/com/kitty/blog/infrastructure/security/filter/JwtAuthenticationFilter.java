@@ -1,6 +1,7 @@
 package com.kitty.blog.infrastructure.security.filter;
 
 import com.kitty.blog.application.dto.user.LoginResponseDto;
+import com.kitty.blog.domain.service.auth.UserTokenManager;
 import com.kitty.blog.infrastructure.security.JwtTokenUtil;
 import com.kitty.blog.infrastructure.utils.AuthenticationUtils;
 import jakarta.servlet.FilterChain;
@@ -31,12 +32,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private UserDetailsService userDetailsService;
 
+    @Autowired
+    private UserTokenManager userTokenManager;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String jwt = null;
-        String username = null;
 
         // 先尝试从URL参数获取token
         jwt = request.getParameter("token");
@@ -52,6 +55,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // 如果获取到了token，进行验证
         if (jwt != null) {
             Authentication auth = AuthenticationUtils.authenticateToken(jwt, jwtService, userDetailsService);
+            // 检查token是否在黑名单中
+            if (!userTokenManager.isTokenValid(jwt)){
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("Token is invalid or expired");
+                return;
+            }
             if (auth != null) {
                 ((UsernamePasswordAuthenticationToken) auth)
                         .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

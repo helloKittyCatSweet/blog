@@ -19,6 +19,9 @@ import {
   findByUserId,
   deleteById,
 } from "@/api/post/favorite";
+import { useRoute } from "vue-router";
+
+const route = useRoute();
 
 const loading = ref(false);
 const favorites = ref([]);
@@ -200,6 +203,13 @@ const handleCurrentChange = (val) => {
 
 onMounted(async () => {
   await getFolders();
+
+    // Add query parameter handling
+    const folderFromQuery = route.query.folder;
+  if (folderFromQuery && folders.value.includes(folderFromQuery)) {
+    currentFolder.value = folderFromQuery;
+  }
+
   await getFavoriteList();
   await getFolderStats();
 });

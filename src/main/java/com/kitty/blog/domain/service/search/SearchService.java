@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.elasticsearch._types.query_dsl.TermQuery;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
@@ -19,6 +20,7 @@ import com.kitty.blog.domain.model.search.TagIndex;
 import com.kitty.blog.domain.model.tag.Tag;
 import com.kitty.blog.domain.repository.search.PostIndexRepository;
 import com.kitty.blog.domain.service.post.PostService;
+import com.kitty.blog.infrastructure.converter.StringConverter;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -135,116 +139,145 @@ public class SearchService {
             String tags;
             String category;
 
-            // # -> tags
-            if (keyword.contains("#")) {
-                String[] parts = keyword.split("#");
-                keyword = parts[0].trim();
-                tags = parts.length > 1 ? parts[1].trim() : null;
+            // 使用正则表达式提取标签和分类
+            Pattern tagPattern = Pattern.compile("#([^#@]+)#");
+            Pattern categoryPattern = Pattern.compile("@([^#@]+)@");
+
+            // 提取标签 (#tag1,tag2#)
+            Matcher tagMatcher = tagPattern.matcher(keyword);
+            if (tagMatcher.find()) {
+                tags = tagMatcher.group(1).trim();
+                keyword = keyword.replace(tagMatcher.group(0), "").trim();
             } else {
-                tags = null;
+                tags = "";
             }
 
-            // @ -> category
-            if (keyword.contains("@")) {
-                String[] parts = keyword.split("@");
-                keyword = parts[0].trim();
-                category = parts.length > 1 ? parts[1].trim() : null;
+            // 提取分类 (@category@)
+            Matcher categoryMatcher = categoryPattern.matcher(keyword);
+            if (categoryMatcher.find()) {
+                category = categoryMatcher.group(1).trim();
+                keyword = keyword.replace(categoryMatcher.group(0), "").trim();
             } else {
-                category = null;
+                category = "";
             }
 
-            String finalKeyword = keyword;
+            String finalKeyword = StringConverter.convertUpperCaseToLowerCase(keyword.trim());
+            log.info("Search keyword: {}, tags: {}, category: {}", finalKeyword, tags, category);
 
-            // create base queries
-            List<Query> queries = new ArrayList<>();
+            // 主查询构建
+            BoolQuery.Builder boolQueryBuilder = QueryBuilders.bool();
 
-            // 标题搜索：使用模糊匹配和通配符
-            queries.add(Query.of(q -> q
-                    .bool(b -> b
-                            .should(s -> s
-                                    .match(m -> m
-                                            .field("title")
-                                            .query(finalKeyword)
-                                            .boost(3.0f)))
-                            .should(s -> s
-                                    .wildcard(w -> w
-                                            .field("title")
-                                            .value("*" + finalKeyword + "*")
-                                            .boost(2.0f)))
-                            .should(s -> s
-                                    .fuzzy(f -> f
-                                            .field("title")
-                                            .value(finalKeyword)
-                                            .boost(1.5f))))));
+            /**
+             * 必须满足的条件(filter)
+             */
+            List<Query> mustQueries = new ArrayList<>();
 
-            // Tag query(when tags specified)
-            if (tags != null && !tags.isEmpty()) {
-                queries.add(Query.of(q -> q
-                        .terms(t -> t
-                                .field("tags")
-                                .terms(ts -> ts.value(
-                                                Arrays.stream(tags.split(","))
-                                                        // 使用FieldValue.of创建值
-                                                        .map(tsv -> FieldValue.of(tsv.trim()))
-                                                        .collect(Collectors.toList())
-                                        )
-                                )
-                                .boost(5.0f)
-                        )));
-            } else {
-                queries.add(Query.of(q -> q
-                        .match(m -> m
-                                .field("tags")
-                                .query(finalKeyword))));
-            }
-
-            // Category query(when category specified)
-            if (category != null && !category.isEmpty()) {
-                queries.add(Query.of(q -> q
+            // 分类过滤
+            if (!category.isEmpty()) {
+                mustQueries.add(Query.of(q -> q
                         .match(m -> m
                                 .field("category")
                                 .query(category)
-                                .boost(4.0f))));
-            } else {
-                queries.add(Query.of(q -> q
-                        .match(m -> m
-                                .field("category")
-                                .query(finalKeyword))));
+                        )
+                ));
             }
 
-            // 摘要搜索：使用模糊匹配
-            queries.add(Query.of(q -> q
-                    .bool(b -> b
-                            .should(s -> s
-                                    .match(m -> m
-                                            .field("summary")
-                                            .query(finalKeyword)
-                                            .boost(2.0f)))
-                            .should(s -> s
-                                    .fuzzy(f -> f
-                                            .field("summary")
-                                            .value(finalKeyword))))));
+            // 标签过滤
+            if (!tags.isEmpty()) {
+                mustQueries.add(Query.of(q -> q
+                        .terms(t -> t
+                                .field("tags")
+                                .terms(ts -> ts.value(
+                                        Arrays.stream(tags.split(","))
+                                                .map(tsv -> FieldValue.of(tsv.trim()))
+                                                .collect(Collectors.toList())
+                                ))
+                        )
+                ));
+            }
 
-            // 内容搜索：使用模糊匹配
-            queries.add(Query.of(q -> q
-                    .bool(b -> b
-                            .should(s -> s
-                                    .match(m -> m
-                                            .field("content")
-                                            .query(finalKeyword)))
-                            .should(s -> s
-                                    .fuzzy(f -> f
-                                            .field("content")
-                                            .value(finalKeyword))))));
+            // 添加必须条件
+            if (!mustQueries.isEmpty()) {
+                boolQueryBuilder.must(mustQueries);
+            }
 
-            BoolQuery boolQuery = BoolQuery.of(b -> b
-                    .should(queries)
-                    .minimumShouldMatch("1") // 至少匹配1个条件
-            );
+            /**
+             * 应该满足的条件(should) - 关键字搜索
+             */
+            if (!finalKeyword.isEmpty()) {
+                List<Query> shouldQueries = new ArrayList<>();
+
+                // 标题搜索：使用模糊匹配和通配符
+                shouldQueries.add(Query.of(q -> q
+                        .bool(b -> b
+                                .should(s -> s
+                                        .match(m -> m
+                                                .field("title")
+                                                .query(finalKeyword)
+                                                .boost(3.0f)))
+                                .should(s -> s
+                                        .wildcard(w -> w
+                                                .field("title")
+                                                .value("*" + finalKeyword + "*")
+                                                .boost(2.0f)))
+                                .should(s -> s
+                                        .fuzzy(f -> f
+                                                .field("title")
+                                                .value(finalKeyword)
+                                                .boost(1.5f))))));
+
+                // Tag query(when tags are not specified)
+                if (tags == null || tags.isEmpty()) {
+                    shouldQueries.add(Query.of(q -> q
+                            .match(m -> m
+                                    .field("tags")
+                                    .query(finalKeyword))));
+                }
+
+                // Category query(when category is not specified)
+                if (category == null || category.isEmpty()) {
+                    shouldQueries.add(Query.of(q -> q
+                            .match(m -> m
+                                    .field("category")
+                                    .query(finalKeyword))));
+                }
+
+                // 摘要搜索：使用模糊匹配
+                shouldQueries.add(Query.of(q -> q
+                        .bool(b -> b
+                                .should(s -> s
+                                        .match(m -> m
+                                                .field("summary")
+                                                .query(finalKeyword)
+                                                .boost(2.0f)))
+                                .should(s -> s
+                                        .fuzzy(f -> f
+                                                .field("summary")
+                                                .value(finalKeyword))))));
+
+                // 内容搜索：使用模糊匹配
+                shouldQueries.add(Query.of(q -> q
+                        .bool(b -> b
+                                .should(s -> s
+                                        .match(m -> m
+                                                .field("content")
+                                                .query(finalKeyword)))
+                                .should(s -> s
+                                        .fuzzy(f -> f
+                                                .field("content")
+                                                .value(finalKeyword))))));
+
+                boolQueryBuilder.must(Query.of(q -> q
+                        .bool(b -> b
+                                .should(shouldQueries)
+                                .minimumShouldMatch("1")
+                        )
+                ));
+            }
 
             SearchResponse<PostIndex> response = client.search(s -> s
                             .index("posts")
-                            .query(q -> q.bool(boolQuery))
+                            .query(q -> q.bool(boolQueryBuilder.build()))
                             .highlight(h -> h
                                     .fields("title", HighlightField.of(f -> f
                                             .preTags("<em class=\"highlight\">")
