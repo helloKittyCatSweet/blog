@@ -2,15 +2,18 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import * as echarts from "echarts";
-import { Document, View, ChatRound, Star, User } from "@element-plus/icons-vue";
+import { Document, View, ChatRound, Star, User, Reading } from "@element-plus/icons-vue";
 import {
   getDashboardStats,
   getMonthlyStats,
   getInteractionStats,
   getRecentPosts,
 } from "@/api/post/post";
+import { getAuthorAnalytics } from "@/api/post/authorAnalytics";
 import { ElMessage } from "element-plus";
 import { USER_POST_LIST_PATH } from "@/constants/routes/user.js";
+import { BLOG_POST_DETAIL_PATH } from "@/constants/routes/blog";
+import AuthorAnalytics from "@/components/user/AuthorAnalytics.vue";
 
 const router = useRouter();
 const postChartRef = ref(null);
@@ -59,6 +62,11 @@ const fetchRecentPosts = async () => {
   } catch (error) {
     ElMessage.error("获取最近文章失败");
   }
+};
+
+// 文章路由跳转
+const goToPostDetail = (postId) => {
+  router.push(BLOG_POST_DETAIL_PATH.replace(":id", postId));
 };
 
 // 初始化文章数据图表
@@ -165,10 +173,19 @@ const initInteractionChart = async () => {
 
 // 监听窗口大小变化，重绘图表
 const handleResize = () => {
-  const postChart = echarts.init(postChartRef.value);
-  const interactionChart = echarts.init(interactionChartRef.value);
-  postChart.resize();
-  interactionChart.resize();
+  if (postChartRef.value) {
+    const postChart = echarts.getInstanceByDom(postChartRef.value);
+    if (postChart) {
+      postChart.resize();
+    }
+  }
+
+  if (interactionChartRef.value) {
+    const interactionChart = echarts.getInstanceByDom(interactionChartRef.value);
+    if (interactionChart) {
+      interactionChart.resize();
+    }
+  }
 };
 
 onMounted(async () => {
@@ -258,6 +275,9 @@ const tableHeaderStyle = {
       </el-card>
     </div>
 
+    <!-- 添加作者写作建议卡片 -->
+    <AuthorAnalytics />
+
     <!-- 最近文章 -->
     <el-card class="recent-posts" shadow="hover">
       <template #header>
@@ -279,11 +299,7 @@ const tableHeaderStyle = {
       >
         <el-table-column prop="title" label="标题">
           <template #default="{ row }">
-            <el-link
-              type="primary"
-              :underline="false"
-              @click="router.push(`/post/${row.id}`)"
-            >
+            <el-link type="primary" :underline="false" @click="goToPostDetail(row.id)">
               {{ row.title }}
             </el-link>
           </template>
@@ -449,6 +465,83 @@ const tableHeaderStyle = {
   }
 
   .chart-card {
+    background-color: var(--el-bg-color);
+  }
+}
+
+.analytics-card {
+  margin-bottom: 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.analytics-content {
+  padding: 20px 16px;
+}
+
+.suggestions-list {
+  .suggestion-card {
+    margin-bottom: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateX(5px);
+    }
+
+    &.primary {
+      border-left: 4px solid var(--el-color-primary);
+    }
+
+    &.success {
+      border-left: 4px solid var(--el-color-success);
+    }
+
+    &.warning {
+      border-left: 4px solid var(--el-color-warning);
+    }
+
+    &.danger {
+      border-left: 4px solid var(--el-color-danger);
+    }
+  }
+
+  .suggestion-text {
+    margin: 0;
+    line-height: 1.8;
+    color: var(--el-text-color-primary);
+    white-space: pre-line;
+    font-size: 14px;
+  }
+}
+
+:deep(.el-timeline) {
+  padding-left: 16px;
+}
+
+:deep(.el-timeline-item__node) {
+  width: 16px;
+  height: 16px;
+  left: -1px;
+}
+
+:deep(.el-timeline-item__tail) {
+  left: 7px;
+}
+
+:deep(.el-timeline-item__timestamp) {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  margin-bottom: 8px;
+}
+
+:deep(.el-timeline-item__content) {
+  margin-left: 24px;
+}
+
+/* 适配暗色主题 */
+:deep(.dark) {
+  .suggestion-card {
     background-color: var(--el-bg-color);
   }
 }

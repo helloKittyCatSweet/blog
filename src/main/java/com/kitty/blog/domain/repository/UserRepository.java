@@ -159,4 +159,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT u FROM User u WHERE u.username LIKE %?1% OR u.email LIKE %?1% AND u.isDeleted = false")
     Optional<List<User>> findUserByUsernameAndEmail(String keyword);
+
+    List<User> findByUserIdIn(List<Integer> userIds);
 }

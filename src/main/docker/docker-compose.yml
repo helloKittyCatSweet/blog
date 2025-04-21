@@ -48,9 +48,29 @@ services:
       - NODE_OPTIONS=--openssl-legacy-provider
     networks:
       - elk-network
+  
+  redis:
+    image: redis:7.2
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - elk-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 volumes:
   elasticsearch_data:
+  redis_data:
 
 networks:
   elk-network:
