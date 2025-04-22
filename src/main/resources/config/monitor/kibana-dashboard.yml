@@ -1,0 +1,164 @@
+blog:
+  monitor:
+    kibana:
+      url: http://localhost:5601
+      username: elastic
+      password: 123456
+      version: "8.11.1"
+      security:
+        enabled: true
+        ssl:
+          enabled: false
+        authentication:
+          provider: basic
+        session:
+          timeout: 1h
+        sandbox:
+          enabled: false
+      indexPatterns:
+        - title: "blog-api-metrics-*"
+          name: "API指标监控"
+          timeFieldName: "@timestamp"
+          fields:
+            response_time:
+              type: "double"
+              searchable: true
+              aggregatable: true
+        - title: "blog-error-logs-*"
+          name: "错误日志监控"
+          timeFieldName: "@timestamp"
+          fields:
+            error_count:
+              type: "long"
+              searchable: true
+              aggregatable: true
+            error_type:
+              type: "keyword"
+              searchable: true
+              aggregatable: true
+        - title: "blog-user-activity-*"
+          name: "用户活动监控"
+          timeFieldName: "@timestamp"
+          fields:
+            user_count:
+              type: "long"
+              searchable: true
+              aggregatable: true
+        - title: "blog-post-metrics-*"
+          name: "文章指标监控"
+          timeFieldName: "@timestamp"
+          fields:
+            view_count:
+              type: "long"
+              searchable: true
+              aggregatable: true
+            post_title:
+              type: "keyword"
+              searchable: true
+              aggregatable: true
+        - title: "blog-system-metrics-*"
+          name: "系统资源监控"
+          timeFieldName: "@timestamp"
+          fields:
+            cpu_usage:
+              type: "double"
+              searchable: true
+              aggregatable: true
+            memory_used:
+              type: "double"
+              searchable: true
+              aggregatable: true
+
+      dashboards:
+        - title: "博客系统性能监控"
+          description: "监控系统整体性能指标"
+          visualizations:
+            - title: "API响应时间趋势"
+              type: "line"
+              index: "blog-api-metrics-*"
+              metrics:
+                field: "response_time"
+                aggregation: "avg"
+              buckets:
+                date_histogram:
+                  field: "@timestamp"
+                  interval: "1m"
+
+            - title: "错误率统计"
+              type: "pie"
+              index: "blog-error-logs-*"
+              metrics:
+                field: "error_count"
+                aggregation: "sum"
+              buckets:
+                terms:
+                  field: "error_type"
+                  size: 10
+
+        - title: "用户行为分析"
+          description: "监控用户活动和互动情况"
+          visualizations:
+            - title: "活跃用户趋势"
+              type: "line"
+              index: "blog-user-activity-*"
+              metrics:
+                field: "user_count"
+                aggregation: "cardinality"
+              buckets:
+                date_histogram:
+                  field: "@timestamp"
+                  interval: "1h"
+
+            - title: "热门文章排行"
+              type: "bar"
+              index: "blog-post-metrics-*"
+              metrics:
+                field: "view_count"
+                aggregation: "sum"
+              buckets:
+                terms:
+                  field: "post_title"
+                  size: 10
+
+        - title: "系统资源监控"
+          description: "监控服务器资源使用情况"
+          visualizations:
+            - title: "CPU使用率"
+              type: "gauge"
+              index: "blog-system-metrics-*"
+              metrics:
+                field: "cpu_usage"
+                aggregation: "avg"
+
+            - title: "内存使用趋势"
+              type: "area"
+              index: "blog-system-metrics-*"
+              metrics:
+                field: "memory_used"
+                aggregation: "avg"
+              buckets:
+                date_histogram:
+                  field: "@timestamp"
+                  interval: "5m"
+      # 添加重试配置
+      retry:
+        max-attempts: 3
+        delay-millis: 1000
+        max-delay-millis: 5000
+
+      # 添加健康检查配置
+      health-check:
+        timeout-seconds: 30
+        interval-seconds: 5
+        max-attempts: 10
+
+  elasticsearch:
+    metrics:
+      enabled: true
+      index-prefix: blog-system-metrics
+      interval: 60
+      security:
+        username: elastic
+        password: 123456
+        ssl:
+          enabled: false

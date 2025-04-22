@@ -31,10 +31,16 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'element-plus': ['element-plus']
+          'element-plus': ['element-plus'],
+          'markdown': ['md-editor-v3'],
+          'echarts': ['echarts']
         }
       }
-    }
+    },
+    chunkSizeWarningLimit: 2000
+  },
+  optimizeDeps: {
+    include: ['element-plus', 'md-editor-v3', 'echarts']
   },
   resolve: {
     alias: {

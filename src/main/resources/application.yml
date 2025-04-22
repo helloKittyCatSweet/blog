@@ -1,3 +1,26 @@
 spring:
   profiles:
     active: dev
+  config:
+    import:
+      - optional:classpath:/config/monitor/kibana-dashboard.yml
+  elasticsearch:
+    host: localhost
+    port: 9200
+    username: elastic
+    password: 123456
+
+logstash:
+  host: localhost
+  port: 5000
+management:
+  endpoints:
+    web:
+      exposure:
+        include: metrics,health
+  metrics:
+    export:
+      elasticsearch:
+        enabled: true
+        index: blog-system-metrics
+        step: 60s

@@ -3,7 +3,7 @@ import { ref } from "vue";
 
 export const useSettingsStore = defineStore("free-share-settings", () => {
   const settings = ref({
-    theme: localStorage.getItem('theme') || 'light',
+    theme: 'light',
     notifications: true,
     githubAccount: "",
     csdnAccount: "",
@@ -21,7 +21,7 @@ export const useSettingsStore = defineStore("free-share-settings", () => {
   };
 
   const setSettings = (newSettings) => {
-    settings.value = { ...settings.value, ...newSettings };
+    settings.value = { ...newSettings };
   };
 
   // 重置方法

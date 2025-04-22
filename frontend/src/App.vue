@@ -1,13 +1,15 @@
 <script setup>
 import { RouterView } from "vue-router";
-import { ElConfigProvider } from "element-plus";
+import { ElConfigProvider, ElLoading } from "element-plus";
 import zhCn from "element-plus/es/locale/lang/zh-cn";
-import { useUserStore, useSettingsStore } from "./stores";
-import { computed, onMounted, ref } from "vue";
+import { useUserStore, useSettingsStore, useThemeStore } from "./stores";
+import { computed, onMounted, ref, provide } from "vue";
+import { useRouter } from "vue-router";
 
 const isLoading = ref(true);
 const userStore = useUserStore();
 const settingsStore = useSettingsStore();
+const themeStore = useThemeStore();
 
 onMounted(async () => {
   try {
@@ -15,10 +17,8 @@ onMounted(async () => {
     if (userStore.getToken()) {
       userStore.getUser();
     }
-    const savedTheme = localStorage.getItem("userTheme");
-    if (savedTheme) {
-      settingsStore.setTheme(savedTheme);
-    }
+    // 初始化主题
+    themeStore.setTheme(themeStore.currentTheme || "light");
   } catch (error) {
     console.error("获取用户信息失败:", error);
     // 可能需要清除 token 并跳转到登录页
@@ -30,6 +30,25 @@ onMounted(async () => {
 });
 
 const currentTheme = computed(() => `theme-${settingsStore.getTheme()}`);
+
+/**
+ * 全局加载
+ */
+
+const globalLoading = ref(false);
+provide("globalLoading", globalLoading);
+
+const router = useRouter();
+
+// 添加全局路由守卫
+router.beforeEach((to, from, next) => {
+  globalLoading.value = true;
+  next();
+});
+
+router.afterEach(() => {
+  globalLoading.value = false;
+});
 </script>
 
 <template>
@@ -42,6 +61,10 @@ const currentTheme = computed(() => `theme-${settingsStore.getTheme()}`);
         v-loading="true"
         element-loading-fullscreen
       ></div>
+      <!-- 添加全局加载状态 -->
+      <div v-if="globalLoading" class="global-loading-mask">
+        <el-loading></el-loading>
+      </div>
     </div>
   </el-config-provider>
 </template>
@@ -54,6 +77,19 @@ const currentTheme = computed(() => `theme-${settingsStore.getTheme()}`);
 
 .loading-container {
   height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.global-loading-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.7);
+  z-index: 9999;
   display: flex;
   justify-content: center;
   align-items: center;

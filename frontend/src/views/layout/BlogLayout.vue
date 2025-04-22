@@ -75,7 +75,7 @@ const handleUserCommand = async (command) => {
           <router-link to="/tags" :class="{ active: route.path.startsWith('/tags') }"
             >标签</router-link
           >
-          <FavoriteDropdown v-if="userStore.isLoggedIn"/>
+          <FavoriteDropdown v-if="userStore.isLoggedIn" />
           <router-link to="/about" :class="{ active: route.path.startsWith('/about') }"
             >关于</router-link
           >
@@ -100,9 +100,9 @@ const handleUserCommand = async (command) => {
 
     <main class="blog-main">
       <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
+        <keep-alive :include="['Home', 'PostList', 'Categories', 'Tags']">
           <component :is="Component" />
-        </transition>
+        </keep-alive>
       </router-view>
     </main>
 

@@ -45,3 +45,17 @@ app.component('font-awesome-icon', FontAwesomeIcon)
 app.directive('permission', permissionDirective)
 
 app.mount('#app')
+
+// 预加载常用组件
+const preloadComponents = () => {
+  const components = [
+    import('@/views/blog/Home.vue'),
+    import('@/views/blog/PostList.vue'),
+    import('@/views/blog/Categories.vue'),
+    import('@/views/blog/Tags.vue')
+  ]
+  return Promise.all(components)
+}
+
+// 在应用启动时预加载
+preloadComponents()

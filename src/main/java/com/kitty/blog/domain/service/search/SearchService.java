@@ -32,6 +32,8 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -48,6 +50,9 @@ public class SearchService {
 
     @Autowired
     private ApplicationContext applicationContext;
+
+    @Autowired
+    private ThreadPoolExecutor searchExecutor;
 
     @PostConstruct
     public void init() {
@@ -72,18 +77,20 @@ public class SearchService {
     }
 
     public void syncPostToEs(PostDto postDto) {
-        try {
-            PostIndex postIndex = convertToPostIndex(postDto);
-            client.index(i -> i
-                    .index("posts")
-                    .id(postDto.getPost().getPostId().toString())
-                    .document(postIndex)
-                    .refresh(Refresh.True) // 添加立即刷新选项
-            );
-            log.info("Synced post to ES: {}", postDto.getPost().getPostId());
-        } catch (Exception e) {
-            log.error("Failed to sync post to ES: {}", postDto.getPost().getPostId(), e);
-        }
+        CompletableFuture.runAsync(() -> {
+            try {
+                PostIndex postIndex = convertToPostIndex(postDto);
+                client.index(i -> i
+                        .index("posts")
+                        .id(postDto.getPost().getPostId().toString())
+                        .document(postIndex)
+                        .refresh(Refresh.True) // 添加立即刷新选项
+                );
+                log.info("Synced post to ES: {}", postDto.getPost().getPostId());
+            } catch (Exception e) {
+                log.error("Failed to sync post to ES: {}", postDto.getPost().getPostId(), e);
+            }
+        }, searchExecutor);
     }
 
     public void syncCategoryToEs(Category category) {

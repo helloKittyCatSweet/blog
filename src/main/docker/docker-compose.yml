@@ -6,35 +6,61 @@ services:
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-      - xpack.security.enabled=false
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=123456
+      - bootstrap.memory_lock=true
+      - cluster.name=docker-cluster
+      - network.host=0.0.0.0
+      - xpack.security.transport.ssl.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - "ELASTIC_USERNAME=elastic"
+      - KIBANA_SYSTEM_PASSWORD=kibana123
     ports:
       - "9201:9200"
       - "9300:9300"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
       - ./config/elasticsearch/plugins/analysis-ik:/usr/share/elasticsearch/plugins/analysis-ik
+      - ./config/elasticsearch/setup:/usr/share/elasticsearch/setup
     networks:
       - elk-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      test: ["CMD-SHELL", "curl -s -u elastic:123456 http://localhost:9200/_cluster/health || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 60s
+    ulimits:  # 添加系统限制
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
 
   logstash:
     image: logstash:8.11.1
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy  # 添加健康检查依赖
     ports:
       - "5000:5000"
     volumes:
       - ./config/logstash/logstash.yml:/usr/share/logstash/config/logstash.yml:ro # 标记为只读
       - ./config/logstash/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./config/logstash/templates:/usr/share/logstash/templates:ro
     environment:
       - "LS_JAVA_OPTS=-Xms256m -Xmx256m"
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=123456
     networks:
       - elk-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:9600 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   kibana:
     image: kibana:8.11.1
@@ -46,6 +72,8 @@ services:
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200 # 使用内部容器端口
       - NODE_OPTIONS=--openssl-legacy-provider
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=kibana123
     networks:
       - elk-network
   
@@ -68,9 +96,50 @@ services:
       retries: 3
       start_period: 10s
 
+  metricbeat:
+    image: elastic/metricbeat:8.11.1
+    user: root
+    volumes:
+      - ./config/metricbeat/metricbeat.yml:/usr/share/metricbeat/metricbeat.yml
+      - /proc:/hostfs/proc:ro
+      - /sys/fs/cgroup:/hostfs/sys/fs/cgroup:ro
+      - /:/hostfs:ro
+    depends_on:
+      - elasticsearch
+      - logstash
+    networks:
+      - elk-network
+  
+  filebeat:
+    image: elastic/filebeat:8.11.1
+    user: root
+    volumes:
+      - ./config/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
+      - ./logs:/var/log/blog
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      logstash:
+          condition: service_healthy
+    environment:
+      - ENVIRONMENT=dev
+      - ELASTIC_USERNAME=elastic  # 添加认证信息
+      - ELASTIC_PASSWORD=123456
+    networks:
+      - elk-network
+    command: >
+      bash -c "
+        chmod go-w /usr/share/filebeat/filebeat.yml &&
+        chown root:root /usr/share/filebeat/filebeat.yml &&
+        chmod 0644 /usr/share/filebeat/filebeat.yml &&
+        filebeat -e -strict.perms=false
+      "
+
 volumes:
   elasticsearch_data:
+    driver: local  # 指定卷驱动
   redis_data:
+    driver: local
 
 networks:
   elk-network:

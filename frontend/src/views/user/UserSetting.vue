@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, computed, nextTick } from "vue";
 import { ElMessage } from "element-plus";
 import PageContainer from "@/components/PageContainer.vue";
-import { useUserStore } from "@/stores";
+import { useUserStore, useThemeStore, useSettingsStore } from "@/stores";
 import { save, findByUserId } from "@/api/user/userSetting";
 import { Check } from "@element-plus/icons-vue";
 import { useRouter } from "vue-router";
@@ -10,6 +10,8 @@ import { useRouter } from "vue-router";
 const router = useRouter();
 
 const userStore = useUserStore();
+const themeStore = useThemeStore();
+const settingsStore = useSettingsStore();
 
 // 设置表单数据
 const settingForm = ref({
@@ -112,9 +114,6 @@ const handleSave = async () => {
     // 保存成功后更新原始表单数据
     originalForm.value = JSON.parse(JSON.stringify(settingForm.value));
 
-    // 使用 window.location.reload() 刷新页面
-    window.location.reload();
-
     ElMessage.success("设置保存成功");
   } catch (error) {
     if (error?.message) {
@@ -138,39 +137,8 @@ const THEMES = [
 
 // 主题切换函数
 const changeTheme = (theme) => {
-  // 设置根元素的主题类名
-  document.documentElement.className = `theme-${theme}`;
-  // 存储theme到localStorage
-  localStorage.setItem("theme", theme);
-
-  // 更新 Element Plus 主题
-  const html = document.documentElement;
-  const prevTheme = html.getAttribute("data-theme");
-  if (prevTheme) {
-    html.classList.remove(`el-theme-${prevTheme}`);
-  }
-  html.setAttribute("data-theme", theme);
-  html.classList.add(`el-theme-${theme}`);
-
-  // 触发主题变化事件
-  window.dispatchEvent(new CustomEvent("theme-change", { detail: theme }));
-
-  // 强制重新计算样式
-  requestAnimationFrame(() => {
-    const elements = document.getElementsByTagName("*");
-    for (let i = 0; i < elements.length; i++) {
-      const element = elements[i];
-      // 修改这里的检查方式
-      if (
-        typeof element.className === "string" &&
-        element.className.indexOf("el-") !== -1
-      ) {
-        element.style.transition = "none";
-        element.offsetHeight; // 触发重排
-        element.style.transition = "";
-      }
-    }
-  });
+  settingsStore.setTheme(theme);
+  themeStore.setTheme(theme);
 };
 
 // 监听主题变化
@@ -183,12 +151,8 @@ watch(
 
 // 在 onMounted 中初始化主题
 onMounted(() => {
-  // 从 localStorage 获取已保存的主题
-  const savedTheme = localStorage.getItem("theme");
-  if (savedTheme) {
-    settingForm.value.theme = savedTheme;
-    changeTheme(savedTheme);
-  }
+  // 从 store 获取当前主题
+  settingForm.value.theme = themeStore.currentTheme;
 
   // 确保用户信息已加载后再加载设置
   if (userStore.user?.id) {
@@ -196,15 +160,6 @@ onMounted(() => {
   } else {
     ElMessage.warning("正在加载用户信息，请稍后");
   }
-
-  // 添加主题变化的全局监听
-  window.addEventListener("theme-change", (event) => {
-    const theme = event.detail;
-    // 确保所有依赖主题的组件都能更新
-    nextTick(() => {
-      document.documentElement.setAttribute("data-theme", theme);
-    });
-  });
 });
 
 // 添加重置方法

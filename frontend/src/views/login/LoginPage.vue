@@ -2,7 +2,7 @@
 import { User, Lock } from "@element-plus/icons-vue";
 import { ref, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { ElMessage } from "element-plus";
-import { useUserStore, useSettingsStore } from "@/stores";
+import { useUserStore, useSettingsStore, useThemeStore } from "@/stores";
 import { useRouter, useRoute } from "vue-router";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import ResetPasswordDialog from "@/components/ResetPasswordDialog.vue";
@@ -11,11 +11,7 @@ import OAuthPasswordDialog from "@/components/OAuthPasswordDialog.vue";
 import { findByUserId } from "@/api/user/userSetting.js";
 
 // api
-import {
-  getCaptcha,
-  checkCaptcha,
-  getCurrentSessionId,
-} from "@/api/user/security/captcha.js";
+import { getCaptcha, checkCaptcha } from "@/api/user/security/captcha.js";
 import { login, register } from "@/api/user/user";
 import { verify, send } from "@/api/user/security/emailVerification";
 import { CONTROL_PANEL_PATH } from "@/constants/routes/base";
@@ -349,25 +345,23 @@ const autoLogin = async () => {
  */
 const loadUserTheme = async (userId) => {
   const settingsStore = useSettingsStore();
+  const themeStore = useThemeStore();
 
-  // 1. 先尝试从 localStorage 获取
-  const savedTheme = localStorage.getItem("userTheme");
-  if (savedTheme) {
-    settingsStore.setTheme(savedTheme);
-    return;
-  }
-
-  // 2. 如果没有，从 API 获取
   try {
     const { data } = await findByUserId(userId);
-    const theme = data.theme || "light";
-    settingsStore.setTheme(theme);
-    localStorage.setItem("userTheme", theme);
+    settingsStore.setSettings({
+      theme: data.theme,
+      notifications: data.notifications,
+      githubAccount: data.githubAccount,
+      csdnAccount: data.CSDNAccount || "",
+      bilibiliAccount: data.BiliBiliAccount || "",
+    });
+    themeStore.setTheme(data.theme || "light");
   } catch (error) {
     console.error("加载主题设置失败:", error);
     // 使用默认主题
     settingsStore.setTheme("light");
-    localStorage.setItem("userTheme", "light");
+    themeStore.setTheme("light");
   }
 };
 

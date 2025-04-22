@@ -41,8 +41,17 @@ spring:
         store_data_at_delete: true # 删除时是否存储数据
 
     jackson:
+      date-format: yyyy-MM-dd HH:mm:ss
+      time-zone: Asia/Shanghai
       serialization:
-        fail-on-empty-beans: false
+        write-dates-as-timestamps: false
+      deserialization:
+        fail-on-unknown-properties: false
+      default-property-inclusion: non_null
+      mapper:
+        accept-case-insensitive-enums: true
+      modules:
+        - com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 
   data:
     jpa:

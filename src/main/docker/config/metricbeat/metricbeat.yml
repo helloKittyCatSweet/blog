@@ -1,0 +1,32 @@
+metricbeat.modules:
+- module: system
+  metricsets: 
+    - cpu
+    - memory
+    - network
+    - process
+    - filesystem
+    - load
+  enabled: true
+  period: 10s
+  processes: ['.*']
+  cpu.metrics: ["percentages", "normalized_percentages"]
+  core.metrics: ["percentages"]
+
+- module: http
+  metricsets: ["json"]
+  period: 10s
+  hosts: ["localhost:8080"]
+  namespace: "blog"
+  path: "/actuator/metrics"
+  method: "GET"
+
+output.logstash:
+  hosts: ["logstash:5044"]
+  
+setup.kibana:
+  host: "kibana:5601"
+
+processors:
+  - add_host_metadata: ~
+  - add_cloud_metadata: ~
