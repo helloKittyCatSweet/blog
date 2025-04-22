@@ -19,6 +19,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.nio.charset.StandardCharsets;
 
@@ -91,39 +92,62 @@ public class KibanaInitializationService {
         });
     }
 
+
+    /**
+     * Create a new Kibana dashboard with the given title and description.
+     *
+     * @param dashboard The configuration of the dashboard to be created.
+     * @return The ID of the created dashboard, or null if the creation failed.
+     */
     private String createDashboard(KibanaMonitoringConfig.DashboardConfig dashboard) {
         try {
+            // 生成仪表板ID
+            String dashboardId = dashboard.getTitle().toLowerCase()
+                    .replaceAll("[^a-z0-9]", "_")
+                    .replaceAll("_+", "_")
+                    .replaceAll("^_|_$", "");
+
+            // 构建请求体
+            Map<String, Object> request = new HashMap<>();
+
+            // 构建 attributes
             Map<String, Object> attributes = new HashMap<>();
             attributes.put("title", dashboard.getTitle());
             attributes.put("description", dashboard.getDescription());
-            attributes.put("panelsJSON", "[]");
+            attributes.put("panelsJSON", "[]"); // 初始化为空数组，后续会添加可视化
             attributes.put("version", 1);
             attributes.put("timeRestore", false);
-            attributes.put("optionsJSON", objectMapper.writeValueAsString(Map.of(
-                    "useMargins", true,
-                    "hidePanelTitles", false)));
-            attributes.put("kibanaSavedObjectMeta", Map.of(
-                    "searchSourceJSON", objectMapper.writeValueAsString(Map.of(
-                            "query", Map.of("query", "", "language", "kuery"),
-                            "filter", List.of()))));
+            attributes.put("optionsJSON", "{\"useMargins\":true,\"hidePanelTitles\":false}");
 
-            ResponseEntity<Map> response = kibanaClient.create("dashboard", null, attributes, null);
+            // 构建 kibanaSavedObjectMeta
+            Map<String, Object> kibanaSavedObjectMeta = new HashMap<>();
+            kibanaSavedObjectMeta.put("searchSourceJSON", "{\"query\":{\"query\":\"\",\"language\":\"kuery\"},\"filter\":[]}");
+            attributes.put("kibanaSavedObjectMeta", kibanaSavedObjectMeta);
+
+            request.put("attributes", attributes);
+
+            // 发送创建请求
+            String url = "/api/saved_objects/dashboard/" + dashboardId;
+            HttpHeaders headers = getHeaders();
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
+            ResponseEntity<Map> response = kibanaClient.post(url, entity, Map.class);
 
             if (response.getStatusCode() == HttpStatus.OK) {
-                String dashboardId = (String) ((Map<?, ?>) response.getBody()).get("id");
                 log.info("创建仪表板成功: {} (ID: {})", dashboard.getTitle(), dashboardId);
                 return dashboardId;
+            } else {
+                log.error("创建仪表板失败: {} (状态码: {})", dashboard.getTitle(), response.getStatusCode());
+                return null;
             }
-            return null;
         } catch (Exception e) {
-            log.error("创建仪表板失败: {}", dashboard.getTitle(), e);
+            log.error("创建仪表板异常: {}", dashboard.getTitle(), e);
             return null;
         }
     }
 
     private void createAndAddVisualizations(KibanaMonitoringConfig.DashboardConfig dashboard, String dashboardId) {
         dashboard.getVisualizations().forEach(vis -> {
-            String visId = createVisualization(vis);
+            String visId = createLensVisualization(vis);
             if (visId != null) {
                 addVisualizationToDashboard(dashboardId, visId, vis);
             }
@@ -135,76 +159,71 @@ public class KibanaInitializationService {
             String url = "/api/saved_objects/dashboard/" + dashboardId;
             HttpHeaders headers = getHeaders();
 
-            // 获取当前仪表板的可视化图表
-            ResponseEntity<Map> response = kibanaClient.get(url, headers, Map.class);
-            Map<String, Object> dashboardAttributes = (Map<String, Object>) ((Map<?, ?>) response.getBody())
-                    .get("attributes");
+            ResponseEntity<Map> getResponse = kibanaClient.get(url, headers, Map.class);
+            Map<?, ?> dashboardResponse = (Map<?, ?>) getResponse.getBody();
+
+            String panelsJSON = (String) ((Map<?, ?>) dashboardResponse.get("attributes")).get("panelsJSON");
+            List<Map<String, Object>> panels = objectMapper.readValue(panelsJSON, PANELS_TYPE);
 
             // 构建面板配置
-            List<Map<String, Object>> panels = new ArrayList<>();
             List<Map<String, Object>> references = new ArrayList<>();
             int panelIndex = 0;
 
             for (KibanaMonitoringConfig.VisualizationConfig vis : dashboard.getVisualizations()) {
-                String visId = createVisualization(vis);
+                String visId = createLensVisualization(vis);
                 if (visId != null) {
                     // 计算面板位置
-                    int x = (panelIndex * 24) % 48;
-                    int y = (panelIndex / 2) * 15;
+                    int x = (panelIndex * 24) % 48; // 每行最多放置2个面板
+                    int y = (panelIndex / 2) * 15; // 每个面板高度为15
 
                     // 创建面板配置
                     Map<String, Object> panel = new HashMap<>();
-                    panel.put("version", "8.11.1");
-                    panel.put("type", "visualization");
+                    panel.put("version", monitoringConfig.getKibana().getVersion());
+                    // 使用lens类型而不是visualization
+                    panel.put("type", "lens");
                     panel.put("gridData", Map.of(
                             "x", x,
                             "y", y,
                             "w", 24,
                             "h", 15,
-                            "i", visId));
-                    panel.put("panelIndex", visId);
+                            "i", String.valueOf(panelIndex)));
+                    panel.put("panelIndex", String.valueOf(panelIndex));
                     panel.put("embeddableConfig", Map.of());
-                    panel.put("panelRefName", "panel_" + visId);
+
+                    // 使用正确的引用格式
+                    String panelRefName = "panel:" + visId;
+                    panel.put("panelRefName", panelRefName);
                     panels.add(panel);
 
-                    // 添加引用
+                    // 添加引用，使用正确的名称格式
                     references.add(Map.of(
-                            "name", "panel_" + visId,
-                            "type", "visualization",
-                            "id", visId));
+                            "id", visId,
+                            "name", panelRefName,
+                            "type", "lens"));
 
                     panelIndex++;
                 }
             }
 
-            // 更新仪表板属性
-            Map<String, Object> attributes = new HashMap<>();
-            attributes.put("title", dashboard.getTitle());
-            attributes.put("description", dashboard.getDescription());
-            attributes.put("version", 1);
-            attributes.put("panelsJSON", objectMapper.writeValueAsString(panels));
-            attributes.put("optionsJSON", objectMapper.writeValueAsString(Map.of(
-                    "useMargins", true,
-                    "hidePanelTitles", false)));
-            attributes.put("timeRestore", false);
-            attributes.put("kibanaSavedObjectMeta", Map.of(
-                    "searchSourceJSON", objectMapper.writeValueAsString(Map.of(
-                            "query", Map.of("query", "", "language", "kuery"),
-                            "filter", new ArrayList<>()))));
-
-            // 构建更新请求
+            // 更新仪表板配置
             Map<String, Object> updateRequest = new HashMap<>();
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("panelsJSON", objectMapper.writeValueAsString(panels));
             updateRequest.put("attributes", attributes);
             updateRequest.put("references", references);
 
             // 发送更新请求
-            String updateUrl = url + "?overwrite=true";
+            String updateUrl = "/api/saved_objects/dashboard/" + dashboardId;
             HttpEntity<Map<String, Object>> updateEntity = new HttpEntity<>(updateRequest, headers);
-            kibanaClient.put(updateUrl, updateEntity, Map.class);
+            ResponseEntity<String> updateResponse = kibanaClient.put(updateUrl, updateEntity, String.class);
 
-            log.info("更新仪表板可视化图表成功: {}", dashboard.getTitle());
+            if (updateResponse.getStatusCode() == HttpStatus.OK) {
+                log.info("更新仪表板可视化图表成功: {}", dashboard.getTitle());
+            } else {
+                log.error("更新仪表板可视化图表失败: {} (状态码: {})", dashboard.getTitle(), updateResponse.getStatusCode());
+            }
         } catch (Exception e) {
-            log.error("更新仪表板可视化图表失败: {}", dashboard.getTitle(), e);
+            log.error("更新仪表板可视化图表异常: {}", dashboard.getTitle(), e);
         }
     }
 
@@ -300,194 +319,256 @@ public class KibanaInitializationService {
         }
     }
 
-    private String createVisualization(KibanaMonitoringConfig.VisualizationConfig visualization) {
+    private String createLensVisualization(KibanaMonitoringConfig.VisualizationConfig visualization) {
         try {
-            String visId = "vis_" + visualization.getTitle()
-                    .toLowerCase()
+            // 确保生成唯一的ID
+            String title = visualization.getTitle();
+            if (title == null || title.trim().isEmpty()) {
+                title = "unnamed_visualization_" + System.currentTimeMillis();
+            }
+
+            String visId = "vis_" + title.toLowerCase()
                     .replaceAll("[^a-z0-9]", "_")
                     .replaceAll("_+", "_")
                     .replaceAll("^_|_$", "");
 
-            // 修改 API 路径
-            String url = "/api/saved_objects/visualization/" + visId;
+            // 添加随机后缀以确保唯一性
+            if (visId.equals("vis_") || visId.length() < 5) {
+                visId = "vis_" + UUID.randomUUID().toString().substring(0, 8);
+            }
+
+            // 使用lens API路径
+            String url = "/api/saved_objects/lens/" + visId;
 
             Map<String, Object> attributes = new HashMap<>();
             attributes.put("title", visualization.getTitle());
-            attributes.put("type", getKibanaVisualizationType(visualization.getType()));
+            attributes.put("description", "显示" + visualization.getTitle() + "图表");
+            attributes.put("visualizationType", getLensVisualizationType(visualization.getType()));
 
-            // Build visualization state
-            Map<String, Object> visState = new HashMap<>();
-            visState.put("title", visualization.getTitle());
-            visState.put("type", getKibanaVisualizationType(visualization.getType()));
-            visState.put("params", getVisualizationParams(visualization));
-            visState.put("aggs", createAggregations(visualization));
-            // 添加 Kibana 8.5.0 版本特定配置
-            visState.put("version", "8.5.0");
-            attributes.put("visState", objectMapper.writeValueAsString(visState));
+            // 构建Lens state
+            Map<String, Object> state = createLensState(visualization);
+            attributes.put("state", state);
 
-            // Build search source
-            Map<String, Object> searchSource = new HashMap<>();
-            searchSource.put("index", visualization.getIndex());
-            searchSource.put("query", Map.of("query", "", "language", "kuery", "query", ""));
-            searchSource.put("filter", List.of());
-            searchSource.put("version", "8.5.0");
-
-            // Add time range
-            Map<String, Object> timeRange = new HashMap<>();
-            timeRange.put("from", "now-24h");
-            timeRange.put("to", "now");
-            searchSource.put("timeRange", timeRange);
-
-            attributes.put("kibanaSavedObjectMeta", Map.of(
-                    "searchSourceJSON", objectMapper.writeValueAsString(searchSource)));
-            attributes.put("version", "8.5.0");
-
+            // 构建references
             List<Map<String, Object>> references = List.of(Map.of(
-                    "name", "kibanaSavedObjectMeta.searchSourceJSON.index",
-                    "type", "index-pattern",
-                    "id", visualization.getIndex()));
+                    "id", visualization.getIndex(),
+                    "name", "indexpattern-datasource-layer1-col1-col2",
+                    "type", "index-pattern"));
 
+            // 构建请求体
             Map<String, Object> request = new HashMap<>();
             request.put("attributes", attributes);
             request.put("references", references);
 
-            ResponseEntity<Map> response = kibanaClient.create("visualization", visId, attributes, references);
+            // 发送创建请求
+            HttpHeaders headers = getHeaders();
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
+
+            // 添加overwrite=true参数，以便在对象已存在时覆盖它
+            String urlWithParams = url + "?overwrite=true";
+            ResponseEntity<Map> response = kibanaClient.post(urlWithParams, entity, Map.class);
 
             if (response.getStatusCode() == HttpStatus.OK) {
-                log.info("Successfully created visualization: {}", visualization.getTitle());
+                log.info("成功创建Lens可视化: {} (ID: {})", visualization.getTitle(), visId);
                 return visId;
             } else {
-                log.error("Failed to create visualization: {} (status: {})", visualization.getTitle(),
-                        response.getStatusCode());
+                log.error("创建Lens可视化失败: {} (状态码: {})", visualization.getTitle(), response.getStatusCode());
                 return null;
             }
         } catch (Exception e) {
-            log.error("Error creating visualization: {} (error: {})", visualization.getTitle(), e.getMessage(), e);
+            log.error("创建Lens可视化异常: {} (错误: {})", visualization.getTitle(), e.getMessage(), e);
             return null;
         }
     }
 
-    private Map<String, Object> getVisualizationParams(
-            KibanaMonitoringConfig.VisualizationConfig visualization) {
-        return VisualizationParamsFactory.createParams(visualization);
-    }
-
-    private String getKibanaVisualizationType(String type) {
+    private String getLensVisualizationType(String type) {
         return switch (type) {
-            case "line", "area" -> "line";
-            case "bar" -> "histogram";
-            case "pie" -> "pie";
-            case "gauge" -> "gauge";
-            case "metric" -> "metric";
-            default -> type;
+            case "line", "area" -> "lnsXY";
+            case "bar" -> "lnsXY";
+            case "pie" -> "lnsPie";
+            case "gauge" -> "lnsGauge";
+            case "metric" -> "lnsMetric";
+            default -> "lnsXY";
         };
     }
 
-    private Map<String, Object> createAggregations(KibanaMonitoringConfig.VisualizationConfig visualization) {
-        Map<String, Object> aggs = new HashMap<>();
+    private Map<String, Object> createLensState(KibanaMonitoringConfig.VisualizationConfig visualization) {
+        Map<String, Object> state = new HashMap<>();
 
-        try {
-            if (visualization.getMetrics() != null) {
-                Map<String, Object> metricsAgg = new HashMap<>();
-                String aggType = (String) visualization.getMetrics().get("aggregation");
-                String field = (String) visualization.getMetrics().get("field");
+        // 构建datasourceStates
+        Map<String, Object> datasourceStates = new HashMap<>();
+        Map<String, Object> indexpattern = new HashMap<>();
+        Map<String, Object> layers = new HashMap<>();
 
-                if (aggType == null) {
-                    log.error("聚合类型不能为空: {}", visualization.getTitle());
-                    return aggs;
-                }
+        // 构建layer1
+        Map<String, Object> layer1 = new HashMap<>();
+        layer1.put("columnOrder", List.of("col1", "col2"));
 
-                metricsAgg.put("id", "1");
-                metricsAgg.put("enabled", true);
-                metricsAgg.put("type", aggType);
-                metricsAgg.put("schema", "metric");
+        // 构建columns
+        Map<String, Object> columns = new HashMap<>();
 
-                Map<String, Object> params = new HashMap<>();
-                if (!"count".equals(aggType)) {
-                    if (field == null) {
-                        log.error("字段名不能为空: {} (聚合类型: {})", visualization.getTitle(), aggType);
-                        return aggs;
-                    }
-                    params.put("field", field);
-                }
+        // 时间列或分组列
+        Map<String, Object> col1 = new HashMap<>();
+        if (visualization.getBuckets() != null && visualization.getBuckets().containsKey("date_histogram")) {
+            Map<String, Object> dateHistogram = (Map<String, Object>) visualization.getBuckets().get("date_histogram");
+            String field = (String) dateHistogram.get("field");
+            String interval = (String) dateHistogram.get("interval");
 
-                switch (aggType) {
-                    case "avg", "sum", "min", "max" -> params.put("customLabel", field);
-                    case "cardinality" -> {
-                        params.put("precision_threshold", 3000);
-                        params.put("customLabel", "Unique " + field);
-                    }
-                    case "count" -> params.put("customLabel", "Count");
-                    default -> {
-                        log.warn("未知的聚合类型: {} (图表: {})", aggType, visualization.getTitle());
-                        return aggs;
-                    }
-                }
+            col1.put("dataType", "date");
+            col1.put("isBucketed", true);
+            col1.put("label", "Time");
+            col1.put("operationType", "date_histogram");
+            col1.put("params", Map.of("interval", interval != null ? interval : "1m"));
+            col1.put("sourceField", field != null ? field : "@timestamp");
+        } else if (visualization.getBuckets() != null && visualization.getBuckets().containsKey("terms")) {
+            Map<String, Object> terms = (Map<String, Object>) visualization.getBuckets().get("terms");
+            String field = (String) terms.get("field");
+            Integer size = (Integer) terms.get("size");
 
-                metricsAgg.put("params", params);
-                aggs.put("1", metricsAgg);
-            }
-
-            if (visualization.getBuckets() != null) {
-                Map<String, Object> bucketConfig = visualization.getBuckets();
-                Map<String, Object> bucketsAgg = new HashMap<>();
-                bucketsAgg.put("id", "2");
-                bucketsAgg.put("enabled", true);
-                bucketsAgg.put("schema", "segment");
-
-                if (bucketConfig.containsKey("date_histogram")) {
-                    Map<String, Object> dateHistogram = (Map<String, Object>) bucketConfig.get("date_histogram");
-                    String field = (String) dateHistogram.get("field");
-                    String interval = (String) dateHistogram.get("interval");
-
-                    if (field == null || interval == null) {
-                        log.error("date_histogram配置错误: {} (field: {}, interval: {})",
-                                visualization.getTitle(), field, interval);
-                        return aggs;
-                    }
-
-                    bucketsAgg.put("type", "date_histogram");
-                    Map<String, Object> params = new HashMap<>();
-                    params.put("field", field);
-                    params.put("useNormalizedEsInterval", true);
-                    params.put("interval", interval);
-                    params.put("drop_partials", false);
-                    params.put("min_doc_count", 0);
-                    params.put("extended_bounds", Map.of());
-                    params.put("customLabel", "Time");
-                    bucketsAgg.put("params", params);
-
-                } else if (bucketConfig.containsKey("terms")) {
-                    Map<String, Object> terms = (Map<String, Object>) bucketConfig.get("terms");
-                    String field = (String) terms.get("field");
-                    Integer size = (Integer) terms.get("size");
-
-                    if (field == null) {
-                        log.error("terms配置错误: {} (field: {})", visualization.getTitle(), field);
-                        return aggs;
-                    }
-
-                    bucketsAgg.put("type", "terms");
-                    Map<String, Object> params = new HashMap<>();
-                    params.put("field", field);
-                    params.put("orderBy", "1");
-                    params.put("order", "desc");
-                    params.put("size", size != null ? size : 10);
-                    params.put("otherBucket", false);
-                    params.put("otherBucketLabel", "Other");
-                    params.put("missingBucket", false);
-                    params.put("missingBucketLabel", "Missing");
-                    params.put("customLabel", field);
-                    bucketsAgg.put("params", params);
-                }
-
-                aggs.put("2", bucketsAgg);
-            }
-        } catch (Exception e) {
-            log.error("创建聚合配置失败: {} (错误: {})", visualization.getTitle(), e.getMessage());
+            col1.put("dataType", "string");
+            col1.put("isBucketed", true);
+            col1.put("label", field);
+            col1.put("operationType", "terms");
+            col1.put("params", Map.of("size", size != null ? size : 10));
+            col1.put("sourceField", field);
+        } else {
+            // 默认时间列
+            col1.put("dataType", "date");
+            col1.put("isBucketed", true);
+            col1.put("label", "Time");
+            col1.put("operationType", "date_histogram");
+            col1.put("params", Map.of("interval", "1m"));
+            col1.put("sourceField", "@timestamp");
         }
 
-        return aggs;
+        // 度量列
+        Map<String, Object> col2 = new HashMap<>();
+        if (visualization.getMetrics() != null) {
+            String field = (String) visualization.getMetrics().get("field");
+            String aggregation = (String) visualization.getMetrics().get("aggregation");
+
+            col2.put("dataType", "number");
+            col2.put("isBucketed", false);
+            col2.put("label", field != null ? field : "Value");
+            col2.put("operationType", aggregation != null ? aggregation : "average");
+            if ("cardinality".equals(aggregation)) {
+                col2.put("params", Map.of("precision_threshold", 3000));
+            }
+            col2.put("sourceField", field);
+        } else {
+            // 默认度量列
+            col2.put("dataType", "number");
+            col2.put("isBucketed", false);
+            col2.put("label", "Value");
+            col2.put("operationType", "count");
+        }
+
+        columns.put("col1", col1);
+        columns.put("col2", col2);
+
+        layer1.put("columns", columns);
+        layers.put("layer1", layer1);
+        indexpattern.put("layers", layers);
+        datasourceStates.put("indexpattern", indexpattern);
+        state.put("datasourceStates", datasourceStates);
+
+        // 构建visualization
+        Map<String, Object> visualizationConfig = new HashMap<>();
+
+        String visType = visualization.getType();
+        if ("line".equals(visType) || "area".equals(visType) || "bar".equals(visType)) {
+            visualizationConfig.put("axisTitlesVisibilitySettings", Map.of(
+                "x", true,
+                "yLeft", true,
+                "yRight", true
+            ));
+            visualizationConfig.put("fittingFunction", "None");
+            visualizationConfig.put("gridlinesVisibilitySettings", Map.of(
+                "x", true,
+                "yLeft", true,
+                "yRight", true
+            ));
+
+            List<Map<String, Object>> layersList = new ArrayList<>();
+            Map<String, Object> layerConfig = new HashMap<>();
+            layerConfig.put("accessors", List.of("col2"));
+            layerConfig.put("layerId", "layer1");
+
+            String seriesType;
+            if ("line".equals(visType)) {
+                seriesType = "line";
+            } else if ("area".equals(visType)) {
+                seriesType = "area";
+            } else {
+                seriesType = "bar_horizontal";
+            }
+
+            layerConfig.put("seriesType", seriesType);
+            layerConfig.put("xAccessor", "col1");
+
+            List<Map<String, Object>> yConfig = new ArrayList<>();
+            Map<String, Object> yConfigItem = new HashMap<>();
+            yConfigItem.put("forAccessor", "col2");
+
+            String color;
+            if ("line".equals(visType)) {
+                color = "blue";
+            } else if ("area".equals(visType)) {
+                color = "purple";
+            } else {
+                color = "orange";
+            }
+
+            yConfigItem.put("color", color);
+            yConfig.add(yConfigItem);
+
+            layerConfig.put("yConfig", yConfig);
+            layersList.add(layerConfig);
+
+            visualizationConfig.put("layers", layersList);
+            visualizationConfig.put("preferredSeriesType", seriesType);
+            visualizationConfig.put("tickLabelsVisibilitySettings", Map.of(
+                "x", true,
+                "yLeft", true,
+                "yRight", true
+            ));
+            visualizationConfig.put("valueLabels", "hide");
+        } else if ("pie".equals(visType)) {
+            List<Map<String, Object>> layersList = new ArrayList<>();
+            Map<String, Object> layerConfig = new HashMap<>();
+            layerConfig.put("categoryDisplay", "default");
+            layerConfig.put("groups", List.of("col1"));
+            layerConfig.put("layerId", "layer1");
+            layerConfig.put("legendDisplay", "default");
+            layerConfig.put("metric", "col2");
+            layerConfig.put("nestedLegend", false);
+            layerConfig.put("percentDecimals", 1);
+            layersList.add(layerConfig);
+
+            visualizationConfig.put("shape", "pie");
+            visualizationConfig.put("layers", layersList);
+        } else if ("gauge".equals(visType)) {
+            List<Map<String, Object>> layersList = new ArrayList<>();
+            Map<String, Object> layerConfig = new HashMap<>();
+            layerConfig.put("layerId", "layer1");
+            layerConfig.put("metricAccessor", "col1");
+            layerConfig.put("colorMode", "Labels");
+            layerConfig.put("maxMode", "percentage");
+            layerConfig.put("maxValue", 100);
+            layerConfig.put("minMode", "static");
+            layerConfig.put("minValue", 0);
+            layerConfig.put("ticksPosition", "auto");
+            layerConfig.put("gaugeType", "semi");
+            layerConfig.put("labelMajorMode", "auto");
+            layerConfig.put("labelMinorMode", "none");
+            layersList.add(layerConfig);
+
+            visualizationConfig.put("layers", layersList);
+        }
+
+        state.put("visualization", visualizationConfig);
+
+        return state;
     }
 
     private HttpHeaders getHeaders() {
