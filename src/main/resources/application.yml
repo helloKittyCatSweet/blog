@@ -3,12 +3,16 @@ spring:
     active: dev
   config:
     import:
-      - optional:classpath:/config/monitor/kibana-dashboard.yml
+      - optional:classpath:/config/monitor/kibana-index-patterns.yml
   elasticsearch:
     host: localhost
     port: 9200
     username: elastic
     password: 123456
+  task:
+    scheduling:
+      pool:
+        size: 5
 
 logstash:
   host: localhost

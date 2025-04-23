@@ -1,0 +1,98 @@
+blog:
+  monitor:
+    kibana:
+      url: http://localhost:5601
+      username: elastic
+      password: 123456
+      version: "8.11.1"
+      security:
+        enabled: true
+        ssl:
+          enabled: false
+        authentication:
+          provider: basic
+        session:
+          timeout: 1h
+        sandbox:
+          enabled: false
+      indexPatterns:
+        - title: "blog-api-metrics-*"
+          name: "API指标监控"
+          timeFieldName: "@timestamp"
+          pattern: "blog-api-metrics-*"
+          fields:
+            response_time:
+              type: "double"
+              searchable: true
+              aggregatable: true
+        - title: "blog-error-logs-*"
+          name: "错误日志监控"
+          timeFieldName: "@timestamp"
+          pattern: "blog-error-logs-*"
+          fields:
+            error_count:
+              type: "long"
+              searchable: true
+              aggregatable: true
+            error_type:
+              type: "keyword"
+              searchable: true
+              aggregatable: true
+        - title: "blog-user-activity-*"
+          name: "用户活动监控"
+          timeFieldName: "@timestamp"
+          pattern: "blog-user-activity-*"
+          fields:
+            user_count:
+              type: "long"
+              searchable: true
+              aggregatable: true
+        - title: "blog-post-metrics-*"
+          name: "文章指标监控"
+          timeFieldName: "@timestamp"
+          pattern: "blog-post-metrics-*"
+          fields:
+            view_count:
+              type: "long"
+              searchable: true
+              aggregatable: true
+            post_title:
+              type: "keyword"
+              searchable: true
+              aggregatable: true
+        - title: "blog-system-metrics-*"
+          name: "系统资源监控"
+          timeFieldName: "@timestamp"
+          pattern: "blog-system-metrics-*"
+          fields:
+            cpu_usage:
+              type: "double"
+              searchable: true
+              aggregatable: true
+            memory_used:
+              type: "double"
+              searchable: true
+              aggregatable: true
+
+      # 添加重试配置
+      retry:
+        max-attempts: 3
+        delay-millis: 1000
+        max-delay-millis: 5000
+
+      # 添加健康检查配置
+      health-check:
+        timeout-seconds: 30
+        interval-seconds: 5
+        max-attempts: 10
+
+  elasticsearch:
+    metrics:
+      enabled: true
+      index-prefix: blog-system-metrics
+      interval: 60
+      security:
+        username: elastic
+        password: 123456
+        ssl:
+          enabled: false

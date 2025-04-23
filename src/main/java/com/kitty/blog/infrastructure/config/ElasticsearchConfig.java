@@ -1,6 +1,8 @@
 package com.kitty.blog.infrastructure.config;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Time;
+import co.elastic.clients.json.JsonData;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 import jakarta.annotation.PostConstruct;
@@ -22,6 +24,8 @@ import org.springframework.boot.autoconfigure.elasticsearch.ElasticsearchRestCli
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
+
+import java.util.Map;
 
 @Configuration
 @EnableAutoConfiguration(exclude = {
@@ -74,29 +78,66 @@ public class ElasticsearchConfig {
 
     @Bean
     public ElasticsearchClient elasticsearchClient(RestClient restClient, JacksonJsonpMapper jsonpMapper) {
-        RestClientTransport transport = new RestClientTransport(
-                restClient,
-                jsonpMapper);
+
+        RestClientTransport transport = new RestClientTransport(restClient, jsonpMapper);
         ElasticsearchClient client = new ElasticsearchClient(transport);
 
-        // Move index creation logic here
         try {
+            // 创建生命周期策略
+            client.ilm().putLifecycle(r -> r
+                    .name("blog-policy")
+                    .policy(p -> p
+                            .phases(ph -> ph
+                                    .hot(h -> h
+                                            .actions(JsonData.of(Map.of(
+                                                    "rollover", Map.of(
+                                                            "max_age", "30d",
+                                                            "max_size", "50gb")))))
+                                    .delete(d -> d
+                                            .minAge(Time.of(t -> t.time("90d")))
+                                            .actions(JsonData.of(Map.of(
+                                                    "delete", Map.of())))))));
             String[] indices = {
-                    "blog-api-metrics-*",
-                    "blog-error-logs-*",
-                    "blog-user-activity-*",
-                    "blog-post-metrics-*",
-                    "blog-system-metrics-*"
+                    "blog-api-metrics",
+                    "blog-error-logs",
+                    "blog-user-activity",
+                    "blog-post-metrics",
+                    "blog-system-metrics"
             };
 
             for (String index : indices) {
-                if (!client.indices().exists(e -> e.index(index)).value()) {
+                // 创建具体的初始索引
+                String initialIndex = String.format("%s-%s-000001",
+                        index,
+                        java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy.MM.dd")));
+                String aliasName = index + "-alias";
+
+                if (!client.indices().exists(e -> e.index(initialIndex)).value()) {
                     client.indices().create(c -> c
-                            .index(index)
+                            .index(initialIndex)
+                            .settings(s -> s
+                                    .numberOfShards("1")
+                                    .numberOfReplicas("0")
+                                    .refreshInterval(new Time.Builder().time("5s").build())
+                                    .lifecycle(l -> l
+                                            .name("blog-policy")
+                                            .rolloverAlias(aliasName)))
                             .mappings(m -> m
+                                    // 添加必要的字段映射
                                     .properties("@timestamp", p -> p
                                             .date(d -> d
-                                                    .format("strict_date_optional_time||epoch_millis")))));
+                                                    .format("strict_date_optional_time||epoch_millis")))
+                                    .properties("metrics_name", p -> p.keyword(k -> k))
+                                    .properties("value", p -> p.double_(d -> d))
+                                    .properties("tags", p -> p.object(o -> o
+                                            .properties("host", t -> t.keyword(k -> k))
+                                            .properties("service", t -> t.keyword(k -> k))
+                                            .properties("environment", t -> t.keyword(k -> k))))));
+                    // 创建别名并设置为写入索引
+                    client.indices().putAlias(a -> a
+                            .index(initialIndex)
+                            .name(aliasName)
+                            .isWriteIndex(true));
                 }
             }
         } catch (Exception e) {
@@ -105,5 +146,4 @@ public class ElasticsearchConfig {
 
         return client;
     }
-
 }

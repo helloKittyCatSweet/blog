@@ -3,6 +3,9 @@ package com.kitty.blog.infrastructure.config.monitor;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+
+import com.kitty.blog.infrastructure.config.ElasticsearchConfig;
+
 import java.util.List;
 import java.util.Map;
 
@@ -12,6 +15,8 @@ import java.util.Map;
 public class KibanaMonitoringConfig {
 
     private KibanaConfig kibana = new KibanaConfig();
+
+    private ElasticsearchConfig elasticsearch = new ElasticsearchConfig();
 
     @Data
     public static class KibanaConfig {
@@ -56,6 +61,9 @@ public class KibanaMonitoringConfig {
         private String name;
         private String timeFieldName = "@timestamp";
         private Map<String, FieldConfig> fields;
+        // 添加索引模式匹配规则
+        private String pattern = "*"; // 默认匹配所有
+        private boolean allowNoIndex = true; // 允许没有匹配的索引
     }
 
     @Data
@@ -95,5 +103,13 @@ public class KibanaMonitoringConfig {
         private int timeoutSeconds = 30;
         private int intervalSeconds = 5;
         private int maxAttempts = 10;
+    }
+
+    @Data
+    public static class ElasticsearchConfig {
+        private boolean enabled = true;
+        private String indexPrefix = "blog-system-metrics";
+        private int interval = 60;
+        private SecurityConfig security = new SecurityConfig();
     }
 }

@@ -23,7 +23,9 @@ export default defineConfig({
   optimizeDeps: {
     include: [
       'element-plus',
-      '@element-plus/icons-vue'
+      '@element-plus/icons-vue',
+      'md-editor-v3',
+      'echarts'
     ]
   },
   build: {
@@ -36,11 +38,7 @@ export default defineConfig({
           'echarts': ['echarts']
         }
       }
-    },
-    chunkSizeWarningLimit: 2000
-  },
-  optimizeDeps: {
-    include: ['element-plus', 'md-editor-v3', 'echarts']
+    }
   },
   resolve: {
     alias: {

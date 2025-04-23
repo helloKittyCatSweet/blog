@@ -5,11 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import { Delete, Download, Upload, Plus } from "@element-plus/icons-vue";
 import PageContainer from "@/components/PageContainer.vue";
 import { formatDateTime } from "@/utils/format";
-import {
-  findAttachmentsByUserId,
-  deleteAttachment,
-  findByUsername,
-} from "@/api/post/post";
+import { findAttachmentsByUserId, deleteAttachment, findByUserId } from "@/api/post/post";
 import { USER_POST_EDIT_PATH } from "@/constants/routes/user";
 import { useUserStore } from "@/stores/modules/user";
 
@@ -29,7 +25,7 @@ const userStore = useUserStore();
 // 获取用户文章列表
 const getArticleList = async () => {
   try {
-    const response = await findByUsername(userStore.user.username);
+    const response = await findByUserId(userStore.user.id);
     if (response.data?.status === 200) {
       console.log("getArticleList:", response.data.data);
       articleList.value = response.data.data.map((item) => ({
