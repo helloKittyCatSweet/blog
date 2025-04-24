@@ -1,0 +1,62 @@
+{
+  "index_patterns": ["blog-user-activity-*"],
+  "version": 2,
+  "priority": 300,
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1,
+      "index.lifecycle.name": "blog-policy",
+      "index.lifecycle.rollover_alias": "blog-user-activity"
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "log_type": {
+          "type": "keyword"
+        },
+        "service_name": {
+          "type": "keyword"
+        },
+        "level": {
+          "type": "keyword"
+        },
+        "user_id": {
+          "type": "keyword"
+        },
+        "activity_type": {
+          "type": "keyword"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "duration": {
+          "type": "long"
+        },
+        "endpoint": {
+          "type": "keyword"
+        },
+        "method": {
+          "type": "keyword"
+        },
+        "client_ip": {
+          "type": "ip"
+        },
+        "user_agent": {
+          "type": "text"
+        },
+        "error_message": {
+          "type": "text"
+        },
+        "host": {
+          "type": "keyword"
+        },
+        "environment": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

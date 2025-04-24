@@ -48,7 +48,7 @@ public class KibanaInitializationService {
 
     @PostConstruct
     private void initializeKibanaDashboards() {
-        if (isInitialized) {
+        if (isInitialized || isInitialized()) {
             log.info("Kibana仪表板已经初始化过，跳过初始化过程");
             return;
         }

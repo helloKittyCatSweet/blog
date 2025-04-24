@@ -1,6 +1,7 @@
 package com.kitty.blog.application.controller.user;
 
 
+import com.kitty.blog.common.annotation.LogUserActivity;
 import com.kitty.blog.domain.model.Role;
 import com.kitty.blog.domain.service.RoleService;
 import com.kitty.blog.infrastructure.utils.Response;
@@ -60,6 +61,7 @@ public class RoleController {
             @ApiResponse(responseCode = "200", description = "成功"),
             @ApiResponse(responseCode = "500", description = "失败")
     })
+    @LogUserActivity("更新角色")
     public ResponseEntity<Response<Boolean>> update
             (@RequestBody Role updatedRole) {
         ResponseEntity<Boolean> response = roleService.update(updatedRole);
@@ -81,6 +83,7 @@ public class RoleController {
             @ApiResponse(responseCode = "200", description = "成功"),
             @ApiResponse(responseCode = "500", description = "失败")
     })
+    @LogUserActivity("根据角色名称删除角色")
     public ResponseEntity<Response<Boolean>> deleteByRoleName
             (@PathVariable(value = "roleName") String roleName) {
         ResponseEntity<Boolean> response = roleService.deleteByRoleName(roleName);
@@ -164,6 +167,7 @@ public class RoleController {
             @ApiResponse(responseCode = "200", description = "成功"),
             @ApiResponse(responseCode = "500", description = "失败")
     })
+    @LogUserActivity("保存角色")
     public ResponseEntity<Response<Role>> save
             (@RequestBody Role role) {
         ResponseEntity<Role> response = roleService.save(role);
@@ -225,6 +229,7 @@ public class RoleController {
             @ApiResponse(responseCode = "200", description = "成功"),
             @ApiResponse(responseCode = "500", description = "失败")
     })
+    @LogUserActivity("根据角色ID删除角色")
     public ResponseEntity<Response<Boolean>> deleteById
             (@PathVariable(value = "roleId") Integer roleId) {
         ResponseEntity<Boolean> response = roleService.deleteById(roleId);

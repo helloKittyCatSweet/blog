@@ -2,6 +2,7 @@ package com.kitty.blog.application.controller.user;
 
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.application.dto.userActivity.UserActivityDto;
+import com.kitty.blog.common.annotation.LogUserActivity;
 import com.kitty.blog.domain.model.UserActivity;
 import com.kitty.blog.domain.service.UserActivityService;
 import com.kitty.blog.infrastructure.utils.Response;
@@ -39,6 +40,7 @@ public class UserActivityController {
             @ApiResponse(responseCode = "200", description = "创建成功"),
             @ApiResponse(responseCode = "400", description = "参数错误")
     })
+    @LogUserActivity("创建用户动态")
     public ResponseEntity<Response<Boolean>> create
             (@RequestBody UserActivity userActivity) {
         ResponseEntity<Boolean> response = userActivityService.create(userActivity);
@@ -61,6 +63,7 @@ public class UserActivityController {
             @ApiResponse(responseCode = "400", description = "参数错误"),
             @ApiResponse(responseCode = "404", description = "动态不存在")
     })
+    @LogUserActivity("更新用户动态")
     public ResponseEntity<Response<Boolean>> update
             (@RequestBody UserActivity updatedActivity) {
         ResponseEntity<Boolean> response = userActivityService.update(updatedActivity);
@@ -259,6 +262,7 @@ public class UserActivityController {
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "404", description = "动态不存在")
     })
+    @LogUserActivity("删除用户动态")
     public ResponseEntity<Response<Boolean>> deleteById
             (@PathVariable(name = "activityId") Integer activityId,
              @AuthenticationPrincipal LoginResponseDto user) {

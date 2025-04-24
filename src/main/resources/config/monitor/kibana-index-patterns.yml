@@ -16,7 +16,7 @@ blog:
         sandbox:
           enabled: false
       indexPatterns:
-        - title: "blog-api-metrics-*"
+        - title: "blog-api-metrics"
           name: "API指标监控"
           timeFieldName: "@timestamp"
           pattern: "blog-api-metrics-*"
@@ -25,10 +25,10 @@ blog:
               type: "double"
               searchable: true
               aggregatable: true
-        - title: "blog-error-logs-*"
+        - title: "blog-error"
           name: "错误日志监控"
           timeFieldName: "@timestamp"
-          pattern: "blog-error-logs-*"
+          pattern: "blog-error-*"
           fields:
             error_count:
               type: "long"
@@ -38,29 +38,53 @@ blog:
               type: "keyword"
               searchable: true
               aggregatable: true
-        - title: "blog-user-activity-*"
+        - title: "blog-user-activity"
           name: "用户活动监控"
           timeFieldName: "@timestamp"
           pattern: "blog-user-activity-*"
           fields:
-            user_count:
+            user_id:
+              type: "keyword"
+              searchable: true
+              aggregatable: true
+            activity_type:
+              type: "keyword"
+              searchable: true
+              aggregatable: true
+            endpoint:
+              type: "keyword"
+              searchable: true
+              aggregatable: true
+            success:
+              type: "boolean"
+              searchable: true
+              aggregatable: true
+            duration:
               type: "long"
               searchable: true
               aggregatable: true
-        - title: "blog-post-metrics-*"
+        - title: "blog-post-metrics"
           name: "文章指标监控"
           timeFieldName: "@timestamp"
           pattern: "blog-post-metrics-*"
           fields:
-            view_count:
-              type: "long"
-              searchable: true
-              aggregatable: true
-            post_title:
+            post_id:
               type: "keyword"
               searchable: true
               aggregatable: true
-        - title: "blog-system-metrics-*"
+            operation:
+              type: "keyword"
+              searchable: true
+              aggregatable: true
+            success:
+              type: "boolean"
+              searchable: true
+              aggregatable: true
+            duration:
+              type: "long"
+              searchable: true
+              aggregatable: true
+        - title: "blog-system-metrics"
           name: "系统资源监控"
           timeFieldName: "@timestamp"
           pattern: "blog-system-metrics-*"

@@ -116,6 +116,15 @@ public class IpUtil {
     }
 
     public static String getIpLocation(String ip) {
+        if (ip == null || ip.isEmpty()) {
+            return "未知";
+        }
+
+        // 处理本地地址
+        if (ip.equals("127.0.0.1") || ip.equals("0:0:0:0:0:0:0:1")) {
+            return "本地";
+        }
+
         try {
             String region = searcher.search(ip);
             return Arrays.stream(region.split("\\|"))

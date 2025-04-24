@@ -1,6 +1,7 @@
 package com.kitty.blog.application.controller.post;
 
 import com.kitty.blog.application.dto.report.ReportDto;
+import com.kitty.blog.common.annotation.LogUserActivity;
 import com.kitty.blog.common.constant.ReportReason;
 import com.kitty.blog.common.constant.ReportStatus;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
@@ -45,6 +46,7 @@ public class ReportController {
             @ApiResponse(responseCode = "400", description = "请求参数错误"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
+    @LogUserActivity("创建报告")
     public ResponseEntity<Response<Boolean>> create
             (@RequestBody Report report) {
         ResponseEntity<Boolean> response = reportService.create(report);
@@ -67,6 +69,7 @@ public class ReportController {
             @ApiResponse(responseCode = "404", description = "报告不存在"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
+    @LogUserActivity("更新报告")
     public ResponseEntity<Response<Boolean>> update(@RequestBody Report updatedReport) {
         ResponseEntity<Boolean> response = reportService.update(updatedReport);
         return Response.createResponse(response,
@@ -166,6 +169,7 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "保存成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
+    @LogUserActivity("保存报告")
     public ResponseEntity<Response<Report>> save
             (@RequestBody Report report) {
         ResponseEntity<Report> response = reportService.save(report);
@@ -226,6 +230,7 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "404", description = "报告不存在")
     })
+    @LogUserActivity("删除报告")
     public ResponseEntity<Response<Boolean>> deleteById(@PathVariable(value = "id") Integer reportId) {
         ResponseEntity<Boolean> response = reportService.deleteById(reportId);
         return Response.createResponse(response,
@@ -277,6 +282,11 @@ public class ReportController {
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "审核举报")
     @PostMapping("/admin/review/{reportId}")
+    @LogUserActivity("审核举报")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "审核完成"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
     public ResponseEntity<Response<Boolean>> reviewReport(
             @PathVariable Integer reportId,
             @RequestParam boolean approved,
@@ -299,6 +309,11 @@ public class ReportController {
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "提交举报")
     @PostMapping("/public/submit")
+    @LogUserActivity("提交举报")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "举报提交成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
     public ResponseEntity<Response<Boolean>> submitReport(@RequestBody Report report) {
         try {
             // 直接使用 reportService.create

@@ -1,5 +1,6 @@
 package com.kitty.blog.common.aspect;
 
+import com.kitty.blog.common.constant.LogConstants;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
@@ -9,7 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -47,9 +49,13 @@ public class MetricsAspect {
                     .getRequestAttributes();
             HttpServletRequest request = attributes.getRequest();
 
+            // 构建指标数据
             Map<String, Object> metrics = new HashMap<>();
-            metrics.put("log_type", "api-metrics");
-            metrics.put("@timestamp", Instant.now().toString());
+
+            // 基础字段
+            metrics.put("@timestamp", LocalDateTime.now().toInstant(ZoneOffset.UTC).toString());
+            metrics.put("log_type", LogConstants.LogType.API_METRICS);
+            metrics.put("application", LogConstants.APPLICATION_NAME);
 
             // 性能指标
             metrics.put("response_time", duration);
@@ -75,9 +81,15 @@ public class MetricsAspect {
                 metrics.put("error_message", errorMessage);
             }
 
-            // 使用结构化日志格式
+            // 添加标签
+            metrics.put("host", java.net.InetAddress.getLocalHost().getHostName());
+            metrics.put("service", LogConstants.APPLICATION_NAME);
+            metrics.put("environment", System.getProperty("spring.profiles.active", "dev"));
+
+            // 写入日志文件
             log.info("API Performance Metrics: {}",
                     net.logstash.logback.argument.StructuredArguments.entries(metrics));
+
         } catch (Exception e) {
             log.error("Failed to record metrics", e);
         }

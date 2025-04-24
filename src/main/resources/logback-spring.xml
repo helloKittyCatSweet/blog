@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <timestamp key="CURRENT_DATE" datePattern="yyyy-MM-dd"/>
     <property name="LOG_PATH" value="./logs"/>
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
 
@@ -10,109 +11,158 @@
         </encoder>
     </appender>
 
-    <!-- JSON格式输出到文件 -->
-    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/blog-api-metrics.json</file>
+    <!-- API指标日志 -->
+    <appender name="API_METRICS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/blog-api-metrics-${CURRENT_DATE}.json</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/blog-api-metrics.%d{yyyy-MM-dd}.json</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/blog-api-metrics-%d{yyyy.MM.dd}.json</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <customFields>{"application":"blog-system","log_type":"api-metrics"}</customFields>
             <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</timestampPattern>
-            <fieldNames>
-                <timestamp>@timestamp</timestamp>
-                <message>message</message>
-                <logger>logger_name</logger>
-                <thread>thread_name</thread>
-                <level>level</level>
-            </fieldNames>
             <includeMdcData>true</includeMdcData>
             <includeContext>true</includeContext>
+            <fieldNames>
+                <tags>[ignore]</tags>
+                <hostname>host</hostname>
+            </fieldNames>
+            <provider class="net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider"/>
+            <provider class="net.logstash.logback.composite.loggingevent.MdcJsonProvider"/>
         </encoder>
     </appender>
 
     <!-- 系统API日志 -->
     <appender name="SYSTEM_API_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/blog-system-api.json</file>
+        <file>${LOG_PATH}/blog-system-api-${CURRENT_DATE}.json</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/blog-system-api.%d{yyyy-MM-dd}.json</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/blog-system-api-%d{yyyy.MM.dd}.json</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <customFields>{"application":"blog-system","log_type":"system-api"}</customFields>
-            <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</timestampPattern>
+             <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</timestampPattern>
             <includeMdcData>true</includeMdcData>
             <includeContext>true</includeContext>
             <fieldNames>
-                <timestamp>@timestamp</timestamp>
-                <message>message</message>
-                <logger>logger_name</logger>
-                <thread>thread_name</thread>
-                <level>level</level>
+                <tags>[ignore]</tags>
+                <hostname>host</hostname>
             </fieldNames>
+            <provider class="net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider"/>
+            <provider class="net.logstash.logback.composite.loggingevent.MdcJsonProvider"/>
         </encoder>
     </appender>
 
-    <!-- 错误日志单独收集 -->
+    <!-- 错误日志 -->
     <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/blog-error.json</file>
+        <file>${LOG_PATH}/blog-error-${CURRENT_DATE}.json</file>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/blog-error.%d{yyyy-MM-dd}.json</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/blog-error-%d{yyyy.MM.dd}.json</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <customFields>{"application":"blog-system","log_type":"error"}</customFields>
-            <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</timestampPattern>
+             <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</timestampPattern>
             <includeMdcData>true</includeMdcData>
             <includeContext>true</includeContext>
+            <fieldNames>
+                <tags>[ignore]</tags>
+                <hostname>host</hostname>
+            </fieldNames>
+            <provider class="net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider"/>
+            <provider class="net.logstash.logback.composite.loggingevent.MdcJsonProvider"/>
         </encoder>
     </appender>
 
     <!-- 系统指标日志 -->
-    <appender name="METRICS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/blog-system-metrics.json</file>
+    <appender name="SYSTEM_METRICS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/blog-system-metrics-${CURRENT_DATE}.json</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/blog-system-metrics.%d{yyyy-MM-dd}.json</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/blog-system-metrics-%d{yyyy.MM.dd}.json</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <customFields>{"application":"blog-system","log_type":"system-metrics"}</customFields>
-            <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</timestampPattern>
+             <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</timestampPattern>
             <includeMdcData>true</includeMdcData>
             <includeContext>true</includeContext>
+            <fieldNames>
+                <tags>[ignore]</tags>
+                <hostname>host</hostname>
+            </fieldNames>
+            <provider class="net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider"/>
+            <provider class="net.logstash.logback.composite.loggingevent.MdcJsonProvider"/>
         </encoder>
     </appender>
 
-    <!-- 根据环境配置不同的日志级别 -->
-    <springProfile name="dev">
-        <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="JSON_FILE"/>
-            <appender-ref ref="ERROR_FILE"/>
-        </root>
-        <logger name="com.kitty.blog.common.aspect.MetricsAspect" level="INFO" additivity="false">
-            <appender-ref ref="METRICS_FILE"/>
-        </logger>
-        <logger name="com.kitty.blog.common.aspect.SystemCallLogAspect" level="INFO" additivity="false">
-            <appender-ref ref="SYSTEM_API_FILE"/>
-            <appender-ref ref="CONSOLE"/>
-        </logger>
-    </springProfile>
+    <!-- 用户活动日志 -->
+    <appender name="USER_ACTIVITY_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/blog-user-activity-${CURRENT_DATE}.json</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/blog-user-activity-%d{yyyy.MM.dd}.json</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"application":"blog-system","log_type":"user-activity"}</customFields>
+             <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</timestampPattern>
+            <includeMdcData>true</includeMdcData>
+            <includeContext>true</includeContext>
+            <fieldNames>
+                <tags>[ignore]</tags>
+                <hostname>host</hostname>
+            </fieldNames>
+            <provider class="net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider"/>
+            <provider class="net.logstash.logback.composite.loggingevent.MdcJsonProvider"/>
+        </encoder>
+    </appender>
 
-    <springProfile name="prod">
-        <root level="INFO">
-            <appender-ref ref="JSON_FILE"/>
-            <appender-ref ref="ERROR_FILE"/>
-        </root>
-        <logger name="com.kitty.blog.common.aspect.MetricsAspect" level="INFO" additivity="false">
-            <appender-ref ref="METRICS_FILE"/>
-        </logger>
-        <logger name="com.kitty.blog.common.aspect.SystemCallLogAspect" level="INFO" additivity="false">
-            <appender-ref ref="SYSTEM_API_FILE"/>
-        </logger>
-    </springProfile>
+    <!-- 博客文章指标日志 -->
+    <appender name="POST_METRICS_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/blog-post-metrics-${CURRENT_DATE}.json</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/blog-post-metrics-%d{yyyy.MM.dd}.json</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"application":"blog-system","log_type":"post-metrics"}</customFields>
+             <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</timestampPattern>
+            <includeMdcData>true</includeMdcData>
+            <includeContext>true</includeContext>
+            <fieldNames>
+                <tags>[ignore]</tags>
+                <hostname>host</hostname>
+            </fieldNames>
+            <provider class="net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider"/>
+            <provider class="net.logstash.logback.composite.loggingevent.MdcJsonProvider"/>
+        </encoder>
+    </appender>
+
+    <!-- 日志配置 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="ERROR_FILE"/>
+    </root>
+
+    <logger name="com.kitty.blog.common.aspect.MetricsAspect" level="INFO" additivity="false">
+        <appender-ref ref="SYSTEM_METRICS_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <logger name="com.kitty.blog.common.aspect.SystemCallLogAspect" level="INFO" additivity="false">
+        <appender-ref ref="API_METRICS_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <logger name="com.kitty.blog.common.aspect.UserActivityAspect" level="INFO" additivity="false">
+        <appender-ref ref="USER_ACTIVITY_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
+
+    <logger name="com.kitty.blog.common.aspect.PostMetricsAspect" level="INFO" additivity="false">
+        <appender-ref ref="POST_METRICS_FILE"/>
+        <appender-ref ref="CONSOLE"/>
+    </logger>
 </configuration>

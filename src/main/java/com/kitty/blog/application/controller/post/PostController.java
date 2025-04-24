@@ -4,6 +4,8 @@ import com.kitty.blog.application.dto.common.FileDto;
 import com.kitty.blog.application.dto.post.PostAttachmentDto;
 import com.kitty.blog.application.dto.post.PostDto;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
+import com.kitty.blog.common.annotation.LogPostMetrics;
+import com.kitty.blog.common.annotation.LogPostMetrics;
 import com.kitty.blog.domain.model.*;
 import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.model.tag.PostTag;
@@ -54,6 +56,7 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "创建成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
+    @LogPostMetrics("创建文章")
     public ResponseEntity<Response<PostDto>> create(@RequestBody PostDto postDto) {
         ResponseEntity<PostDto> response = postService.create(postDto);
         return Response.createResponse(response,
@@ -76,6 +79,7 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "更新成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
+    @LogPostMetrics("更新文章")
     public ResponseEntity<Response<PostDto>> update(
             @RequestBody PostDto postDto,
             @AuthenticationPrincipal LoginResponseDto user) {
@@ -95,6 +99,7 @@ public class PostController {
             @ApiResponse(responseCode = "404", description = "用户不存在"),
             @ApiResponse(responseCode = "500", description = "上传失败")
     })
+    @LogPostMetrics("上传文件")
     public ResponseEntity<Response<String>> uploadAttachment(
             @Parameter(description = "文件", required = true)
             @RequestPart(value = "file") @NotNull MultipartFile file,
@@ -651,6 +656,7 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "收藏成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
+    @LogPostMetrics("收藏文章")
     public ResponseEntity<Response<Boolean>> increaseFavorites
     (@RequestParam Integer postId,
      @RequestParam Integer count,
@@ -675,6 +681,7 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "保存成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
+    @LogPostMetrics("保存文章")
     public ResponseEntity<Response<Post>> save(@RequestBody Post post) {
         ResponseEntity<Post> response = postService.save(post);
         return Response.createResponse(response,
@@ -732,6 +739,7 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
+    @LogPostMetrics("删除文章")
     public ResponseEntity<Response<Boolean>> deleteById(
             @PathVariable Integer postId,
             @AuthenticationPrincipal LoginResponseDto user) {
@@ -869,6 +877,11 @@ public class PostController {
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "生成文章摘要")
     @PostMapping("/public/summary")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "生成成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    @LogPostMetrics("生成文章摘要")
     public ResponseEntity<Response<String>> generateSummary(@RequestBody String content) {
         String summary = postService.generateAbstract(content);
         return Response.createResponse(

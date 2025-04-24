@@ -2,6 +2,7 @@ package com.kitty.blog.application.controller.post;
 
 import com.kitty.blog.application.dto.comment.CommentDto;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
+import com.kitty.blog.common.annotation.LogUserActivity;
 import com.kitty.blog.domain.model.Comment;
 import com.kitty.blog.domain.service.CommentService;
 import com.kitty.blog.infrastructure.utils.Response;
@@ -38,6 +39,7 @@ public class CommentController {
     @PostMapping("/public/create")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "新增成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
+    @LogUserActivity("新增评论")
     public ResponseEntity<Response<Comment>> create(
             @RequestBody Comment comment) {
         ResponseEntity<Comment> response = commentService.create(comment);
@@ -64,6 +66,7 @@ public class CommentController {
     @PutMapping("/public/update")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "修改成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
+    @LogUserActivity("修改评论")
     public ResponseEntity<Response<Boolean>> update(
             @RequestBody Comment comment,
             @AuthenticationPrincipal LoginResponseDto user) {
@@ -85,6 +88,7 @@ public class CommentController {
     @PutMapping("/public/add/{commentId}/like")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "点赞成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
+    @LogUserActivity("点赞评论")
     public ResponseEntity<Response<Boolean>> incrementLikes(
             @PathVariable Integer commentId,
             @RequestParam int count) {
@@ -176,6 +180,7 @@ public class CommentController {
     @PostMapping("/public/save")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "新增成功"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
+    @LogUserActivity("新增评论")
     public ResponseEntity<Response<Comment>> save(
             @RequestBody Comment comment) {
         ResponseEntity<Comment> response = commentService.save(comment);
@@ -235,6 +240,7 @@ public class CommentController {
     @DeleteMapping("/public/delete/id/{commentId}/{userId}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "404", description = "该评论不存在")})
+    @LogUserActivity("删除评论")
     public ResponseEntity<Response<Boolean>> deleteById(
             @PathVariable Integer commentId,
             @AuthenticationPrincipal LoginResponseDto user) {
@@ -251,6 +257,7 @@ public class CommentController {
     @DeleteMapping("/public/delete/batch")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "404", description = "该评论不存在")})
+    @LogUserActivity("删除评论")
     public ResponseEntity<Response<Boolean>> deleteBatch(
             @RequestBody List<Integer> commentIds) {
         ResponseEntity<Boolean> response = commentService.deleteBatch(commentIds);

@@ -5,6 +5,7 @@ import com.kitty.blog.application.dto.user.LoginDto;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.application.dto.user.RegisterDto;
 import com.kitty.blog.application.dto.userRole.WholeUserInfo;
+import com.kitty.blog.common.annotation.LogUserActivity;
 import com.kitty.blog.domain.model.User;
 import com.kitty.blog.domain.service.user.UserService;
 import com.kitty.blog.infrastructure.utils.Response;
@@ -54,6 +55,7 @@ public class UserController {
             @ApiResponse(responseCode = "409", description = "用户名已被注册或邮箱已被注册"),
             @ApiResponse(responseCode = "500", description = "注册失败")
     })
+    @LogUserActivity("注册")
     public ResponseEntity<Response<Boolean>> register(@RequestBody RegisterDto registerDto) {
         User user = new User();
         user.setUsername(registerDto.getUsername());
@@ -82,6 +84,7 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "更新失败"),
             @ApiResponse(responseCode = "500", description = "服务器繁忙")
     })
+    @LogUserActivity("更新用户信息")
     public ResponseEntity<Response<Boolean>> update(@RequestBody User user) {
         ResponseEntity<Boolean> responseEntity = userService.update(user);
         return Response.createResponse(responseEntity,
@@ -104,6 +107,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "激活成功"),
             @ApiResponse(responseCode = "500", description = "激活失败")
     })
+    @LogUserActivity("激活用户")
     public ResponseEntity<Response<Boolean>> activateUser
     (@RequestParam("userId") Integer userId,
      @RequestParam("isActive") Boolean isActive) {
@@ -212,6 +216,7 @@ public class UserController {
             @ApiResponse(responseCode = "403", description = "用户被禁用"),
             @ApiResponse(responseCode = "500", description = "登录失败")
     })
+    @LogUserActivity("登录")
     public ResponseEntity<Response<LoginResponseDto>> login(@RequestBody LoginDto loginDto) {
         ResponseEntity<LoginResponseDto> responseEntity =
                 userService.login(loginDto.getUsername(),
@@ -429,6 +434,7 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "404", description = "用户不存在")
     })
+    @LogUserActivity("删除用户")
     public ResponseEntity<Response<Boolean>> deleteById(@PathVariable("userId") Integer userId) {
         ResponseEntity<Boolean> responseEntity = userService.deleteById(userId);
         return Response.createResponse(responseEntity,
@@ -498,6 +504,13 @@ public class UserController {
     @PostMapping("/admin/import")
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER)" +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
+    @Operation(summary = "导入用户")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "导入成功"),
+            @ApiResponse(responseCode = "400", description = "文件格式不正确"),
+            @ApiResponse(responseCode = "500", description = "导入失败")
+    })
+    @LogUserActivity("导入用户")
     public ResponseEntity<Response<String>> importUsers(@RequestParam("file") MultipartFile file) {
         if (file.isEmpty()) {
             return Response.error("请选择要上传的文件");

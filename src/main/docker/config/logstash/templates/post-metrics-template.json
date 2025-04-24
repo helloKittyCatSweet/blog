@@ -1,0 +1,50 @@
+{
+  "index_patterns": ["blog-post-metrics-*"],
+  "version": 2,
+  "priority": 400,
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 1,
+      "index.lifecycle.name": "blog-policy",
+      "index.lifecycle.rollover_alias": "blog-post-metrics"
+    },
+    "mappings": {
+      "properties": {
+        "@timestamp": {
+          "type": "date"
+        },
+        "log_type": {
+          "type": "keyword"
+        },
+        "service_name": {
+          "type": "keyword"
+        },
+        "level": {
+          "type": "keyword"
+        },
+        "operation": {
+          "type": "keyword"
+        },
+        "post_id": {
+          "type": "long"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "duration": {
+          "type": "long"
+        },
+        "error_message": {
+          "type": "text"
+        },
+        "host": {
+          "type": "keyword"
+        },
+        "environment": {
+          "type": "keyword"
+        }
+      }
+    }
+  }
+}

@@ -1,5 +1,7 @@
 {
-  "index_patterns": ["blog-*"],
+  "index_patterns": ["blog-api-metrics-*", "blog-error-*", "blog-system-metrics-*"],
+  "version": 2,
+  "priority": 200,
   "template": {
     "settings": {
       "number_of_shards": 1,
@@ -12,17 +14,11 @@
         "@timestamp": {
           "type": "date"
         },
-        "app": {
-          "type": "keyword"
-        },
-        "environment": {
-          "type": "keyword"
-        },
         "log_type": {
           "type": "keyword"
         },
-        "message": {
-          "type": "text"
+        "service_name": {
+          "type": "keyword"
         },
         "level": {
           "type": "keyword"
@@ -51,13 +47,25 @@
         "user_agent": {
           "type": "text"
         },
-        "error": {
+        "error_message": {
           "type": "text"
         },
         "stack_trace": {
           "type": "text"
+        },
+        "host": {
+          "type": "keyword"
+        },
+        "environment": {
+          "type": "keyword"
+        },
+        "service": {
+          "type": "keyword"
+        },
+        "tags": {
+          "type": "keyword"
         }
       }
     }
   }
-} 
+}

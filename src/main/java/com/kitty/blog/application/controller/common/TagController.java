@@ -1,5 +1,6 @@
 package com.kitty.blog.application.controller.common;
 
+import com.kitty.blog.common.annotation.LogUserActivity;
 import com.kitty.blog.common.constant.Compare;
 import com.kitty.blog.domain.service.tag.TagService;
 import com.kitty.blog.infrastructure.utils.Response;
@@ -38,6 +39,7 @@ public class TagController {
             @ApiResponse(responseCode = "409", description = "标签名称已存在"),
             @ApiResponse(responseCode = "500", description = "标签名称不合规")
     })
+    @LogUserActivity("创建标签")
     public ResponseEntity<Response<Boolean>> create
             (@RequestBody com.kitty.blog.domain.model.tag.Tag tag) {
         ResponseEntity<Boolean> entity = tagService.create(tag);
@@ -61,6 +63,7 @@ public class TagController {
             @ApiResponse(responseCode = "200", description = "更新成功"),
             @ApiResponse(responseCode = "500", description = "更新失败")
     })
+    @LogUserActivity("更新标签")
     public ResponseEntity<Response<Boolean>> update
             (@RequestBody com.kitty.blog.domain.model.tag.Tag tag) {
         ResponseEntity<Boolean> entity = tagService.update(tag);
@@ -183,6 +186,7 @@ public class TagController {
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "500", description = "删除失败")
     })
+    @LogUserActivity("删除标签")
     public ResponseEntity<Response<Boolean>> deleteById(@PathVariable("tagId") Integer tagId) {
         ResponseEntity<Boolean> entity = tagService.deleteById(tagId);
         return Response.createResponse(entity,

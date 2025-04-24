@@ -1,6 +1,7 @@
 package com.kitty.blog.common.aspect;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.kitty.blog.common.constant.LogConstants;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,8 +61,10 @@ public class SystemCallLogAspect {
     private void logRequest(HttpServletRequest request, String requestId) {
         try {
             Map<String, Object> requestLog = new HashMap<>();
-            requestLog.put("log_type", "system-api-request");
-            requestLog.put("@timestamp", Instant.now().toString());
+            requestLog.put("@timestamp", LocalDateTime.now().toInstant(ZoneOffset.UTC).toString());
+            requestLog.put("log_type", LogConstants.LogType.API_METRICS);
+            requestLog.put("application", LogConstants.APPLICATION_NAME);
+            requestLog.put("phase", "request");
             requestLog.put("request_id", requestId);
 
             // 请求基本信息
@@ -94,6 +98,11 @@ public class SystemCallLogAspect {
                 }
             }
 
+            // 添加标签
+            requestLog.put("host", java.net.InetAddress.getLocalHost().getHostName());
+            requestLog.put("service", LogConstants.APPLICATION_NAME);
+            requestLog.put("environment", System.getProperty("spring.profiles.active", "dev"));
+
             log.info("API Request: {}",
                     net.logstash.logback.argument.StructuredArguments.entries(requestLog));
         } catch (Exception e) {
@@ -105,8 +114,10 @@ public class SystemCallLogAspect {
             boolean isSuccess, String errorMessage) {
         try {
             Map<String, Object> responseLog = new HashMap<>();
-            responseLog.put("log_type", "system-api-response");
-            responseLog.put("@timestamp", Instant.now().toString());
+            responseLog.put("@timestamp", LocalDateTime.now().toInstant(ZoneOffset.UTC).toString());
+            responseLog.put("log_type", LogConstants.LogType.API_METRICS);
+            responseLog.put("application", LogConstants.APPLICATION_NAME);
+            responseLog.put("phase", "response");
             responseLog.put("request_id", requestId);
 
             // 响应信息
@@ -130,6 +141,11 @@ public class SystemCallLogAspect {
                 }
                 wrapper.copyBodyToResponse(); // 重要：复制响应体以便后续处理
             }
+
+            // 添加标签
+            responseLog.put("host", java.net.InetAddress.getLocalHost().getHostName());
+            responseLog.put("service", LogConstants.APPLICATION_NAME);
+            responseLog.put("environment", System.getProperty("spring.profiles.active", "dev"));
 
             log.info("API Response: {}",
                     net.logstash.logback.argument.StructuredArguments.entries(responseLog));

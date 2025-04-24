@@ -115,7 +115,7 @@ services:
     user: root
     volumes:
       - ./config/filebeat/filebeat.yml:/usr/share/filebeat/filebeat.yml
-      - ./logs:/var/log/blog
+      - ../../../logs:/var/log/blog:ro
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
@@ -123,7 +123,7 @@ services:
           condition: service_healthy
     environment:
       - ENVIRONMENT=dev
-      - ELASTIC_USERNAME=elastic  # 添加认证信息
+      - ELASTIC_USERNAME=elastic
       - ELASTIC_PASSWORD=123456
     networks:
       - elk-network

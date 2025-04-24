@@ -1,6 +1,7 @@
 package com.kitty.blog.application.controller.common;
 
 import com.kitty.blog.application.dto.category.TreeDto;
+import com.kitty.blog.common.annotation.LogUserActivity;
 import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.service.CategoryService;
 
@@ -38,6 +39,7 @@ public class CategoryController {
     @PostMapping("/public/create")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "创建成功"),
                             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
+    @LogUserActivity("创建分类")
     public ResponseEntity<Response<Boolean>> create(
             @RequestBody Category category) {
         // TODO: create category
@@ -57,6 +59,7 @@ public class CategoryController {
     @PutMapping("/public/update")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "更新成功"),
                             @ApiResponse(responseCode = "500", description = "服务器繁忙")})
+    @LogUserActivity("更新分类")
     public ResponseEntity<Response<Boolean>> update(
             @RequestBody Category category) {
         // TODO: update category
@@ -77,6 +80,7 @@ public class CategoryController {
     @DeleteMapping("/admin/delete/sub/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
                            @ApiResponse(responseCode = "404", description = "分类不存在")})
+    @LogUserActivity("删除分类及其子分类")
     public ResponseEntity<Response<Boolean>> deleteWithSubCategories(
             @PathVariable("id") Integer id) {
         // TODO: delete category and sub categories
@@ -97,6 +101,7 @@ public class CategoryController {
     @DeleteMapping("/admin/delete/leaf/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
                            @ApiResponse(responseCode =  "404", description = "分类不存在")})
+    @LogUserActivity("删除叶子分类")
     public ResponseEntity<Response<Boolean>> deleteLeafCategory(
             @PathVariable("id") Integer id) {
         // TODO: delete leaf category
@@ -245,6 +250,7 @@ public class CategoryController {
     @DeleteMapping("/admin/delete/id/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
                             @ApiResponse(responseCode = "404", description = "分类不存在")})
+    @LogUserActivity("删除分类")
     public ResponseEntity<Response<Boolean>> deleteById(
             @PathVariable("id") Integer id) {
         // TODO: delete category by id

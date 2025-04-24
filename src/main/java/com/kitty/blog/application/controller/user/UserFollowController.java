@@ -1,6 +1,7 @@
 package com.kitty.blog.application.controller.user;
 
 import com.kitty.blog.application.dto.user.LoginResponseDto;
+import com.kitty.blog.common.annotation.LogUserActivity;
 import com.kitty.blog.domain.model.User;
 import com.kitty.blog.domain.model.UserFollow;
 import com.kitty.blog.domain.service.user.UserFollowService;
@@ -34,6 +35,7 @@ public class UserFollowController {
             @ApiResponse(responseCode = "200", description = "关注成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
+    @LogUserActivity("关注用户")
     public ResponseEntity<Response<String>> follow(
             @PathVariable Integer followingId,
             @AuthenticationPrincipal LoginResponseDto user) {
@@ -52,6 +54,7 @@ public class UserFollowController {
             @ApiResponse(responseCode = "200", description = "取消关注成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
+    @LogUserActivity("取消关注")
     public ResponseEntity<Response<String>> unfollow(
             @PathVariable Integer followingId,
             @AuthenticationPrincipal LoginResponseDto user) {

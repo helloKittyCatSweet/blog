@@ -1,6 +1,7 @@
 package com.kitty.blog.application.controller.user;
 
 import com.kitty.blog.application.dto.userRole.FindDto;
+import com.kitty.blog.common.annotation.LogUserActivity;
 import com.kitty.blog.domain.model.Role;
 import com.kitty.blog.domain.model.User;
 import com.kitty.blog.domain.model.userRole.UserRole;
@@ -38,6 +39,7 @@ public class UserRoleController {
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "500", description = "删除失败")
     })
+    @LogUserActivity("删除角色")
     public ResponseEntity<Response<Boolean>> deleteRole
             (@PathVariable Integer userId,
              @PathVariable Integer roleId) {
@@ -60,6 +62,7 @@ public class UserRoleController {
             @ApiResponse(responseCode = "200", description = "保存成功"),
             @ApiResponse(responseCode = "500", description = "保存失败")
     })
+    @LogUserActivity("保存角色")
     public ResponseEntity<Response<UserRole>> save(@RequestBody UserRoleId ur) {
         UserRole userRole = new UserRole(ur);
         ResponseEntity<UserRole> response = userRoleService.save(userRole);
@@ -174,6 +177,12 @@ public class UserRoleController {
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_ROLE_MANAGER) " +
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @PostMapping(value = "/admin/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "导入角色数据")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "导入成功"),
+            @ApiResponse(responseCode = "500", description = "导入失败")
+    })
+    @LogUserActivity("导入角色数据")
     public ResponseEntity<Response<String>> importRoleData(@RequestParam("file") MultipartFile file) {
         ResponseEntity<String> response = userRoleService.importRoleData(file);
         return Response.createResponse(response,
