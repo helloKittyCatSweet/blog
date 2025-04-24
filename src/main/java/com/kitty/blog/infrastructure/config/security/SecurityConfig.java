@@ -88,6 +88,8 @@ public class SecurityConfig {
 
                         // 公开登录注册接口
                         .requestMatchers("/api/user/auth/**").permitAll()
+                        // 联系我们接口
+                        .requestMatchers("/api/contact/**").permitAll()
                         // OAuth2认证
                         .requestMatchers("/api/auth/oauth2/**").permitAll()
                         // 静态资源可以直接访问

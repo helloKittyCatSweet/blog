@@ -122,6 +122,18 @@ export default {
         </el-icon>
       </template>
     </el-autocomplete>
+    <div class="search-tips">
+      <el-tooltip
+        content="例如：@Java@ Spring入门 或 #Spring Boot# 依赖注入"
+        placement="bottom"
+        effect="light"
+      >
+        <p class="tip-text">
+          搜索提示：使用 <span class="highlight">@分类名@</span> 搜索指定分类，
+          <span class="highlight">#标签名#</span> 搜索指定标签
+        </p>
+      </el-tooltip>
+    </div>
   </div>
 </template>
 
@@ -143,5 +155,25 @@ export default {
 
 .clear-icon:hover {
   color: var(--el-text-color-primary);
+}
+
+.search-tips {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.tip-text {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  margin: 0;
+  cursor: help;
+}
+
+.highlight {
+  color: var(--el-color-primary);
+  font-family: monospace;
+  background-color: var(--el-color-primary-light-9);
+  padding: 2px 4px;
+  border-radius: 4px;
 }
 </style>

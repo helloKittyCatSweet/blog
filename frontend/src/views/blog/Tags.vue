@@ -1,11 +1,19 @@
 <script setup>
-import { ref, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, watch, onBeforeUnmount } from "vue";
 import { ElMessage } from "element-plus";
 import { Search, CircleClose, Star } from "@element-plus/icons-vue";
 import { findAll } from "@/api/common/tag";
 import PostListItem from "@/components/blog/post/PostListItem.vue";
 import { searchTagSuggestions, searchPosts } from "@/api/search/es.js";
 import { findByTags } from "@/api/post/post";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+// 添加路由历史状态监听
+window.addEventListener('popstate', () => {
+  cleanup();
+});
 
 const searchQuery = ref("");
 const tags = ref([]);
@@ -24,17 +32,33 @@ const filteredTags = computed(() => {
   );
 });
 
-// 加载所有标签
+// 修改 loadTags 函数
 const loadTags = async () => {
   loading.value = true;
   try {
     const response = await findAll();
     if (response.data?.status === 200) {
       tags.value = response.data.data;
-      // 如果有标签且当前没有选中的标签，自动选中第一个
-      if (tags.value.length > 0 && selectedTags.value.length === 0) {
+
+      // 在标签数据加载完成后处理选择
+      const tagParam = router.currentRoute.value.query.tag;
+      if (tagParam) {
+        // 如果URL中有标签参数，可能是单个标签或逗号分隔的多个标签
+        const tagNames = decodeURIComponent(tagParam).split(',').filter(Boolean);
+        const matchedTags = tags.value.filter(tag => tagNames.includes(tag.name));
+        
+        if (matchedTags.length > 0) {
+          selectedTags.value = matchedTags.map(tag => tag.tagId);
+          await loadTagPosts();
+        }
+      } else if (tags.value.length > 0 && !selectedTags.value.length) {
+        // 仅在首次加载且没有任何选中标签时，默认选择第一个
         selectedTags.value = [tags.value[0].tagId];
         await loadTagPosts();
+      }
+
+      if (tags.value.length === 0) {
+        ElMessage.warning("暂无标签数据");
       }
     }
   } catch (error) {
@@ -44,20 +68,53 @@ const loadTags = async () => {
   }
 };
 
-// 处理标签点击
-const handleTagClick = (tag) => {
-  console.log("Tag clicked:", tag);
-  // Use tag.tagId instead of tag.id
+// 修改路由监听器
+watch(
+  () => router.currentRoute.value.query.tag,
+  async (newTag) => {
+    if (tags.value.length > 0) {
+      if (!newTag) {
+        // 如果URL中没有标签参数，清空选择
+        selectedTags.value = [];
+        tagPosts.value = [];
+      } else {
+        // 处理多个标签的情况
+        const tagNames = decodeURIComponent(newTag).split(',').filter(Boolean);
+        const matchedTags = tags.value.filter(tag => tagNames.includes(tag.name));
+        
+        if (matchedTags.length > 0) {
+          selectedTags.value = matchedTags.map(tag => tag.tagId);
+          await loadTagPosts();
+        }
+      }
+    }
+  }
+);
+
+// 修改 handleTagClick 函数
+const handleTagClick = async (tag) => {
   const index = selectedTags.value.indexOf(tag.tagId);
   if (index > -1) {
-    // If already selected, remove it
+    // 如果已选中，取消选中
     selectedTags.value.splice(index, 1);
   } else {
-    // If not selected, add it
+    // 如果未选中，添加到选中列表
     selectedTags.value.push(tag.tagId);
   }
-  console.log("Selected tags:", selectedTags.value);
-  loadTagPosts();
+
+  // 统一处理URL更新
+  if (selectedTags.value.length > 0) {
+    const tagNames = tags.value
+      .filter(t => selectedTags.value.includes(t.tagId))
+      .map(t => t.name);
+    router.push({
+      query: { tag: tagNames.join(',') }
+    });
+  } else {
+    router.push({ query: {} });
+  }
+  
+  await loadTagPosts();
 };
 
 const selectedTagObjects = computed(() => {
@@ -125,12 +182,6 @@ const loadTagPosts = async () => {
   } finally {
     loading.value = false;
   }
-};
-
-// 添加移除标签的处理函数
-const removeTag = (tagId) => {
-  selectedTags.value = selectedTags.value.filter((id) => id !== tagId);
-  loadTagPosts();
 };
 
 // 获取标签类型
@@ -223,13 +274,13 @@ const querySearchAsync = async (queryString, cb) => {
     cb([]);
   }
 };
-/**
- * 清空标签
- */
+
+// 修改清空标签的函数
 const clearSelectedTags = () => {
   selectedTags.value = [];
-  loadTagPosts();
-  handleSearch();
+  // 清除URL参数
+  router.push({ query: {} });
+  tagPosts.value = []; // 清空文章列表
 };
 
 /**
@@ -273,6 +324,46 @@ const sortedPosts = computed(() => {
 const currentPage = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
+
+// 清理函数
+const cleanup = () => {
+  selectedTags.value = [];
+  tagPosts.value = [];
+  searchQuery.value = "";
+  // 清除URL中的参数
+  if (router.currentRoute.value.query.tag) {
+    router.replace({
+      query: {}
+    });
+  }
+};
+
+// 在组件卸载前清理状态
+onBeforeUnmount(() => {
+  cleanup();
+});
+
+// 修改移除单个标签的函数
+const removeTag = async (tagToRemove) => {
+  const index = selectedTags.value.indexOf(tagToRemove.tagId);
+  if (index > -1) {
+    selectedTags.value.splice(index, 1);
+    
+    // 统一处理URL更新
+    if (selectedTags.value.length > 0) {
+      const tagNames = tags.value
+        .filter(t => selectedTags.value.includes(t.tagId))
+        .map(t => t.name);
+      router.push({
+        query: { tag: tagNames.join(',') }
+      });
+    } else {
+      router.push({ query: {} });
+    }
+    
+    await loadTagPosts();
+  }
+};
 </script>
 
 <template>
@@ -350,7 +441,7 @@ const total = ref(0);
                     :type="getTagType(tag.weight)"
                     size="large"
                     closable
-                    @close="removeTag(tag.tagId)"
+                    @close="removeTag(tag)"
                   >
                     {{ tag.name }}
                   </el-tag>

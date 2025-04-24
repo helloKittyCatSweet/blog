@@ -19,6 +19,9 @@ export const userActivityPrefix = '/activity'
 export const userFollowPrefix = '/follow'
 export const userRecommendPrefix = '/recommend'
 
+// 联系模块下面的api
+export const contactPrefix = '/api/contact'
+
 // comment模块下面的api
 export const commentPrefix = '/api/comment'
 export const categoryPrefix = '/api/category'

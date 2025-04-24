@@ -6,6 +6,9 @@ import { findAll } from "@/api/common/category";
 import { findByCategory, findAll as findAllPosts } from "@/api/post/post";
 import { searchCategorySuggestions, searchPosts } from "@/api/search/es";
 import PostListItem from "@/components/blog/post/PostListItem.vue";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
 
 const searchQuery = ref("");
 const categoriesTree = ref([]);
@@ -13,51 +16,6 @@ const selectedCategory = ref(null);
 const categoryPosts = ref([]);
 const sortBy = ref("newest");
 const loading = ref(false);
-
-// 加载所有分类
-const loadCategories = async () => {
-  loading.value = true;
-  try {
-    const response = await findAll();
-    if (response.data?.status === 200) {
-      categoriesTree.value = response.data.data.map((item) => ({
-        ...item,
-        label: item.category.name,
-        children: item.children?.map((child) => ({
-          ...child,
-          label: child.category.name,
-        })),
-      }));
-
-      // 如果有分类且当前没有选中的分类，自动选中第一个
-      if (categoriesTree.value.length > 0) {
-        if (!selectedCategory.value) {
-          selectedCategory.value = categoriesTree.value[0].category;
-        }
-        await loadPosts(); // 无论是否选中新分类，都重新加载文章
-      } else {
-        ElMessage.warning("暂无分类数据");
-      }
-    }
-  } catch (error) {
-    console.error("加载分类失败:", error);
-    ElMessage.error("加载分类失败");
-  } finally {
-    loading.value = false;
-  }
-};
-
-// 处理分类点击
-const handleCategoryClick = async (data) => {
-  selectedCategory.value = data.category;
-  await loadPosts();
-};
-
-// 查看文章列表
-const viewPosts = (data) => {
-  selectedCategory.value = data.category;
-  loadPosts();
-};
 
 // 提取的数据转换方法
 const transformPostData = (rawData) => {
@@ -88,6 +46,169 @@ const transformPostData = (rawData) => {
     highlightTitle: item.post.title,
     highlightContent: item.post.content,
   }));
+};
+
+// 加载文章，根据是否有选中分类决定加载分类文章还是全部文章
+const loadPosts = async () => {
+  if (!selectedCategory.value?.categoryId) {
+    categoryPosts.value = [];
+    total.value = 0;
+    return;
+  }
+
+  loading.value = true;
+  try {
+    let response;
+    // 组合搜索：当前分类 + 搜索关键词
+    if (searchQuery.value) {
+      response = await searchPosts(
+        `@${selectedCategory.value.name}@ ${searchQuery.value}`,
+        currentPage.value - 1,
+        pageSize.value
+      );
+    } else {
+      // 仅按分类搜索
+      response = await findByCategory(
+        selectedCategory.value.name,
+        currentPage.value - 1,
+        pageSize.value
+      );
+    }
+
+    if (response.data?.status === 200) {
+      const data = response.data.data;
+      if (data.content) {
+        categoryPosts.value = transformPostData(data.content);
+        total.value = data.totalElements;
+      } else {
+        categoryPosts.value = transformPostData(data);
+        total.value = data.length;
+      }
+
+      if (categoryPosts.value.length === 0) {
+        ElMessage.info("该分类下暂无文章");
+      }
+    }
+  } catch (error) {
+    console.error("加载文章失败:", error);
+    ElMessage.error("加载文章失败");
+    categoryPosts.value = [];
+    total.value = 0;
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 添加一个递归函数来扁平化分类树
+const flattenCategoryTree = (items) => {
+  const flattenedCategories = [];
+  const flatten = (items) => {
+    for (const item of items) {
+      flattenedCategories.push(item.category);
+      if (item.children?.length > 0) {
+        flatten(item.children);
+      }
+    }
+  };
+  flatten(items);
+  return flattenedCategories;
+};
+
+// 修改路由监听器，只处理路由变化时的情况
+watch(
+  () => router.currentRoute.value.query.category,
+  async (newCategory) => {
+    if (categoriesTree.value.length > 0) {
+      if (!newCategory) {
+        // 如果没有分类参数，选择第一个分类并加载文章
+        selectedCategory.value = categoriesTree.value[0].category;
+        await loadPosts();
+      } else {
+        // 有分类参数时的处理
+        const decodedCategoryName = decodeURIComponent(newCategory);
+        const flattenedCategories = flattenCategoryTree(categoriesTree.value);
+        const matchedCategory = flattenedCategories.find(
+          category => category.name === decodedCategoryName
+        );
+        
+        if (matchedCategory) {
+          selectedCategory.value = matchedCategory;
+          await loadPosts();
+        }
+      }
+    }
+  }
+);
+
+// 修改 loadCategories 函数
+const loadCategories = async () => {
+  loading.value = true;
+  try {
+    const response = await findAll();
+    if (response.data?.status === 200) {
+      categoriesTree.value = response.data.data.map((item) => ({
+        ...item,
+        label: item.category.name,
+        children: item.children?.map((child) => ({
+          ...child,
+          label: child.category.name,
+        })),
+      }));
+
+      // 在分类数据加载完成后立即处理选择
+      const categoryParam = router.currentRoute.value.query.category;
+      if (categoryParam) {
+        // 如果URL中有分类参数
+        const decodedCategoryName = decodeURIComponent(categoryParam);
+        const flattenedCategories = flattenCategoryTree(categoriesTree.value);
+        const matchedCategory = flattenedCategories.find(
+          category => category.name === decodedCategoryName
+        );
+        
+        if (matchedCategory) {
+          selectedCategory.value = matchedCategory;
+        } else {
+          // 如果找不到匹配的分类，选择第一个
+          selectedCategory.value = categoriesTree.value[0].category;
+        }
+      } else {
+        // 如果URL中没有分类参数，直接选择第一个
+        selectedCategory.value = categoriesTree.value[0].category;
+      }
+
+      // 加载选中分类的文章
+      if (selectedCategory.value) {
+        await loadPosts();
+      } else if (categoriesTree.value.length === 0) {
+        ElMessage.warning("暂无分类数据");
+      }
+    }
+  } catch (error) {
+    console.error("加载分类失败:", error);
+    ElMessage.error("加载分类失败");
+  } finally {
+    loading.value = false;
+  }
+};
+
+// 修改 handleCategoryClick 函数
+const handleCategoryClick = async (data) => {
+  selectedCategory.value = data.category;
+  // 更新 URL 参数
+  router.push({
+    query: { category: data.category.name }
+  });
+  await loadPosts();
+};
+
+// 修改 viewPosts 函数
+const viewPosts = (data) => {
+  selectedCategory.value = data.category;
+  // 更新 URL 参数
+  router.push({
+    query: { category: data.category.name }
+  });
+  loadPosts();
 };
 
 // 搜索处理
@@ -178,61 +299,6 @@ const querySearchAsync = async (queryString, cb) => {
   }
 };
 
-// 加载文章，根据是否有选中分类决定加载分类文章还是全部文章
-const loadPosts = async () => {
-  if (!selectedCategory.value?.categoryId) {
-    categoryPosts.value = [];
-    total.value = 0;
-    return;
-  }
-
-  loading.value = true;
-  try {
-    let response;
-    // 组合搜索：当前分类 + 搜索关键词
-    if (searchQuery.value) {
-      response = await searchPosts(
-        `@${selectedCategory.value.name}@ ${searchQuery.value}`,
-        currentPage.value - 1,
-        pageSize.value
-      );
-    } else {
-      // 仅按分类搜索
-      response = await findByCategory(
-        selectedCategory.value.name,
-        currentPage.value - 1,
-        pageSize.value
-      );
-    }
-
-    if (response.data?.status === 200) {
-      const data = response.data.data;
-      if (data.content) {
-        categoryPosts.value = transformPostData(data.content);
-        total.value = data.totalElements;
-      } else {
-        categoryPosts.value = transformPostData(data);
-        total.value = data.length;
-      }
-
-      if (categoryPosts.value.length === 0) {
-        ElMessage.info("该分类下暂无文章");
-      }
-    }
-  } catch (error) {
-    console.error("加载文章失败:", error);
-    ElMessage.error("加载文章失败");
-    categoryPosts.value = [];
-    total.value = 0;
-  } finally {
-    loading.value = false;
-  }
-};
-
-onMounted(() => {
-  loadCategories();
-});
-
 /**
  * 搜索框监视器
  */
@@ -274,6 +340,10 @@ const sortedPosts = computed(() => {
 const currentPage = ref(1);
 const pageSize = ref(10);
 const total = ref(0);
+
+onMounted(() => {
+  loadCategories();
+});
 </script>
 
 <template>

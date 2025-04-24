@@ -117,8 +117,9 @@ onMounted(async () => {
       try {
         const response = await findPostExplicit(userStore.user.id, postId, "LIKE");
         const activityData = response.data.data;
-        interactionState.value.isLiked = activityData !== null;
-        if (activityData) {
+        // 只有当存在有效的点赞记录（包含activityId）时才标记为已点赞
+        interactionState.value.isLiked = activityData?.activityId != null;
+        if (activityData?.activityId) {
           interactionState.value.likeActivityId = activityData.activityId;
         }
 
@@ -161,6 +162,29 @@ const goToLogin = () => {
 const refreshPost = async () => {
   if (post.value.postId) {
     await getPostDetail(post.value.postId);
+    
+    // 刷新交互状态
+    if (userStore.isLoggedIn) {
+      try {
+        // 重新获取点赞状态
+        const response = await findPostExplicit(userStore.user.id, post.value.postId, "LIKE");
+        const activityData = response.data.data;
+        interactionState.value.isLiked = activityData?.activityId != null;
+        interactionState.value.likeActivityId = activityData?.activityId || null;
+
+        // 重新获取收藏状态
+        const favoriteResponse = await findPostExplicit(
+          userStore.user.id,
+          post.value.postId,
+          "FAVORITE"
+        );
+        const favoriteData = favoriteResponse.data.data;
+        interactionState.value.isFavorited = favoriteData?.activityId != null;
+        interactionState.value.favoriteActivityId = favoriteData?.activityId || null;
+      } catch (error) {
+        console.error("刷新交互状态失败:", error);
+      }
+    }
   }
 };
 
@@ -175,6 +199,14 @@ const showAllComments = ref(false);
 const displayedComments = computed(() => {
   return showAllComments.value ? null : 5;
 });
+
+// 添加评论数量状态
+const commentCount = ref(0);
+
+// 更新评论数量的方法
+const updateCommentCount = (count) => {
+  commentCount.value = count;
+};
 
 /**
  * 用户名点击处理函数
@@ -275,10 +307,11 @@ const handleAuthorClick = (userId) => {
           :display-limit="displayedComments"
           :show-view-more="true"
           @refresh="refreshPost"
+          @update:comment-count="updateCommentCount"
         />
 
         <!-- 添加查看更多按钮 -->
-        <div class="view-more-comments" v-if="!showAllComments">
+        <div class="view-more-comments" v-if="!showAllComments && commentCount > 5">
           <el-button type="primary" text @click="drawerVisible = true">
             查看全部评论
           </el-button>
@@ -308,7 +341,7 @@ const handleAuthorClick = (userId) => {
 
 <style scoped>
 .post-view {
-  max-width: 900px;
+  width: 900px;
   margin: 0 auto;
 }
 

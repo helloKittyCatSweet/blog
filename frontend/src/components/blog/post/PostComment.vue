@@ -465,7 +465,7 @@ const displayComments = computed(() => {
         resize="none"
       />
       <div class="comment-actions">
-        <el-button type="primary" @click="submitComment" style="margin-left: auto">
+        <el-button type="primary" @click="submitComment">
           发表评论
         </el-button>
       </div>
@@ -543,6 +543,10 @@ const displayComments = computed(() => {
   padding: 32px 0;
 }
 
+.comment-input-area {
+  margin-bottom: 24px;
+}
+
 .comment-toolbar {
   margin-bottom: 8px;
   display: flex;
@@ -586,14 +590,15 @@ const displayComments = computed(() => {
   margin-top: 8px;
 }
 
-.comment-actions .el-button {
-  padding: 0 4px;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
+.comment-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
-.comment-actions .el-button:hover {
-  color: var(--el-color-primary);
+.comment-actions .el-button {
+  margin-left: 16px;
 }
 
 .comment-operations {

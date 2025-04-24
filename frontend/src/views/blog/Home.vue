@@ -287,7 +287,10 @@ const handlePostClick = async (postId) => {
           <router-link
             v-for="category in categories"
             :key="category.categoryId"
-            :to="`${BLOG_POSTS_PATH}?category=${category.categoryId}`"
+            :to="{
+              path: BLOG_CATEGORIES_PATH,
+              query: { category: category.name }
+            }"
             class="category-item"
           >
             <div class="category-info">
@@ -310,7 +313,10 @@ const handlePostClick = async (postId) => {
           <router-link
             v-for="tag in tags"
             :key="tag.tagId"
-            :to="`${BLOG_POSTS_PATH}?tag=${tag.tagId}`"
+            :to="{
+              path: BLOG_TAGS_PATH,
+              query: { tag: tag.name }
+            }"
             class="tag-item"
             :style="{ fontSize: `${tag.size}px` }"
           >

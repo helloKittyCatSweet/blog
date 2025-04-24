@@ -241,7 +241,8 @@ onUnmounted(() => {
  * 监听回车按键
  */
 const handleKeydown = (event) => {
-  if (event.key === "Enter") {
+  // 只在当前路由是登录页面时才处理回车事件
+  if (route.path === LOGIN_PATH && event.key === "Enter") {
     if (isRegister.value) {
       registerUser();
     } else {
@@ -905,6 +906,25 @@ const handlePasswordSet = async (userData) => {
 
     .button {
       width: 100%;
+      background-color: var(--el-color-primary) !important;
+      color: white !important;
+      border: none !important;
+      font-weight: 500;
+      height: 44px;
+      font-size: 16px;
+      letter-spacing: 1px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: var(--el-color-primary-light-3) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+      }
+
+      &:active {
+        background-color: var(--el-color-primary-dark-2) !important;
+        transform: translateY(0);
+      }
     }
 
     .flex {
@@ -915,9 +935,9 @@ const handlePasswordSet = async (userData) => {
 
     .centered-title {
       display: flex;
-      justify-content: center; /* 水平居中 */
-      align-items: center; /* 垂直居中 */
-      text-align: center; /* 文字居中 */
+      justify-content: center;
+      align-items: center;
+      text-align: center;
     }
 
     .flex-input-button {
@@ -925,13 +945,13 @@ const handlePasswordSet = async (userData) => {
       align-items: center;
 
       .flex-grow {
-        flex-grow: 20; /* 输入框占据剩余空间 */
-        width: 180%; /* 输入框宽度增加 */
+        flex-grow: 20;
+        width: 180%;
       }
 
       .flex-shrink {
-        flex-shrink: 1; /* 按钮不缩小 */
-        margin-left: 20px; /* *按钮距离输入框的距离*/
+        flex-shrink: 1;
+        margin-left: 20px;
       }
     }
   }
@@ -950,15 +970,30 @@ const handlePasswordSet = async (userData) => {
     }
 
     .github-button {
-      width: 60%; // 设置按钮宽度为父容器的60%
-      padding: 12px 24px; // 增加内边距使按钮更大
+      width: 60%;
+      padding: 12px 24px;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 8px; // 图标和文字之间的间距
+      gap: 8px;
+      background-color: #24292e;
+      color: white !important;
+      border: none !important;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background-color: #2f363d !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      &:active {
+        background-color: #1b1f23 !important;
+        transform: translateY(0);
+      }
 
       .fa-github {
-        font-size: 18px; // 增大图标尺寸
+        font-size: 18px;
       }
     }
   }

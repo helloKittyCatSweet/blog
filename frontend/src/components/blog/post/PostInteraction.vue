@@ -34,8 +34,12 @@ const userStore = useUserStore();
 const handleLike = async () => {
   try {
     if (props.isLiked) {
-      console.log("取消点赞:activityId", props.activityId);
-      await deleteUserActivity(props.activityId);
+      if (!props.likeActivityId) {
+        ElMessage.error("点赞记录不存在");
+        return;
+      }
+      console.log("取消点赞:likeActivityId", props.likeActivityId);
+      await deleteUserActivity(props.likeActivityId);
       emit("update:isLiked", false);
       ElMessage.success("取消点赞成功");
     } else {
@@ -43,8 +47,7 @@ const handleLike = async () => {
         userId: userStore.user.id,
         activityType: "LIKE",
         postId: props.postId,
-        activityDetail: `${userStore.user.username}点赞了文章《${props.title}》`,
-        isDeleted: false,
+        activityDetail: `${userStore.user.username}点赞了文章《${props.title}》`
       });
       emit("update:isLiked", true);
       ElMessage.success("点赞成功");

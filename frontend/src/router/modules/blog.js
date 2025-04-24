@@ -7,12 +7,14 @@ import {
   BLOG_ABOUT_PATH,
   BLOG_USER_DETAIL_PATH,
   BLOG_SEARCH_PATH,
+  BLOG_CONTACT_PATH,
+  BLOG_RSS_PATH,
 } from '@/constants/routes-constants.js'
 import { KeepAlive } from 'vue'
 
 export default {
   path: BLOG_HOME_PATH,
-  component: () => import('@/views/layout/BlogLayout.vue'),
+  component: () => import('@/views/blog/BlogLayout.vue'),
   children: [
     {
       path: '',
@@ -84,5 +86,23 @@ export default {
         keepAlive: true, // 添加缓存配置
       }
     },
+    {
+      path: '/rss',
+      name: 'RSS',
+      component: () => import('@/components/layout/Rss.vue'),
+      meta: {
+        title: 'RSS订阅',
+        public: true
+      }
+    },
+    {
+      path: '/contact',
+      name: 'Contact',
+      component: () => import('@/components/layout/Contact.vue'),
+      meta: {
+        title: '联系我',
+        public: true
+      }
+    }
   ]
 }
