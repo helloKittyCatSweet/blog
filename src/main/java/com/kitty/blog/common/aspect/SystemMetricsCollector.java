@@ -25,7 +25,7 @@ public class SystemMetricsCollector {
     @Autowired
     private KibanaMonitoringConfig monitoringConfig;
 
-    @Scheduled(fixedDelayString = "${blog.elasticsearch.metrics.interval:60}000")
+    @Scheduled(fixedDelayString = "${blog.elasticsearch.metrics.interval:300}000")
     public void collectSystemMetrics() {
         try {
             OperatingSystemMXBean osBean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();

@@ -1,6 +1,6 @@
 <script setup>
 import { RouterView } from "vue-router";
-import { ElConfigProvider, ElLoading } from "element-plus";
+import { ElConfigProvider } from "element-plus";
 import zhCn from "element-plus/es/locale/lang/zh-cn";
 import { useUserStore, useSettingsStore, useThemeStore } from "./stores";
 import { computed, onMounted, ref, provide } from "vue";
@@ -61,10 +61,6 @@ router.afterEach(() => {
         v-loading="true"
         element-loading-fullscreen
       ></div>
-      <!-- 添加全局加载状态 -->
-      <div v-if="globalLoading" class="global-loading-mask">
-        <el-loading></el-loading>
-      </div>
     </div>
   </el-config-provider>
 </template>

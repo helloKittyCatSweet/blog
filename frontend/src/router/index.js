@@ -12,6 +12,7 @@ import authRoutes from './modules/auth.js'
 import userRoutes from './modules/user.js'
 import adminRoutes from './modules/admin.js'
 import blogRoutes from './modules/blog.js'
+import externalRoutes from './modules/external.js'
 
 import { verifyToken } from '@/api/user/user.js';
 
@@ -61,11 +62,12 @@ const router = createRouter({
         ...userRoutes,
         // 管理路由
         ...adminRoutes,
+        // 外部链接路由
+        ...externalRoutes
       ],
     },
   ],
 });
-
 
 // 登录访问拦截 => 默认是直接放行的
 // 根据返回值决定，是放行还是拦截

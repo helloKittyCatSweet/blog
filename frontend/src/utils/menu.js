@@ -22,7 +22,10 @@ import {
   HelpFilled,
   InfoFilled,
   ChatDotRound,
-  Message
+  Message,
+  Link,
+  Tools,
+  Histogram
 } from "@element-plus/icons-vue";
 import { ROLES } from "@/constants/role-constants";
 import {
@@ -277,6 +280,32 @@ export const adminMenus = [
             title: '系统消息管理',
             index: ADMIN_SYSTEM_MESSAGE_PATH,
             roles: [ROLES.SYSTEM_ADMINISTRATOR]
+          },
+          {
+            icon: Tools,
+            title: 'Kibana管理',
+            index: 'kibana-management',
+            roles: [ROLES.SYSTEM_ADMINISTRATOR],
+            children: [
+              {
+                icon: Histogram,
+                title: '仪表盘',
+                index: '/kibana-dashboard',
+                roles: [ROLES.SYSTEM_ADMINISTRATOR]
+              },
+              {
+                icon: HelpFilled,
+                title: '索引管理',
+                index: '/kibana-indices',
+                roles: [ROLES.SYSTEM_ADMINISTRATOR]
+              },
+              {
+                icon: Link,
+                title: '数据视图管理',
+                index: '/kibana-dataviews',
+                roles: [ROLES.SYSTEM_ADMINISTRATOR]
+              }
+            ]
           }
         ]
       }
@@ -294,9 +323,19 @@ export function generateMenus(userStore) {
       const hasAccess = item.roles && item.roles.some(role => userStore.hasRole(role));
 
       if (hasAccess && item.children) {
-        item.children = item.children.filter(child =>
-          child.roles && child.roles.some(role => userStore.hasRole(role))
-        );
+        item.children = item.children.filter(child => {
+          const hasChildAccess = child.roles && child.roles.some(role => userStore.hasRole(role));
+          // 处理外部链接
+          if (hasChildAccess && child.index && child.index.startsWith('EXTERNAL_LINK:')) {
+            const url = child.index.substring('EXTERNAL_LINK:'.length);
+            child.index = '#'; // 使用#作为占位符
+            child.onClick = (e) => {
+              e.preventDefault();
+              window.open(url, '_blank');
+            };
+          }
+          return hasChildAccess;
+        });
       }
 
       return hasAccess;
