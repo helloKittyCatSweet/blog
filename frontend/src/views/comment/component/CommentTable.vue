@@ -1,6 +1,8 @@
 <script setup>
 import { ref } from "vue";
 import { formatDate } from "@/utils/date.js";
+import { useRouter } from "vue-router";
+import { BLOG_POST_DETAIL_PATH } from "@/constants/routes/blog";
 
 const props = defineProps({
   data: {
@@ -31,6 +33,14 @@ const props = defineProps({
     default: () => [],
   },
 });
+
+const router = useRouter();
+
+const goToPost = (postId) => {
+  if (postId) {
+    router.push(BLOG_POST_DETAIL_PATH.replace(':id', postId));
+  }
+};
 
 const emit = defineEmits([
   "selection-change",
@@ -114,7 +124,7 @@ const emit = defineEmits([
         <div class="comment-content">
           <div class="comment-header">
             <span class="username">{{ row.username }}</span>
-            <span class="article-title">《{{ row.title }}》</span>
+            <span class="article-title" @click="goToPost(row.postId)" :class="{ clickable: row.postId }">《{{ row.title }}》</span>
           </div>
           <div class="comment-text">
             <span v-if="row.content.length <= 50 || row.isExpanded">
@@ -294,4 +304,44 @@ const emit = defineEmits([
   margin: 0;
   min-width: 70px;
 }
+</style>
+
+<style lang="scss" scoped>
+.login-page {
+  // ... existing styles ...
+}
+
+.comment-content {
+  word-break: break-word;
+  line-height: 1.5;
+
+  .comment-header {
+    margin-bottom: 4px;
+    font-size: 13px;
+
+    .username {
+      color: var(--el-color-primary);
+      margin-right: 8px;
+    }
+
+    .article-title {
+      color: var(--el-text-color-regular);
+      
+      &.clickable {
+        cursor: pointer;
+        color: var(--el-color-primary);
+        transition: all 0.3s ease;
+
+        &:hover {
+          color: var(--el-color-primary-light-3);
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+
+  // ... existing styles ...
+}
+
+// ... existing styles ...
 </style>

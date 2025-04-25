@@ -66,8 +66,8 @@ public class MessageService {
         message.setIsRead(false);
         message.setStatus(MessageStatus.SENT.name());
 
-        SecondaryMessageReviewerService.ReviewResult reviewResult =
-                secondaryMessageReviewerService.review(message.getContent());
+        SecondaryMessageReviewerService.ReviewResult reviewResult = secondaryMessageReviewerService
+                .review(message.getContent());
         message.setSuspicious(reviewResult.isSuspicious());
         message.setScore(reviewResult.getScore());
         message.setReason(String.join(",", reviewResult.getReasons()));
@@ -82,6 +82,7 @@ public class MessageService {
 
     /**
      * 更新消息状态
+     * 
      * @param messageId
      * @param messageStatus
      */
@@ -89,9 +90,9 @@ public class MessageService {
     @CacheEvict(allEntries = true)
     public void updateMessageStatus(Integer messageId, String messageStatus) {
         Message message = findById(messageId).getBody();
-        if(message != null){
+        if (message != null) {
             message.setStatus(messageStatus);
-            if (messageStatus.equals(MessageStatus.READ.name())){
+            if (messageStatus.equals(MessageStatus.READ.name())) {
                 message.setIsRead(true);
             }
             save(message);
@@ -127,8 +128,8 @@ public class MessageService {
             throw new RuntimeException(e);
         }
 
-        SecondaryMessageReviewerService.ReviewResult reviewResult =
-                secondaryMessageReviewerService.review(message.getContent());
+        SecondaryMessageReviewerService.ReviewResult reviewResult = secondaryMessageReviewerService
+                .review(message.getContent());
         assert oldMessage != null;
         oldMessage.setSuspicious(reviewResult.isSuspicious());
         oldMessage.setScore(reviewResult.getScore());
@@ -140,17 +141,19 @@ public class MessageService {
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public ResponseEntity<Boolean> readMessage(Integer senderId,Integer receiverId) {
-        if (!messageRepository.existsById(receiverId) || !userRepository.existsById(senderId)) {
+    public ResponseEntity<Boolean> readMessage(Integer senderId, Integer receiverId) {
+        // 检查发送者和接收者是否存在
+        if (!userRepository.existsById(senderId) || !userRepository.existsById(receiverId)) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
+        // 将发送者发给接收者的所有未读消息标记为已读
         messageRepository.readMessage(senderId, receiverId);
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
     @Transactional
     public ResponseEntity<Boolean> unReadMessage(Integer senderId, Integer receiverId) {
-        if (!messageRepository.existsById(receiverId) || !userRepository.existsById(senderId)){
+        if (!userRepository.existsById(senderId) || !userRepository.existsById(receiverId)) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         messageRepository.unReadMessage(senderId, receiverId);
@@ -187,8 +190,8 @@ public class MessageService {
         if (!userRepository.existsById(senderId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         } else {
-            return new ResponseEntity<>(messageRepository.
-                    findByContentForSender(content, senderId).orElse(new ArrayList<>()),
+            return new ResponseEntity<>(
+                    messageRepository.findByContentForSender(content, senderId).orElse(new ArrayList<>()),
                     HttpStatus.OK);
         }
     }
@@ -199,8 +202,8 @@ public class MessageService {
         if (!userRepository.existsById(receiverId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         } else {
-            return new ResponseEntity<>(messageRepository.
-                    findByContentForReceiver(content, receiverId).orElse(new ArrayList<>()),
+            return new ResponseEntity<>(
+                    messageRepository.findByContentForReceiver(content, receiverId).orElse(new ArrayList<>()),
                     HttpStatus.OK);
         }
     }
@@ -211,8 +214,7 @@ public class MessageService {
         if (!userRepository.existsById(userId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         } else {
-            List<Integer> contactedUserIds =
-                    messageRepository.findContactedUserIds(userId).orElse(new ArrayList<>());
+            List<Integer> contactedUserIds = messageRepository.findContactedUserIds(userId).orElse(new ArrayList<>());
             if (contactedUserIds.isEmpty()) {
                 return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
             }
@@ -225,7 +227,7 @@ public class MessageService {
                         .username(user.getUsername())
                         .avatar(user.getAvatar())
                         .lastMessage(message == null ? "暂无消息" : message.getContent())
-                        .unreadCount(messageRepository.findUnreadCount(userId, contactedUserId))
+                        .unreadCount(messageRepository.findUnreadCount(contactedUserId, userId))
                         .lastMessageTime(message == null ? null : message.getCreatedAt())
                         .build();
                 contactedUserNames.add(messageInfo);
@@ -248,25 +250,24 @@ public class MessageService {
 
     /**
      * 发送私人消息
+     * 
      * @param message
      * @return
      */
     @Transactional
-    public ResponseEntity<Message> sendPrivateMessage(Message message){
+    public ResponseEntity<Message> sendPrivateMessage(Message message) {
         Message savedMessage = save(message).getBody();
-        if (savedMessage != null){
+        if (savedMessage != null) {
             // 发送给接收者
             simpMessagingTemplate.convertAndSendToUser(
                     savedMessage.getReceiverId().toString(),
                     "/queue/message",
-                    savedMessage
-            );
+                    savedMessage);
             // 发送状态更新给发送者
             simpMessagingTemplate.convertAndSendToUser(
                     savedMessage.getSenderId().toString(),
                     "/queue/message-status",
-                    new MessageStatusUpdate(savedMessage.getMessageId(), MessageStatus.SENT.name())
-            );
+                    new MessageStatusUpdate(savedMessage.getMessageId(), MessageStatus.SENT.name()));
             return new ResponseEntity<>(savedMessage, HttpStatus.OK);
         }
         return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -274,17 +275,17 @@ public class MessageService {
 
     /**
      * 发送群组消息
+     * 
      * @param message
      * @return
      */
     @Transactional
-    public ResponseEntity<Message> sendTopicMessage(Message message){
+    public ResponseEntity<Message> sendTopicMessage(Message message) {
         Message savedMessage = save(message).getBody();
-        if (savedMessage != null){
+        if (savedMessage != null) {
             simpMessagingTemplate.convertAndSend(
                     "/topic/chat",
-                    savedMessage
-            );
+                    savedMessage);
             return new ResponseEntity<>(savedMessage, HttpStatus.OK);
         }
         return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
@@ -292,24 +293,25 @@ public class MessageService {
 
     /**
      * 获取用户未读消息数量
+     * 
      * @param receiverId
      * @return
      */
     @Transactional
     public ResponseEntity<Long> countByReceiverIdAndIsReadFalse(Integer receiverId) {
-        return new ResponseEntity<>
-                (messageRepository.countByReceiverIdAndIsReadFalse(receiverId), HttpStatus.OK);
+        return new ResponseEntity<>(messageRepository.countByReceiverIdAndIsReadFalse(receiverId), HttpStatus.OK);
     }
 
     /**
      * 标记消息为已读并通知发送者
+     * 
      * @param messageId
      * @param receiverId
      */
     @Transactional
     public void markMessageAsRead(Integer messageId, Integer receiverId) {
         Message message = findById(messageId).getBody();
-        if (message != null && message.getReceiverId().equals(receiverId) && !message.getIsRead()){
+        if (message != null && message.getReceiverId().equals(receiverId) && !message.getIsRead()) {
             message.setIsRead(true);
             message.setStatus(MessageStatus.READ.name());
             save(message);
@@ -337,34 +339,66 @@ public class MessageService {
                 HttpStatus.OK);
     }
 
+    /**
+     * 将 Message 转换为 MessageDto，并统计未读消息数量
+     * 
+     * @param message 消息实体
+     * @return MessageDto
+     */
+    private MessageDto convertToDto(Message message) {
+        User sender = userRepository.findById(message.getSenderId()).orElse(new User());
+        User receiver = userRepository.findById(message.getReceiverId()).orElse(new User());
+
+        // 获取未读消息数量
+        int unreadCount = messageRepository.findUnreadCount(message.getReceiverId(), message.getSenderId());
+
+        return MessageDto.builder()
+                .messageId(message.getMessageId())
+                .senderId(message.getSenderId())
+                .senderName(sender.getUsername())
+                .receiverId(message.getReceiverId())
+                .receiverName(receiver.getUsername())
+                .content(message.getContent())
+                .createdAt(message.getCreatedAt())
+                .suspicious(message.isSuspicious())
+                .score(message.getScore())
+                .reason(message.getReason())
+                .operation(message.isOperation())
+                .build();
+    }
+
+    @Transactional
+    @Cacheable(key = "#senderName + #receiverName + #content + #startDate + #endDate")
+    public ResponseEntity<Page<MessageDto>> searchMessages(
+            String senderName, String receiverName, String content,
+            LocalDate startDate, LocalDate endDate, int page, int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Message> messagePage = messageRepository.searchMessages(
+                senderName, receiverName, content,
+                startDate != null ? startDate.atStartOfDay() : null,
+                endDate != null ? endDate.plusDays(1).atStartOfDay() : null,
+                pageable);
+
+        List<MessageDto> messageDtos = messagePage.getContent().stream()
+                .filter(message -> message.isSuspicious() || message.getScore() > 60)
+                .map(this::convertToDto)
+                .toList();
+
+        Page<MessageDto> resultPage = new PageImpl<>(messageDtos, pageable, messagePage.getTotalElements());
+        return new ResponseEntity<>(resultPage, HttpStatus.OK);
+    }
+
     @Transactional
     public ResponseEntity<List<MessageDto>> findAll() {
         if (messageRepository.count() == 0) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
         }
         List<Message> all = messageRepository.findAll();
-        List<MessageDto> messageDtos = new ArrayList<>();
-        for (Message message : all) {
-            if (message.isSuspicious() || message.getScore() > 60){
-                MessageDto messageDto = MessageDto.builder()
-                        .messageId(message.getMessageId())
-                        .senderId(message.getSenderId())
-                        .senderName(userRepository.findById(message.getSenderId())
-                                .get().getUsername())
-                        .receiverId(message.getReceiverId())
-                        .receiverName(userRepository.findById(message.getReceiverId())
-                                .get().getUsername())
-                        .content(message.getContent())
-                        .createdAt(message.getCreatedAt())
-                        .suspicious(message.isSuspicious())
-                        .score(message.getScore())
-                        .reason(message.getReason())
-                        .operation(message.isOperation())
-                        .build();
-                messageDtos.add(messageDto);
-            }
-
-        }
+        List<MessageDto> messageDtos = all.stream()
+                .filter(message -> message.isSuspicious() || message.getScore() > 60)
+                .map(this::convertToDto)
+                .toList();
         return new ResponseEntity<>(messageDtos, HttpStatus.OK);
     }
 
@@ -406,10 +440,8 @@ public class MessageService {
             Integer userId, Pageable pageable) {
         try {
             // 转换日期范围
-            LocalDateTime startTime = startDate != null ?
-                    startDate.atStartOfDay() : null;
-            LocalDateTime endTime = endDate != null ?
-                    endDate.plusDays(1).atStartOfDay() : null;
+            LocalDateTime startTime = startDate != null ? startDate.atStartOfDay() : null;
+            LocalDateTime endTime = endDate != null ? endDate.plusDays(1).atStartOfDay() : null;
 
             Page<Message> messages = messageRepository.findMessagePage(
                     receiverName, content, startTime, endTime, userId, pageable);
@@ -442,42 +474,7 @@ public class MessageService {
     }
 
     @Transactional
-    @Cacheable(key = "#senderName + #receiverName + #content + #startDate + #endDate")
-    public ResponseEntity<Page<MessageDto>> searchMessages(
-            String senderName, String receiverName, String content,
-            LocalDate startDate, LocalDate endDate, int page, int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Message> messagePage = messageRepository.searchMessages(
-                senderName, receiverName, content,
-                startDate != null ? startDate.atStartOfDay() : null,
-                endDate != null ? endDate.plusDays(1).atStartOfDay() : null,
-                pageable);
-
-        List<MessageDto> messageDtos = messagePage.getContent().stream()
-                .filter(message -> message.isSuspicious() || message.getScore() > 60)
-                .map(message -> MessageDto.builder()
-                        .messageId(message.getMessageId())
-                        .senderId(message.getSenderId())
-                        .senderName(userRepository.findById(message.getSenderId())
-                                .orElse(new User()).getUsername())
-                        .receiverId(message.getReceiverId())
-                        .receiverName(userRepository.findById(message.getReceiverId())
-                                .orElse(new User()).getUsername())
-                        .content(message.getContent())
-                        .createdAt(message.getCreatedAt())
-                        .suspicious(message.isSuspicious())
-                        .score(message.getScore())
-                        .reason(message.getReason())
-                        .build())
-                .toList();
-
-        Page<MessageDto> resultPage = new PageImpl<>(messageDtos, pageable, messagePage.getTotalElements());
-        return new ResponseEntity<>(resultPage, HttpStatus.OK);
-    }
-
-    @Transactional
-    public ResponseEntity<Boolean> setOperation(Integer messageId, boolean operation){
+    public ResponseEntity<Boolean> setOperation(Integer messageId, boolean operation) {
         return new ResponseEntity<>(messageRepository.setOperation(messageId, operation) > 0, HttpStatus.OK);
     }
 
@@ -490,8 +487,8 @@ public class MessageService {
             }
 
             // 查找两个用户之间的最后一条消息
-            Message lastMessage = messageRepository.
-                    findFirstBySenderIdAndReceiverIdOrReceiverIdAndSenderIdOrderByCreatedAtDesc(
+            Message lastMessage = messageRepository
+                    .findFirstBySenderIdAndReceiverIdOrReceiverIdAndSenderIdOrderByCreatedAtDesc(
                             senderId, receiverId, senderId, receiverId)
                     .orElse(null);
 

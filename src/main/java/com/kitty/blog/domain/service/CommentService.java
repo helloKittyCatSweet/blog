@@ -325,28 +325,16 @@ public class CommentService {
    }
 
     @Transactional
-    public boolean isUnderAuthorPost(Integer commentId, Integer userId) {
-        Comment comment = (Comment) commentRepository.findById(commentId).orElse(null);
-        if (comment == null || !Objects.equals(comment.getUserId(), userId)) {
+    public boolean hasDeletePermission(Integer userId, Integer commentId){
+        if (!userRepository.existsById(userId) || !commentRepository.existsById(commentId)){
             return false;
-        } else {
-            Post post = (Post) postRepository.findById(comment.getPostId()).orElse(null);
-            if (post == null || !Objects.equals(post.getUserId(), userId)) {
-                return false;
-            } else {
-                return true;
-            }
         }
-    }
-
-    @Transactional
-    public boolean isUnderAuthorPost(List<Integer> commentIds, Integer userId) {
-        for (Integer commentId : commentIds) {
-            if (!isUnderAuthorPost(commentId, userId)) {
-                return false;
-            }
+        Comment comment = commentRepository.findById(commentId).orElse(new Comment());
+        if (comment.getUserId() == userId
+        || postRepository.findById(comment.getPostId()).orElse(new Post()).getUserId() == userId){
+            return true;
         }
-        return true;
+        return false;
     }
 
     @Transactional

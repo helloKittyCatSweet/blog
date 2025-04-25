@@ -146,8 +146,8 @@ export const deleteCategory = (data) =>
   request.delete(`${postPrefix}/public/delete/category`, data);
 
 // 根据id删除文章
-export const deleteById = (data) =>
-  request.delete(`${postPrefix}/public/delete/id/${data}`);
+export const deleteById = (postId) =>
+  request.delete(`${postPrefix}/public/delete/id/${postId}`);
 
 // 搜索文章
 export const searchPosts = (criteria) =>
@@ -180,3 +180,6 @@ export const updateTags = (postId, tags) =>
 // 查看文章
 export const addViews = (postId) =>
   request.put(`${postPrefix}/public/add/views/${postId}`);
+
+// 临时创建一个文章
+export const savePost = (data) => request.post(`${postPrefix}/public/save`, data);

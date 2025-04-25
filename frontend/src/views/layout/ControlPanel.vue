@@ -2,7 +2,16 @@
 import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import * as echarts from "echarts";
-import { Document, View, ChatRound, Star, User, Reading } from "@element-plus/icons-vue";
+import {
+  Document,
+  View,
+  ChatRound,
+  Star,
+  User,
+  Reading,
+  ArrowUp,
+  ArrowDown,
+} from "@element-plus/icons-vue";
 import {
   getUserDashboard,
   getUserMonthlyStats,
@@ -18,6 +27,15 @@ const router = useRouter();
 const postChartRef = ref(null);
 const interactionChartRef = ref(null);
 const loading = ref(true);
+
+/**
+ * 图表可折叠
+ */
+const postChartVisible = ref(true);
+const interactionChartVisible = ref(true);
+const chartsVisible = ref(true);
+const analyticsVisible = ref(true);
+const suggestionsVisible = ref(true);
 
 // 统计数据
 const statistics = ref({
@@ -224,14 +242,14 @@ const initInteractionChart = async () => {
 
 // 监听窗口大小变化，重绘图表
 const handleResize = () => {
-  if (postChartRef.value) {
+  if (postChartRef.value && postChartVisible.value) {
     const postChart = echarts.getInstanceByDom(postChartRef.value);
     if (postChart) {
       postChart.resize();
     }
   }
 
-  if (interactionChartRef.value) {
+  if (interactionChartRef.value && interactionChartVisible.value) {
     const interactionChart = echarts.getInstanceByDom(interactionChartRef.value);
     if (interactionChart) {
       interactionChart.resize();
@@ -327,19 +345,58 @@ const hasData = computed(() => {
     </div>
 
     <template v-if="hasData">
-      <!-- 图表区域 -->
-      <div class="charts-container">
-        <el-card class="chart-card" shadow="hover">
-          <div ref="postChartRef" class="chart"></div>
-        </el-card>
+      <!-- 数据统计图表区域 -->
+      <el-card class="section-card" shadow="hover">
+        <template #header>
+          <div class="card-header">
+            <div class="header-left">
+              <span>数据统计</span>
+            </div>
+            <el-button type="primary" link @click="chartsVisible = !chartsVisible">
+              {{ chartsVisible ? "收起" : "展开" }}
+              <el-icon class="el-icon--right">
+                <component :is="chartsVisible ? 'ArrowUp' : 'ArrowDown'" />
+              </el-icon>
+            </el-button>
+          </div>
+        </template>
+        <el-collapse-transition>
+          <div v-show="chartsVisible" class="charts-container">
+            <div class="chart-wrapper">
+              <div ref="postChartRef" class="chart"></div>
+            </div>
+            <div class="chart-wrapper">
+              <div ref="interactionChartRef" class="chart"></div>
+            </div>
+          </div>
+        </el-collapse-transition>
+      </el-card>
 
-        <el-card class="chart-card" shadow="hover">
-          <div ref="interactionChartRef" class="chart"></div>
-        </el-card>
-      </div>
-
-      <!-- 添加作者写作建议卡片 -->
-      <AuthorAnalytics />
+      <!-- 写作建议 -->
+      <el-card class="section-card" shadow="hover">
+        <template #header>
+          <div class="card-header">
+            <div class="header-left">
+              <span>写作建议</span>
+            </div>
+            <el-button
+              type="primary"
+              link
+              @click="suggestionsVisible = !suggestionsVisible"
+            >
+              {{ suggestionsVisible ? "收起" : "展开" }}
+              <el-icon class="el-icon--right">
+                <component :is="suggestionsVisible ? 'ArrowUp' : 'ArrowDown'" />
+              </el-icon>
+            </el-button>
+          </div>
+        </template>
+        <el-collapse-transition>
+          <div v-show="suggestionsVisible">
+            <AuthorAnalytics />
+          </div>
+        </el-collapse-transition>
+      </el-card>
 
       <!-- 最近文章 -->
       <el-card class="recent-posts" shadow="hover">
@@ -463,6 +520,7 @@ const hasData = computed(() => {
   align-items: center;
   gap: 8px;
   padding: 12px;
+  justify-content: space-between;
 }
 
 .header-left {
@@ -613,5 +671,32 @@ const hasData = computed(() => {
   .suggestion-card {
     background-color: var(--el-bg-color);
   }
+}
+
+/* 确保图表容器在折叠时平滑过渡 */
+.chart {
+  transition: height 0.3s ease-in-out;
+}
+
+.section-card {
+  margin-bottom: 24px;
+  border-radius: 8px;
+}
+
+.section-card:hover {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.charts-container {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  padding: 16px;
+}
+
+.chart-wrapper {
+  background-color: var(--el-bg-color);
+  border-radius: 8px;
+  padding: 16px;
 }
 </style>

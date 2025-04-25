@@ -30,8 +30,8 @@ export const count = () => request.get(`${commentPrefix}/admin/count`)
 export const findAll = () => request.get(`${commentPrefix}/admin/find/all`)
 
 // 删除评论
-export const deleteById = (commentId, userId) =>
-  request.delete(`${commentPrefix}/public/delete/id/${commentId}/${userId}`)
+export const deleteById = (commentId) =>
+  request.delete(`${commentPrefix}/public/delete/id/${commentId}`)
 
 // 批量删除评论
 export const batchDelete = (commentIds) =>

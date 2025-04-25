@@ -731,9 +731,11 @@ public class PostController {
      * @param postId
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_POST_MANAGER)" +
-            " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
-            " or @postService.isAuthorOfOpenPost(#postId, #user.id)")
+    @PreAuthorize(
+            "hasRole(T(com.kitty.blog.common.constant.Role).ROLE_POST_MANAGER) " +
+                    "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR) " +
+                    "or @postService.isAuthorOfOpenPost(#user.id, #postId)"
+    )
     @Operation(summary = "根据ID删除文章")
     @DeleteMapping("/public/delete/id/{postId}")
     @ApiResponses(value = {
@@ -790,6 +792,7 @@ public class PostController {
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
+
     /**
      * 搜索文章
      */
@@ -870,6 +873,7 @@ public class PostController {
     // 前台展示功能
     @Operation(summary = "点击文章")
     @PutMapping("/public/add/views/{postId}")
+    @LogPostMetrics("点击文章")
     public ResponseEntity<Response<Boolean>> addViews(@PathVariable Integer postId) {
         postService.addViews(postId);
         return Response.createResponse(

@@ -13,6 +13,7 @@ import {
   deleteAttachment,
   uploadPostCover,
   generateSummary,
+  savePost,
 } from "@/api/post/post.js";
 import { USER_POST_LIST_PATH } from "@/constants/routes/user.js";
 import { useUserStore } from "@/stores";
@@ -109,12 +110,16 @@ const getPostDetail = async (id) => {
   }
 };
 
+// 添加一个标记，用于区分是否是通过上传图片自动创建的文章
+const isAutoCreated = ref(false);
+
 const handleUploadImg = async (files, callback) => {
   try {
     let currentPostId = form.value.postId;
     if (!currentPostId) {
-      const createResponse = await create({
+      const createResponse = await savePost({
         title: form.value.title || "未命名文章",
+        userId: userStore.user.id,
         content: form.value.content || "正在编辑...",
         isDraft: true,
         isPublished: false,
@@ -124,6 +129,7 @@ const handleUploadImg = async (files, callback) => {
       if (createResponse.data.status === 200) {
         currentPostId = createResponse.data.data.postId;
         form.value.postId = currentPostId;
+        isAutoCreated.value = true; // 标记为自动创建
         if (!form.value.title) form.value.title = "未命名文章";
         if (!form.value.content) form.value.content = "正在编辑...";
       } else {
@@ -284,7 +290,7 @@ const handleCoverUpload = async (options) => {
 
     // 自动创建文章（如果不存在）
     if (!form.value.postId) {
-      const createRes = await create({
+      const createRes = await savePost({
         title: form.value.title || "未命名文章",
         content: form.value.content || "正在编辑...",
         isDraft: true,
@@ -359,8 +365,8 @@ watch(
 const selectedVersion = ref(null);
 
 const isCurrentVersion = computed(() => {
-  // 如果是新建文章，始终返回 true
-  if (!form.value.postId) return true;
+  // 如果是新建文章或自动创建的文章，始终返回 true
+  if (!form.value.postId || isAutoCreated.value) return true;
   // 如果是编辑文章，则检查是否是当前版本
   return selectedVersion.value?.version === form.value.version;
 });
@@ -427,7 +433,7 @@ const handleGenerateSummary = async () => {
     <el-card v-loading="loading">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <!-- 在标题之前添加版本选择器 -->
-        <el-form-item v-if="form.postId" label="历史版本">
+        <el-form-item v-if="form.postId && !isAutoCreated" label="历史版本">
           <version-select
             v-model="selectedVersion"
             :post-id="form.postId"
@@ -592,7 +598,7 @@ const handleGenerateSummary = async () => {
         <el-form-item>
           <el-tooltip content="直接发布文章，文章将立即在博客中公开显示" placement="top">
             <el-button type="primary" @click="handleSave(false)">
-              {{ form.postId ? "更新文章" : "发布文章" }}
+              {{ !form.postId || isAutoCreated ? "发布文章" : "更新文章" }}
             </el-button>
           </el-tooltip>
 
@@ -601,7 +607,7 @@ const handleGenerateSummary = async () => {
             placement="top"
           >
             <el-button @click="handleSave(true)">
-              {{ form.postId ? "保存更新" : "保存草稿" }}
+              {{ !form.postId || isAutoCreated ? "保存草稿" : "保存更新" }}
             </el-button>
           </el-tooltip>
 

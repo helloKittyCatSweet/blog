@@ -96,8 +96,6 @@ public class PostService {
     @Transactional
     public ResponseEntity<PostDto> create(PostDto input) {
         Post post = input.getPost();
-        Integer categoryId = input.getCategory().getCategoryId();
-        List<Integer> tagIds = input.getTags().stream().map(Tag::getTagId).toList();
 
         // 验证用户是否存在
         if (!userRepository.existsById(post.getUserId())) {
@@ -105,7 +103,7 @@ public class PostService {
         }
 
         // 内容审核
-        String s = baiduContentService.checkText(post.getContent());
+        String s= baiduContentService.checkText(post.getContent());
         if (!s.equals("合规")) {
             return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
         }
@@ -134,12 +132,13 @@ public class PostService {
                         savedPost.getUserId(), savedPost.getVersion()));
 
         // 添加分类
-        if (categoryId != null) {
-            addCategory(savedPost.getPostId(), categoryId);
+        if (input.getCategory() != null) {
+            addCategory(savedPost.getPostId(), input.getCategory().getCategoryId());
         }
 
         // 添加标签
-        if (!tagIds.isEmpty()) {
+        if (!input.getTags().isEmpty()) {
+            List<Integer> tagIds = input.getTags().stream().map(Tag::getTagId).toList();
             for (Integer tagId : tagIds) {
                 addTag(savedPost.getPostId(), tagId);
             }
@@ -158,8 +157,8 @@ public class PostService {
     @CacheEvict(allEntries = true)
     public ResponseEntity<PostDto> update(PostDto input) {
         Post post = input.getPost();
-        Integer categoryId = input.getCategory().getCategoryId();
-        List<Integer> tagIds = input.getTags().stream().map(Tag::getTagId).toList();
+//        log.info("update post: {}", post.getPostId());
+//        log.info("update postdto: {}",input);
 
         // 检查文章是否存在
         if (!postRepository.existsById(post.getPostId())) {
@@ -201,16 +200,23 @@ public class PostService {
         Post updatedPost = (Post) postRepository.save(existingPost);
 
         // 更新分类和标签
-        if (categoryId != null) {
-            updateCategory(post.getPostId(), categoryId);
+        if (input.getCategory() != null) {
+            updateCategory(post.getPostId(), input.getCategory().getCategoryId());
         }
-        if (!tagIds.isEmpty()) {
+        if (!input.getTags().isEmpty()) {
+            List<Integer> tagIds = input.getTags().stream().map(Tag::getTagId).toList();
             updateTags(post.getPostId(), tagIds);
         }
 
         // 同步版本管理
         PostVersion postVersion = postVersionRepository
-                .findByPostIdAndVersion(updatedPost.getPostId(), updatedPost.getVersion()).orElse(new PostVersion());
+                .findByPostIdAndVersion(updatedPost.getPostId(), updatedPost.getVersion())
+                .orElse(new PostVersion(
+                        updatedPost.getPostId(),
+                        updatedPost.getContent(),
+                        updatedPost.getUserId(),
+                        updatedPost.getVersion()
+                ));
         postVersion.setContent(updatedPost.getContent());
         postVersionRepository.save(postVersion);
 
@@ -625,7 +631,7 @@ public class PostService {
         } else {
             Favorite favorite = favoriteService.findByUserIdAndPostId(userId, postId).getBody();
             assert favorite != null;
-            favoriteService.deleteById(favorite.getFavoriteId());
+            favoriteService.deleteById(favorite.getFavoriteId(), userId);
             UserActivity userActivity = userActivityService.findPostActivityExplicit(userId, postId,
                     ActivityType.FAVORITE.name()).getBody();
             assert userActivity != null;
@@ -661,11 +667,10 @@ public class PostService {
     @Transactional
     @CacheEvict(allEntries = true)
     public ResponseEntity<Post> save(Post post) {
-        String s = baiduContentService.checkText(post.getContent());
-        System.out.println(s);
-        if (!s.equals("合规")) {
-            return new ResponseEntity<>(new Post(), HttpStatus.BAD_REQUEST);
-        }
+        postVersionRepository.save(
+                new PostVersion(post.getPostId(), post.getContent(),
+                        post.getUserId(), post.getVersion()));
+
         return new ResponseEntity<>((Post) postRepository.save(post), HttpStatus.OK);
     }
 

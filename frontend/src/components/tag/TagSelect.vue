@@ -9,6 +9,10 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
+  disabled: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const emit = defineEmits(["update:modelValue"]);
@@ -138,9 +142,16 @@ const handleDialogOpen = () => {
       placeholder="请选择标签"
       style="width: 100%"
       @change="handleTagChange"
+      :disabled="disabled"
     >
       <template #prefix>
-        <el-button type="primary" link :icon="Plus" @click.stop="dialogVisible = true">
+        <el-button 
+          type="primary" 
+          link 
+          :icon="Plus" 
+          @click.stop="dialogVisible = true"
+          :disabled="disabled"
+        >
           创建标签
         </el-button>
       </template>

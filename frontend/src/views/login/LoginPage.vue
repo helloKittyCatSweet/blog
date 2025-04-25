@@ -15,6 +15,7 @@ import { getCaptcha, checkCaptcha } from "@/api/user/security/captcha.js";
 import { login, register } from "@/api/user/user";
 import { verify, send } from "@/api/user/security/emailVerification";
 import { CONTROL_PANEL_PATH, LOGIN_PATH } from "@/constants/routes/base";
+import { BLOG_HOME_PATH } from "@/constants/routes/blog.js";
 import { getGithubLoginUrl, handleGithubCallback } from "@/api/auth/oauth";
 
 const isRegister = ref(false);
@@ -376,10 +377,17 @@ const loginUser = async (isAutoLogin = false) => {
   try {
     // 确保表单实例存在
     if (!form.value) {
-      throw new Error("表单实例不存在");
+      ElMessage.error("系统初始化中，请稍后再试");
+      return;
     }
 
-    await form.value.validate();
+    // 表单验证
+    try {
+      await form.value.validate();
+    } catch (error) {
+      console.error("表单验证失败:", error);
+      return;
+    }
 
     // 如果不是自动登录，需要验证验证码
     if (!isAutoLogin) {
@@ -407,10 +415,8 @@ const loginUser = async (isAutoLogin = false) => {
 
     // 1. 先同步更新用户状态
     const userData = res.data.data;
-    // console.log("userData:", userData.token);
     userStore.setToken(userData.token);
     userStore.setUser({
-      // 推荐使用setUser批量更新
       id: userData.id,
       username: userData.username,
       avatar: userData.avatar,
@@ -419,27 +425,13 @@ const loginUser = async (isAutoLogin = false) => {
     });
 
     // 2. 设置并持久化主题
-    loadUserTheme(userData.id);
+    await loadUserTheme(userData.id);
 
-    // 2. 确保Pinia状态更新完成
-    await nextTick();
-
-    // 3. 显示成功提示（短暂延迟确保UI更新）
-    await new Promise((resolve) => {
-      ElMessage({
-        message: "登录成功",
-        type: "success",
-        offset: 80,
-        onClose: resolve,
-      });
-    });
-
-    // 3. 添加调试信息
-    console.log("登录状态:", {
-      token: userStore.user.token,
-      user: userStore.user,
-      roles: userStore.user?.roles,
-      targetPath: CONTROL_PANEL_PATH,
+    // 3. 显示成功提示
+    ElMessage({
+      message: "登录成功",
+      type: "success",
+      offset: 80,
     });
 
     // 4. 执行跳转
@@ -642,6 +634,10 @@ const handlePasswordSet = async (userData) => {
     ElMessage.error("设置密码后登录失败");
   }
 };
+
+const goToBlog = () => {
+  router.push(BLOG_HOME_PATH);
+};
 </script>
 
 <template>
@@ -670,7 +666,7 @@ const handlePasswordSet = async (userData) => {
   </div>
 
   <el-row class="login-page">
-    <el-col :span="12" class="bg"></el-col>
+    <el-col :span="12" class="bg" @click="goToBlog"></el-col>
     <el-col :span="7" :offset="2" class="form">
       <!-- 注册相关表单 -->
       <el-form

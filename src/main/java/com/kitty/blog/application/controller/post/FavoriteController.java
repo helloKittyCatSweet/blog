@@ -216,8 +216,10 @@ public class FavoriteController {
     @DeleteMapping("/public/delete/id/{id}")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "404", description = "收藏不存在")})
-    public ResponseEntity<Response<Boolean>> deleteById(@PathVariable Integer id) {
-        ResponseEntity<Boolean> response = favoriteService.deleteById(id);
+    public ResponseEntity<Response<Boolean>> deleteById
+            (@PathVariable Integer id,
+             @AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<Boolean> response = favoriteService.deleteById(id, user.getId());
         return Response.createResponse(response,
                 HttpStatus.OK, "删除成功",
                 HttpStatus.NOT_FOUND, "收藏不存在");

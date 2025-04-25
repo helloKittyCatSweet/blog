@@ -321,6 +321,7 @@ const getFolderStats = async () => {
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item
+                    v-if="folders.length > 1"
                     v-for="folder in folders"
                     :key="folder"
                     :disabled="folder === currentFolder"
@@ -328,7 +329,7 @@ const getFolderStats = async () => {
                   >
                     移动到 {{ folder }}
                   </el-dropdown-item>
-                  <el-dropdown-item divided @click="handleDelete(item)">
+                  <el-dropdown-item :divided="folders.length > 1" @click="handleDelete(item)">
                     <span style="color: var(--el-color-danger)">取消收藏</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>

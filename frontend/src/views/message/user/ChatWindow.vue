@@ -11,6 +11,7 @@ import {
   findContactedUserNames,
   deleteById,
   update,
+  readMessage,
 } from "@/api/user/message";
 import { useUserStore } from "@/stores/modules/user";
 import { useMessageStore } from "@/stores/modules/message";
@@ -384,6 +385,13 @@ const switchContact = async (contact) => {
     receiverName: contact.receiverName,
     receiverAvatar: contact.receiverAvatar,
   });
+
+  // 标记该联系人发来的所有消息为已读
+  try {
+    await readMessage(contact.receiverId);
+  } catch (error) {
+    console.error("标记消息已读失败:", error);
+  }
 
   // 清除未读消息计数
   messageStore.clearUnreadCount(contact.receiverId);

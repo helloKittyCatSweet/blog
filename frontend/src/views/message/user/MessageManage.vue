@@ -86,57 +86,62 @@ const loadMessages = async () => {
         startDate: searchForm.value.startDate,
         endDate: searchForm.value.endDate,
         page: pagination.value.currentPage - 1,
-        size: pagination.value.pageSize,
+        size: pagination.value.pageSize
       });
 
-      // 处理搜索结果，对于未知用户进行额外查询
-      chatList.value = await Promise.all(
-        data.data.content.map(async (message) => {
-          let receiverName = message.receiver?.username;
-          let receiverAvatar = message.receiver?.avatar;
+      if (data.status === 200) {
+        chatList.value = await Promise.all(
+          data.data.content.map(async (message) => {
+            let receiverName = message.receiver?.username;
+            let receiverAvatar = message.receiver?.avatar;
 
-          // 如果用户信息不完整，尝试获取完整信息
-          if (!receiverName || !receiverAvatar) {
-            try {
-              const userResponse = await findUserById(message.receiverId);
-              if (userResponse.data.status === 200) {
-                receiverName = userResponse.data.data.username;
-                receiverAvatar = userResponse.data.data.avatar;
+            if (!receiverName || !receiverAvatar) {
+              try {
+                const userResponse = await findUserById(message.receiverId);
+                if (userResponse.data.status === 200) {
+                  receiverName = userResponse.data.data.username;
+                  receiverAvatar = userResponse.data.data.avatar;
+                }
+              } catch (error) {
+                console.error("获取用户信息失败:", error);
               }
-            } catch (error) {
-              console.error("获取用户信息失败:", error);
             }
-          }
 
-          return {
-            messageId: message.messageId,
-            receiverId: message.receiverId,
-            senderId: message.senderId,
-            content: message.content,
-            createdAt: message.createdAt,
-            isRead: message.isRead,
-            receiverName: receiverName || "未知用户",
-            receiverAvatar: receiverAvatar,
-          };
-        })
-      );
+            return {
+              messageId: message.messageId,
+              receiverId: message.receiverId,
+              senderId: message.senderId,
+              content: message.content,
+              createdAt: message.createdAt,
+              isRead: message.isRead,
+              receiverName: receiverName || "未知用户",
+              receiverAvatar: receiverAvatar
+            };
+          })
+        );
 
-      pagination.value.total = data.data.totalElements;
+        pagination.value.total = data.data.totalElements;
+      } else {
+        ElMessage.error(data.message || "获取消息列表失败");
+      }
     } else {
-      // 原有的联系人列表逻辑保持不变
       const { data } = await findContactedUserNames();
-      chatList.value = data.data.map((item) => ({
-        receiverId: item.userId,
-        receiverName: item.username,
-        receiverAvatar: item.avatar,
-        lastMessage: item.message,
-        unreadCount: item.unreadCount,
-        lastMessageTime: item.lastMessageTime == null ? "-" : item.lastMessageTime,
-      }));
-      // 设置联系人列表的总数
-      pagination.value.total = chatList.value.length;
+      if (data.status === 200) {
+        chatList.value = data.data.map((item) => ({
+          receiverId: item.userId,
+          receiverName: item.username,
+          receiverAvatar: item.avatar,
+          lastMessage: item.message,
+          unreadCount: Number(item.unreadCount) || 0,
+          lastMessageTime: item.lastMessageTime == null ? "-" : item.lastMessageTime
+        }));
+        pagination.value.total = chatList.value.length;
+      } else {
+        ElMessage.error(data.message || "获取联系人列表失败");
+      }
     }
   } catch (error) {
+    console.error("加载消息列表失败:", error);
     ElMessage.error("加载失败");
   } finally {
     loading.value = false;
@@ -217,21 +222,36 @@ const currentUserId = userStore.user.id;
  */
 const handleMarkAsRead = async (row) => {
   try {
-    await readMessage(row.receiverId);
-    ElMessage.success("标为已读成功");
-    loadMessages();
+    const count = row.unreadCount;
+    const response = await readMessage(row.receiverId);
+    
+    if (response.data.status === 200) {
+      ElMessage.success(`已将 ${count} 条消息标记为已读`);
+      // 等待消息列表刷新完成
+      await loadMessages();
+    } else {
+      ElMessage.error(response.data.message || "标记已读失败");
+    }
   } catch (error) {
-    ElMessage.error("标为已读失败");
+    console.error("标记已读失败:", error);
+    ElMessage.error("标记已读失败");
   }
 };
 
 const handleMarkAsUnread = async (row) => {
   try {
-    row.unreadCount = 1; // 直接设置标记未读数量为1
-    await unReadMessage(row.receiverId);
-    ElMessage.success("标记未读成功");
+    const response = await unReadMessage(row.receiverId);
+    
+    if (response.data.status === 200) {
+      ElMessage.success("已标记为未读");
+      // 等待消息列表刷新完成
+      await loadMessages();
+    } else {
+      ElMessage.error(response.data.message || "标记未读失败");
+    }
   } catch (error) {
-    ElMessage.error("操作失败");
+    console.error("标记未读失败:", error);
+    ElMessage.error("标记未读失败");
   }
 };
 
@@ -418,24 +438,34 @@ const handleSystemMessageUnread = async (row) => {
                 >
                   聊天
                 </el-button>
-                <el-button
+                <el-tooltip
                   v-if="!isSearchMode && row.unreadCount"
-                  type="info"
-                  :icon="Check"
-                  link
-                  @click="handleMarkAsRead(row)"
+                  :content="`有 ${row.unreadCount} 条未读消息`"
+                  placement="top"
                 >
-                  已读
-                </el-button>
-                <el-button
+                  <el-button
+                    type="success"
+                    :icon="Check"
+                    link
+                    @click="handleMarkAsRead(row)"
+                  >
+                    标为已读
+                  </el-button>
+                </el-tooltip>
+                <el-tooltip
                   v-if="!isSearchMode && (!row.unreadCount || row.unreadCount === 0)"
-                  type="warning"
-                  :icon="Remove"
-                  link
-                  @click="handleMarkAsUnread(row)"
+                  content="标记为未读"
+                  placement="top"
                 >
-                  未读
-                </el-button>
+                  <el-button
+                    type="warning"
+                    :icon="Remove"
+                    link
+                    @click="handleMarkAsUnread(row)"
+                  >
+                    标为未读
+                  </el-button>
+                </el-tooltip>
               </template>
             </el-table-column>
           </el-table>

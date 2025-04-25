@@ -1,9 +1,12 @@
 package com.kitty.blog.domain.service;
 
 import com.kitty.blog.application.dto.favorite.FavoriteDto;
+import com.kitty.blog.common.constant.ActivityType;
 import com.kitty.blog.domain.model.Favorite;
 import com.kitty.blog.domain.model.Post;
+import com.kitty.blog.domain.model.UserActivity;
 import com.kitty.blog.domain.repository.FavoriteRepository;
+import com.kitty.blog.domain.repository.UserActivityRepository;
 import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
@@ -34,6 +37,9 @@ public class FavoriteService {
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private UserActivityRepository userActivityRepository;
 
     @Transactional
     public ResponseEntity<Boolean> create(Favorite favorite) {
@@ -198,9 +204,16 @@ public class FavoriteService {
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public ResponseEntity<Boolean> deleteById(Integer id) {
-        if (!existsById(id).getBody()){
+    public ResponseEntity<Boolean> deleteById(Integer id, Integer userId) {
+        if (Boolean.FALSE.equals(existsById(id).getBody())){
             return new ResponseEntity<>(false,HttpStatus.NOT_FOUND);
+        }
+        Favorite favorite = favoriteRepository.findById(id).orElse(new Favorite());
+        UserActivity userActivity = userActivityRepository.findPostActivityExplicit
+                        (userId, favorite.getPostId(), ActivityType.FAVORITE.type)
+                .orElse(new UserActivity());
+        if (userActivity.getActivityId() != null){
+            userActivityRepository.deleteById(userActivity.getActivityId());
         }
         favoriteRepository.deleteById(id);
         return new ResponseEntity<>(true, HttpStatus.OK);

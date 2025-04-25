@@ -1,5 +1,7 @@
 package com.kitty.blog.infrastructure.utils;
 
+import com.aliyun.oss.ClientBuilderConfiguration;
+import com.aliyun.oss.ClientConfiguration;
 import com.aliyun.oss.OSS;
 import com.aliyun.oss.OSSClientBuilder;
 import com.aliyun.oss.model.ListObjectsV2Request;
@@ -8,14 +10,25 @@ import com.aliyun.oss.model.OSSObjectSummary;
 import com.aliyun.oss.model.PutObjectRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.*;
 import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class AliyunOSSUploader {
+    private static final Logger logger = LoggerFactory.getLogger(AliyunOSSUploader.class);
 
     @Value("${aliyun.oss.endpoint}")
     private String endpoint;
@@ -29,12 +42,67 @@ public class AliyunOSSUploader {
     @Value("${aliyun.oss.bucket-name}")
     private String bucketName;
 
+    // 调整超时时间配置
+    private static final int CONNECTION_TIMEOUT = 20000; // 20秒
+    private static final int SOCKET_TIMEOUT = 20000; // 20秒
+    private static final int MAX_CONNECTIONS = 1024;
+    private static final int MAX_ERROR_RETRY = 5;
+    private static final int REQUEST_TIMEOUT = 30000; // 30秒
+
+    // 连续失败计数
+    private final AtomicInteger failureCount = new AtomicInteger(0);
+    private volatile boolean usingInternalEndpoint = false;
+
+    private String getEffectiveEndpoint() {
+        // 如果已经在使用内网endpoint，直接返回
+        if (usingInternalEndpoint) {
+            return endpoint;
+        }
+
+        // 如果连续失败次数超过阈值，尝试切换到内网endpoint
+        if (failureCount.get() >= 3) {
+            String internalEndpoint = endpoint.replace(".aliyuncs.com", "-internal.aliyuncs.com");
+            if (isInAliyunNetwork() && !endpoint.contains("-internal.")) {
+                logger.info("Switching to internal endpoint: {}", internalEndpoint);
+                usingInternalEndpoint = true;
+                return internalEndpoint;
+            }
+        }
+        return endpoint;
+    }
+
+    private boolean isInAliyunNetwork() {
+        try {
+            // 尝试解析内网DNS
+            InetAddress.getAllByName("oss-cn-hangzhou-internal.aliyuncs.com");
+            return true;
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    private OSS createOSSClient() {
+        // 创建ClientConfiguration实例
+        ClientBuilderConfiguration conf = new ClientBuilderConfiguration();
+
+        // 基础连接配置
+        conf.setConnectionTimeout(CONNECTION_TIMEOUT);
+        conf.setSocketTimeout(SOCKET_TIMEOUT);
+        conf.setMaxConnections(MAX_CONNECTIONS);
+        conf.setMaxErrorRetry(MAX_ERROR_RETRY);
+        conf.setRequestTimeout(REQUEST_TIMEOUT);
+
+        // 开启TCP连接复用
+        conf.setSupportCname(true);
+
+        // 使用当前有效的endpoint创建客户端
+        String currentEndpoint = getEffectiveEndpoint();
+        logger.debug("Creating OSS client with endpoint: {}", currentEndpoint);
+        return new OSSClientBuilder().build(currentEndpoint, accessKeyId, accessKeySecret, conf);
+    }
+
     /**
-     * 上传文件到阿里云 OSS
-     *
-     * @param file       本地文件对象
-     * @param objectName OSS 中存储的文件路径和名称
-     * @return 上传成功的 URL 地址
+     * 上传文件到阿里云 OSS，添加重试逻辑
      */
     public String uploadFile(File file, String objectName, Integer someId) {
         if (objectName == null || objectName.trim().isEmpty()) {
@@ -42,23 +110,49 @@ public class AliyunOSSUploader {
         }
 
         OSS ossClient = null;
-        try {
-            // 创建 OSS 客户端实例
-            ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+        int retryCount = 0;
+        Exception lastException = null;
 
-            // 创建文件上传请求
-            PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, objectName, file);
+        while (retryCount < MAX_ERROR_RETRY) {
+            try {
+                ossClient = createOSSClient();
 
-            // 上传文件到 OSS
-            ossClient.putObject(putObjectRequest);
-            return generateFileUrl(objectName);
-        } catch (Exception e) {
-            throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
-        } finally {
-            if (ossClient != null) {
-                ossClient.shutdown();
+                // 创建文件上传请求
+                PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, objectName, file);
+
+                // 上传文件到 OSS
+                ossClient.putObject(putObjectRequest);
+
+                // 上传成功，重置失败计数
+                failureCount.set(0);
+                return generateFileUrl(objectName);
+
+            } catch (Exception e) {
+                lastException = e;
+                retryCount++;
+
+                // 增加失败计数
+                failureCount.incrementAndGet();
+
+                logger.warn("文件上传失败，正在进行第 {} 次重试: {}", retryCount, e.getMessage());
+
+                try {
+                    // 指数退避策略，但最大等待时间不超过5秒
+                    long sleepTime = Math.min(1000 * (long) Math.pow(2, retryCount - 1), 5000);
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("上传被中断", ie);
+                }
+            } finally {
+                if (ossClient != null) {
+                    ossClient.shutdown();
+                }
             }
         }
+
+        throw new RuntimeException("文件上传失败，已重试 " + retryCount + " 次: " +
+                (lastException != null ? lastException.getMessage() : "未知错误"), lastException);
     }
 
     /**
@@ -119,7 +213,6 @@ public class AliyunOSSUploader {
         return "https://" + bucketName + "." + endpoint + "/" + objectName;
     }
 
-
     /**
      * 删除指定目录下的所有文件
      *
@@ -128,7 +221,7 @@ public class AliyunOSSUploader {
     public void deleteFilesInDirectory(String prefix) {
         OSS ossClient = null;
         try {
-            ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+            ossClient = createOSSClient();
 
             // 列出目录下的所有文件
             ListObjectsV2Request listObjectsRequest = new ListObjectsV2Request(bucketName)
@@ -158,7 +251,7 @@ public class AliyunOSSUploader {
     public void deleteFile(String objectName) {
         OSS ossClient = null;
         try {
-            ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+            ossClient = createOSSClient();
             // 检查文件是否存在
             if (!ossClient.doesObjectExist(bucketName, objectName)) {
                 throw new RuntimeException("文件不存在");
@@ -196,7 +289,7 @@ public class AliyunOSSUploader {
         String objectName = "signature/" + userId + "/signature.png";
         OSS ossClient = null;
         try {
-            ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+            ossClient = createOSSClient();
 
             // 如果已存在则先删除
             if (ossClient.doesObjectExist(bucketName, objectName)) {
@@ -235,7 +328,7 @@ public class AliyunOSSUploader {
         String objectName = "signature/" + userId + "/signature.png";
         OSS ossClient = null;
         try {
-            ossClient = new OSSClientBuilder().build(endpoint, accessKeyId, accessKeySecret);
+            ossClient = createOSSClient();
             return ossClient.doesObjectExist(bucketName, objectName);
         } catch (Exception e) {
             throw new RuntimeException("检查用户签名失败: " + e.getMessage(), e);

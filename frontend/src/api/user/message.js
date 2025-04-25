@@ -15,12 +15,12 @@ export const update = (data) => request.put(`${userPrefix}${messagePrefix}/publi
 })
 
 // 已读消息
-export const readMessage = (receiverId) =>
-  request.put(`${userPrefix}${messagePrefix}/public/read/${receiverId}`)
+export const readMessage = (senderId) =>
+  request.put(`${userPrefix}${messagePrefix}/public/read/${senderId}`)
 
 // 未读消息
-export const unReadMessage = (receiverId) =>
-  request.put(`${userPrefix}${messagePrefix}/public/unread/${receiverId}`)
+export const unReadMessage = (senderId) =>
+  request.put(`${userPrefix}${messagePrefix}/public/unread/${senderId}`)
 
 // 创建消息，支持实时消息
 export const create = async (data) => {

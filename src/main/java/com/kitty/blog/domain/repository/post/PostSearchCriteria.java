@@ -25,4 +25,10 @@ public class PostSearchCriteria {
     private LocalDate startDate;
     private LocalDate endDate;
     private Boolean isDeleted;
+
+    // 分页参数
+    private Integer currentPage;
+    private Integer pageSize;
+    private String sortField;
+    private String sortOrder;
 }
