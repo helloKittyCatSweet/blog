@@ -14,10 +14,10 @@ import org.springframework.web.context.request.async.DeferredResult;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+@Tag(name = "联系我们接口")
 @RestController
 @RequestMapping("/api/contact")
 @CrossOrigin
-@Tag(name = "Contact", description = "Contact API")
 public class ContactController {
 
     @Autowired

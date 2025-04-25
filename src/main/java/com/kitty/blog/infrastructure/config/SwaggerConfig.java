@@ -84,5 +84,14 @@ public class SwaggerConfig {
                 .pathsToMatch("/api/search/**")
                 .build();
     }
+
+    // 统计数据模块
+    @Bean
+    public GroupedOpenApi analyticsApi() {
+        return GroupedOpenApi.builder()
+                .group("统计数据") // Swagger UI 下拉框中显示的名字
+                .pathsToMatch("/api/stat/**")
+                .build();
+    }
 }
    

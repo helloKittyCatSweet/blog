@@ -25,7 +25,8 @@ import {
   Message,
   Link,
   Tools,
-  Histogram
+  Histogram,
+  Promotion
 } from "@element-plus/icons-vue";
 import { ROLES } from "@/constants/role-constants";
 import {
@@ -62,7 +63,8 @@ import {
   ADMIN_ROLE_MANAGE_PATH,
   ADMIN_MESSAGE_MANAGE_PATH,
   ADMIN_SYSTEM_PATH,
-  ADMIN_SYSTEM_MESSAGE_PATH
+  ADMIN_SYSTEM_MESSAGE_PATH,
+  ADMIN_SYSTEM_STATISTICS_PATH
 } from '@/constants/routes/admin';
 
 
@@ -273,12 +275,44 @@ export const adminMenus = [
         icon: Setting,
         title: '系统管理',
         index: ADMIN_SYSTEM_PATH,
-        roles: [ROLES.SYSTEM_ADMINISTRATOR, ROLES.MESSAGE_MANAGER],
+        roles: [
+          ROLES.CATEGORY_MANAGER,
+          ROLES.PERMISSION_MANAGER,
+          ROLES.PERMISSION_MAPPING_MANAGER,
+          ROLES.TAG_MANAGER,
+          ROLES.POST_MANAGER,
+          ROLES.USER_ACTIVITY_MANAGER,
+          ROLES.USER_ROLE_MAPPING_MANAGER,
+          ROLES.COMMENT_MANAGER,
+          ROLES.MESSAGE_MANAGER,
+          ROLES.REPORT_MANAGER,
+          ROLES.ROLE_MANAGER,
+          ROLES.SYSTEM_ADMINISTRATOR
+        ],
         children: [
           {
             icon: MessageBox,
             title: '系统消息管理',
             index: ADMIN_SYSTEM_MESSAGE_PATH,
+            roles: [
+              ROLES.CATEGORY_MANAGER,
+              ROLES.PERMISSION_MANAGER,
+              ROLES.PERMISSION_MAPPING_MANAGER,
+              ROLES.TAG_MANAGER,
+              ROLES.POST_MANAGER,
+              ROLES.USER_ACTIVITY_MANAGER,
+              ROLES.USER_ROLE_MAPPING_MANAGER,
+              ROLES.COMMENT_MANAGER,
+              ROLES.MESSAGE_MANAGER,
+              ROLES.REPORT_MANAGER,
+              ROLES.ROLE_MANAGER,
+              ROLES.SYSTEM_ADMINISTRATOR
+            ]
+          },
+          {
+            icon: Histogram,
+            title: '系统统计',
+            index: '/admin/system/statistics',
             roles: [ROLES.SYSTEM_ADMINISTRATOR]
           },
           {
@@ -305,6 +339,25 @@ export const adminMenus = [
                 index: '/kibana-dataviews',
                 roles: [ROLES.SYSTEM_ADMINISTRATOR]
               }
+            ]
+          },
+          {
+            icon: Promotion,
+            title: '系统统计',
+            index: ADMIN_SYSTEM_STATISTICS_PATH,
+            roles: [
+              ROLES.CATEGORY_MANAGER,
+              ROLES.PERMISSION_MANAGER,
+              ROLES.PERMISSION_MAPPING_MANAGER,
+              ROLES.TAG_MANAGER,
+              ROLES.POST_MANAGER,
+              ROLES.USER_ACTIVITY_MANAGER,
+              ROLES.USER_ROLE_MAPPING_MANAGER,
+              ROLES.COMMENT_MANAGER,
+              ROLES.MESSAGE_MANAGER,
+              ROLES.REPORT_MANAGER,
+              ROLES.ROLE_MANAGER,
+              ROLES.SYSTEM_ADMINISTRATOR
             ]
           }
         ]

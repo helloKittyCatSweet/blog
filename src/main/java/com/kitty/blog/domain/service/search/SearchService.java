@@ -112,7 +112,10 @@ public class SearchService {
     public void syncTagToEs(Tag tag) {
         try {
             TagIndex tagIndex = TagIndex.builder()
-                    .id(tag.getTagId()).name(tag.getName()).build();
+                    .id(tag.getTagId())
+                    .name(tag.getName())
+                    .weight(tag.getWeight())
+                    .build();
             client.index(i -> i
                     .index("tags")
                     .id(tagIndex.getId().toString())
@@ -184,23 +187,32 @@ public class SearchService {
                 mustQueries.add(Query.of(q -> q
                         .match(m -> m
                                 .field("category")
-                                .query(category)
-                        )
-                ));
+                                .query(category))));
             }
 
             // 标签过滤
             if (!tags.isEmpty()) {
+                List<Query> tagQueries = Arrays.stream(tags.split(","))
+                        .map(String::trim)
+                        .map(tag -> Query.of(q -> q
+                                .functionScore(fs -> fs
+                                        .query(qq -> qq
+                                                .match(m -> m
+                                                        .field("tags")
+                                                        .query(tag)))
+                                        .functions(f -> f
+                                                .fieldValueFactor(fvf -> fvf
+                                                        .field("weight")
+                                                        .factor(1.0)
+                                                        .missing(1.0)))
+                                        .boostMode(
+                                                co.elastic.clients.elasticsearch._types.query_dsl.FunctionBoostMode.Multiply))))
+                        .collect(Collectors.toList());
+
                 mustQueries.add(Query.of(q -> q
-                        .terms(t -> t
-                                .field("tags")
-                                .terms(ts -> ts.value(
-                                        Arrays.stream(tags.split(","))
-                                                .map(tsv -> FieldValue.of(tsv.trim()))
-                                                .collect(Collectors.toList())
-                                ))
-                        )
-                ));
+                        .bool(b -> b
+                                .should(tagQueries)
+                                .minimumShouldMatch("1"))));
             }
 
             // 添加必须条件
@@ -277,34 +289,32 @@ public class SearchService {
                 boolQueryBuilder.must(Query.of(q -> q
                         .bool(b -> b
                                 .should(shouldQueries)
-                                .minimumShouldMatch("1")
-                        )
-                ));
+                                .minimumShouldMatch("1"))));
             }
 
             SearchResponse<PostIndex> response = client.search(s -> s
-                            .index("posts")
-                            .query(q -> q.bool(boolQueryBuilder.build()))
-                            .highlight(h -> h
-                                    .fields("title", HighlightField.of(f -> f
-                                            .preTags("<em class=\"highlight\">")
-                                            .postTags("</em>")))
-                                    .fields("content", HighlightField.of(f -> f
-                                            .preTags("<em class=\"highlight\">")
-                                            .postTags("</em>")
-                                            .numberOfFragments(3)
-                                            .fragmentSize(150)))
-                                    .fields("summary", HighlightField.of(f -> f
-                                            .preTags("<em class=\"highlight\">")
-                                            .postTags("</em>")))
-                                    .fields("tags", HighlightField.of(f -> f
-                                            .preTags("<em class=\"highlight\">")
-                                            .postTags("</em>")))
-                                    .fields("category", HighlightField.of(f -> f
-                                            .preTags("<em class=\"highlight\">")
-                                            .postTags("</em>"))))
-                            .from(page * size)
-                            .size(size),
+                    .index("posts")
+                    .query(q -> q.bool(boolQueryBuilder.build()))
+                    .highlight(h -> h
+                            .fields("title", HighlightField.of(f -> f
+                                    .preTags("<em class=\"highlight\">")
+                                    .postTags("</em>")))
+                            .fields("content", HighlightField.of(f -> f
+                                    .preTags("<em class=\"highlight\">")
+                                    .postTags("</em>")
+                                    .numberOfFragments(3)
+                                    .fragmentSize(150)))
+                            .fields("summary", HighlightField.of(f -> f
+                                    .preTags("<em class=\"highlight\">")
+                                    .postTags("</em>")))
+                            .fields("tags", HighlightField.of(f -> f
+                                    .preTags("<em class=\"highlight\">")
+                                    .postTags("</em>")))
+                            .fields("category", HighlightField.of(f -> f
+                                    .preTags("<em class=\"highlight\">")
+                                    .postTags("</em>"))))
+                    .from(page * size)
+                    .size(size),
                     PostIndex.class);
 
             List<PostDto> postDtos = new ArrayList<>();
@@ -369,9 +379,9 @@ public class SearchService {
                     .should(titleWildcardQuery));
 
             SearchResponse<PostIndex> response = client.search(s -> s
-                            .index("posts")
-                            .query(q -> q.bool(boolQuery))
-                            .size(10),
+                    .index("posts")
+                    .query(q -> q.bool(boolQuery))
+                    .size(10),
                     PostIndex.class);
 
             return response.hits().hits().stream()
@@ -404,9 +414,9 @@ public class SearchService {
                     .should(categoryWildcardQuery));
 
             SearchResponse<CategoryIndex> response = client.search(s -> s
-                            .index("categories")
-                            .query(q -> q.bool(boolQuery))
-                            .size(10),
+                    .index("categories")
+                    .query(q -> q.bool(boolQuery))
+                    .size(10),
                     CategoryIndex.class);
             return response.hits().hits().stream()
                     .map(Hit::source)
@@ -437,9 +447,9 @@ public class SearchService {
                     .should(tagWildcardQuery));
 
             SearchResponse<TagIndex> response = client.search(s -> s
-                            .index("tags")
-                            .query(q -> q.bool(boolQuery))
-                            .size(10),
+                    .index("tags")
+                    .query(q -> q.bool(boolQuery))
+                    .size(10),
                     TagIndex.class);
 
             return response.hits().hits().stream()
@@ -468,7 +478,7 @@ public class SearchService {
                 .likeCount(postDto.getPost().getLikes())
                 .tags(postDto.getTags() != null
                         ? postDto.getTags().stream().map(Tag::getName)
-                        .collect(Collectors.joining(","))
+                                .collect(Collectors.joining(","))
                         : "")
                 .category(postDto.getCategory() != null ? postDto.getCategory().getName() : "")
                 .build();
@@ -478,12 +488,43 @@ public class SearchService {
     public void checkIndexContent() {
         try {
             SearchResponse<PostIndex> response = client.search(s -> s
-                            .index("posts")
-                            .size(1),
+                    .index("posts")
+                    .size(1),
                     PostIndex.class);
             log.info("Index total documents: {}", response.hits().total().value());
         } catch (Exception e) {
             log.error("Failed to check index content: {}", e.getMessage());
         }
+    }
+
+    /**
+     * 获取标签权重
+     * 通过查询 Tag 实体获取权重值，如果找不到则返回默认权重 1.0
+     *
+     * @param tagName 标签名称
+     * @return 标签权重
+     */
+    private float getTagWeight(String tagName) {
+        try {
+            // 从 ES 中查询标签
+            Query query = TermQuery.of(t -> t
+                    .field("name")
+                    .value(tagName))._toQuery();
+
+            SearchResponse<TagIndex> response = client.search(s -> s
+                    .index("tags")
+                    .query(query),
+                    TagIndex.class);
+
+            if (!response.hits().hits().isEmpty()) {
+                TagIndex tagIndex = response.hits().hits().get(0).source();
+                return tagIndex != null && tagIndex.getWeight() != null
+                        ? tagIndex.getWeight()
+                        : 1.0f;
+            }
+        } catch (Exception e) {
+            log.error("Failed to get tag weight for tag: {}", tagName, e);
+        }
+        return 1.0f;
     }
 }

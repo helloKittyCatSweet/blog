@@ -14,7 +14,7 @@ import { findByUserId } from "@/api/user/userSetting.js";
 import { getCaptcha, checkCaptcha } from "@/api/user/security/captcha.js";
 import { login, register } from "@/api/user/user";
 import { verify, send } from "@/api/user/security/emailVerification";
-import { CONTROL_PANEL_PATH } from "@/constants/routes/base";
+import { CONTROL_PANEL_PATH, LOGIN_PATH } from "@/constants/routes/base";
 import { getGithubLoginUrl, handleGithubCallback } from "@/api/auth/oauth";
 
 const isRegister = ref(false);

@@ -12,7 +12,11 @@
           <div class="about-content">
             <section class="intro-section">
               <h2>项目介绍</h2>
-              <p>FreeShare 是一个现代化的技术博客分享平台，专注于为开发者提供优质的技术内容分享和交流空间。采用前后端分离架构，基于 Vue 3 + Spring Boot 开发，具有响应式设计和丰富的交互功能。</p>
+              <p>
+                FreeShare
+                是一个现代化的技术博客分享平台，专注于为开发者提供优质的技术内容分享和交流空间。采用前后端分离架构，基于
+                Vue 3 + Spring Boot 开发，具有响应式设计和丰富的交互功能。
+              </p>
             </section>
 
             <el-divider />
@@ -82,23 +86,38 @@
                   <h3>前端技术</h3>
                   <div class="tech-list">
                     <el-tag size="large" effect="plain" class="tech-tag">Vue 3</el-tag>
-                    <el-tag size="large" effect="plain" class="tech-tag">Vue Router</el-tag>
+                    <el-tag size="large" effect="plain" class="tech-tag"
+                      >Vue Router</el-tag
+                    >
                     <el-tag size="large" effect="plain" class="tech-tag">Pinia</el-tag>
-                    <el-tag size="large" effect="plain" class="tech-tag">Element Plus</el-tag>
-                    <el-tag size="large" effect="plain" class="tech-tag">MD Editor V3</el-tag>
+                    <el-tag size="large" effect="plain" class="tech-tag"
+                      >Element Plus</el-tag
+                    >
+                    <el-tag size="large" effect="plain" class="tech-tag"
+                      >MD Editor V3</el-tag
+                    >
                     <el-tag size="large" effect="plain" class="tech-tag">Axios</el-tag>
                   </div>
                 </div>
                 <div class="tech-category">
                   <h3>后端技术</h3>
                   <div class="tech-list">
-                    <el-tag size="large" effect="plain" class="tech-tag">Spring Boot</el-tag>
-                    <el-tag size="large" effect="plain" class="tech-tag">Spring Security</el-tag>
-                    <el-tag size="large" effect="plain" class="tech-tag">Hibernate</el-tag>
+                    <el-tag size="large" effect="plain" class="tech-tag"
+                      >Spring Boot</el-tag
+                    >
+                    <el-tag size="large" effect="plain" class="tech-tag"
+                      >Spring Security</el-tag
+                    >
+                    <el-tag size="large" effect="plain" class="tech-tag">Swagger</el-tag>
+                    <el-tag size="large" effect="plain" class="tech-tag"
+                      >Hibernate</el-tag
+                    >
                     <el-tag size="large" effect="plain" class="tech-tag">MySQL</el-tag>
                     <el-tag size="large" effect="plain" class="tech-tag">Redis</el-tag>
                     <el-tag size="large" effect="plain" class="tech-tag">JWT</el-tag>
-                    <el-tag size="large" effect="plain" class="tech-tag">Elasticsearch</el-tag>
+                    <el-tag size="large" effect="plain" class="tech-tag"
+                      >Elasticsearch</el-tag
+                    >
                     <el-tag size="large" effect="plain" class="tech-tag">ELK</el-tag>
                     <el-tag size="large" effect="plain" class="tech-tag">AOP</el-tag>
                   </div>
@@ -134,7 +153,11 @@
                 </p>
                 <p>
                   <el-icon><Link /></el-icon> GitHub：
-                  <a href="https://github.com/helloKittyCatSweet/blog" target="_blank" rel="noopener noreferrer">
+                  <a
+                    href="https://github.com/helloKittyCatSweet/blog"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     https://github.com/helloKittyCatSweet/blog
                   </a>
                 </p>
@@ -148,7 +171,7 @@
 </template>
 
 <script setup>
-import { User, Edit, Share, Message, Link } from '@element-plus/icons-vue'
+import { User, Edit, Share, Message, Link } from "@element-plus/icons-vue";
 </script>
 
 <style lang="scss" scoped>
@@ -192,7 +215,7 @@ import { User, Edit, Share, Message, Link } from '@element-plus/icons-vue'
 
   .feature-card {
     height: 100%;
-    
+
     .feature-header {
       display: flex;
       align-items: center;
@@ -207,7 +230,7 @@ import { User, Edit, Share, Message, Link } from '@element-plus/icons-vue'
       list-style: none;
       padding: 0;
       margin: 0;
-      
+
       li {
         position: relative;
         padding-left: 16px;
@@ -243,7 +266,7 @@ import { User, Edit, Share, Message, Link } from '@element-plus/icons-vue'
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
-    
+
     .tech-tag {
       font-size: 14px;
       transition: all 0.3s ease;
@@ -257,22 +280,22 @@ import { User, Edit, Share, Message, Link } from '@element-plus/icons-vue'
 
   .contact-info {
     margin-top: 20px;
-    
+
     p {
       display: flex;
       align-items: center;
       gap: 8px;
       margin: 12px 0;
-      
+
       .el-icon {
         color: var(--el-color-primary);
       }
-      
+
       a {
         color: var(--el-color-primary);
         text-decoration: none;
         transition: color 0.3s ease;
-        
+
         &:hover {
           color: var(--el-color-primary-light-3);
           text-decoration: underline;

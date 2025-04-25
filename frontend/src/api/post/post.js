@@ -85,7 +85,7 @@ export const addCategory = (data) =>
 export const findByTag = (tag) => request.get(`${postPrefix}/public/find/tag/${tag}`);
 
 // 根据标签列表查询文章列表
-export const findByTags = (tags) => request.post(`${postPrefix}/public/find/tags`,  tags );
+export const findByTags = (tags) => request.post(`${postPrefix}/public/find/tags`, tags);
 
 // 根据分类查询文章列表
 export const findByCategory = (category) =>
@@ -148,24 +148,6 @@ export const deleteCategory = (data) =>
 // 根据id删除文章
 export const deleteById = (data) =>
   request.delete(`${postPrefix}/public/delete/id/${data}`);
-
-// 获取仪表盘统计数据
-export const getDashboardStats = () =>
-  request.get(`${postPrefix}/public/dashboard/stats`);
-
-// 获取月度统计数据
-export const getMonthlyStats = (year, month) =>
-  request.get(`${postPrefix}/public/dashboard/monthly-stats`, {
-    params: { year, month },
-  });
-
-// 获取互动数据统计
-export const getInteractionStats = () =>
-  request.get(`${postPrefix}/public/dashboard/interaction-stats`);
-
-// 获取最近文章
-export const getRecentPosts = (limit = 5) =>
-  request.get(`${postPrefix}/public/dashboard/recent-posts`, { params: { limit } });
 
 // 搜索文章
 export const searchPosts = (criteria) =>

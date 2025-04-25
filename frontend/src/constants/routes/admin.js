@@ -24,3 +24,4 @@ export const ADMIN_MESSAGE_MANAGE_PATH = `${ADMIN}/message/manage`
 // 系统管理
 export const ADMIN_SYSTEM_PATH = `${ADMIN}/system`
 export const ADMIN_SYSTEM_MESSAGE_PATH = `${ADMIN_SYSTEM_PATH}/message`
+export const ADMIN_SYSTEM_STATISTICS_PATH = `${ADMIN_SYSTEM_PATH}/statistics`

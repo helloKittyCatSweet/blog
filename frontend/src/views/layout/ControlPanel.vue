@@ -1,15 +1,14 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import * as echarts from "echarts";
 import { Document, View, ChatRound, Star, User, Reading } from "@element-plus/icons-vue";
 import {
-  getDashboardStats,
-  getMonthlyStats,
-  getInteractionStats,
-  getRecentPosts,
-} from "@/api/post/post";
-import { getAuthorAnalytics } from "@/api/post/authorAnalytics";
+  getUserDashboard,
+  getUserMonthlyStats,
+  getUserRecentPosts,
+  getUserInteractions,
+} from "@/api/user/userStat.js";
 import { ElMessage } from "element-plus";
 import { USER_POST_LIST_PATH } from "@/constants/routes/user.js";
 import { BLOG_POST_DETAIL_PATH } from "@/constants/routes/blog";
@@ -35,19 +34,34 @@ const recentPosts = ref([]);
 // 获取统计数据
 const fetchDashboardStats = async () => {
   try {
-    const res = await getDashboardStats();
+    const res = await getUserDashboard();
     if (res.data.status === 200) {
-      statistics.value = res.data.data;
+      // 确保所有值都有默认值
+      statistics.value = res.data.data || {
+        totalPosts: 0,
+        totalViews: 0,
+        totalComments: 0,
+        totalLikes: 0,
+        totalFavorites: 0,
+      };
     }
   } catch (error) {
     ElMessage.error("获取统计数据失败");
+    // 设置默认值
+    statistics.value = {
+      totalPosts: 0,
+      totalViews: 0,
+      totalComments: 0,
+      totalLikes: 0,
+      totalFavorites: 0,
+    };
   }
 };
 
 // 获取最近文章
 const fetchRecentPosts = async () => {
   try {
-    const res = await getRecentPosts();
+    const res = await getUserRecentPosts();
     if (res.data.status === 200) {
       // 转换数据格式以适配表格显示
       recentPosts.value = res.data.data.map((item) => ({
@@ -72,9 +86,11 @@ const goToPostDetail = (postId) => {
 // 初始化文章数据图表
 const initPostChart = async () => {
   try {
-    const now = new Date();
-    const res = await getMonthlyStats(now.getFullYear(), now.getMonth() + 1);
+    const res = await getUserMonthlyStats();
     const monthlyData = res.data.data;
+
+    // 确保DOM元素已经挂载
+    if (!postChartRef.value) return;
 
     const chart = echarts.init(postChartRef.value);
     const option = {
@@ -91,21 +107,31 @@ const initPostChart = async () => {
       },
       xAxis: {
         type: "category",
-        data: monthlyData.months || ["1月", "2月", "3月", "4月", "5月", "6月"],
+        data: monthlyData?.months || ["1月", "2月", "3月", "4月", "5月", "6月"],
       },
-      yAxis: {
-        type: "value",
-      },
+      yAxis: [
+        // 修改为双Y轴
+        {
+          type: "value",
+          name: "发布量",
+          position: "left",
+        },
+        {
+          type: "value",
+          name: "访问量",
+          position: "right",
+        },
+      ],
       series: [
         {
           name: "发布量",
           type: "bar",
-          data: monthlyData.posts || [0, 0, 0, 0, 0, 0],
+          data: monthlyData?.posts || [0, 0, 0, 0, 0, 0],
         },
         {
           name: "访问量",
           type: "line",
-          data: monthlyData.views || [0, 0, 0, 0, 0, 0],
+          data: monthlyData?.views || [0, 0, 0, 0, 0, 0],
         },
       ],
     };
@@ -118,8 +144,12 @@ const initPostChart = async () => {
 // 初始化互动数据图表
 const initInteractionChart = async () => {
   try {
-    const res = await getInteractionStats();
+    const res = await getUserInteractions();
+    // console.log("res", res.data.data);
     const interactionData = res.data.data;
+
+    // 确保DOM元素已经挂载
+    if (!interactionChartRef.value) return;
 
     const chart = echarts.init(interactionChartRef.value);
     const option = {
@@ -129,12 +159,15 @@ const initInteractionChart = async () => {
       },
       tooltip: {
         trigger: "item",
+        formatter: "{a} <br/>{b}: {c} ({d}%)",
       },
       legend: {
         bottom: "0%",
+        data: ["点赞", "评论", "收藏"],
       },
       series: [
         {
+          name: "互动数据",
           type: "pie",
           radius: ["40%", "70%"],
           avoidLabelOverlap: false,
@@ -146,6 +179,7 @@ const initInteractionChart = async () => {
           label: {
             show: false,
             position: "center",
+            formatter: "{b}: {c}",
           },
           emphasis: {
             label: {
@@ -158,9 +192,9 @@ const initInteractionChart = async () => {
             show: false,
           },
           data: [
-            { value: interactionData.likes || 0, name: "点赞" },
-            { value: interactionData.comments || 0, name: "评论" },
-            { value: interactionData.favorites || 0, name: "收藏" },
+            { value: interactionData?.likes || 0, name: "点赞" },
+            { value: interactionData?.comments || 0, name: "评论" },
+            { value: interactionData?.favorites || 0, name: "收藏" },
           ],
         },
       ],
@@ -168,6 +202,23 @@ const initInteractionChart = async () => {
     chart.setOption(option);
   } catch (error) {
     ElMessage.error("获取互动统计数据失败");
+    // 如果出错，初始化一个空的图表
+    if (interactionChartRef.value) {
+      const chart = echarts.init(interactionChartRef.value);
+      chart.setOption({
+        // ... 保持其他配置不变 ...
+        series: [
+          {
+            // ... 保持其他配置不变 ...
+            data: [
+              { value: 0, name: "点赞" },
+              { value: 0, name: "评论" },
+              { value: 0, name: "收藏" },
+            ],
+          },
+        ],
+      });
+    }
   }
 };
 
@@ -191,13 +242,12 @@ const handleResize = () => {
 onMounted(async () => {
   loading.value = true;
   try {
-    await Promise.all([
-      fetchDashboardStats(),
-      initPostChart(),
-      initInteractionChart(),
-      fetchRecentPosts(),
-    ]);
+    // 确保先获取数据
+    await fetchDashboardStats();
+    // 等待所有图表初始化完成
+    await Promise.all([initPostChart(), initInteractionChart(), fetchRecentPosts()]);
   } catch (error) {
+    console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
   } finally {
     loading.value = false;
@@ -216,6 +266,18 @@ const tableHeaderStyle = {
   color: "var(--el-text-color-primary)",
   fontWeight: "bold",
 };
+
+/**
+ * 判断是否有数据
+ */
+const hasData = computed(() => {
+  return (
+    statistics.value.totalPosts > 0 ||
+    statistics.value.totalViews > 0 ||
+    statistics.value.totalComments > 0 ||
+    statistics.value.totalLikes > 0
+  );
+});
 </script>
 
 <template>
@@ -230,7 +292,7 @@ const tableHeaderStyle = {
             <span>文章数量</span>
           </div>
         </template>
-        <div class="stat-value">{{ statistics.totalPosts }}</div>
+        <div class="stat-value">{{ statistics.totalPosts || 0 }}</div>
       </el-card>
 
       <el-card class="stat-card success-card">
@@ -240,7 +302,7 @@ const tableHeaderStyle = {
             <span>总访问量</span>
           </div>
         </template>
-        <div class="stat-value">{{ statistics.totalViews }}</div>
+        <div class="stat-value">{{ statistics.totalViews || 0 }}</div>
       </el-card>
 
       <el-card class="stat-card warning-card">
@@ -250,7 +312,7 @@ const tableHeaderStyle = {
             <span>评论数</span>
           </div>
         </template>
-        <div class="stat-value">{{ statistics.totalComments }}</div>
+        <div class="stat-value">{{ statistics.totalComments || 0 }}</div>
       </el-card>
 
       <el-card class="stat-card danger-card">
@@ -260,61 +322,68 @@ const tableHeaderStyle = {
             <span>获赞数</span>
           </div>
         </template>
-        <div class="stat-value">{{ statistics.totalLikes }}</div>
+        <div class="stat-value">{{ statistics.totalLikes || 0 }}</div>
       </el-card>
     </div>
 
-    <!-- 图表区域 -->
-    <div class="charts-container">
-      <el-card class="chart-card" shadow="hover">
-        <div ref="postChartRef" class="chart"></div>
-      </el-card>
+    <template v-if="hasData">
+      <!-- 图表区域 -->
+      <div class="charts-container">
+        <el-card class="chart-card" shadow="hover">
+          <div ref="postChartRef" class="chart"></div>
+        </el-card>
 
-      <el-card class="chart-card" shadow="hover">
-        <div ref="interactionChartRef" class="chart"></div>
-      </el-card>
-    </div>
+        <el-card class="chart-card" shadow="hover">
+          <div ref="interactionChartRef" class="chart"></div>
+        </el-card>
+      </div>
 
-    <!-- 添加作者写作建议卡片 -->
-    <AuthorAnalytics />
+      <!-- 添加作者写作建议卡片 -->
+      <AuthorAnalytics />
 
-    <!-- 最近文章 -->
-    <el-card class="recent-posts" shadow="hover">
-      <template #header>
-        <div class="card-header">
-          <div class="header-left">
-            <el-icon class="header-icon"><Document /></el-icon>
-            <span>最近发布</span>
+      <!-- 最近文章 -->
+      <el-card class="recent-posts" shadow="hover">
+        <template #header>
+          <div class="card-header">
+            <div class="header-left">
+              <el-icon class="header-icon"><Document /></el-icon>
+              <span>最近发布</span>
+            </div>
+            <el-button type="primary" link @click="router.push(USER_POST_LIST_PATH)">
+              查看全部
+              <el-icon class="el-icon--right"><arrow-right /></el-icon>
+            </el-button>
           </div>
-          <el-button type="primary" link @click="router.push(USER_POST_LIST_PATH)">
-            查看全部
-            <el-icon class="el-icon--right"><arrow-right /></el-icon>
-          </el-button>
-        </div>
-      </template>
-      <el-table
-        :data="recentPosts"
-        style="width: 100%"
-        :header-cell-style="tableHeaderStyle"
-      >
-        <el-table-column prop="title" label="标题">
-          <template #default="{ row }">
-            <el-link type="primary" :underline="false" @click="goToPostDetail(row.id)">
-              {{ row.title }}
-            </el-link>
-          </template>
-        </el-table-column>
-        <el-table-column label="分类" width="120">
-          <template #default="{ row }">
-            <el-tag size="small" :type="row.category?.name ? 'info' : 'success'">
-              {{ row.category?.name || "未分类" }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="views" label="浏览" width="100" />
-        <el-table-column prop="createTime" label="发布时间" width="180" />
-      </el-table>
-    </el-card>
+        </template>
+        <el-table
+          :data="recentPosts"
+          style="width: 100%"
+          :header-cell-style="tableHeaderStyle"
+        >
+          <el-table-column prop="title" label="标题">
+            <template #default="{ row }">
+              <el-link type="primary" :underline="false" @click="goToPostDetail(row.id)">
+                {{ row.title }}
+              </el-link>
+            </template>
+          </el-table-column>
+          <el-table-column label="分类" width="120">
+            <template #default="{ row }">
+              <el-tag size="small" :type="row.category?.name ? 'info' : 'success'">
+                {{ row.category?.name || "未分类" }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="views" label="浏览" width="100" />
+          <el-table-column prop="createTime" label="发布时间" width="180" />
+        </el-table>
+      </el-card>
+    </template>
+
+    <!-- 没有数据时显示的提示 -->
+    <template v-else>
+      <el-empty description="暂无数据" />
+    </template>
   </div>
 </template>
 

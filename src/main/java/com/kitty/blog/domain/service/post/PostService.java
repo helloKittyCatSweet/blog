@@ -209,8 +209,8 @@ public class PostService {
         }
 
         // 同步版本管理
-        PostVersion postVersion = postVersionRepository.findByPostIdAndVersion
-                (updatedPost.getPostId(), updatedPost.getVersion()).orElse(new PostVersion());
+        PostVersion postVersion = postVersionRepository
+                .findByPostIdAndVersion(updatedPost.getPostId(), updatedPost.getVersion()).orElse(new PostVersion());
         postVersion.setContent(updatedPost.getContent());
         postVersionRepository.save(postVersion);
 
@@ -345,8 +345,8 @@ public class PostService {
             }
         }
 
-        PostVersion postVersion = (PostVersion) postVersionRepository.
-                save(new PostVersion(postId, content, userId, getLatestVersion(postId).getBody() + 1));
+        PostVersion postVersion = (PostVersion) postVersionRepository
+                .save(new PostVersion(postId, content, userId, getLatestVersion(postId).getBody() + 1));
         if (postVersion.equals(new PostVersion()))
             return new ResponseEntity<>(new PostVersion(), HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -519,7 +519,6 @@ public class PostService {
         return new ResponseEntity<>(postDtos, HttpStatus.OK);
     }
 
-
     @Transactional
     @Cacheable(key = "#postId")
     public ResponseEntity<List<PostDto>> findByCategory(String category) {
@@ -527,8 +526,8 @@ public class PostService {
         if (!categoryRepository.existsById(targetCategory.getCategoryId())) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         } else {
-            List<Post> posts =
-                    postRepository.findByCategoryId(targetCategory.getCategoryId()).orElse(new ArrayList<>());
+            List<Post> posts = postRepository.findByCategoryId(targetCategory.getCategoryId())
+                    .orElse(new ArrayList<>());
             return new ResponseEntity<>(posts.stream().map(this::convertToPostDto).toList(), HttpStatus.OK);
         }
     }
@@ -571,7 +570,6 @@ public class PostService {
 
         return new ResponseEntity<>(postDtos, HttpStatus.OK);
     }
-
 
     @Transactional
     @Cacheable(key = "#postId")
@@ -650,8 +648,7 @@ public class PostService {
     public ResponseEntity<List<Post>> findByVisibility(String visibility, Integer userId) {
         try {
             Visibility.valueOf(visibility);
-            List<Post> posts = postRepository.
-                    findByVisibility(visibility, userId).orElse(new ArrayList<>());
+            List<Post> posts = postRepository.findByVisibility(visibility, userId).orElse(new ArrayList<>());
             return ResponseEntity.ok(posts);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);
@@ -710,7 +707,7 @@ public class PostService {
         }
         postRepository.findById(postId).orElse(new Post()).setDeleted(true);
 
-//        postRepository.deleteById(postId);
+        // postRepository.deleteById(postId);
         // 同步到es
         searchService.deletePostFromEs(postId);
 
@@ -727,97 +724,7 @@ public class PostService {
         return new ResponseEntity<>(postRepository.existsById(postId), HttpStatus.OK);
     }
 
-    /**
-     * 控制台数据首页数据渲染
-     *
-     * @return
-     */
 
-    @Transactional
-    @Cacheable(key = "'dashboard_stats'")
-    public ResponseEntity<Map<String, Object>> getDashboardStats() {
-        Map<String, Object> stats = new HashMap<>();
-        try {
-            stats.put("totalPosts", postRepository.count());
-            stats.put("totalViews", postRepository.getTotalViews());
-            stats.put("totalComments", postRepository.getTotalComments());
-            stats.put("totalLikes", postRepository.getTotalLikes());
-            return new ResponseEntity<>(stats, HttpStatus.OK);
-        } catch (Exception e) {
-            log.error("获取仪表盘统计数据失败", e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Transactional
-    public Map<String, Object> getMonthlyStats() {
-        LocalDate now = LocalDate.now();
-        LocalDate startDate = now.minusMonths(5).withDayOfMonth(1); // 获取6个月前的第一天
-        LocalDate endDate = now.withDayOfMonth(now.lengthOfMonth()); // 当月最后一天
-
-        List<Object[]> postCounts = postRepository.getMonthlyPostCount(startDate, endDate);
-        List<Object[]> viewCounts = postRepository.getMonthlyViewCount(startDate, endDate);
-
-        Map<Integer, Integer> postMap = new HashMap<>();
-        Map<Integer, Integer> viewMap = new HashMap<>();
-
-        // 初始化最近6个月的数据为0
-        for (int i = 0; i < 6; i++) {
-            int month = now.minusMonths(i).getMonthValue();
-            postMap.put(month, 0);
-            viewMap.put(month, 0);
-        }
-
-        // 填充实际数据
-        for (Object[] row : postCounts) {
-            int month = ((Number) row[0]).intValue();
-            int count = ((Number) row[1]).intValue();
-            postMap.put(month, count);
-        }
-
-        for (Object[] row : viewCounts) {
-            int month = ((Number) row[0]).intValue();
-            int views = row[1] == null ? 0 : ((Number) row[1]).intValue();
-            viewMap.put(month, views);
-        }
-
-        List<String> months = postMap.keySet().stream()
-                .sorted()
-                .map(month -> month + "月")
-                .collect(Collectors.toList());
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("months", months);
-        result.put("posts", new ArrayList<>(postMap.values()));
-        result.put("views", new ArrayList<>(viewMap.values()));
-
-        return result;
-    }
-
-    @Transactional
-    @Cacheable(key = "'interaction_stats'")
-    public ResponseEntity<Map<String, Integer>> getInteractionStats() {
-        Map<String, Integer> stats = new HashMap<>();
-        try {
-            stats.put("likes", postRepository.getTotalLikes());
-            stats.put("comments", postRepository.getTotalComments());
-            stats.put("favorites", postRepository.getTotalFavorites());
-            return new ResponseEntity<>(stats, HttpStatus.OK);
-        } catch (Exception e) {
-            log.error("获取互动统计数据失败", e);
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Transactional
-    public ResponseEntity<List<PostDto>> getRecentPosts() {
-        List<Post> posts = postRepository.findTop5ByOrderByCreatedAtDesc();
-        List<PostDto> postDtos = posts.stream()
-                .map(this::convertToPostDto)
-                .collect(Collectors.toList());
-
-        return new ResponseEntity<>(postDtos, HttpStatus.OK);
-    }
 
     @Transactional
     public List<Post> searchPosts(PostSearchCriteria criteria) {
@@ -928,7 +835,7 @@ public class PostService {
     /**
      * Post到PostDto的映射方法
      */
-    private PostDto convertToPostDto(Post post){
+    public PostDto convertToPostDto(Post post) {
         PostDto postDto = new PostDto();
         postDto.setPost(post);
         postDto.setCategory(categoryRepository.findByPostId(post.getPostId()).orElse(new Category()));
