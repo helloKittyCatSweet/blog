@@ -122,10 +122,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/*/public/**").hasRole(Role.ROLE_USER)
                         // 管理员接口
                         .requestMatchers("/api/*/admin/**").
-                            hasAnyRole(Role.ROLE_CATEGORY_MANAGER, Role.ROLE_PERMISSION_MANAGER,
-                                    Role.ROLE_PERMISSION_MAPPING_MANAGER, Role.ROLE_TAG_MANAGER,
-                                    Role.ROLE_POST_MANAGER, Role.ROLE_USER_ACTIVITY_MANAGER,
-                                    Role.ROLE_COMMENT_MANAGER,
+                            hasAnyRole(Role.ROLE_CATEGORY_MANAGER, Role.ROLE_TAG_MANAGER,
+                                    Role.ROLE_POST_MANAGER, Role.ROLE_COMMENT_MANAGER,
                                     Role.ROLE_MESSAGE_MANAGER, Role.ROLE_REPORT_MANAGER,
                                     Role.ROLE_ROLE_MANAGER, Role.ROLE_SYSTEM_ADMINISTRATOR)
                         .anyRequest().authenticated()

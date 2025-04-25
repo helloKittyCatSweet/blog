@@ -27,12 +27,8 @@ export default [
       breadcrumb: true,
       roles: [
         ROLES.CATEGORY_MANAGER,
-        ROLES.PERMISSION_MANAGER,
-        ROLES.PERMISSION_MAPPING_MANAGER,
         ROLES.TAG_MANAGER,
         ROLES.POST_MANAGER,
-        ROLES.USER_ACTIVITY_MANAGER,
-        ROLES.USER_ROLE_MAPPING_MANAGER,
         ROLES.COMMENT_MANAGER,
         ROLES.MESSAGE_MANAGER,
         ROLES.REPORT_MANAGER,
@@ -48,6 +44,7 @@ export default [
         meta: {
           title: '内容管理',
           breadcrumb: true,
+          roles: [ROLES.POST_MANAGER, ROLES.CATEGORY_MANAGER, ROLES.TAG_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
         },
         children: [
           {
@@ -101,11 +98,8 @@ export default [
           redirect: ADMIN_USER_MANAGE_PATH,
           breadcrumb: true,
           roles: [
-            ROLES.USER_USER_MANAGER,
             ROLES.ROLE_MANAGER,
             ROLES.SYSTEM_ADMINISTRATOR,
-            ROLES.PERMISSION_MAPPING_MANAGER,
-            ROLES.PERMISSION_MANAGER
           ],
         },
         children: [
@@ -115,7 +109,7 @@ export default [
             meta: {
               title: '用户管理',
               breadcrumb: true,
-              roles: [ROLES.SYSTEM_ADMINISTRATOR, ROLES.USER_USER_MANAGER],
+              roles: [ROLES.ROLE_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
             }
           },
           {
@@ -127,15 +121,15 @@ export default [
               roles: [ROLES.ROLE_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
             }
           },
-          {
-            path: ADMIN_ROLE_PERMISSION_MANAGE_PATH,
-            component: () => import('@/views/role/RolePermissionManage.vue'),
-            meta: {
-              title: '角色权限配置',
-              breadcrumb: true,
-              roles: [ROLES.PERMISSION_MAPPING_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
-            }
-          },
+          // {
+          //   path: ADMIN_ROLE_PERMISSION_MANAGE_PATH,
+          //   component: () => import('@/views/role/RolePermissionManage.vue'),
+          //   meta: {
+          //     title: '角色权限配置',
+          //     breadcrumb: true,
+          //     roles: [ROLES.PERMISSION_MAPPING_MANAGER, ROLES.SYSTEM_ADMINISTRATOR],
+          //   }
+          // },
         ]
       },
 
@@ -159,12 +153,8 @@ export default [
           breadcrumb: true,
           roles: [
             ROLES.CATEGORY_MANAGER,
-            ROLES.PERMISSION_MANAGER,
-            ROLES.PERMISSION_MAPPING_MANAGER,
             ROLES.TAG_MANAGER,
             ROLES.POST_MANAGER,
-            ROLES.USER_ACTIVITY_MANAGER,
-            ROLES.USER_ROLE_MAPPING_MANAGER,
             ROLES.COMMENT_MANAGER,
             ROLES.MESSAGE_MANAGER,
             ROLES.REPORT_MANAGER,
@@ -181,12 +171,8 @@ export default [
               breadcrumb: true,
               roles: [
                 ROLES.CATEGORY_MANAGER,
-                ROLES.PERMISSION_MANAGER,
-                ROLES.PERMISSION_MAPPING_MANAGER,
                 ROLES.TAG_MANAGER,
                 ROLES.POST_MANAGER,
-                ROLES.USER_ACTIVITY_MANAGER,
-                ROLES.USER_ROLE_MAPPING_MANAGER,
                 ROLES.COMMENT_MANAGER,
                 ROLES.MESSAGE_MANAGER,
                 ROLES.REPORT_MANAGER,
@@ -203,12 +189,8 @@ export default [
               breadcrumb: true,
               roles: [
                 ROLES.CATEGORY_MANAGER,
-                ROLES.PERMISSION_MANAGER,
-                ROLES.PERMISSION_MAPPING_MANAGER,
                 ROLES.TAG_MANAGER,
                 ROLES.POST_MANAGER,
-                ROLES.USER_ACTIVITY_MANAGER,
-                ROLES.USER_ROLE_MAPPING_MANAGER,
                 ROLES.COMMENT_MANAGER,
                 ROLES.MESSAGE_MANAGER,
                 ROLES.REPORT_MANAGER,
