@@ -103,38 +103,58 @@ const handleSubmit = async () => {
 
 <template>
   <el-dialog
+    v-model="modelValue"
     title="更换邮箱"
-    :model-value="modelValue"
-    @update:model-value="emit('update:modelValue', $event)"
-    width="400px"
+    width="500px"
+    :close-on-click-modal="false"
     @close="emit('update:modelValue', false)"
   >
-    <el-form :model="formData" label-width="100px">
+    <el-form
+      ref="formRef"
+      :model="formData"
+      :rules="rules"
+      label-width="100px"
+      class="change-email-form"
+    >
       <el-form-item label="当前邮箱">
-        <el-input v-model="formData.currentEmail" disabled></el-input>
+        <span>{{ currentEmail }}</span>
       </el-form-item>
-
-      <el-form-item label="新邮箱">
+      <el-form-item label="新邮箱" prop="email">
         <div style="display: flex; gap: 10px">
           <el-input 
             v-model="formData.email" 
             placeholder="请输入新邮箱"
             @blur="validateEmail"
           ></el-input>
-          <el-button :disabled="buttonDisabled" @click="sendCode" type="primary">{{
-            buttonStatus
-          }}</el-button>
+          <el-button
+            :disabled="buttonDisabled"
+            @click="sendCode"
+            type="primary"
+          >
+            {{ buttonStatus }}
+          </el-button>
         </div>
       </el-form-item>
-
-      <el-form-item label="验证码">
-        <el-input v-model="formData.code" placeholder="请输入验证码"></el-input>
+      <el-form-item label="验证码" prop="code">
+        <div class="code-input">
+          <el-input v-model="formData.code" placeholder="请输入验证码"></el-input>
+          <el-button
+            type="primary"
+            :disabled="!!countdown || loading"
+            @click="handleSendCode"
+          >
+            {{ countdown ? `${countdown}s后重试` : "获取验证码" }}
+          </el-button>
+        </div>
       </el-form-item>
     </el-form>
-
     <template #footer>
-      <el-button @click="emit('update:modelValue', false)">取消</el-button>
-      <el-button type="primary" @click="handleSubmit">确认更换</el-button>
+      <span class="dialog-footer">
+        <el-button @click="emit('update:modelValue', false)">取消</el-button>
+        <el-button type="primary" :loading="loading" @click="handleSubmit">
+          确认修改
+        </el-button>
+      </span>
     </template>
   </el-dialog>
 </template>

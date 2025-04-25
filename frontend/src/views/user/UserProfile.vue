@@ -395,7 +395,7 @@ const previewSignature = () => {
                   <el-button type="primary" @click="handleSignatureClick"
                     >上传签名</el-button
                   >
-                  <el-button @click="generateSignature">使用默认签名</el-button>
+                  <el-button type="success" @click="generateSignature">使用默认签名</el-button>
                 </div>
               </div>
             </div>

@@ -1,7 +1,7 @@
 <script setup>
 import { defineProps, defineEmits } from "vue";
 import { ElMessage } from "element-plus";
-import { Pointer } from "@element-plus/icons-vue";
+import { Pointer, Thumb } from "@element-plus/icons-vue";
 
 const props = defineProps({
   comment: {
@@ -80,12 +80,13 @@ const getAllReplies = (comment) => {
       <div v-if="canManage" :class="[isReply ? 'reply-actions' : 'comment-actions']">
         <el-button
           v-if="comment.userId === currentUserId"
+          type="primary"
           link
           @click="emit('edit', comment)"
         >
           编辑
         </el-button>
-        <el-button link @click="emit('delete', comment.commentId)">删除</el-button>
+        <el-button type="danger" link @click="emit('delete', comment.commentId)">删除</el-button>
       </div>
     </div>
 
@@ -103,8 +104,8 @@ const getAllReplies = (comment) => {
         resize="none"
       />
       <div class="edit-actions">
-        <el-button size="small" @click="emit('cancel-edit', comment)">取消</el-button>
-        <el-button type="primary" size="small" @click="emit('save-edit', comment)">
+        <el-button @click="emit('cancel-edit', comment)">取消</el-button>
+        <el-button type="primary" @click="emit('save-edit', comment)">
           保存
         </el-button>
       </div>
@@ -112,15 +113,15 @@ const getAllReplies = (comment) => {
 
     <div :class="[isReply ? 'reply-operations' : 'comment-operations']">
       <el-button
-        link
         :type="comment.isLiked ? 'primary' : 'default'"
+        link
         @click="emit('like', comment)"
       >
-        <el-icon><Pointer /></el-icon>
+        <el-icon><Thumb /></el-icon>
         {{ comment.likes || 0 }}
       </el-button>
 
-      <el-button v-if="isLoggedIn" link @click="emit('reply', comment)"> 回复 </el-button>
+      <el-button type="primary" link @click="emit('reply', comment)">回复</el-button>
     </div>
 
     <!-- 修改子评论列表的渲染逻辑 -->
@@ -219,9 +220,9 @@ const getAllReplies = (comment) => {
 
 /* 按钮样式调整 */
 :deep(.el-button--link) {
-  padding: 0 4px;
   height: auto;
-  font-size: 13px;
+  padding: 0;
+  color: var(--el-text-color-regular);
 }
 
 :deep(.el-button--link:hover) {

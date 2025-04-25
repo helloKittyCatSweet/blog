@@ -18,8 +18,8 @@ const settingForm = ref({
   theme: settingsStore.settings.theme,
   notifications: settingsStore.settings.notifications,
   githubAccount: settingsStore.settings.githubAccount,
-  csdnAccount: settingsStore.settings.csdnAccount,
-  bilibiliAccount: settingsStore.settings.bilibiliAccount,
+  CSDNAccount: settingsStore.settings.CSDNAccount,
+  BiliBiliAccount: settingsStore.settings.BiliBiliAccount,
 });
 
 const validateGithub = (rule, value, callback) => {
@@ -60,8 +60,8 @@ const validateBilibili = (rule, value, callback) => {
 
 const rules = {
   githubAccount: [{ validator: validateGithub, trigger: "blur" }],
-  csdnAccount: [{ validator: validateCSDN, trigger: "blur" }],
-  bilibiliAccount: [{ validator: validateBilibili, trigger: "blur" }],
+  CSDNAccount: [{ validator: validateCSDN, trigger: "blur" }],
+  BiliBiliAccount: [{ validator: validateBilibili, trigger: "blur" }],
 };
 
 const settingId = ref(0);
@@ -73,8 +73,8 @@ const originalForm = ref({
   theme: settingsStore.settings.theme,
   notifications: settingsStore.settings.notifications,
   githubAccount: settingsStore.settings.githubAccount,
-  csdnAccount: settingsStore.settings.csdnAccount,
-  bilibiliAccount: settingsStore.settings.bilibiliAccount,
+  CSDNAccount: settingsStore.settings.CSDNAccount,
+  BiliBiliAccount: settingsStore.settings.BiliBiliAccount,
 });
 
 // 加载用户设置
@@ -86,8 +86,8 @@ const loadUserSettings = async () => {
       theme: data.theme || settingsStore.settings.theme,
       notifications: data.notifications ?? settingsStore.settings.notifications,
       githubAccount: data.githubAccount || settingsStore.settings.githubAccount,
-      csdnAccount: data.csdnAccount || settingsStore.settings.csdnAccount,
-      bilibiliAccount: data.biliBiliAccount || settingsStore.settings.bilibiliAccount,
+      CSDNAccount: data.CSDNAccount || settingsStore.settings.CSDNAccount,
+      BiliBiliAccount: data.BiliBiliAccount || settingsStore.settings.BiliBiliAccount,
     };
     originalForm.value = { ...settingForm.value };
   } catch (error) {
@@ -108,22 +108,33 @@ const handleSave = async () => {
       return;
     }
 
-    await save({
+    const response = await save({
       settingId: settingId.value,
       userId: userStore.user.id,
       theme: settingForm.value.theme,
       notifications: settingForm.value.notifications,
       githubAccount: settingForm.value.githubAccount,
-      csdnAccount: settingForm.value.csdnAccount,
-      bilibiliAccount: settingForm.value.bilibiliAccount,
+      CSDNAccount: settingForm.value.CSDNAccount,
+      BiliBiliAccount: settingForm.value.BiliBiliAccount,
     });
 
-    // 保存成功后立即应用主题
-    changeTheme(settingForm.value.theme);
-    // 保存成功后更新原始表单数据
-    originalForm.value = JSON.parse(JSON.stringify(settingForm.value));
+    if (response.data.status === 200) {
+      // 更新 settings store
+      settingsStore.setSettings({
+        theme: settingForm.value.theme,
+        notifications: settingForm.value.notifications,
+        githubAccount: settingForm.value.githubAccount,
+        CSDNAccount: settingForm.value.CSDNAccount,
+        BiliBiliAccount: settingForm.value.BiliBiliAccount,
+      });
 
-    ElMessage.success("设置保存成功");
+      // 保存成功后更新原始表单数据
+      originalForm.value = JSON.parse(JSON.stringify(settingForm.value));
+
+      ElMessage.success("设置保存成功");
+    } else {
+      ElMessage.error("保存失败：" + response.data.message);
+    }
   } catch (error) {
     if (error?.message) {
       ElMessage.error(`保存失败：${error.message}`);
@@ -280,9 +291,9 @@ const handlePageRefresh = () => {
           </el-input>
         </el-form-item>
 
-        <el-form-item label="CSDN" for="csdn" prop="csdnAccount">
+        <el-form-item label="CSDN" for="csdn" prop="CSDNAccount">
           <el-input
-            v-model="settingForm.csdnAccount"
+            v-model="settingForm.CSDNAccount"
             placeholder="请输入CSDN账号"
             clearable
           >
@@ -292,9 +303,9 @@ const handlePageRefresh = () => {
           </el-input>
         </el-form-item>
 
-        <el-form-item label="哔哩哔哩" for="bilibili" prop="bilibiliAccount">
+        <el-form-item label="哔哩哔哩" for="bilibili" prop="BiliBiliAccount">
           <el-input
-            v-model="settingForm.bilibiliAccount"
+            v-model="settingForm.BiliBiliAccount"
             placeholder="请输入哔哩哔哩账号"
             clearable
           >
@@ -348,6 +359,105 @@ const handlePageRefresh = () => {
   }
 }
 
+.theme-cards {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap; /* 允许换行 */
+}
+
+.setting-card :deep(.theme-card) {
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.3s !important;
+  border-radius: 8px !important;
+  overflow: hidden;
+  border: 2px solid var(--el-border-color-light);
+  background: var(--el-bg-color);
+
+  &:hover {
+    transform: translateY(-2px) !important;
+    border-color: var(--el-color-primary) !important;
+    box-shadow: 0 2px 12px 0 var(--el-color-primary-light-5) !important;
+  }
+
+  &.active {
+    border-color: var(--el-color-primary) !important;
+    box-shadow: 0 0 0 2px var(--el-color-primary-light-3) !important;
+  }
+}
+
+.setting-card :deep(.theme-preview) {
+  width: 120px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 20px;
+  transition: all 0.3s !important;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--el-color-primary-light-8) !important;
+    opacity: 0;
+    transition: opacity 0.3s !important;
+  }
+
+  &:hover::after {
+    opacity: 1 !important;
+  }
+}
+
+.setting-card :deep(.theme-label) {
+  padding: 8px;
+  font-size: 14px;
+  background: var(--el-bg-color);
+  color: var(--el-text-color-primary);
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+
+.setting-card :deep(.theme-radio-group) {
+  margin-top: 16px;
+  display: block;
+
+  .el-radio-button__inner {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 16px !important;
+    transition: all 0.3s !important;
+    
+    &:hover {
+      color: var(--el-color-primary) !important;
+      background-color: var(--el-color-primary-light-9) !important;
+      border-color: var(--el-color-primary) !important;
+    }
+  }
+
+  .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+    color: #fff !important;
+    background-color: var(--el-color-primary) !important;
+    border-color: var(--el-color-primary) !important;
+    box-shadow: -1px 0 0 0 var(--el-color-primary) !important;
+  }
+}
+
+.theme-setting-item {
+  :deep(.el-form-item__label) {
+    height: 12px;
+    line-height: 100px;
+    padding-top: 0;
+  }
+}
+
 .theme-option {
   display: flex;
   align-items: center;
@@ -357,63 +467,13 @@ const handlePageRefresh = () => {
     width: 16px;
     height: 16px;
     border-radius: 4px;
-    border: 1px solid #dcdfe6;
-  }
-}
+    border: 1px solid var(--el-border-color-light);
+    transition: all 0.3s !important;
 
-.theme-cards {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 20px;
-  flex-wrap: wrap; /* 允许换行 */
-}
-
-.theme-card {
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.3s;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 2px solid var(--el-border-color-light);
-  background: var(--el-bg-color);
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  &.active {
-    border-color: var(--el-color-primary);
-  }
-}
-
-.theme-preview {
-  width: 120px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 20px;
-  transition: all 0.3s;
-}
-
-.theme-label {
-  padding: 8px;
-  font-size: 14px;
-  background: var(--el-bg-color);
-}
-
-.theme-radio-group {
-  margin-top: 16px;
-  display: block;
-}
-
-.theme-setting-item {
-  :deep(.el-form-item__label) {
-    height: 12px;
-    line-height: 100px;
-    padding-top: 0;
+    &:hover {
+      border-color: var(--el-color-primary) !important;
+      box-shadow: 0 0 0 1px var(--el-color-primary-light-5) !important;
+    }
   }
 }
 </style>

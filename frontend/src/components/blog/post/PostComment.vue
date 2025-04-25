@@ -444,6 +444,8 @@ const displayComments = computed(() => {
       <div class="comment-toolbar">
         <el-button
           size="small"
+          type="primary"
+          plain
           @click="showEmojiPicker = !showEmojiPicker"
           :class="{ 'is-active': showEmojiPicker }"
           class="emoji-trigger-btn"
@@ -509,9 +511,9 @@ const displayComments = computed(() => {
             resize="none"
           />
           <div class="reply-actions">
-            <el-button size="small" @click="cancelReply">取消</el-button>
-            <el-button type="primary" size="small" @click="submitReply(comment)">
-              回复
+            <el-button @click="cancelReply">取消</el-button>
+            <el-button type="primary" @click="submitReply(comment)">
+              发表回复
             </el-button>
           </div>
         </div>
@@ -519,7 +521,7 @@ const displayComments = computed(() => {
 
       <!-- 显示查看更多按钮 -->
       <div v-if="showViewMore && comments.length > displayLimit" class="view-more">
-        <el-button type="primary" text @click="$emit('view-all')">
+        <el-button type="primary" link @click="$emit('view-all')">
           查看全部评论
         </el-button>
       </div>
@@ -554,8 +556,8 @@ const displayComments = computed(() => {
 }
 
 .comment-toolbar .el-button.is-active {
-  background-color: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
+  color: var(--el-color-primary) !important;
+  background-color: var(--el-color-primary-light-9) !important;
 }
 
 .emoji-picker-container {
@@ -598,7 +600,7 @@ const displayComments = computed(() => {
 }
 
 .comment-actions .el-button {
-  margin-left: 16px;
+  padding: 4px 8px;
 }
 
 .comment-operations {

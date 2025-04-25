@@ -36,7 +36,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,10 +80,9 @@ public class UserService {
     private UserTokenManager userTokenManager;
 
     @Transactional
-    public boolean setPassword(User user, String password) {
+    public void setPassword(User user, String password) {
         user.setPassword(passwordEncoder.encode(password));
         save(user);
-        return true;
     }
 
     @Transactional

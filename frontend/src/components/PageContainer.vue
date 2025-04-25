@@ -64,9 +64,12 @@ const breadcrumbs = computed(() => {
       <div class="header-actions">
         <!-- 刷新按钮 -->
         <el-tooltip v-if="showRefresh" content="刷新" placement="top">
-          <el-button circle plain @click="handleRefresh">
-            <el-icon><RefreshRight /></el-icon>
-          </el-button>
+          <el-button
+            :icon="RefreshRight"
+            circle
+            @click="handleRefresh"
+            class="refresh-button"
+          />
         </el-tooltip>
 
         <!-- 更多操作下拉菜单 -->

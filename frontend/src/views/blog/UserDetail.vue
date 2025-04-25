@@ -341,7 +341,7 @@ const handleUserClick = async (userId) => {
                     <el-button @click="handleViewFollowers"
                       >粉丝 {{ followersCount }}</el-button
                     >
-                    <el-button @click="handleViewFollowing"
+                    <el-button type="primary" @click="handleViewFollowing"
                       >关注 {{ followingCount }}</el-button
                     >
                   </el-button-group>
@@ -455,6 +455,7 @@ const handleUserClick = async (userId) => {
                 </div>
                 <el-button
                   v-if="userStore.user?.id !== user.userId"
+                  type="primary"
                   size="small"
                   @click="handleUserClick(user.userId)"
                 >
@@ -484,6 +485,7 @@ const handleUserClick = async (userId) => {
                 </div>
                 <el-button
                   v-if="userStore.user?.id !== user.userId"
+                  type="primary"
                   size="small"
                   @click="handleUserClick(user.userId)"
                 >

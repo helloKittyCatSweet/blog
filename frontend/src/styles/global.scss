@@ -1,0 +1,83 @@
+/* Element Plus 全局样式覆盖 */
+
+/* 设置主题色 - 更明亮的蓝色 */
+:root {
+  --el-color-primary: #1890ff !important;         /* 更明亮的主题蓝 */
+  --el-color-primary-light-3: #40a9ff !important; /* 明亮的悬停色 */
+  --el-color-primary-light-5: #69c0ff !important; /* 更浅的蓝色 */
+  --el-color-primary-light-7: #91d5ff !important; /* 非常浅的蓝色 */
+  --el-color-primary-light-9: #e6f7ff !important; /* 最浅的背景蓝 */
+  --el-color-primary-dark-2: #096dd9 !important;  /* 深蓝色用于激活状态 */
+}
+
+/* 所有按钮默认使用主题色 */
+.el-button {
+  --el-button-bg-color: var(--el-color-primary) !important;
+  --el-button-border-color: var(--el-color-primary) !important;
+  --el-button-text-color: white !important;
+  --el-button-hover-text-color: white !important;
+  --el-button-active-text-color: white !important;
+  
+  &:hover {
+    --el-button-hover-bg-color: var(--el-color-primary-light-3) !important;
+    --el-button-hover-border-color: var(--el-color-primary-light-3) !important;
+  }
+  
+  &:active {
+    --el-button-active-bg-color: var(--el-color-primary-dark-2) !important;
+    --el-button-active-border-color: var(--el-color-primary-dark-2) !important;
+  }
+}
+
+/* 次要按钮样式 */
+.el-button.el-button--default {
+  --el-button-bg-color: white !important;
+  --el-button-text-color: var(--el-text-color-regular) !important;
+  --el-button-border-color: var(--el-border-color) !important;
+  
+  &:hover {
+    --el-button-hover-bg-color: var(--el-color-primary-light-9) !important;
+    --el-button-hover-text-color: var(--el-color-primary) !important;
+    --el-button-hover-border-color: var(--el-color-primary) !important;
+  }
+}
+
+/* 文本按钮样式 */
+.el-button.is-text {
+  background: transparent !important;
+  border-color: transparent !important;
+  color: var(--el-color-primary) !important;
+  
+  &:hover {
+    color: var(--el-color-primary-light-3) !important;
+    background-color: var(--el-color-primary-light-9) !important;
+  }
+  
+  &:active {
+    color: var(--el-color-primary-dark-2) !important;
+  }
+}
+
+/* 链接按钮样式 */
+.el-button.is-link {
+  border: none !important;
+  background: transparent !important;
+  color: var(--el-color-primary) !important;
+  
+  &:hover {
+    color: var(--el-color-primary-light-3) !important;
+  }
+  
+  &:active {
+    color: var(--el-color-primary-dark-2) !important;
+  }
+}
+
+/* 禁用状态 */
+.el-button.is-disabled {
+  &, &:hover, &:active {
+    background-color: var(--el-button-disabled-bg-color) !important;
+    border-color: var(--el-button-disabled-border-color) !important;
+    color: var(--el-button-disabled-text-color) !important;
+  }
+} 

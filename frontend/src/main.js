@@ -19,7 +19,8 @@ import { permissionDirective } from '@/directives/permission'
 // Github icon
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
 
-import '@/styles/themes.css'
+import './styles/themes.css'
+import './styles/global.scss'
 
 library.add(faEnvelope);
 library.add(faGithub);
@@ -38,8 +39,15 @@ app.use(ElementPlus, {
   locale: zhCn,
   zIndex: 3000,
   size: 'default',
-  namespace: 'el'  // 添加命名空间
+  namespace: 'el',  // 添加命名空间
+  button: {
+    autoInsertSpace: true,
+    type: 'primary'  // 设置按钮默认类型为 primary
+  }
 })
+
+// 设置Element Plus主题色
+document.documentElement.style.setProperty('--el-color-primary', '#409EFF')
 
 app.component('font-awesome-icon', FontAwesomeIcon)
 app.directive('permission', permissionDirective)

@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from "vue";
-import { ChatLineRound, Star, Pointer } from "@element-plus/icons-vue";
+import { ChatLineRound, Star, Pointer, Thumb } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import {
   create as createUserActivity,
@@ -21,6 +21,14 @@ const props = defineProps({
   isFavorited: Boolean,
   likeActivityId: Number,
   favoriteActivityId: Number,
+  likes: {
+    type: Number,
+    default: 0
+  },
+  favorites: {
+    type: Number,
+    default: 0
+  }
 });
 
 const emit = defineEmits(["update:isLiked", "update:isFavorited", "refresh"]);
@@ -162,15 +170,19 @@ const confirmFavorite = async () => {
     <div class="interaction-buttons">
       <el-button
         :type="isLiked ? 'primary' : 'default'"
-        :class="{ 'liked-button': isLiked }"
+        link
         @click="handleLike"
       >
-        <el-icon><Pointer /></el-icon>
-        {{ isLiked ? "已点赞" : "点赞" }}
+        <el-icon><Thumb /></el-icon>
+        {{ likes || 0 }}
       </el-button>
-      <el-button :type="isFavorited ? 'warning' : 'default'" @click="handleFavorite">
+      <el-button
+        :type="isFavorited ? 'primary' : 'default'"
+        link
+        @click="handleFavorite"
+      >
         <el-icon><Star /></el-icon>
-        {{ isFavorited ? "已收藏" : "收藏" }}
+        {{ favorites || 0 }}
       </el-button>
     </div>
 
@@ -197,8 +209,10 @@ const confirmFavorite = async () => {
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showFolderDialog = false">取消</el-button>
-        <el-button type="primary" @click="confirmFavorite">确定</el-button>
+        <span class="dialog-footer">
+          <el-button @click="showFolderDialog = false">取消</el-button>
+          <el-button type="primary" @click="confirmFavorite">确定</el-button>
+        </span>
       </template>
     </el-dialog>
   </div>
@@ -209,6 +223,20 @@ const confirmFavorite = async () => {
   display: flex;
   gap: 12px;
   justify-content: center;
+}
+
+.interaction-buttons :deep(.el-button--link) {
+  height: auto;
+  padding: 0;
+  color: var(--el-text-color-regular);
+}
+
+.interaction-buttons :deep(.el-button--link:hover) {
+  color: var(--el-color-primary);
+}
+
+.interaction-buttons :deep(.el-button--link.el-button--primary) {
+  color: var(--el-color-primary);
 }
 
 .comment-input {

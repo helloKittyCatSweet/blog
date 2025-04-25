@@ -4,6 +4,18 @@
   --primary-text: #303133;
   --secondary-bg: #f5f7fa;
   --border-color: #dcdfe6;
+  
+  /* 马卡龙色系按钮颜色 */
+  --button-primary: #94c2f3;  /* 淡天蓝色 */
+  --button-primary-hover: #afd4f8;
+  --button-success: #9ed3ab;  /* 薄荷绿 */
+  --button-success-hover: #b5e0c1;
+  --button-warning: #f8d0a0;  /* 杏色 */
+  --button-warning-hover: #fde0bd;
+  --button-danger: #f4a7a7;   /* 淡珊瑚色 */
+  --button-danger-hover: #f9c2c2;
+  --button-info: #bdc8d0;     /* 淡灰蓝色 */
+  --button-info-hover: #d1dbe2;
 }
 
 /* 深色主题 */
@@ -66,9 +78,60 @@ body {
   background-color: var(--secondary-bg) !important;
 }
 
+/* 按钮样式 */
 .el-button--primary {
-  background-color: var(--border-color) !important;
-  border-color: var(--border-color) !important;
+  background-color: var(--button-primary) !important;
+  border-color: var(--button-primary) !important;
+  color: #ffffff !important;
+}
+
+.el-button--primary:hover {
+  background-color: var(--button-primary-hover) !important;
+  border-color: var(--button-primary-hover) !important;
+}
+
+.el-button--success {
+  background-color: var(--button-success) !important;
+  border-color: var(--button-success) !important;
+  color: #ffffff !important;
+}
+
+.el-button--success:hover {
+  background-color: var(--button-success-hover) !important;
+  border-color: var(--button-success-hover) !important;
+}
+
+.el-button--warning {
+  background-color: var(--button-warning) !important;
+  border-color: var(--button-warning) !important;
+  color: #ffffff !important;
+}
+
+.el-button--warning:hover {
+  background-color: var(--button-warning-hover) !important;
+  border-color: var(--button-warning-hover) !important;
+}
+
+.el-button--danger {
+  background-color: var(--button-danger) !important;
+  border-color: var(--button-danger) !important;
+  color: #ffffff !important;
+}
+
+.el-button--danger:hover {
+  background-color: var(--button-danger-hover) !important;
+  border-color: var(--button-danger-hover) !important;
+}
+
+.el-button--info {
+  background-color: var(--button-info) !important;
+  border-color: var(--button-info) !important;
+  color: #ffffff !important;
+}
+
+.el-button--info:hover {
+  background-color: var(--button-info-hover) !important;
+  border-color: var(--button-info-hover) !important;
 }
 
 /* 可以继续添加其他组件的主题样式 */

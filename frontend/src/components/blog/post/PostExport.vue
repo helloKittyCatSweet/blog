@@ -210,9 +210,9 @@ const downloadFile = (content, fileName, contentType) => {
 <template>
   <div class="export-actions">
     <el-dropdown trigger="click" @command="handleExport">
-      <el-button type="primary" plain>
-        <el-icon><Pointer /></el-icon>
-        <span>导出文章</span>
+      <el-button type="primary">
+        <el-icon><Download /></el-icon>
+        导出文章
       </el-button>
       <template #dropdown>
         <el-dropdown-menu>

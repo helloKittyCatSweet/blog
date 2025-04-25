@@ -227,6 +227,7 @@ onMounted(() => {
             size="small"
             @click="handleViewReplies(row)"
             v-if="row.replies?.length"
+            type="primary"
           >
             查看回复({{ row.replies.length }})
           </el-button>

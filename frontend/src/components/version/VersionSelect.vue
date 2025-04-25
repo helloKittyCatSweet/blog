@@ -222,7 +222,7 @@ watch(
     </el-select>
 
     <el-dropdown trigger="click" @command="handleCreateVersion">
-      <el-button class="ml-2">
+      <el-button type="primary" class="ml-2">
         新建版本
         <el-icon class="el-icon--right"><arrow-down /></el-icon>
       </el-button>

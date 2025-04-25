@@ -117,8 +117,10 @@ const handleSubmit = debounce(async () => {
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">提交举报</el-button>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">提交举报</el-button>
+        </span>
       </template>
     </el-dialog>
   </div>

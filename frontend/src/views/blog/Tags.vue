@@ -394,7 +394,7 @@ const removeTag = async (tagToRemove) => {
                     <el-icon><Search /></el-icon>
                   </template>
                 </el-autocomplete>
-                <el-button @click="handleSearch" type="primary" size="large">
+                <el-button type="primary" @click="handleSearch" size="large">
                   搜索
                 </el-button>
               </div>
