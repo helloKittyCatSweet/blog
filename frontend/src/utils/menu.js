@@ -310,12 +310,6 @@ export const adminMenus = [
             ]
           },
           {
-            icon: Histogram,
-            title: '系统统计',
-            index: '/admin/system/statistics',
-            roles: [ROLES.SYSTEM_ADMINISTRATOR]
-          },
-          {
             icon: Tools,
             title: 'Kibana管理',
             index: 'kibana-management',

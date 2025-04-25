@@ -405,7 +405,12 @@ const handleExport = () => {
             >
               {{ row.operation ? "标记未审核" : "标记已审核" }}
             </el-button>
-            <el-button type="danger" link @click="deleteMessage(row)">删除</el-button>
+            <el-button 
+              v-if="!row.operation"
+              type="danger" 
+              link 
+              @click="deleteMessage(row)"
+            >删除</el-button>
           </template>
         </el-table-column>
       </el-table>

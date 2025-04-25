@@ -103,7 +103,7 @@ public class PostService {
         }
 
         // 内容审核
-        String s= baiduContentService.checkText(post.getContent());
+        String s = baiduContentService.checkText(post.getContent());
         if (!s.equals("合规")) {
             return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
         }
@@ -157,8 +157,8 @@ public class PostService {
     @CacheEvict(allEntries = true)
     public ResponseEntity<PostDto> update(PostDto input) {
         Post post = input.getPost();
-//        log.info("update post: {}", post.getPostId());
-//        log.info("update postdto: {}",input);
+        // log.info("update post: {}", post.getPostId());
+        // log.info("update postdto: {}",input);
 
         // 检查文章是否存在
         if (!postRepository.existsById(post.getPostId())) {
@@ -215,8 +215,7 @@ public class PostService {
                         updatedPost.getPostId(),
                         updatedPost.getContent(),
                         updatedPost.getUserId(),
-                        updatedPost.getVersion()
-                ));
+                        updatedPost.getVersion()));
         postVersion.setContent(updatedPost.getContent());
         postVersionRepository.save(postVersion);
 
@@ -469,6 +468,7 @@ public class PostService {
                     deleteTag(postId, tag.getTagId());
                     tagWeightService.decrementUseCount(tag);
                     tagWeightService.updateWeight(tag);
+                    tagRepository.save(tag); // 确保保存更改
                 });
 
         // 添加新标签
@@ -476,10 +476,12 @@ public class PostService {
                 .filter(tagId -> !currentTagIds.contains(tagId))
                 .forEach(tagId -> {
                     if (tagRepository.existsById(tagId)) {
-                        addTag(postId, tagId);
                         Tag tag = tagRepository.findById(tagId).orElse(new Tag());
                         tagWeightService.incrementUseCount(tag);
+                        tag.setLastUsedAt(LocalDateTime.now()); // 明确设置最后使用时间
                         tagWeightService.updateWeight(tag);
+                        tagRepository.save(tag); // 先保存标签更新
+                        postRepository.addTag(postId, tagId); // 再添加关联
                     }
                 });
 
@@ -728,8 +730,6 @@ public class PostService {
     public ResponseEntity<Boolean> existsById(Integer postId) {
         return new ResponseEntity<>(postRepository.existsById(postId), HttpStatus.OK);
     }
-
-
 
     @Transactional
     public List<Post> searchPosts(PostSearchCriteria criteria) {

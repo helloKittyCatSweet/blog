@@ -223,7 +223,7 @@ public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecif
         List<Object[]> getMonthlyViewCount(@Param("startDate") LocalDate startDate,
                         @Param("endDate") LocalDate endDate);
 
-        List<Post> findTop5ByOrderByCreatedAtDesc();
+        List<Post> findTop5ByIsDeletedFalseOrderByCreatedAtDesc();
 
         @Query("UPDATE PostCategory pc SET pc.id.categoryId = :categoryId WHERE " +
                         "pc.id.postId = :postId AND pc.id.categoryId = :oldCategoryId")
@@ -277,7 +277,7 @@ public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecif
                         @Param("startDate") LocalDate startDate,
                         @Param("endDate") LocalDate endDate);
 
-        List<Post> findTop5ByUserIdOrderByCreatedAtDesc(Integer userId);
+        List<Post> findTop5ByIsDeletedFalseAndUserIdOrderByCreatedAtDesc(Integer userId);
 
         @Query("SELECT CASE WHEN COUNT(p) = 0 THEN true ELSE false END FROM Post p " +
                         "WHERE p.userId = :userId AND p.isDeleted = false AND p.isPublished = true")

@@ -240,6 +240,14 @@ const generateSignature = async () => {
     ElMessage.error("默认签名生成失败");
   }
 };
+
+// 添加查看大图的变量
+const showSignaturePreview = ref(false);
+
+// 添加查看大图的方法
+const previewSignature = () => {
+  showSignaturePreview.value = true;
+};
 </script>
 
 <template>
@@ -376,15 +384,11 @@ const generateSignature = async () => {
                     :src="userInfo.signature"
                     alt="个人签名"
                     class="signature-image"
-                    @click="handleSignatureClick"
+                    @click="previewSignature"
                   />
                   <div class="signature-actions">
-                    <el-button type="primary" link @click="handleSignatureClick"
-                      >更换签名</el-button
-                    >
-                    <el-button type="primary" link @click="generateSignature"
-                      >重新生成</el-button
-                    >
+                    <el-button type="primary" link @click="handleSignatureClick">更换签名</el-button>
+                    <el-button type="primary" link @click="generateSignature">重新生成</el-button>
                   </div>
                 </template>
                 <div v-else class="signature-placeholder">
@@ -400,6 +404,20 @@ const generateSignature = async () => {
       </el-col>
     </el-row>
   </page-container>
+
+  <!-- 添加签名预览对话框 -->
+  <el-dialog
+    v-model="showSignaturePreview"
+    title="签名预览"
+    width="60%"
+    :close-on-click-modal="true"
+    :show-close="true"
+    center
+  >
+    <div class="signature-preview">
+      <img :src="userInfo.signature" alt="个人签名" style="max-width: 100%; max-height: 70vh;" />
+    </div>
+  </el-dialog>
 </template>
 
 <style lang="scss" scoped>
@@ -552,6 +570,12 @@ const generateSignature = async () => {
     max-width: 100%;
     max-height: 100px;
     object-fit: contain;
+    cursor: pointer;
+    transition: transform 0.3s;
+
+    &:hover {
+      transform: scale(1.05);
+    }
   }
 
   .signature-placeholder {
@@ -593,5 +617,13 @@ const generateSignature = async () => {
   gap: 16px;
   justify-content: center;
   align-items: center;
+}
+
+.signature-preview {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  background-color: var(--el-bg-color);
 }
 </style>

@@ -450,16 +450,13 @@ const handleImportError = () => {
       size="80%"
     >
       <template #header>
-        <div
-          style="
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-          "
-        >
+        <div style="flex: 1; display: flex; align-items: center; justify-content: space-between;">
           <span>{{ currentRole?.roleName || "" }} - 用户列表</span>
-          <el-button type="primary" @click="handleAddUsers">添加用户</el-button>
+          <el-button 
+            v-if="currentRole?.roleName !== '普通用户'" 
+            type="primary" 
+            @click="handleAddUsers"
+          >添加用户</el-button>
         </div>
       </template>
       <el-table
@@ -484,9 +481,10 @@ const handleImportError = () => {
           </template>
         </el-table-column>
         <!-- 添加操作列 -->
-        <el-table-column label="操作" width="100" align="center">
+        <el-table-column v-if="currentRole?.roleName !== '普通用户'" label="操作" width="100" align="center">
           <template #default="{ row }">
             <el-button
+             
               type="danger"
               :icon="Delete"
               circle

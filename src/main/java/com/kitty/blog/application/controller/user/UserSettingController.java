@@ -31,25 +31,19 @@ public class UserSettingController {
     /**
      * 根据用户ID查询用户设置
      *
-     * @param userId
      * @param user
      * @return
      */
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)" +
-            " and #userId == #user.id")
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户ID查询用户设置")
-    @GetMapping("/public/find/user/{userId}")
+    @GetMapping("/public/find/user")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "用户设置不存在")
     })
     public ResponseEntity<Response<UserSetting>> findByUserId
-            (@PathVariable(name = "userId") Integer userId,
-             @AuthenticationPrincipal LoginResponseDto user) {
-        log.info("Current user roles: {}", user.getAuthorities());
-        log.info("Requested userId: {}, Authenticated user id: {}", userId, user.getId());
-
-        UserSetting response = userSettingService.findByUserId(userId);
+            (@AuthenticationPrincipal LoginResponseDto user) {
+        UserSetting response = userSettingService.findByUserId(user.getId());
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND,"用户设置不存在");

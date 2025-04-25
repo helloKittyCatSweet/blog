@@ -15,11 +15,11 @@ const settingsStore = useSettingsStore();
 
 // 设置表单数据
 const settingForm = ref({
-  theme: "light",
-  notifications: true,
-  githubAccount: "",
-  csdnAccount: "",
-  bilibiliAccount: "",
+  theme: settingsStore.settings.theme,
+  notifications: settingsStore.settings.notifications,
+  githubAccount: settingsStore.settings.githubAccount,
+  csdnAccount: settingsStore.settings.csdnAccount,
+  bilibiliAccount: settingsStore.settings.bilibiliAccount,
 });
 
 const validateGithub = (rule, value, callback) => {
@@ -68,17 +68,26 @@ const settingId = ref(0);
 const settingFormRef = ref(null);
 const loading = ref(false);
 
+// 原始数据记录（与表单结构一致）
+const originalForm = ref({
+  theme: settingsStore.settings.theme,
+  notifications: settingsStore.settings.notifications,
+  githubAccount: settingsStore.settings.githubAccount,
+  csdnAccount: settingsStore.settings.csdnAccount,
+  bilibiliAccount: settingsStore.settings.bilibiliAccount,
+});
+
 // 加载用户设置
 const loadUserSettings = async () => {
   try {
     const { data } = await findByUserId(userStore.user.id);
     settingId.value = data.settingId;
     settingForm.value = {
-      theme: data.theme || "light",
-      notifications: data.notifications ?? true,
-      githubAccount: data.githubAccount || "",
-      csdnAccount: data.CSDNAccount || "",
-      bilibiliAccount: data.BiliBiliAccount || "",
+      theme: data.theme || settingsStore.settings.theme,
+      notifications: data.notifications ?? settingsStore.settings.notifications,
+      githubAccount: data.githubAccount || settingsStore.settings.githubAccount,
+      csdnAccount: data.csdnAccount || settingsStore.settings.csdnAccount,
+      bilibiliAccount: data.biliBiliAccount || settingsStore.settings.bilibiliAccount,
     };
     originalForm.value = { ...settingForm.value };
   } catch (error) {
@@ -105,8 +114,8 @@ const handleSave = async () => {
       theme: settingForm.value.theme,
       notifications: settingForm.value.notifications,
       githubAccount: settingForm.value.githubAccount,
-      CSDNAccount: settingForm.value.csdnAccount,
-      BiliBiliAccount: settingForm.value.bilibiliAccount,
+      csdnAccount: settingForm.value.csdnAccount,
+      bilibiliAccount: settingForm.value.bilibiliAccount,
     });
 
     // 保存成功后立即应用主题
@@ -137,8 +146,26 @@ const THEMES = [
 
 // 主题切换函数
 const changeTheme = (theme) => {
+  // 保存到 store
   settingsStore.setTheme(theme);
   themeStore.setTheme(theme);
+  
+  // 保存到 localStorage
+  localStorage.setItem('app-theme', theme);
+  
+  // 更新根元素的主题类名
+  const html = document.documentElement;
+  // 移除所有主题相关的类
+  THEMES.forEach(t => html.classList.remove(`theme-${t.value}`));
+  // 添加新主题的类
+  html.classList.add(`theme-${theme}`);
+  
+  // 更新 element-plus 的主题
+  if (theme === 'dark') {
+    html.classList.add('dark');
+  } else {
+    html.classList.remove('dark');
+  }
 };
 
 // 监听主题变化
@@ -151,9 +178,6 @@ watch(
 
 // 在 onMounted 中初始化主题
 onMounted(() => {
-  // 从 store 获取当前主题
-  settingForm.value.theme = themeStore.currentTheme;
-
   // 确保用户信息已加载后再加载设置
   if (userStore.user?.id) {
     loadUserSettings();
@@ -167,15 +191,6 @@ const handleReset = () => {
   settingFormRef.value?.resetFields();
   loadUserSettings();
 };
-
-// 原始数据记录（与表单结构一致）
-const originalForm = ref({
-  theme: "light",
-  notifications: true,
-  githubAccount: "",
-  csdnAccount: "",
-  bilibiliAccount: "",
-});
 
 // 表单变化检测
 const isFormChanged = computed(() => {

@@ -202,6 +202,10 @@ onMounted(async () => {
     // 降级处理
     setTimeout(autoLogin, 0);
   }
+
+  // 初始化主题
+  const themeStore = useThemeStore();
+  themeStore.initTheme();
 });
 
 const oauthDialogVisible = ref(false);
@@ -350,20 +354,23 @@ const loadUserTheme = async (userId) => {
   const themeStore = useThemeStore();
 
   try {
-    const { data } = await findByUserId(userId);
-    settingsStore.setSettings({
-      theme: data.theme,
-      notifications: data.notifications,
-      githubAccount: data.githubAccount,
-      csdnAccount: data.CSDNAccount || "",
-      bilibiliAccount: data.BiliBiliAccount || "",
-    });
-    themeStore.setTheme(data.theme || "light");
+    const { data } = await findByUserId();
+    if (data.status === 200) {
+      // 更新设置
+      settingsStore.setSettings({
+        theme: data.theme || 'light',
+        notifications: data.notifications,
+        githubAccount: data.githubAccount,
+        csdnAccount: data.csdnAccount,
+        bilibiliAccount: data.biliBiliAccount,
+      });
+      
+      // 主题会通过 settingsStore 自动同步到 themeStore
+    }
   } catch (error) {
     console.error("加载主题设置失败:", error);
     // 使用默认主题
-    settingsStore.setTheme("light");
-    themeStore.setTheme("light");
+    settingsStore.setTheme('light');
   }
 };
 

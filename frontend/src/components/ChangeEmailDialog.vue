@@ -29,6 +29,18 @@ const countdown = ref(0);
 const buttonStatus = ref("发送验证码");
 const buttonDisabled = ref(false);
 
+// 添加邮箱验证方法
+const validateEmail = () => {
+  if (!formData.value.email) return;
+  
+  if (formData.value.email === formData.value.currentEmail) {
+    ElMessage.error("新邮箱不能与当前邮箱相同");
+    formData.value.email = ""; // 清空输入
+    return false;
+  }
+  return true;
+};
+
 const startCountdown = () => {
   countdown.value = 60;
   buttonDisabled.value = true;
@@ -51,6 +63,7 @@ const sendCode = async () => {
     ElMessage.error("请输入新邮箱地址");
     return;
   }
+
   try {
     const response = await send(formData.value.email);
     if (response.data.status === 200) {
@@ -103,7 +116,11 @@ const handleSubmit = async () => {
 
       <el-form-item label="新邮箱">
         <div style="display: flex; gap: 10px">
-          <el-input v-model="formData.email" placeholder="请输入新邮箱"></el-input>
+          <el-input 
+            v-model="formData.email" 
+            placeholder="请输入新邮箱"
+            @blur="validateEmail"
+          ></el-input>
           <el-button :disabled="buttonDisabled" @click="sendCode" type="primary">{{
             buttonStatus
           }}</el-button>

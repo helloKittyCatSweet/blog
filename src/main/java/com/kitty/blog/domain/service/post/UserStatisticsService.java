@@ -155,7 +155,8 @@ public class UserStatisticsService {
         }
 
         try {
-            List<Post> posts = postRepository.findTop5ByUserIdOrderByCreatedAtDesc(userId);
+            List<Post> posts =
+                    postRepository.findTop5ByIsDeletedFalseAndUserIdOrderByCreatedAtDesc(userId);
             // 如果没有文章，返回空列表
             if (posts.isEmpty()) {
                 return new ResponseEntity<>(Collections.emptyList(), HttpStatus.OK);
@@ -256,7 +257,7 @@ public class UserStatisticsService {
 
     @Transactional
     public ResponseEntity<List<PostDto>> getRecentPosts() {
-        List<Post> posts = postRepository.findTop5ByOrderByCreatedAtDesc();
+        List<Post> posts = postRepository.findTop5ByIsDeletedFalseOrderByCreatedAtDesc();
         List<PostDto> postDtos = posts.stream()
                 .map(postService::convertToPostDto)
                 .collect(Collectors.toList());

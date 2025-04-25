@@ -5,8 +5,8 @@ import { userSettingPrefix, userPrefix } from '@/constants/api-constants.js'
 export const save = (data) => request.post(`${userPrefix}${userSettingPrefix}/public/save`, data)
 
 // 根据用户id查询用户设置
-export const findByUserId = (userId) =>
-  request.get(`${userPrefix}${userSettingPrefix}/public/find/user/${userId}`)
+export const findByUserId = () =>
+  request.get(`${userPrefix}${userSettingPrefix}/public/find/user`)
 
 // 根据id查询用户设置
 export const findById = (id) => request.get(`${userPrefix}${userSettingPrefix}admin/find/id/${id}`)
