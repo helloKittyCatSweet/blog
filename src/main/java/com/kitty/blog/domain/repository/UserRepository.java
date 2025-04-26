@@ -2,6 +2,8 @@ package com.kitty.blog.domain.repository;
 
 import com.kitty.blog.domain.model.User;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -155,7 +157,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT u FROM User u WHERE u.isDeleted = false")
     @NotNull
-    List<User> findAll();
+    Page<User> findAll(@NotNull Pageable pageable);
 
     @Query("SELECT u FROM User u WHERE u.username LIKE %?1% OR u.email LIKE %?1% AND u.isDeleted = false")
     Optional<List<User>> findUserByUsernameAndEmail(String keyword);

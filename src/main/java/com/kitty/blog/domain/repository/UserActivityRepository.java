@@ -1,6 +1,8 @@
 package com.kitty.blog.domain.repository;
 
 import com.kitty.blog.domain.model.UserActivity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.history.RevisionRepository;
 import org.springframework.data.repository.query.Param;
@@ -47,6 +49,9 @@ public interface UserActivityRepository extends BaseRepository<UserActivity, Int
      * @param userId
      * @return
      */
+    @Query("SELECT ua FROM UserActivity ua WHERE ua.userId = ?1")
+    Page<Optional<List<UserActivity>>> findByUserId(Integer userId, Pageable pageable);
+
     @Query("SELECT ua FROM UserActivity ua WHERE ua.userId = ?1")
     Optional<List<UserActivity>> findByUserId(Integer userId);
 

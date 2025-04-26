@@ -80,15 +80,16 @@ const loadMessages = async () => {
     );
 
     if (isSearchMode.value) {
-      const { data } = await findMessagePage({
+      const params = {
         receiverName: searchForm.value.receiverName,
         content: searchForm.value.content,
         startDate: searchForm.value.startDate,
         endDate: searchForm.value.endDate,
         page: pagination.value.currentPage - 1,
         size: pagination.value.pageSize
-      });
+      };
 
+      const { data } = await findMessagePage(params);
       if (data.status === 200) {
         chatList.value = await Promise.all(
           data.data.content.map(async (message) => {
@@ -131,7 +132,7 @@ const loadMessages = async () => {
           receiverId: item.userId,
           receiverName: item.username,
           receiverAvatar: item.avatar,
-          lastMessage: item.message,
+          lastMessage: item.lastMessage,
           unreadCount: Number(item.unreadCount) || 0,
           lastMessageTime: item.lastMessageTime == null ? "-" : item.lastMessageTime
         }));

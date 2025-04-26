@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -106,10 +107,14 @@ public class UserRoleController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
-    public ResponseEntity<Response<List<User>>> findByRoleId
-            (@PathVariable("roleId") Integer id) {
-        ResponseEntity<List<User>> response = userRoleService.findByRoleId(id);
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<User>>> findByRoleId(
+            @PathVariable("roleId") Integer id,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sort", required = false, defaultValue = "id") String[] sort
+    ) {
+        Page<User> response = userRoleService.findByRoleId(id, page, size, sort);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
     }

@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -62,9 +63,15 @@ public class FavoriteController {
     @GetMapping("/public/find/list")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "用户不存在")})
-    public ResponseEntity<Response<List<FavoriteDto>>> findByUserId(@AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<List<FavoriteDto>> response = favoriteService.findByUserId(user.getId());
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<FavoriteDto>>> findByUserId(
+            @AuthenticationPrincipal LoginResponseDto user,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<FavoriteDto> response =
+                favoriteService.findByUserId(user.getId(), page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND, "用户不存在");
     }
@@ -100,10 +107,16 @@ public class FavoriteController {
     @Operation(summary = "获取用户特定收藏夹中的文章")
     @GetMapping("/public/find/folder/{folderName}")
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
-    public ResponseEntity<List<FavoriteDto>> getPostsByFolder(
+    public ResponseEntity<Response<Page<FavoriteDto>>> getPostsByFolder(
             @AuthenticationPrincipal LoginResponseDto user,
-            @PathVariable String folderName) {
-        return favoriteService.findByUserIdAndFolderName(user.getId(), folderName);
+            @PathVariable String folderName,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+            ) {
+        return Response.ok(
+                favoriteService.findByUserIdAndFolderName
+                        (user.getId(), folderName, page, size, sorts));
     }
 
     @Operation(summary = "移动收藏到指定文件夹")
@@ -204,9 +217,13 @@ public class FavoriteController {
     @GetMapping("/admin/find/all")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "收藏不存在")})
-    public ResponseEntity<Response<List<Post>>> findAll() {
-        ResponseEntity<List<Post>> response = favoriteService.findAll();
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<Post>>> findAll(
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<Post> response = favoriteService.findAll(page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND, "收藏不存在");
     }

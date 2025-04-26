@@ -3,6 +3,8 @@ package com.kitty.blog.domain.repository;
 import com.kitty.blog.common.constant.ReportReason;
 import com.kitty.blog.common.constant.ReportStatus;
 import com.kitty.blog.domain.model.Report;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -57,7 +59,7 @@ public interface ReportRepository extends BaseRepository<Report, Integer> {
      * @return
      */
     @Query("select r from Report r where r.userId =?1")
-    Optional<List<Report>> findByUserId(Integer userId);
+    Page<Report> findByUserId(Integer userId, Pageable pageable);
 
     /**
      * 根据文章id查找举报信息
@@ -65,7 +67,7 @@ public interface ReportRepository extends BaseRepository<Report, Integer> {
      * @return
      */
     @Query("select r from Report r where r.postId =?1")
-    Optional<List<Report>> findByArticleId(Integer postId);
+    Page<Report> findByArticleId(Integer postId, Pageable pageable);
 
     /**
      * 根据文章id和用户id查找举报信息
@@ -73,6 +75,10 @@ public interface ReportRepository extends BaseRepository<Report, Integer> {
      * @param userId
      * @return
      */
+    @Query("select r from Report r where r.postId =?1 and r.userId =?2")
+    Page<Optional<List<Report>>> findByPostIdAndUserId(Integer postId, Integer userId,
+                                                       Pageable pageable);
+
     @Query("select r from Report r where r.postId =?1 and r.userId =?2")
     Optional<List<Report>> findByPostIdAndUserId(Integer postId, Integer userId);
 
@@ -82,7 +88,7 @@ public interface ReportRepository extends BaseRepository<Report, Integer> {
      * @return
      */
     @Query("select r from Report r where r.reason LIKE %?1%")
-    Optional<List<Report>> findByReason(String reason);
+    Page<Report> findByReason(String reason, Pageable pageable);
 
     /**
      * 根据举报原因和文章id查找举报信息
@@ -91,7 +97,8 @@ public interface ReportRepository extends BaseRepository<Report, Integer> {
      * @return
      */
     @Query("select r from Report r where r.reason LIKE %?1% and r.postId =?2")
-    Optional<List<Report>> findByReasonForPost(String reason, Integer postId);
+    Page<Report> findByReasonForPost(String reason, Integer postId,
+                                                     Pageable pageable);
 
     /**
      * 根据状态查找举报信息
@@ -99,7 +106,7 @@ public interface ReportRepository extends BaseRepository<Report, Integer> {
      * @return
      */
 
-    Optional<List<Report>> findByStatus(ReportStatus status);
+    Page<Report> findByStatus(ReportStatus status, Pageable pageable);
 
     /**
      * 管理员根据状态和文章id查找举报信息
@@ -112,20 +119,22 @@ public interface ReportRepository extends BaseRepository<Report, Integer> {
             "(:keyword IS NULL OR r.description LIKE %:keyword%) AND " +
             "(:status IS NULL OR r.status = :status) AND " +
             "(:reason IS NULL OR r.reason = :reason)")
-    List<Report> searchReportsForAdmin(
+    Page<Report> searchReportsForAdmin(
             @Param("keyword") String keyword,
             @Param("status") ReportStatus status,
-            @Param("reason") ReportReason reason
+            @Param("reason") ReportReason reason,
+            Pageable pageable
     );
 
     @Query("SELECT r FROM Report r WHERE r.userId = :userId AND " +
             "(:keyword IS NULL OR r.description LIKE %:keyword%) AND " +
             "(:status IS NULL OR r.status = :status) AND " +
             "(:reason IS NULL OR r.reason = :reason)")
-    List<Report> searchReportsForUser(
+    Page<Report> searchReportsForUser(
             @Param("userId") Integer userId,
             @Param("keyword") String keyword,
             @Param("status") ReportStatus status,
-            @Param("reason") ReportReason reason
+            @Param("reason") ReportReason reason,
+            Pageable pageable
     );
 }

@@ -6,9 +6,13 @@ import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.repository.CategoryRepository;
 import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+import com.kitty.blog.infrastructure.utils.PageUtil;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -49,8 +53,8 @@ public class CategoryService {
             throw new RuntimeException(e);
         }
         String description = baiduContentService.checkText(category.getDescription());
-        log.info("create a category: check: name: {}, description: {}",name,description);
-        if (!name.equals("合规") || !description.equals("合规")){
+        log.info("create a category: check: name: {}, description: {}", name, description);
+        if (!name.equals("合规") || !description.equals("合规")) {
             return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
         }
         save(category);
@@ -73,7 +77,7 @@ public class CategoryService {
             throw new RuntimeException(e);
         }
         String description = baiduContentService.checkText(category.getDescription());
-        if (!name.equals("合规") || !description.equals("合规")){
+        if (!name.equals("合规") || !description.equals("合规")) {
             return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
         }
 
@@ -154,10 +158,13 @@ public class CategoryService {
 
     @Transactional
     @Cacheable(key = "#parentName", unless = "#result.body.isEmpty()")
-    public ResponseEntity<List<TreeDto>> findDescendantsByParentNameLike(String parentName) {
+    public ResponseEntity<Page<TreeDto>> findDescendantsByParentNameLike
+            (String parentName, Integer page, Integer size, String[] sorts) {
         List<Category> parentCategories = categoryRepository.findByNameLike(parentName).orElse(new ArrayList<>());
         if (parentCategories.isEmpty()) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>(
+                    new PageImpl<>(new ArrayList<>(), PageRequest.of(0, 10), 0),
+                    HttpStatus.NOT_FOUND);
         }
 
         List<TreeDto> allTrees = new ArrayList<>();
@@ -181,17 +188,19 @@ public class CategoryService {
                 allTrees.addAll(CategoryTreeBuilder.buildTree(descendants, parent.getCategoryId()));
             }
         }
-        if (!allTrees.isEmpty()) {
-            return new ResponseEntity<>(allTrees, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+
+        // 创建分页对象
+        PageRequest pageRequest = PageUtil.createPageRequest(page, size, sorts);
+        return new ResponseEntity<>(
+                new PageImpl<>(allTrees, pageRequest, allTrees.size()),
+                allTrees.isEmpty() ? HttpStatus.NOT_FOUND : HttpStatus.OK);
     }
 
     @Transactional
     public ResponseEntity<Category> findByPostId(Integer postId) {
-        if (!postRepository.existsById(postId)){
+        if (!postRepository.existsById(postId)) {
             return new ResponseEntity<>(new Category(), HttpStatus.NOT_FOUND);
-        }else {
+        } else {
             return new ResponseEntity<>(categoryRepository.findByPostId(postId).orElse(new Category()),
                     HttpStatus.OK);
         }
@@ -210,7 +219,7 @@ public class CategoryService {
     @Cacheable(key = "#categoryId", unless = "#result.body == null")
     @Transactional
     public ResponseEntity<Category> findById(Integer categoryId) {
-        if (!existsById(categoryId).getBody()) {
+        if (Boolean.FALSE.equals(existsById(categoryId).getBody())) {
             return new ResponseEntity<>(new Category(), HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>((Category) categoryRepository.findById(categoryId).orElse(new Category()),
@@ -219,36 +228,41 @@ public class CategoryService {
 
     @Cacheable(key = "'all'", unless = "#result.body.isEmpty()")
     @Transactional
-    public ResponseEntity<List<TreeDto>> findAll() {
-        List<Category> allCategories = categoryRepository.findAll();
+    public ResponseEntity<Page<TreeDto>> findAll(Integer page, Integer size, String[] sorts) {
+        PageRequest pageRequest = PageUtil.createPageRequest(page, size, sorts);
+        Page<Category> allCategories = categoryRepository.findAll(pageRequest);
 
         // 更新所有分类的使用次数
-        allCategories.forEach(category -> {
+        allCategories.getContent().forEach(category -> {
             Integer count = categoryRepository.countPostsByCategoryId(category.getCategoryId());
             category.setUseCount(count);
-            categoryRepository.updateUseCount(category.getCategoryId(),count);
+            categoryRepository.updateUseCount(category.getCategoryId(), count);
         });
 
         if (allCategories.isEmpty()) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(
+                    new PageImpl<>(new ArrayList<>(), pageRequest, 0),
+                    HttpStatus.OK);
         }
 
         // 找出所有根节点（parentCategoryId = 0 的节点）
-        List<Category> rootCategories = allCategories.stream()
+        List<Category> rootCategories = allCategories.getContent().stream()
                 .filter(category -> category.getParentCategoryId() == 0)
                 .toList();
 
-        // 直接构建完整的树
+        // 构建树结构
+        List<TreeDto> trees = CategoryTreeBuilder.buildTree(allCategories.getContent(), 0);
+
+        // 创建分页的树结构结果
         return new ResponseEntity<>(
-                CategoryTreeBuilder.buildTree(allCategories, 0),
-                HttpStatus.OK
-        );
+                new PageImpl<>(trees, pageRequest, allCategories.getTotalElements()),
+                HttpStatus.OK);
     }
 
     @CacheEvict(key = "#categoryId")
     @Transactional
     public ResponseEntity<Boolean> deleteById(Integer categoryId) {
-        if (!existsById(categoryId).getBody()) {
+        if (Boolean.FALSE.equals(existsById(categoryId).getBody())) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         categoryRepository.deleteById(categoryId);

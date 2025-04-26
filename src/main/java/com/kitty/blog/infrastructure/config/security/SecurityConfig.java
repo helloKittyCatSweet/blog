@@ -71,12 +71,12 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(AbstractHttpConfigurer::disable)// 禁用 CSRF (仅在开发阶段时使用); // 开启基本的 HTTP 认证 (如需要)
+                .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
-                        .authenticationEntryPoint(unauthorizedHandler)) // 认证失败处理器
+                        .authenticationEntryPoint(unauthorizedHandler))
                 .sessionManagement(sessionManagement -> sessionManagement
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 禁用 session
-                .authenticationProvider(authenticationProvider())
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .userDetailsService(userDetailsService)
                 .authorizeHttpRequests(authorize -> authorize
                         /**
                          * Ant 风格的路径模式使用了一些特殊的字符来表示不同级别的路径匹配：
@@ -133,11 +133,10 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(webSocketAuthFilter(), ChannelProcessingFilter.class)
                 .cors(Customizer.withDefaults())
-                // 添加WebSocket支持
                 .securityMatcher(new AndRequestMatcher(
                         new NegatedRequestMatcher(new AntPathRequestMatcher("/ws/**")),
                         new AntPathRequestMatcher("/**")));
-        // 添加WebSocket认证拦截器
+
         return http.build();
     }
 
@@ -149,9 +148,7 @@ public class SecurityConfig {
                     HttpServletResponse response,
                     FilterChain filterChain) throws ServletException, IOException {
                 if (request.getRequestURI().startsWith("/ws/")) {
-                    // 复用 JWT 过滤器时需重置安全上下文
                     SecurityContextHolder.clearContext();
-
                     jwtAuthenticationFilter().doFilter(request, response, (req, res) -> {
                         if (SecurityContextHolder.getContext().getAuthentication() != null
                                 && SecurityContextHolder.getContext().getAuthentication().isAuthenticated()) {

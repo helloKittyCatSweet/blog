@@ -9,6 +9,7 @@ import com.kitty.blog.domain.model.userRole.UserRoleId;
 import com.kitty.blog.domain.repository.RoleRepository;
 import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.domain.repository.UserRoleRepository;
+import com.kitty.blog.infrastructure.utils.PageUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -16,6 +17,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -91,16 +94,11 @@ public class UserRoleService {
 
     @Transactional
     @Cacheable(key = "#id")
-    public ResponseEntity<List<User>> findByRoleId(Integer id) {
-        ArrayList<UserRole> userRoles =
-                new ArrayList<>(userRoleRepository.findByRoleId(id).orElse(new ArrayList<>()));
-        ArrayList<User> users = new ArrayList<>();
-        for (UserRole userRole : userRoles) {
-            User user = userRepository.findById(userRole.getId().getUserId()).orElse(null);
-            assert user != null;
-            users.add(user);
-        }
-        return new ResponseEntity<>(users, HttpStatus.OK);
+    public Page<User> findByRoleId(Integer id, Integer page, Integer size, String[] sort) {
+        PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+        Page<UserRole> userRoles = userRoleRepository.findByRoleId(id, pageRequest);
+        return userRoles.map(userRole ->
+                userRepository.findById(userRole.getId().getUserId()).orElse(null));
     }
 
     @Transactional

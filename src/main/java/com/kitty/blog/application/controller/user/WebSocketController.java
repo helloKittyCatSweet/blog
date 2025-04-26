@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -168,16 +169,25 @@ public class WebSocketController {
 
     // 获取系统消息历史（管理员）
     @GetMapping("/admin/system-messages")
-    public ResponseEntity<Response<List<SystemMessageDto>>> getSystemMessages() {
-        return Response.ok(webSocketService.getSystemMessages());
+    public ResponseEntity<Response<Page<SystemMessageDto>>> getSystemMessages(
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sort", required = false, defaultValue = "id") String[] sort
+    ) {
+        return Response.ok(webSocketService.getSystemMessages(page, size, sort));
     }
 
     // 获取用户系统消息
     @GetMapping("/system-messages")
-    public ResponseEntity<Response<List<SystemMessageDto>>> getUserSystemMessages() {
+    public ResponseEntity<Response<Page<SystemMessageDto>>> getUserSystemMessages(
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sort", required = false, defaultValue = "id") String[] sort
+    ) {
         // 直接从 SecurityContext 获取当前用户
         LoginResponseDto currentUser = getCurrentUser(null);
-        return Response.ok(webSocketService.getUserSystemMessages(currentUser));
+        assert currentUser != null;
+        return Response.ok(webSocketService.getUserSystemMessages(currentUser, page, size, sort));
     }
 
     private LoginResponseDto getCurrentUser(StompHeaderAccessor headerAccessor) {

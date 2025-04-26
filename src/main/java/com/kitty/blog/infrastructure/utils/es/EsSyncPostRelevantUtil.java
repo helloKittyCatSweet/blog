@@ -56,7 +56,7 @@ public class EsSyncPostRelevantUtil {
                 log.info("Created posts index");
             }
 
-            List<PostDto> posts = postService.findAll().getBody();
+            List<PostDto> posts = postService.findAll();
             log.info("Starting sync {} posts to ES", posts.size());
 
             for (PostDto post : posts) {

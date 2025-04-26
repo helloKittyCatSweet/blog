@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -88,10 +89,15 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "用户不存在")
     })
-    public ResponseEntity<Response<List<ReportDto>>> findByUserId
-            (@AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<List<ReportDto>> response = reportService.findByUserId(user.getId());
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<ReportDto>>> findByUserId(
+            @AuthenticationPrincipal LoginResponseDto user,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<ReportDto> response =
+                reportService.findByUserId(user.getId(), page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND, "用户不存在");
     }
@@ -110,11 +116,16 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "文章不存在")
     })
-    public ResponseEntity<Response<List<Report>>> findByArticleId
-            (@PathVariable(value = "postId") Integer postId,
-             @AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<List<Report>> response = reportService.findByArticleId(postId);
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<ReportDto>>> findByArticleId(
+            @PathVariable(value = "postId") Integer postId,
+            @AuthenticationPrincipal LoginResponseDto user,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<ReportDto> response =
+                reportService.findByArticleId(postId,page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.NOT_FOUND, "文章不存在");
     }
@@ -132,10 +143,15 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Report>>> findByReason
-            (@RequestParam(value = "reason") String reason) {
-        ResponseEntity<List<Report>> response = reportService.findByReason(reason);
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<ReportDto>>> findByReason(
+            @RequestParam(value = "reason") String reason,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+            ) {
+        Page<ReportDto> response =
+                reportService.findByReason(reason, page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
@@ -148,10 +164,14 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Report>>> findByStatus
-            (@PathVariable(value = "status") ReportStatus status) {
-        ResponseEntity<List<Report>> response = reportService.findByStatus(status);
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<ReportDto>>> findByStatus(
+            @PathVariable(value = "status") ReportStatus status,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<ReportDto> response = reportService.findByStatus(status, page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
@@ -211,9 +231,13 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<ReportDto>>> findAll() {
-        ResponseEntity<List<ReportDto>> response = reportService.findAll();
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<ReportDto>>> findAll(
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<ReportDto> response = reportService.findAll(page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
@@ -338,20 +362,27 @@ public class ReportController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<ReportDto>>> searchReports(
+    public ResponseEntity<Response<Page<ReportDto>>> searchReports(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(required = false) ReportReason reason,
             @RequestParam(required = true) boolean isAdmin,
-            @AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<List<ReportDto>> response = reportService.searchReports(
+            @AuthenticationPrincipal LoginResponseDto user,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<ReportDto> response = reportService.searchReports(
                 user.getId(),
                 keyword != null ? keyword : "",
                 status,
                 reason,
-                isAdmin
+                isAdmin,
+                page,
+                size,
+                sorts
         );
-        return Response.createResponse(response,
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }

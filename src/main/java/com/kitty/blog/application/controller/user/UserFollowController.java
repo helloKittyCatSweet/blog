@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -89,9 +90,14 @@ public class UserFollowController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<User>>> getFollowers(@PathVariable Integer userId) {
+    public ResponseEntity<Response<Page<User>>> getFollowers(
+            @PathVariable Integer userId,
+            @RequestParam(required = false, defaultValue = "1") Integer page,
+            @RequestParam(required = false, defaultValue = "10") Integer size,
+            @RequestParam(required = false) String[] sorts
+            ) {
         try {
-            List<User> followers = userFollowService.getFollowers(userId);
+            Page<User> followers = userFollowService.getFollowers(userId, page, size, sorts);
             return Response.ok(followers);
         } catch (Exception e) {
             return Response.error(HttpStatus.INTERNAL_SERVER_ERROR, "查询粉丝列表失败");

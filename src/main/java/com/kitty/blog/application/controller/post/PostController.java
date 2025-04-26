@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -426,9 +427,14 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<PostDto>>> findByTitleContaining(@PathVariable String keyword) {
-        ResponseEntity<List<PostDto>> response = postService.findByTitleContaining(keyword);
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<PostDto>>> findByTitleContaining(
+            @PathVariable String keyword,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<PostDto> response = postService.findByTitleContaining(keyword, page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
@@ -446,9 +452,14 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Post>>> findByContentContaining(@PathVariable String keyword) {
-        ResponseEntity<List<Post>> response = postService.findByContentContaining(keyword);
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<PostDto>>> findByContentContaining(
+            @PathVariable String keyword,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<PostDto> response = postService.findByContentContaining(keyword, page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
@@ -466,9 +477,14 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<PostDto>>> findByUsernameIsPublished(@PathVariable Integer userId) {
-        ResponseEntity<List<PostDto>> response = postService.findByUsernameIsPublished(userId);
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<PostDto>>> findByUsernameIsPublished(
+            @PathVariable Integer userId,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<PostDto> response = postService.findByUserIdIsPublished(userId, page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
@@ -486,9 +502,14 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<PostDto>>> findByCategory(@PathVariable String category) {
-        ResponseEntity<List<PostDto>> response = postService.findByCategory(category);
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<PostDto>>> findByCategory(
+            @PathVariable String category,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<PostDto> response = postService.findByCategory(category, page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
@@ -506,9 +527,14 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<PostDto>>> findByTag(@PathVariable String tag) {
-        ResponseEntity<List<PostDto>> response = postService.findByTag(tag);
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<PostDto>>> findByTag(
+            @PathVariable String tag,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<PostDto> response = postService.findByTag(tag, page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
@@ -519,9 +545,14 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<PostDto>>> findByTags(@RequestBody List<String> tags) {
-        ResponseEntity<List<PostDto>> response = postService.findByTags(tags);
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<PostDto>>> findByTags(
+            @RequestBody List<String> tags,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<PostDto> response = postService.findByTags(tags, page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
@@ -677,10 +708,16 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Post>>> findByVisibility(@PathVariable String visibility,
-                                                                 @AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<List<Post>> response = postService.findByVisibility(visibility, user.getId());
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<PostDto>>> findByVisibility(
+            @PathVariable String visibility,
+            @AuthenticationPrincipal LoginResponseDto user,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<PostDto> response =
+                postService.findByVisibility(visibility, user.getId(), page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
@@ -697,9 +734,13 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<PostDto>>> findAll() {
-        ResponseEntity<List<PostDto>> response = postService.findAll();
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<PostDto>>> findAll(
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<PostDto> response = postService.findAll(page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
@@ -796,9 +837,14 @@ public class PostController {
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户ID查询附件列表")
     @GetMapping("/public/find/attachments")
-    public ResponseEntity<Response<List<PostAttachmentDto>>> findAttachmentsByPostId(
-            @AuthenticationPrincipal LoginResponseDto user) {
-        List<PostAttachmentDto> attachments = postService.findAttachmentsByUserId(user.getId());
+    public ResponseEntity<Response<Page<PostAttachmentDto>>> findAttachmentsByPostId(
+            @AuthenticationPrincipal LoginResponseDto user,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<PostAttachmentDto> attachments =
+                postService.findAttachmentsByUserId(user.getId(), page, size, sorts);
         return Response.createResponse(
                 new ResponseEntity<>(attachments, HttpStatus.OK),
                 HttpStatus.OK, "查询成功",

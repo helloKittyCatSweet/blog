@@ -5,9 +5,13 @@ import com.kitty.blog.domain.model.tag.Tag;
 import com.kitty.blog.domain.repository.tag.TagRepository;
 import com.kitty.blog.domain.repository.tag.TagSpecification;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+import com.kitty.blog.infrastructure.utils.PageUtil;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +22,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -101,10 +106,10 @@ public class TagService {
 
     @Transactional
     @Cacheable(key = "#tag.tagId", unless = "#result.body == null")
-    public ResponseEntity<List<Tag>> findTagsByWeight(Integer weight, Compare compare) {
+    public Page<Tag> findTagsByWeight(Integer weight, Compare compare, Integer page, Integer size, String[] sort) {
         Specification<Tag> spec = TagSpecification.weightCompareTo(weight, compare);
-        List<Tag> tags = tagRepository.findAll(spec);
-        return new ResponseEntity<>(tags, HttpStatus.OK);
+        PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+        return tagRepository.findAll(spec, pageRequest);
     }
 
     /**
@@ -121,11 +126,12 @@ public class TagService {
 
     @Cacheable(key = "'all'", unless = "#result.body.isEmpty()")
     @Transactional
-    public ResponseEntity<List<Tag>> findAll() {
+    public Page<Tag> findAll(Integer page, Integer size, String[] sort) {
         if (tagRepository.count() == 0) {
-            return new ResponseEntity<>(List.of(new Tag()), HttpStatus.OK);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, 10), 0);
         }
-        return new ResponseEntity<>(tagRepository.findAll(), HttpStatus.OK);
+        PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+        return tagRepository.findAll(pageRequest);
     }
 
     @CacheEvict(key = "#tag.tagId")
@@ -143,7 +149,7 @@ public class TagService {
     @CacheEvict(key = "#tagId")
     @Transactional
     public ResponseEntity<Boolean> deleteById(Integer tagId) {
-        if (!existsById(tagId).getBody()) {
+        if (Boolean.FALSE.equals(existsById(tagId).getBody())) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         tagRepository.deleteById(tagId);
@@ -161,14 +167,14 @@ public class TagService {
     }
 
     @Transactional
-    public ResponseEntity<List<Tag>> findByCombined
-            (String name, Integer weight, String operator) {
+    public Page<Tag> findByCombined
+            (String name, Integer weight, String operator, Integer page, Integer size, String[] sort) {
         try {
             Specification<Tag> spec = TagSpecification.combinedSearch(name, weight, operator);
-            List<Tag> tags = tagRepository.findAll(spec);
-            return new ResponseEntity<>(tags, HttpStatus.OK);
+            PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+            return tagRepository.findAll(spec, pageRequest);
         } catch (Exception e) {
-            return new ResponseEntity<>(List.of(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, 10), 0);
         }
     }
 

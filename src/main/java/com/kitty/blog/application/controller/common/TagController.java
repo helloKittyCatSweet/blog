@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -104,12 +105,15 @@ public class TagController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
-    public ResponseEntity<Response<List<com.kitty.blog.domain.model.tag.Tag>>> findTagsByWeight
+    public ResponseEntity<Response<Page<com.kitty.blog.domain.model.tag.Tag>>> findTagsByWeight
     (@PathVariable("weight") Integer weight,
-    @PathVariable("compare") Compare compare) {
-        ResponseEntity<List<com.kitty.blog.domain.model.tag.Tag>> entity =
-                tagService.findTagsByWeight(weight, compare);
-        return Response.createResponse(entity,
+    @PathVariable("compare") Compare compare,
+     @RequestParam(value = "page", defaultValue = "0", required = false) int page,
+     @RequestParam(value = "size", defaultValue = "10", required = false) int size,
+     @RequestParam(value = "sorts", required = false) String[] sorts) {
+        Page<com.kitty.blog.domain.model.tag.Tag> entity =
+                tagService.findTagsByWeight(weight, compare, page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(entity),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
     }
@@ -166,9 +170,13 @@ public class TagController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
-    public ResponseEntity<Response<List<com.kitty.blog.domain.model.tag.Tag>>> findAll() {
-        ResponseEntity<List<com.kitty.blog.domain.model.tag.Tag>> entity = tagService.findAll();
-        return Response.createResponse(entity,
+    public ResponseEntity<Response<Page<com.kitty.blog.domain.model.tag.Tag>>> findAll(
+            @RequestParam(value = "page", defaultValue = "0", required = false) int page,
+            @RequestParam(value = "size", defaultValue = "10", required = false) int size,
+            @RequestParam(value = "sorts", required = false) String[] sorts
+    ) {
+        Page<com.kitty.blog.domain.model.tag.Tag> entity = tagService.findAll(page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(entity),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "查询失败");
     }
@@ -238,13 +246,16 @@ public class TagController {
             @ApiResponse(responseCode = "200", description = "搜索成功"),
             @ApiResponse(responseCode = "500", description = "搜索失败")
     })
-    public ResponseEntity<Response<List<com.kitty.blog.domain.model.tag.Tag>>> findByCombined(
+    public ResponseEntity<Response<Page<com.kitty.blog.domain.model.tag.Tag>>> findByCombined(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer weight,
-            @RequestParam(required = false, defaultValue = "GREATER_THAN") String operator) {
-        ResponseEntity<List<com.kitty.blog.domain.model.tag.Tag>> entity =
-                tagService.findByCombined(name, weight, operator);
-        return Response.createResponse(entity,
+            @RequestParam(required = false, defaultValue = "GREATER_THAN") String operator,
+            @RequestParam(value = "page", defaultValue = "0", required = false) int page,
+            @RequestParam(value = "size", defaultValue = "10", required = false) int size,
+            @RequestParam(value = "sorts", required = false) String[] sorts) {
+        Page<com.kitty.blog.domain.model.tag.Tag> entity =
+                tagService.findByCombined(name, weight, operator, page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(entity),
                 HttpStatus.OK, "搜索成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "搜索失败");
     }

@@ -25,6 +25,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -88,11 +91,11 @@ public class UserService {
     @Transactional
     public ResponseEntity<Boolean> register(User user) {
         User ifExists = userRepository.findByUsername(user.getUsername()).orElse(null);
-        if ((ifExists!= null) &&!ifExists.isDeleted()){
+        if ((ifExists != null) && !ifExists.isDeleted()) {
             ifExists.setUsername("");
             save(ifExists);
         }
-        if (userRepository.existsByEmail(user.getEmail())){
+        if (userRepository.existsByEmail(user.getEmail())) {
             return new ResponseEntity<>(false, HttpStatus.CONFLICT);
         }
 
@@ -140,7 +143,7 @@ public class UserService {
             return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
         }
 
-//        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         try {
             UpdateUtil.updateNotNullProperties(user, userRepository.findById(user.getUserId()).get());
@@ -198,10 +201,10 @@ public class UserService {
     public ResponseEntity<LoginResponseDto> login(String username, String password) {
         // 验证密码
         Optional<User> user = userRepository.findByUsername(username);
-        if (user.get().isDeleted()){
+        if (user.get().isDeleted()) {
             return new ResponseEntity<>(new LoginResponseDto(), HttpStatus.UNAUTHORIZED);
         }
-//        System.out.println(password);
+        // System.out.println(password);
         if (user.isEmpty() || !passwordEncoder.matches(password, user.get().getPassword())) {
             return new ResponseEntity<>(new LoginResponseDto(), HttpStatus.UNAUTHORIZED);
         }
@@ -335,18 +338,30 @@ public class UserService {
 
     @Transactional
     @Cacheable(key = "'all'")
-    public ResponseEntity<List<WholeUserInfo>> findAll() {
+    public ResponseEntity<Page<WholeUserInfo>> findAll(Integer page, Integer size, String[] sort) {
         if (userRepository.count() == 0) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(
+                    new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0),
+                    HttpStatus.OK);
         }
-        List<User> users = userRepository.findAll();
-        List<WholeUserInfo> wholeUserInfos = new ArrayList<>();
-        for (User user : users) {
+
+        PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+        Page<User> users = userRepository.findAll(pageRequest);
+
+        // 转换用户列表并添加角色信息
+        List<WholeUserInfo> wholeUserInfoList = new ArrayList<>();
+        for (User user : users.getContent()) {
             List<Role> roles = userRoleService.findByUserId(user.getUserId()).getBody();
-            wholeUserInfos.add(new WholeUserInfo(user, roles));
+            wholeUserInfoList.add(new WholeUserInfo(user, roles));
         }
-//        log.info("findAll: " + wholeUserInfos.toString());
-        return new ResponseEntity<>(wholeUserInfos, HttpStatus.OK);
+
+        // 创建新的分页对象
+        Page<WholeUserInfo> wholeUserInfoPage = new PageImpl<>(
+                wholeUserInfoList,
+                users.getPageable(),
+                users.getTotalElements());
+
+        return new ResponseEntity<>(wholeUserInfoPage, HttpStatus.OK);
     }
 
     @Transactional
@@ -359,7 +374,7 @@ public class UserService {
         user.setDeleted(true);
         user.setIsActive(false);
         save(user);
-//        userRepository.deleteById(userId);
+        // userRepository.deleteById(userId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
@@ -409,7 +424,8 @@ public class UserService {
             Sheet sheet = workbook.getSheetAt(0);
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
-                if (row == null) continue;
+                if (row == null)
+                    continue;
 
                 try {
                     String username = getCellValueAsString(row.getCell(1));
@@ -441,7 +457,7 @@ public class UserService {
                         }
                     }
 
-                    if (userRepository.existsByEmail(email)){
+                    if (userRepository.existsByEmail(email)) {
                         continue;
                     }
 
@@ -476,8 +492,7 @@ public class UserService {
             errors.add(new ImportError(0, "文件处理失败: " + e.getMessage()));
         }
 
-        return new ResponseEntity<>(errors, errors.isEmpty() ?
-                HttpStatus.OK : HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errors, errors.isEmpty() ? HttpStatus.OK : HttpStatus.BAD_REQUEST);
     }
 
     @Transactional(noRollbackFor = Exception.class)
@@ -514,7 +529,8 @@ public class UserService {
     }
 
     private String getCellValueAsString(Cell cell) {
-        if (cell == null) return "";
+        if (cell == null)
+            return "";
 
         try {
             return switch (cell.getCellType()) {

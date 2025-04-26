@@ -1,6 +1,8 @@
 package com.kitty.blog.domain.repository;
 
 import com.kitty.blog.domain.model.Comment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -25,7 +27,7 @@ public interface CommentRepository extends BaseRepository<Comment, Integer> {
    */
   // save
   @Query("SELECT CASE WHEN COUNT(c) > 0 " +
-          "THEN true ELSE false END FROM Comment c WHERE c.commentId = ?1")
+      "THEN true ELSE false END FROM Comment c WHERE c.commentId = ?1")
   boolean existsById(Integer commentId);
 
   /**
@@ -55,6 +57,9 @@ public interface CommentRepository extends BaseRepository<Comment, Integer> {
    * @return
    */
   @Query("SELECT c FROM Comment c WHERE c.postId = ?1")
+  Page<Comment> findByPostId(Integer postId, Pageable pageable);
+
+  @Query("SELECT c FROM Comment c WHERE c.postId = ?1")
   Optional<List<Comment>> findByPostId(Integer postId);
 
   /**
@@ -68,6 +73,7 @@ public interface CommentRepository extends BaseRepository<Comment, Integer> {
 
   /**
    * 根据用户ID查找评论列表
+   * 
    * @param userId 用户ID
    * @return 评论列表
    */

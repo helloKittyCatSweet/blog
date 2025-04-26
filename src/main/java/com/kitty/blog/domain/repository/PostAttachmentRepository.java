@@ -1,6 +1,8 @@
 package com.kitty.blog.domain.repository;
 
 import com.kitty.blog.domain.model.PostAttachment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.relational.core.sql.In;
@@ -45,6 +47,9 @@ public interface PostAttachmentRepository extends JpaRepository<PostAttachment, 
      * @param postId
      * @return
      */
+    @Query("select p from PostAttachment p where p.postId = :postId")
+    Page<PostAttachment> findByPostId(Integer postId, Pageable pageable);
+
     @Query("select p from PostAttachment p where p.postId = :postId")
     Optional<List<PostAttachment>> findByPostId(Integer postId);
 }

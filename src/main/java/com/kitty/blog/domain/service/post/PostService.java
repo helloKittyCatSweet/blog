@@ -24,6 +24,7 @@ import com.kitty.blog.domain.service.search.SearchService;
 import com.kitty.blog.domain.service.tag.TagWeightService;
 import com.kitty.blog.domain.service.user.UserFollowService;
 import com.kitty.blog.infrastructure.utils.AliyunOSSUploader;
+import com.kitty.blog.infrastructure.utils.PageUtil;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
@@ -31,6 +32,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +43,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -496,71 +500,92 @@ public class PostService {
         return new ResponseEntity<>(postDtos, HttpStatus.OK);
     }
 
-    @Transactional
-    @Cacheable(key = "#postId")
-    public ResponseEntity<List<PostDto>> findByTitleContaining(String keyword) {
-        List<Post> posts = postRepository.findByTitleContaining(keyword).orElse(new ArrayList<>());
-        List<PostDto> postDtos = posts.stream().map(this::convertToPostDto).collect(Collectors.toList());
+    public Page<PostDto> findByUserId(Integer userId, Integer page, Integer size, String[] sort) {
+        // 创建排序
+        Sort sorting = createSort(sort);
 
-        return new ResponseEntity<>(postDtos, HttpStatus.OK);
+        // 创建分页请求
+        PageRequest pageRequest = PageRequest.of(page, size, sorting);
+
+        // 调用repository
+        Page<Post> postPage = postRepository.findByUserId(userId, pageRequest);
+
+        return postPage.map(this::convertToPostDto);
     }
 
     @Transactional
     @Cacheable(key = "#postId")
-    public ResponseEntity<List<Post>> findByContentContaining(String keyword) {
-        return new ResponseEntity<>(
-                postRepository.findByContentContaining(keyword).orElse(new ArrayList<>()),
-                HttpStatus.OK);
+    public Page<PostDto> findByTitleContaining(String keyword, Integer page, Integer size, String[] sort) {
+        // 创建排序
+        Sort sorting = createSort(sort);
+        // 创建分页请求
+        PageRequest pageRequest = PageRequest.of(page, size, sorting);
+        // 调用repository
+        Page<Post> postPage = postRepository.findByTitleContaining(keyword, pageRequest);
+        return postPage.map(this::convertToPostDto);
     }
 
     @Transactional
     @Cacheable(key = "#postId")
-    public ResponseEntity<List<PostDto>> findByUsernameIsPublished(Integer userId) {
-        List<Post> posts = postRepository.findByUserId(userId).orElse(new ArrayList<>())
-                .stream()
-                .filter(post -> !post.getIsDraft() && !post.isDeleted() && post.getIsPublished()
-                        && post.getVisibility().equals(Visibility.PUBLIC.name()))
-                .toList();
-        List<PostDto> postDtos = posts.stream()
-                .map(this::convertToPostDto)
-                .collect(Collectors.toList());
-        return new ResponseEntity<>(postDtos, HttpStatus.OK);
+    public Page<PostDto> findByContentContaining(String keyword, Integer page, Integer size, String[] sort) {
+        // 创建排序
+        Sort sorting = createSort(sort);
+        // 创建分页请求
+        PageRequest pageRequest = PageRequest.of(page, size, sorting);
+        // 调用repository
+        Page<Post> postPage = postRepository.findByContentContaining(keyword, pageRequest);
+        return postPage.map(this::convertToPostDto);
     }
 
     @Transactional
     @Cacheable(key = "#postId")
-    public ResponseEntity<List<PostDto>> findByCategory(String category) {
+    public Page<PostDto> findByUserIdIsPublished(Integer userId, Integer page, Integer size, String[] sort) {
+        // 创建排序
+        Sort sorting = createSort(sort);
+        // 创建分页请求
+        PageRequest pageRequest = PageRequest.of(page, size, sorting);
+        // 调用repository
+        Page<Post> postPage = postRepository.findByUserIdAndIsPublishedTrueAndIsDeletedFalse(userId, pageRequest);
+        return postPage.map(this::convertToPostDto);
+    }
+
+    @Transactional
+    @Cacheable(key = "#postId")
+    public Page<PostDto> findByCategory(String category, Integer page, Integer size, String[] sort) {
         Category targetCategory = categoryRepository.findByName(category).orElse(new Category());
         if (!categoryRepository.existsById(targetCategory.getCategoryId())) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
         } else {
-            List<Post> posts = postRepository.findByCategoryId(targetCategory.getCategoryId())
-                    .orElse(new ArrayList<>());
-            return new ResponseEntity<>(posts.stream().map(this::convertToPostDto).toList(), HttpStatus.OK);
+            Sort sorting = createSort(sort);
+            PageRequest pageRequest = PageRequest.of(page, size, sorting);
+            Page<Post> posts = postRepository.findByCategoryId(targetCategory.getCategoryId(), pageRequest);
+            return posts.map(this::convertToPostDto);
         }
     }
 
     @Transactional
     @Cacheable(key = "#postId")
-    public ResponseEntity<List<PostDto>> findByTag(String tag) {
+    public Page<PostDto> findByTag(String tag, Integer page, Integer size, String[] sort) {
         Tag targetTag = tagRepository.findByName(tag).orElse(new Tag());
         if (!tagRepository.existsById(targetTag.getTagId())) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
         } else {
-            List<Post> posts = postRepository.findByTagId(targetTag.getTagId()).orElse(new ArrayList<>());
-            return new ResponseEntity<>(posts.stream().map(this::convertToPostDto).toList(), HttpStatus.OK);
+            Sort sorting = createSort(sort);
+            PageRequest pageRequest = PageRequest.of(page, size, sorting);
+            Page<Post> posts = postRepository.findByTagId(targetTag.getTagId(), pageRequest);
+            return posts.map(this::convertToPostDto);
         }
     }
 
     @Transactional
     @Cacheable(key = "#tags")
-    public ResponseEntity<List<PostDto>> findByTags(List<String> tags) {
+    public Page<PostDto> findByTags(List<String> tags, Integer page, Integer size, String[] sort) {
         // 查询所有标签
         List<Tag> targetTags = tagRepository.findByNameIn(tags).orElse(new ArrayList<>());
 
         // 如果没有找到任何标签，直接返回空列表
         if (targetTags.isEmpty()) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
         }
 
         // 提取所有标签的 ID
@@ -569,14 +594,10 @@ public class PostService {
                 .collect(Collectors.toSet());
 
         // 根据标签 ID 查询文章
-        List<Post> posts = postRepository.findByTagsIn(tagIds).orElse(new ArrayList<>());
-
-        // 转换为 DTO 并返回
-        List<PostDto> postDtos = posts.stream()
-                .map(this::convertToPostDto)
-                .toList();
-
-        return new ResponseEntity<>(postDtos, HttpStatus.OK);
+        Sort sorting = createSort(sort);
+        PageRequest pageRequest = PageRequest.of(page, size, sorting);
+        Page<Post> posts = postRepository.findByTagsIn(tagIds, pageRequest);
+        return posts.map(this::convertToPostDto);
     }
 
     @Transactional
@@ -653,11 +674,14 @@ public class PostService {
     }
 
     @Transactional
-    public ResponseEntity<List<Post>> findByVisibility(String visibility, Integer userId) {
+    public Page<PostDto> findByVisibility(String visibility, Integer userId, Integer page, Integer size,
+            String[] sort) {
         try {
             Visibility.valueOf(visibility);
-            List<Post> posts = postRepository.findByVisibility(visibility, userId).orElse(new ArrayList<>());
-            return ResponseEntity.ok(posts);
+            Sort sorting = createSort(sort);
+            PageRequest pageRequest = PageRequest.of(page, size, sorting);
+            Page<Post> posts = postRepository.findByVisibility(visibility, userId, pageRequest);
+            return posts.map(this::convertToPostDto);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(e);
         }
@@ -674,7 +698,7 @@ public class PostService {
                 new PostVersion(pp.getPostId(), post.getContent(),
                         post.getUserId(), post.getVersion()));
 
-        return new ResponseEntity<>(pp , HttpStatus.OK);
+        return new ResponseEntity<>(pp, HttpStatus.OK);
     }
 
     @Transactional
@@ -690,7 +714,7 @@ public class PostService {
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public ResponseEntity<List<PostDto>> findAll() {
+    public Page<PostDto> findAll(Integer page, Integer size, String[] sort) {
         // 创建搜索条件
         PostSearchCriteria criteria = PostSearchCriteria.builder()
                 .isPublished(true)
@@ -700,11 +724,28 @@ public class PostService {
         // 使用已有的搜索方法获取公开文章
         List<PostDto> postDtos = searchPostsByMultipleCriteria(criteria);
 
-        if (postDtos.isEmpty()) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
-        }
+        // 创建分页对象
+        PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), postDtos.size());
 
-        return new ResponseEntity<>(postDtos, HttpStatus.OK);
+        // 返回分页结果
+        return new PageImpl<>(
+                postDtos.subList(start, end),
+                pageRequest,
+                postDtos.size());
+    }
+
+    @Transactional
+    @CacheEvict(allEntries = true)
+    public List<PostDto> findAll() {
+        // 创建搜索条件
+        PostSearchCriteria criteria = PostSearchCriteria.builder()
+                .isPublished(true)
+                .visibility("PUBLIC")
+                .build();
+        // 返回分页结果
+        return searchPostsByMultipleCriteria(criteria);
     }
 
     @Transactional
@@ -790,17 +831,19 @@ public class PostService {
     }
 
     @Transactional
-    public List<PostAttachmentDto> findAttachmentsByUserId(Integer userId) {
+    public Page<PostAttachmentDto> findAttachmentsByUserId(Integer userId, Integer page, Integer size, String[] sort) {
         // 1. 获取用户的所有文章
         List<Post> userPosts = postRepository.findByUserId(userId)
                 .orElse(Collections.emptyList());
 
+        Sort sorting = createSort(sort);
+        PageRequest pageRequest = PageRequest.of(page, size, sorting);
+
         // 2. 收集所有文章的附件
         List<PostAttachmentDto> attachmentDtos = new ArrayList<>();
         for (Post post : userPosts) {
-            List<PostAttachment> attachments = postAttachmentRepository
-                    .findByPostId(post.getPostId())
-                    .orElse(Collections.emptyList());
+            Page<PostAttachment> attachments = postAttachmentRepository
+                    .findByPostId(post.getPostId(), pageRequest);
 
             // 3. 转换为DTO
             for (PostAttachment attachment : attachments) {
@@ -818,7 +861,14 @@ public class PostService {
             }
         }
 
-        return attachmentDtos;
+        // 4. 创建分页结果
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), attachmentDtos.size());
+
+        return new PageImpl<>(
+                attachmentDtos.subList(start, end),
+                pageRequest,
+                attachmentDtos.size());
     }
 
     @Transactional
@@ -853,5 +903,15 @@ public class PostService {
         }
         postDto.setAttachments(postAttachmentRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>()));
         return postDto;
+    }
+
+    private Sort createSort(String[] sort) {
+        return sort != null && sort.length > 0 ? Sort.by(Arrays.stream(sort)
+                .map(str -> {
+                    String[] parts = str.split(",");
+                    return parts[1].equalsIgnoreCase("desc") ? Sort.Order.desc(parts[0]) : Sort.Order.asc(parts[0]);
+                })
+                .collect(Collectors.toList()))
+                : Sort.by(Sort.Direction.DESC, "createdAt");
     }
 }

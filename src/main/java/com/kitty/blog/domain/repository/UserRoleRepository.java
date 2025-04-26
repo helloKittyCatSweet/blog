@@ -1,6 +1,8 @@
 package com.kitty.blog.domain.repository;
 
 import com.kitty.blog.domain.model.userRole.UserRole;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -52,6 +54,6 @@ public interface UserRoleRepository extends BaseRepository<UserRole, Integer> {
      * @return
      */
     @Query("SELECT ur FROM UserRole ur WHERE ur.id.roleId = ?1")
-    Optional<List<UserRole>> findByRoleId(Integer roleId);
+    Page<UserRole> findByRoleId(Integer roleId, Pageable pageable);
 
 }

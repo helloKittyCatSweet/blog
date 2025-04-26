@@ -10,6 +10,7 @@ import com.kitty.blog.domain.repository.MessageRepository;
 import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.domain.service.contentReview.SecondaryMessageReviewerService;
+import com.kitty.blog.infrastructure.utils.PageUtil;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @CacheConfig(cacheNames = "message")
@@ -162,49 +164,47 @@ public class MessageService {
 
     @Transactional
     @Cacheable(key = "#userId")
-    public ResponseEntity<List<Message>> findBySenderId(Integer senderId) {
+    public Page<Message> findBySenderId(Integer senderId, Integer page, Integer size, String[] sort) {
         if (!userRepository.existsById(senderId)) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0);
         } else {
-            return new ResponseEntity<>(
-                    messageRepository.findBySenderId(senderId).orElse(new ArrayList<>()),
-                    HttpStatus.OK);
+            PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+            return messageRepository.findBySenderId(senderId, pageRequest);
         }
     }
 
     @Transactional
     @Cacheable(key = "#userId")
-    public ResponseEntity<List<Message>> findByReceiverId(Integer receiverId) {
+    public Page<Message> findByReceiverId(Integer receiverId, Integer page, Integer size, String[] sort) {
         if (!userRepository.existsById(receiverId)) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0);
         } else {
-            return new ResponseEntity(
-                    messageRepository.findByReceiverId(receiverId).orElse(new ArrayList<>()),
-                    HttpStatus.OK);
+            PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+            return messageRepository.findByReceiverId(receiverId, pageRequest);
         }
     }
 
     @Transactional
     @Cacheable(key = "#senderId + #receiverId")
-    public ResponseEntity<List<Message>> findByContentForSender(String content, Integer senderId) {
+    public Page<Message> findByContentForSender(String content, Integer senderId, Integer page, Integer size,
+            String[] sort) {
         if (!userRepository.existsById(senderId)) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0);
         } else {
-            return new ResponseEntity<>(
-                    messageRepository.findByContentForSender(content, senderId).orElse(new ArrayList<>()),
-                    HttpStatus.OK);
+            PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+            return messageRepository.findByContentForSender(content, senderId, pageRequest);
         }
     }
 
     @Transactional
     @Cacheable(key = "#receiverId + #senderId")
-    public ResponseEntity<List<Message>> findByContentForReceiver(String content, Integer receiverId) {
+    public Page<Message> findByContentForReceiver(String content, Integer receiverId, Integer page, Integer size,
+            String[] sort) {
         if (!userRepository.existsById(receiverId)) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0);
         } else {
-            return new ResponseEntity<>(
-                    messageRepository.findByContentForReceiver(content, receiverId).orElse(new ArrayList<>()),
-                    HttpStatus.OK);
+            PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+            return messageRepository.findByContentForReceiver(content, receiverId, pageRequest);
         }
     }
 
@@ -390,16 +390,19 @@ public class MessageService {
     }
 
     @Transactional
-    public ResponseEntity<List<MessageDto>> findAll() {
+    public Page<MessageDto> findAll(Integer page, Integer size, String[] sort) {
         if (messageRepository.count() == 0) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0);
         }
-        List<Message> all = messageRepository.findAll();
-        List<MessageDto> messageDtos = all.stream()
+        PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+        Page<Message> all = messageRepository.findAll(pageRequest);
+
+        List<MessageDto> messageDtos = all.getContent().stream()
                 .filter(message -> message.isSuspicious() || message.getScore() > 60)
                 .map(this::convertToDto)
-                .toList();
-        return new ResponseEntity<>(messageDtos, HttpStatus.OK);
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(messageDtos, pageRequest, all.getTotalElements());
     }
 
     @Transactional

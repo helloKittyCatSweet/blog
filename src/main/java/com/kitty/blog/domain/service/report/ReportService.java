@@ -9,12 +9,16 @@ import com.kitty.blog.common.constant.ReportStatus;
 import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.ReportRepository;
 import com.kitty.blog.domain.repository.UserRepository;
+import com.kitty.blog.infrastructure.utils.PageUtil;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -78,49 +82,47 @@ public class ReportService {
     }
 
     @Transactional
-    public ResponseEntity<List<ReportDto>> findByUserId(Integer userId) {
+    public Page<ReportDto> findByUserId(Integer userId, Integer page, Integer size, String[] sort) {
         if (!userRepository.existsById(userId)) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
         }
 
-        List<Report> reports = reportRepository.findByUserId(userId).orElse(new ArrayList<>());
-        List<ReportDto> reportDtos = reports.stream()
-                .map(this::convertToDto)
-                .filter(dto -> dto != null)
-                .toList();
+        PageRequest pageRequest = PageUtil.createPageRequest(page,size, sort);
+        Page<Report> reports = reportRepository.findByUserId(userId, pageRequest);
 
-        return new ResponseEntity<>(reportDtos, HttpStatus.OK);
+        return reports.map(this::convertToDto);
     }
 
     @Transactional
     @Cacheable(key = "#postId")
-    public ResponseEntity<List<Report>> findByArticleId(Integer postId) {
+    public Page<ReportDto> findByArticleId(Integer postId, Integer page, Integer size, String[] sort) {
         if (!postRepository.existsById(postId)) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
         } else {
-            return new ResponseEntity<>(
-                    reportRepository.findByArticleId(postId).orElse(new ArrayList<>()),
-                    HttpStatus.OK);
+            PageRequest pageRequest = PageUtil.createPageRequest(page,size, sort);
+            Page<Report> reports = reportRepository.findByArticleId(postId, pageRequest);
+            return reports.map(this::convertToDto);
         }
     }
 
     @Transactional
     @Cacheable(key = "#reason")
-    public ResponseEntity<List<Report>> findByReason(String reason) {
-        return new ResponseEntity<>(
-                reportRepository.findByReason(reason).orElse(new ArrayList<>()),
-                HttpStatus.OK);
+    public Page<ReportDto> findByReason(String reason, Integer page, Integer size, String[] sort) {
+        PageRequest pageRequest = PageUtil.createPageRequest(page,size, sort);
+        Page<Report> reports = reportRepository.findByReason(reason, pageRequest);
+        return reports.map(this::convertToDto);
     }
 
     @Transactional
     @Cacheable(key = "#reason+#postId")
-    public ResponseEntity<List<Report>> findByReasonForPost(String reason, Integer postId) {
+    public Page<ReportDto> findByReasonForPost(String reason, Integer postId, Integer page,
+                                                            Integer size, String[] sort) {
         if (!postRepository.existsById(postId)) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
         } else {
-            return new ResponseEntity<>(
-                    reportRepository.findByReasonForPost(reason, postId).orElse(new ArrayList<>()),
-                    HttpStatus.OK);
+            PageRequest pageRequest = PageUtil.createPageRequest(page,size, sort);
+            Page<Report> reports = reportRepository.findByReasonForPost(reason, postId, pageRequest);
+            return reports.map(this::convertToDto);
         }
     }
 
@@ -155,10 +157,10 @@ public class ReportService {
     }
 
     @Transactional
-    public ResponseEntity<List<Report>> findByStatus(ReportStatus status) {
-        return new ResponseEntity<>(
-                reportRepository.findByStatus(status).orElse(new ArrayList<>()),
-                HttpStatus.OK);
+    public Page<ReportDto> findByStatus(ReportStatus status, Integer page, Integer size, String[] sort) {
+        PageRequest pageRequest = PageUtil.createPageRequest(page,size, sort);
+        Page<Report> reports = reportRepository.findByStatus(status, pageRequest);
+        return reports.map(this::convertToDto);
     }
 
     @Transactional
@@ -185,23 +187,19 @@ public class ReportService {
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public ResponseEntity<List<ReportDto>> findAll() {
+    public Page<ReportDto> findAll(Integer page, Integer size, String[] sort) {
         if (reportRepository.count() == 0) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.OK);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
         }
-        List<Report> reports = reportRepository.findAll();
-        List<ReportDto> reportDtos = reports.stream()
-                .map(this::convertToDto)
-                .filter(dto -> dto != null)
-                .toList();
-
-        return new ResponseEntity<>(reportDtos, HttpStatus.OK);
+        PageRequest pageRequest = PageUtil.createPageRequest(page,size, sort);
+        Page<Report> reports = reportRepository.findAll(pageRequest);
+        return reports.map(this::convertToDto);
     }
 
     @Transactional
     @CacheEvict(allEntries = true)
     public ResponseEntity<Boolean> deleteById(Integer reportId) {
-        if (!existsById(reportId).getBody()) {
+        if (Boolean.FALSE.equals(existsById(reportId).getBody())) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         reportRepository.deleteById(reportId);
@@ -222,36 +220,32 @@ public class ReportService {
      * 搜索举报信息（根据角色权限）
      */
     @Transactional
-    public ResponseEntity<List<ReportDto>> searchReports(Integer userId, String keyword, ReportStatus status,
-            ReportReason reason, boolean isAdmin) {
+    public Page<ReportDto> searchReports(Integer userId, String keyword, ReportStatus status,
+            ReportReason reason, boolean isAdmin, Integer page, Integer size, String[] sort) {
         String username = userRepository.findById(userId).orElse(new User()).getUsername();
         if (username == null) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
         }
         try {
-            List<Report> reports;
+            Page<Report> reports;
+            PageRequest pageRequest = PageUtil.createPageRequest(page,size, sort);
 
             if (isAdmin) {
                 reports = reportRepository.searchReportsForAdmin(
                         keyword.isEmpty() ? null : keyword,
                         status,
-                        reason);
+                        reason, pageRequest);
             } else {
                 reports = reportRepository.searchReportsForUser(
                         userId,
                         keyword.isEmpty() ? null : keyword,
                         status,
-                        reason);
+                        reason, pageRequest);
             }
-
-            List<ReportDto> reportDtos = reports.stream()
-                    .map(this::convertToDto)
-                    .filter(dto -> dto != null)
-                    .toList();
-            return new ResponseEntity<>(reportDtos, HttpStatus.OK);
+            return reports.map(this::convertToDto);
         } catch (Exception e) {
             log.error("搜索举报信息失败", e);
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
         }
     }
 

@@ -34,10 +34,14 @@ const searchForm = ref({
 const loadMessages = async () => {
   loading.value = true;
   try {
-    const res = await findAll({});
+    const res = await findAll(
+      pagination.value.currentPage - 1,
+      pagination.value.pageSize,
+      ['createdAt,desc']
+    );
     if (res.data.status === 200) {
-      messageList.value = res.data.data;
-      pagination.value.total = res.data.data.length;
+      messageList.value = res.data.data.content;
+      pagination.value.total = res.data.data.totalElements;
     } else {
       ElMessage.error("加载失败");
     }
@@ -74,7 +78,7 @@ const handleSearch = async () => {
       startDate: startDate,
       endDate: endDate,
       page: pagination.value.currentPage - 1,
-      size: pagination.value.pageSize,
+      size: pagination.value.pageSize
     };
 
     const res = await searchMessages(params);

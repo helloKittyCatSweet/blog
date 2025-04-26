@@ -3,6 +3,7 @@ package com.kitty.blog.domain.repository.post;
 import com.kitty.blog.domain.model.Post;
 import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.repository.BaseRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -118,64 +119,85 @@ public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecif
          */
 
         /**
-         * 根据用户查找文章
+         * 根据用户查找文章（分页）
          *
-         * @param userId
-         * @return
+         * @param userId   用户ID
+         * @param pageable 分页参数
+         * @return 分页后的文章列表
          */
-        @Query("SELECT p FROM Post p WHERE p.userId = ?1 and p.isDeleted = false")
-        Optional<List<Post>> findByUserId(Integer userId);
+        @Query("SELECT p FROM Post p WHERE p.userId = :userId and p.isDeleted = false")
+        Page<Post> findByUserId(@Param("userId") Integer userId, Pageable pageable);
+
+        @Query("SELECT p FROM Post p WHERE p.userId = :userId and p.isDeleted = false")
+        Optional<List<Post>> findByUserId(@Param("userId") Integer userId);
 
         /**
-         * 标题模糊搜索
-         *
-         * @param keyword
-         * @return
+         * 根据用户ID和发布状态查询未删除的文章
          */
-        @Query("SELECT p FROM Post p WHERE p.title LIKE %?1% and p.isDeleted = false")
-        Optional<List<Post>> findByTitleContaining(String keyword);
+        Page<Post> findByUserIdAndIsPublishedTrueAndIsDeletedFalse(
+                @Param("userId") Integer userId,
+                Pageable pageable);
 
         /**
-         * 内容模糊搜索
+         * 标题模糊搜索（分页）
          *
-         * @param keyword
-         * @return
+         * @param keyword  关键词
+         * @param pageable 分页参数
+         * @return 分页后的文章列表
          */
-        @Query("SELECT p FROM Post p WHERE p.content LIKE %?1% and p.isDeleted = false")
-        Optional<List<Post>> findByContentContaining(String keyword);
+        @Query("SELECT p FROM Post p WHERE p.title LIKE %:keyword% and p.isDeleted = false")
+        Page<Post> findByTitleContaining(@Param("keyword") String keyword, Pageable pageable);
 
         /**
-         * 已发布文章 或 草稿文章 查询
+         * 内容模糊搜索（分页）
          *
-         * @param isPublished
-         * @param userId
-         * @return
+         * @param keyword  关键词
+         * @param pageable 分页参数
+         * @return 分页后的文章列表
          */
-        @Query("SELECT p FROM Post p WHERE p.isPublished = ?1 AND p.userId = ?2 and p.isDeleted = false")
-        Optional<List<Post>> findByUserIdIsPublished(Boolean isPublished, Integer userId);
+        @Query("SELECT p FROM Post p WHERE p.content LIKE %:keyword% and p.isDeleted = false")
+        Page<Post> findByContentContaining(@Param("keyword") String keyword, Pageable pageable);
 
         /**
-         * 分类查询
+         * 已发布文章或草稿文章查询（分页）
          *
-         * @param categoryId
-         * @return
+         * @param isPublished 是否已发布
+         * @param userId      用户ID
+         * @param pageable    分页参数
+         * @return 分页后的文章列表
          */
-        @Query("SELECT p FROM Post p JOIN p.postCategories pc WHERE pc.id.categoryId = ?1 " +
-                        "and p.isDeleted = false")
-        Optional<List<Post>> findByCategoryId(Integer categoryId);
+        @Query("SELECT p FROM Post p WHERE p.isPublished = :isPublished AND p.userId = :userId and p.isDeleted = false")
+        Page<Post> findByUserIdAndIsPublished(
+                        @Param("isPublished") Boolean isPublished,
+                        @Param("userId") Integer userId,
+                        Pageable pageable);
 
         /**
-         * 标签查询
+         * 分类查询（分页）
          *
-         * @param tagId
-         * @return
+         * @param categoryId 分类ID
+         * @param pageable   分页参数
+         * @return 分页后的文章列表
          */
-        @Query("SELECT p FROM Post p JOIN p.postTags pt WHERE pt.id.tagId = ?1 and p.isDeleted = false")
-        Optional<List<Post>> findByTagId(Integer tagId);
+        @Query("SELECT p FROM Post p JOIN p.postCategories pc WHERE pc.id.categoryId = :categoryId and p.isDeleted = false")
+        Page<Post> findByCategoryId(@Param("categoryId") Integer categoryId, Pageable pageable);
+
+        /**
+         * 标签查询（分页）
+         *
+         * @param tagId    标签ID
+         * @param pageable 分页参数
+         * @return 分页后的文章列表
+         */
+        @Query("SELECT p FROM Post p JOIN p.postTags pt WHERE pt.id.tagId = :tagId and p.isDeleted = false")
+        Page<Post> findByTagId(@Param("tagId") Integer tagId, Pageable pageable);
 
         // 根据标签Id集合查询文章
         @Query("SELECT p FROM Post p JOIN p.postTags pt WHERE pt.id.tagId IN ?1 and p.isDeleted = false")
         Optional<List<Post>> findByTagsIn(Set<Integer> tags);
+
+        @Query("SELECT p FROM Post p JOIN p.postTags pt WHERE pt.id.tagId IN ?1 and p.isDeleted = false")
+        Page<Post> findByTagsIn(Set<Integer> tags, Pageable pageable);
 
         /**
          * 根据文章ID查询最新版本号
@@ -187,13 +209,18 @@ public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecif
         Integer getLatestVersion(Integer postId);
 
         /**
-         * 根据可见度查找列表
+         * 根据可见度查找列表（分页）
          *
-         * @param visibility
-         * @return
+         * @param visibility 可见度
+         * @param userId     用户ID
+         * @param pageable   分页参数
+         * @return 分页后的文章列表
          */
-        @Query("SELECT p FROM Post p WHERE p.visibility = ?1 AND p.userId = ?2 and p.isDeleted = false")
-        Optional<List<Post>> findByVisibility(String visibility, Integer userId);
+        @Query("SELECT p FROM Post p WHERE p.visibility = :visibility AND p.userId = :userId and p.isDeleted = false")
+        Page<Post> findByVisibility(
+                        @Param("visibility") String visibility,
+                        @Param("userId") Integer userId,
+                        Pageable pageable);
 
         @Query("SELECT COALESCE(SUM(p.views), 0) FROM Post p")
         Integer getTotalViews();

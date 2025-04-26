@@ -120,12 +120,13 @@ public class MessageController {
         @GetMapping("/public/find/sender/{senderId}/list")
         @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
                         @ApiResponse(responseCode = "500", description = "服务器繁忙") })
-        public ResponseEntity<Response<List<Message>>> findBySenderId(
-                        @PathVariable @Param("senderId") Integer senderId) {
-                ResponseEntity<List<Message>> response = messageService.findBySenderId(senderId);
-                return Response.createResponse(response,
-                                HttpStatus.OK, "查询成功",
-                                HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
+        public ResponseEntity<Response<Page<Message>>> findBySenderId(
+                        @PathVariable @Param("senderId") Integer senderId,
+                        @RequestParam(defaultValue = "0") Integer page,
+                        @RequestParam(defaultValue = "10") Integer size,
+                        @RequestParam(defaultValue = "createdAt,desc") String[] sort) {
+                Page<Message> messages = messageService.findBySenderId(senderId, page, size, sort);
+                return Response.ok(messages);
         }
 
         /**
@@ -139,12 +140,13 @@ public class MessageController {
         @GetMapping("/public/find/receiver/{receiverId}/list")
         @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
                         @ApiResponse(responseCode = "500", description = "服务器繁忙") })
-        public ResponseEntity<Response<List<Message>>> findByReceiverId(
-                        @PathVariable @Param("receiverId") Integer receiverId) {
-                ResponseEntity<List<Message>> response = messageService.findByReceiverId(receiverId);
-                return Response.createResponse(response,
-                                HttpStatus.OK, "查询成功",
-                                HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
+        public ResponseEntity<Response<Page<Message>>> findByReceiverId(
+                        @PathVariable @Param("receiverId") Integer receiverId,
+                        @RequestParam(defaultValue = "0") Integer page,
+                        @RequestParam(defaultValue = "10") Integer size,
+                        @RequestParam(defaultValue = "createdAt,desc") String[] sort) {
+                Page<Message> messages = messageService.findByReceiverId(receiverId, page, size, sort);
+                return Response.ok(messages);
         }
 
         /**
@@ -158,13 +160,14 @@ public class MessageController {
         @GetMapping("/public/find/sender/{content}")
         @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
                         @ApiResponse(responseCode = "500", description = "服务器繁忙") })
-        public ResponseEntity<Response<List<Message>>> findByContentForSender(
+        public ResponseEntity<Response<Page<Message>>> findByContentForSender(
                         @PathVariable @Param("content") String content,
-                        @AuthenticationPrincipal LoginResponseDto user) {
-                ResponseEntity<List<Message>> response = messageService.findByContentForSender(content, user.getId());
-                return Response.createResponse(response,
-                                HttpStatus.OK, "查询成功",
-                                HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
+                        @AuthenticationPrincipal LoginResponseDto user,
+                        @RequestParam(defaultValue = "0") Integer page,
+                        @RequestParam(defaultValue = "10") Integer size,
+                        @RequestParam(defaultValue = "createdAt,desc") String[] sort) {
+                Page<Message> messages = messageService.findByContentForSender(content, user.getId(), page, size, sort);
+                return Response.ok(messages);
         }
 
         /**
@@ -178,13 +181,15 @@ public class MessageController {
         @GetMapping("/public/find/receiver/{content}")
         @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
                         @ApiResponse(responseCode = "500", description = "服务器繁忙") })
-        public ResponseEntity<Response<List<Message>>> findByContentForReceiver(
+        public ResponseEntity<Response<Page<Message>>> findByContentForReceiver(
                         @PathVariable @Param("content") String content,
-                        @AuthenticationPrincipal LoginResponseDto user) {
-                ResponseEntity<List<Message>> response = messageService.findByContentForReceiver(content, user.getId());
-                return Response.createResponse(response,
-                                HttpStatus.OK, "查询成功",
-                                HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
+                        @AuthenticationPrincipal LoginResponseDto user,
+                        @RequestParam(defaultValue = "0") Integer page,
+                        @RequestParam(defaultValue = "10") Integer size,
+                        @RequestParam(defaultValue = "createdAt,desc") String[] sort) {
+                Page<Message> messages = messageService.findByContentForReceiver(content, user.getId(), page, size,
+                                sort);
+                return Response.ok(messages);
         }
 
         /**
@@ -199,8 +204,7 @@ public class MessageController {
                         @ApiResponse(responseCode = "500", description = "服务器繁忙") })
         public ResponseEntity<Response<List<MessageUserInfo>>> findContactedUserNames(
                         @AuthenticationPrincipal LoginResponseDto user) {
-                ResponseEntity<List<MessageUserInfo>> response = messageService.
-                        findContactedUserNames(user.getId());
+                ResponseEntity<List<MessageUserInfo>> response = messageService.findContactedUserNames(user.getId());
                 return Response.createResponse(response,
                                 HttpStatus.OK, "查询成功",
                                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
@@ -278,11 +282,12 @@ public class MessageController {
         @GetMapping("/admin/find/all")
         @ApiResponses(value = { @ApiResponse(responseCode = "200", description = "查询成功"),
                         @ApiResponse(responseCode = "500", description = "服务器繁忙") })
-        public ResponseEntity<Response<List<MessageDto>>> findAll() {
-                ResponseEntity<List<MessageDto>> response = messageService.findAll();
-                return Response.createResponse(response,
-                                HttpStatus.OK, "查询成功",
-                                HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
+        public ResponseEntity<Response<Page<MessageDto>>> findAll(
+                        @RequestParam(defaultValue = "0") Integer page,
+                        @RequestParam(defaultValue = "10") Integer size,
+                        @RequestParam(defaultValue = "createdAt,desc") String[] sort) {
+                Page<MessageDto> messages = messageService.findAll(page, size, sort);
+                return Response.ok(messages);
         }
 
         /**

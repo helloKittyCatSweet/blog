@@ -82,7 +82,7 @@ public interface MessageRepository extends BaseRepository<Message, Integer> {
          * @return
          */
         @Query("select m from Message m where m.senderId =?1")
-        Optional<List<Message>> findBySenderId(Integer senderId);
+        Page<Message> findBySenderId(Integer senderId, Pageable pageable);
 
         /**
          * 根据收件人查找消息
@@ -91,7 +91,7 @@ public interface MessageRepository extends BaseRepository<Message, Integer> {
          * @return
          */
         @Query("select m from Message m where m.receiverId =?1")
-        Optional<List<Message>> findByReceiverId(Integer receiverId);
+        Page<Message> findByReceiverId(Integer receiverId, Pageable pageable);
 
         /**
          * 根据内容和发件人查找消息
@@ -101,7 +101,8 @@ public interface MessageRepository extends BaseRepository<Message, Integer> {
          * @return
          */
         @Query("select m from Message m where m.content LIKE %?1% and m.senderId = ?2")
-        Optional<List<Message>> findByContentForSender(String content, Integer senderId);
+        Page<Message> findByContentForSender(String content, Integer senderId,
+                                                             Pageable pageable);
 
         /**
          * 根据内容和收件人查找消息
@@ -111,7 +112,7 @@ public interface MessageRepository extends BaseRepository<Message, Integer> {
          * @return
          */
         @Query("select m from Message m where m.content LIKE %?1% and m.receiverId = ?2")
-        Optional<List<Message>> findByContentForReceiver(String content, Integer receiverId);
+        Page<Message> findByContentForReceiver(String content, Integer receiverId, Pageable pageable);
 
         /**
          * 查找联系人列表（包含双向联系人且去重）

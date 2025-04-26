@@ -2,6 +2,8 @@ package com.kitty.blog.domain.repository.tag;
 
 import com.kitty.blog.domain.model.tag.Tag;
 import com.kitty.blog.domain.repository.BaseRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -62,6 +64,11 @@ public interface TagRepository extends BaseRepository<Tag, Integer>,
      * @param postId 文章ID
      * @return 标签列表
      */
+    @Query("SELECT t FROM Tag t " +
+            "JOIN PostTag pt ON t.tagId = pt.id.tagId " +
+            "WHERE pt.id.postId = :postId")
+    Page<Optional<List<Tag>>> findByPostId(Integer postId, Pageable pageable);
+
     @Query("SELECT t FROM Tag t " +
             "JOIN PostTag pt ON t.tagId = pt.id.tagId " +
             "WHERE pt.id.postId = :postId")

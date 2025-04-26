@@ -1,50 +1,31 @@
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import * as echarts from "echarts";
-import {
-  Document,
-  View,
-  ChatRound,
-  Star,
-  User,
-  Reading,
-  ArrowUp,
-  ArrowDown,
-  ArrowRight,
-} from "@element-plus/icons-vue";
+import { Document, View, ChatRound, Star } from "@element-plus/icons-vue";
 import {
   getUserDashboard,
   getUserMonthlyStats,
   getUserRecentPosts,
-  getUserInteractions,
-} from "@/api/user/userStat.js";
+  getUserInteractions
+} from "@/api/user/userStat";
 import { ElMessage } from "element-plus";
-import { USER_POST_LIST_PATH } from "@/constants/routes/user.js";
-import { BLOG_POST_DETAIL_PATH } from "@/constants/routes/blog";
-import AuthorAnalytics from "@/components/user/AuthorAnalytics.vue";
 
 const router = useRouter();
 const postChartRef = ref(null);
 const interactionChartRef = ref(null);
 const loading = ref(true);
 
-/**
- * 图表可折叠
- */
-const postChartVisible = ref(true);
-const interactionChartVisible = ref(true);
-const chartsVisible = ref(true);
-const analyticsVisible = ref(true);
-const suggestionsVisible = ref(true);
+// Add chart container refs
+const postChartContainer = ref(null);
+const interactionChartContainer = ref(null);
 
 // 统计数据
-const statistics = ref({
+const dashboardStats = ref({
   totalPosts: 0,
   totalViews: 0,
   totalComments: 0,
-  totalLikes: 0,
-  totalFavorites: 0,
+  totalLikes: 0
 });
 
 // 最近文章列表
@@ -55,25 +36,10 @@ const fetchDashboardStats = async () => {
   try {
     const res = await getUserDashboard();
     if (res.data.status === 200) {
-      // 确保所有值都有默认值
-      statistics.value = res.data.data || {
-        totalPosts: 0,
-        totalViews: 0,
-        totalComments: 0,
-        totalLikes: 0,
-        totalFavorites: 0,
-      };
+      dashboardStats.value = res.data.data;
     }
   } catch (error) {
     ElMessage.error("获取统计数据失败");
-    // 设置默认值
-    statistics.value = {
-      totalPosts: 0,
-      totalViews: 0,
-      totalComments: 0,
-      totalLikes: 0,
-      totalFavorites: 0,
-    };
   }
 };
 
@@ -82,191 +48,154 @@ const fetchRecentPosts = async () => {
   try {
     const res = await getUserRecentPosts();
     if (res.data.status === 200) {
-      // 转换数据格式以适配表格显示
-      recentPosts.value = res.data.data.map((item) => ({
-        id: item.post.postId,
-        title: item.post.title,
-        category: item.category,
-        views: item.post.views,
-        createTime: item.post.createdAt,
-        author: item.author,
-      }));
+      recentPosts.value = res.data.data;
     }
   } catch (error) {
     ElMessage.error("获取最近文章失败");
   }
 };
 
-// 文章路由跳转
-const goToPostDetail = (postId) => {
-  router.push(BLOG_POST_DETAIL_PATH.replace(":id", postId));
-};
-
-// 初始化文章数据图表
+// Initialize post chart with proper event handling
 const initPostChart = async () => {
   try {
     const res = await getUserMonthlyStats();
     const monthlyData = res.data.data;
 
-    // 确保DOM元素已经挂载
-    if (!postChartRef.value) return;
+    const chart = echarts.init(postChartRef.value, null, {
+      renderer: 'canvas'
+    });
+    
+    // Add wheel event options
+    if (postChartContainer.value) {
+      postChartContainer.value.addEventListener('wheel', (e) => {
+        e.preventDefault();
+      }, { passive: false });
+    }
 
-    const chart = echarts.init(postChartRef.value);
     const option = {
       title: {
         text: "文章数据统计",
-        left: "center",
+        left: "center"
       },
       tooltip: {
-        trigger: "axis",
+        trigger: "axis"
       },
       legend: {
         bottom: "0%",
-        data: ["发布量", "访问量"],
+        data: ["发布量", "访问量"]
       },
       xAxis: {
         type: "category",
-        data: monthlyData?.months || ["1月", "2月", "3月", "4月", "5月", "6月"],
+        data: monthlyData.months || ["1月", "2月", "3月", "4月", "5月", "6月"]
       },
-      yAxis: [
-        // 修改为双Y轴
-        {
-          type: "value",
-          name: "发布量",
-          position: "left",
-        },
-        {
-          type: "value",
-          name: "访问量",
-          position: "right",
-        },
-      ],
+      yAxis: {
+        type: "value"
+      },
       series: [
         {
           name: "发布量",
           type: "bar",
-          data: monthlyData?.posts || [0, 0, 0, 0, 0, 0],
+          data: monthlyData.posts || [0, 0, 0, 0, 0, 0]
         },
         {
           name: "访问量",
           type: "line",
-          data: monthlyData?.views || [0, 0, 0, 0, 0, 0],
-        },
-      ],
+          data: monthlyData.views || [0, 0, 0, 0, 0, 0]
+        }
+      ]
     };
     chart.setOption(option);
+    return chart;
   } catch (error) {
     ElMessage.error("获取文章统计数据失败");
   }
 };
 
-// 初始化互动数据图表
+// Initialize interaction chart with proper event handling
 const initInteractionChart = async () => {
   try {
     const res = await getUserInteractions();
-    // console.log("res", res.data.data);
     const interactionData = res.data.data;
 
-    // 确保DOM元素已经挂载
-    if (!interactionChartRef.value) return;
+    const chart = echarts.init(interactionChartRef.value, null, {
+      renderer: 'canvas'
+    });
 
-    const chart = echarts.init(interactionChartRef.value);
+    // Add wheel event options
+    if (interactionChartContainer.value) {
+      interactionChartContainer.value.addEventListener('wheel', (e) => {
+        e.preventDefault();
+      }, { passive: false });
+    }
+
     const option = {
       title: {
         text: "互动数据分布",
-        left: "center",
+        left: "center"
       },
       tooltip: {
-        trigger: "item",
-        formatter: "{a} <br/>{b}: {c} ({d}%)",
+        trigger: "item"
       },
       legend: {
-        bottom: "0%",
-        data: ["点赞", "评论", "收藏"],
+        bottom: "0%"
       },
       series: [
         {
-          name: "互动数据",
           type: "pie",
           radius: ["40%", "70%"],
           avoidLabelOverlap: false,
           itemStyle: {
             borderRadius: 10,
             borderColor: "#fff",
-            borderWidth: 2,
+            borderWidth: 2
           },
           label: {
             show: false,
-            position: "center",
-            formatter: "{b}: {c}",
+            position: "center"
           },
           emphasis: {
             label: {
               show: true,
               fontSize: "20",
-              fontWeight: "bold",
-            },
+              fontWeight: "bold"
+            }
           },
           labelLine: {
-            show: false,
+            show: false
           },
           data: [
-            { value: interactionData?.likes || 0, name: "点赞" },
-            { value: interactionData?.comments || 0, name: "评论" },
-            { value: interactionData?.favorites || 0, name: "收藏" },
-          ],
-        },
-      ],
+            { value: interactionData.likes || 0, name: "点赞" },
+            { value: interactionData.comments || 0, name: "评论" },
+            { value: interactionData.favorites || 0, name: "收藏" }
+          ]
+        }
+      ]
     };
     chart.setOption(option);
+    return chart;
   } catch (error) {
     ElMessage.error("获取互动统计数据失败");
-    // 如果出错，初始化一个空的图表
-    if (interactionChartRef.value) {
-      const chart = echarts.init(interactionChartRef.value);
-      chart.setOption({
-        // ... 保持其他配置不变 ...
-        series: [
-          {
-            // ... 保持其他配置不变 ...
-            data: [
-              { value: 0, name: "点赞" },
-              { value: 0, name: "评论" },
-              { value: 0, name: "收藏" },
-            ],
-          },
-        ],
-      });
-    }
   }
 };
 
 // 监听窗口大小变化，重绘图表
 const handleResize = () => {
-  if (postChartRef.value && postChartVisible.value) {
-    const postChart = echarts.getInstanceByDom(postChartRef.value);
-    if (postChart) {
-      postChart.resize();
-    }
-  }
-
-  if (interactionChartRef.value && interactionChartVisible.value) {
-    const interactionChart = echarts.getInstanceByDom(interactionChartRef.value);
-    if (interactionChart) {
-      interactionChart.resize();
-    }
-  }
+  const postChart = echarts.init(postChartRef.value);
+  const interactionChart = echarts.init(interactionChartRef.value);
+  postChart.resize();
+  interactionChart.resize();
 };
 
 onMounted(async () => {
   loading.value = true;
   try {
-    // 确保先获取数据
-    await fetchDashboardStats();
-    // 等待所有图表初始化完成
-    await Promise.all([initPostChart(), initInteractionChart(), fetchRecentPosts()]);
+    await Promise.all([
+      fetchDashboardStats(),
+      initPostChart(),
+      initInteractionChart(),
+      fetchRecentPosts()
+    ]);
   } catch (error) {
-    console.error("加载数据失败:", error);
     ElMessage.error("加载数据失败");
   } finally {
     loading.value = false;
@@ -278,29 +207,9 @@ onMounted(async () => {
 onUnmounted(() => {
   window.removeEventListener("resize", handleResize);
 });
-
-// 添加表格表头样式
-const tableHeaderStyle = {
-  backgroundColor: "var(--el-color-primary-light-9)",
-  color: "var(--el-text-color-primary)",
-  fontWeight: "bold",
-};
-
-/**
- * 判断是否有数据
- */
-const hasData = computed(() => {
-  return (
-    statistics.value.totalPosts > 0 ||
-    statistics.value.totalViews > 0 ||
-    statistics.value.totalComments > 0 ||
-    statistics.value.totalLikes > 0
-  );
-});
 </script>
 
 <template>
-  <!-- 保持现有结构，添加新的样式类 -->
   <div class="dashboard" v-loading="loading" element-loading-text="加载中...">
     <!-- 数据概览卡片 -->
     <div class="stat-cards">
@@ -311,7 +220,7 @@ const hasData = computed(() => {
             <span>文章数量</span>
           </div>
         </template>
-        <div class="stat-value">{{ statistics.totalPosts || 0 }}</div>
+        <div class="stat-value">{{ dashboardStats.totalPosts }}</div>
       </el-card>
 
       <el-card class="stat-card success-card">
@@ -321,7 +230,7 @@ const hasData = computed(() => {
             <span>总访问量</span>
           </div>
         </template>
-        <div class="stat-value">{{ statistics.totalViews || 0 }}</div>
+        <div class="stat-value">{{ dashboardStats.totalViews }}</div>
       </el-card>
 
       <el-card class="stat-card warning-card">
@@ -331,7 +240,7 @@ const hasData = computed(() => {
             <span>评论数</span>
           </div>
         </template>
-        <div class="stat-value">{{ statistics.totalComments || 0 }}</div>
+        <div class="stat-value">{{ dashboardStats.totalComments }}</div>
       </el-card>
 
       <el-card class="stat-card danger-card">
@@ -341,107 +250,63 @@ const hasData = computed(() => {
             <span>获赞数</span>
           </div>
         </template>
-        <div class="stat-value">{{ statistics.totalLikes || 0 }}</div>
+        <div class="stat-value">{{ dashboardStats.totalLikes }}</div>
       </el-card>
     </div>
 
-    <template v-if="hasData">
-      <!-- 数据统计图表区域 -->
-      <el-card class="section-card" shadow="hover">
-        <template #header>
-          <div class="card-header">
-            <div class="header-left">
-              <span>数据统计</span>
-            </div>
-            <el-button type="primary" link @click="chartsVisible = !chartsVisible">
-              {{ chartsVisible ? "收起" : "展开" }}
-              <el-icon class="el-icon--right">
-                <component :is="chartsVisible ? ArrowUp : ArrowDown" />
-              </el-icon>
-            </el-button>
-          </div>
-        </template>
-        <el-collapse-transition>
-          <div v-show="chartsVisible" class="charts-container">
-            <div class="chart-wrapper">
-              <div ref="postChartRef" class="chart"></div>
-            </div>
-            <div class="chart-wrapper">
-              <div ref="interactionChartRef" class="chart"></div>
-            </div>
-          </div>
-        </el-collapse-transition>
+    <!-- 图表区域 -->
+    <div class="charts-container">
+      <el-card class="chart-card" shadow="hover">
+        <div ref="postChartContainer" class="chart-wrapper">
+          <div ref="postChartRef" class="chart"></div>
+        </div>
       </el-card>
 
-      <!-- 写作建议 -->
-      <el-card class="section-card" shadow="hover">
-        <template #header>
-          <div class="card-header">
-            <div class="header-left">
-              <span>写作建议</span>
-            </div>
-            <el-button
+      <el-card class="chart-card" shadow="hover">
+        <div ref="interactionChartContainer" class="chart-wrapper">
+          <div ref="interactionChartRef" class="chart"></div>
+        </div>
+      </el-card>
+    </div>
+
+    <!-- 最近文章 -->
+    <el-card class="recent-posts" shadow="hover">
+      <template #header>
+        <div class="card-header">
+          <div class="header-left">
+            <el-icon class="header-icon"><Document /></el-icon>
+            <span>最近发布</span>
+          </div>
+          <el-button type="primary" link @click="router.push('/posts')">
+            查看全部
+            <el-icon class="el-icon--right"><arrow-right /></el-icon>
+          </el-button>
+        </div>
+      </template>
+
+      <el-table :data="recentPosts" style="width: 100%">
+        <el-table-column prop="title" label="标题">
+          <template #default="{ row }">
+            <el-link
               type="primary"
-              link
-              @click="suggestionsVisible = !suggestionsVisible"
+              :underline="false"
+              @click="router.push(`/post/${row.id}`)"
             >
-              {{ suggestionsVisible ? "收起" : "展开" }}
-              <el-icon class="el-icon--right">
-                <component :is="suggestionsVisible ? ArrowUp : ArrowDown" />
-              </el-icon>
-            </el-button>
-          </div>
-        </template>
-        <el-collapse-transition>
-          <div v-show="suggestionsVisible">
-            <AuthorAnalytics />
-          </div>
-        </el-collapse-transition>
-      </el-card>
-
-      <!-- 最近文章 -->
-      <el-card class="recent-posts" shadow="hover">
-        <template #header>
-          <div class="card-header">
-            <div class="header-left">
-              <el-icon class="header-icon"><Document /></el-icon>
-              <span>最近发布</span>
-            </div>
-            <el-button type="primary" link @click="router.push(USER_POST_LIST_PATH)">
-              查看全部
-              <el-icon class="el-icon--right"><ArrowRight /></el-icon>
-            </el-button>
-          </div>
-        </template>
-        <el-table
-          :data="recentPosts"
-          style="width: 100%"
-          :header-cell-style="tableHeaderStyle"
-        >
-          <el-table-column prop="title" label="标题">
-            <template #default="{ row }">
-              <el-link type="primary" :underline="false" @click="goToPostDetail(row.id)">
-                {{ row.title }}
-              </el-link>
-            </template>
-          </el-table-column>
-          <el-table-column label="分类" width="120">
-            <template #default="{ row }">
-              <el-tag size="small" :type="row.category?.name ? 'info' : 'success'">
-                {{ row.category?.name || "未分类" }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="views" label="浏览" width="100" />
-          <el-table-column prop="createTime" label="发布时间" width="180" />
-        </el-table>
-      </el-card>
-    </template>
-
-    <!-- 没有数据时显示的提示 -->
-    <template v-else>
-      <el-empty description="暂无数据" />
-    </template>
+              {{ row.title }}
+            </el-link>
+          </template>
+        </el-table-column>
+        <el-table-column label="分类" width="120">
+          <template #default="{ row }">
+            <el-tag size="small" :type="row.category?.name ? 'info' : 'warning'">
+              {{ row.category?.name || "未分类" }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="views" label="浏览" width="100" />
+        <el-table-column prop="createTime" label="发布时间" width="180" />
+      </el-table>
+    </el-card>
   </div>
 </template>
 
@@ -460,146 +325,48 @@ const hasData = computed(() => {
 }
 
 .stat-card {
-  transition: all 0.3s ease;
-  border-radius: 12px;
+  transition: transform 0.3s;
+  border-radius: 8px;
   overflow: hidden;
-  text-align: center;
-  background: var(--el-bg-color);
 }
 
 .stat-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.primary-card :deep(.el-card__header) {
+  background-color: var(--el-color-primary-light-8);
+}
+
+.success-card :deep(.el-card__header) {
+  background-color: var(--el-color-success-light-8);
+}
+
+.warning-card :deep(.el-card__header) {
+  background-color: var(--el-color-warning-light-8);
+}
+
+.danger-card :deep(.el-card__header) {
+  background-color: var(--el-color-danger-light-8);
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 8px;
-  font-weight: 600;
-  font-size: 16px;
-  color: #fff;
-  padding: 15px;
-}
-
-.stat-value {
-  font-size: 36px;
-  font-weight: 700;
-  text-align: center;
-  padding: 20px 0;
-  transition: all 0.3s ease;
-  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
-  letter-spacing: 1px;
-  position: relative;
-  color: #fff;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.stat-card:hover .stat-value {
-  transform: scale(1.1);
-}
-
-/* 统计卡片的不同主题色 */
-.primary-card {
-  background: linear-gradient(135deg, #409EFF 0%, #85c5ff 100%);
-  :deep(.el-card__header) {
-    background: transparent;
-  }
-}
-
-.success-card {
-  background: linear-gradient(135deg, #67C23A 0%, #95d475 100%);
-  :deep(.el-card__header) {
-    background: transparent;
-  }
-}
-
-.warning-card {
-  background: linear-gradient(135deg, #E6A23C 0%, #f3c895 100%);
-  :deep(.el-card__header) {
-    background: transparent;
-  }
-}
-
-.danger-card {
-  background: linear-gradient(135deg, #F56C6C 0%, #f8a5a5 100%);
-  :deep(.el-card__header) {
-    background: transparent;
-  }
-}
-
-/* 卡片内的图标样式 */
-.card-header .el-icon {
-  font-size: 24px;
-  color: #fff;
-}
-
-/* 添加卡片内容的阴影效果 */
-:deep(.el-card__body) {
-  position: relative;
-  z-index: 1;
-}
-
-/* 暗色主题适配 */
-:deep(.dark) {
-  .primary-card {
-    background: linear-gradient(135deg, #336699 0%, #4a90e2 100%);
-  }
-  
-  .success-card {
-    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
-  }
-  
-  .warning-card {
-    background: linear-gradient(135deg, #F57C00 0%, #FFB74D 100%);
-  }
-  
-  .danger-card {
-    background: linear-gradient(135deg, #C62828 0%, #EF5350 100%);
-  }
-  
-  .stat-value {
-    color: #fff;
-  }
-}
-
-/* 添加微妙的纹理效果 */
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent);
-  background-size: 4px 4px;
-  opacity: 0.1;
-}
-
-.charts-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 24px;
-}
-
-.chart {
-  height: 400px;
-}
-
-.recent-posts {
-  margin-bottom: 24px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  padding: 12px;
 }
 
 .header-icon {
   font-size: 18px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--el-text-color-primary);
+  text-align: center;
+  padding: 16px 0;
 }
 
 .charts-container {
@@ -615,8 +382,13 @@ const hasData = computed(() => {
 }
 
 .chart-card:hover {
-  transform: translateY(-3px);
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
 }
 
 .chart {
@@ -626,138 +398,19 @@ const hasData = computed(() => {
 
 .recent-posts {
   margin-bottom: 24px;
-  border-radius: 8px;
 }
 
-:deep(.el-table) {
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-:deep(.el-table th) {
-  font-weight: bold;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 :deep(.el-table__row) {
-  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 :deep(.el-table__row:hover) {
-  background-color: var(--el-color-primary-light-9) !important;
-}
-
-/* 适配暗色主题 */
-:deep(.dark) {
-  .stat-card {
-    background-color: var(--el-bg-color);
-  }
-
-  .chart-card {
-    background-color: var(--el-bg-color);
-  }
-}
-
-.analytics-card {
-  margin-bottom: 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.analytics-content {
-  padding: 20px 16px;
-}
-
-.suggestions-list {
-  .suggestion-card {
-    margin-bottom: 8px;
-    border-radius: 8px;
-    transition: all 0.3s ease;
-
-    &:hover {
-      transform: translateX(5px);
-    }
-
-    &.primary {
-      border-left: 4px solid var(--el-color-primary);
-    }
-
-    &.success {
-      border-left: 4px solid var(--el-color-success);
-    }
-
-    &.warning {
-      border-left: 4px solid var(--el-color-warning);
-    }
-
-    &.danger {
-      border-left: 4px solid var(--el-color-danger);
-    }
-  }
-
-  .suggestion-text {
-    margin: 0;
-    line-height: 1.8;
-    color: var(--el-text-color-primary);
-    white-space: pre-line;
-    font-size: 14px;
-  }
-}
-
-:deep(.el-timeline) {
-  padding-left: 16px;
-}
-
-:deep(.el-timeline-item__node) {
-  width: 16px;
-  height: 16px;
-  left: -1px;
-}
-
-:deep(.el-timeline-item__tail) {
-  left: 7px;
-}
-
-:deep(.el-timeline-item__timestamp) {
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-  margin-bottom: 8px;
-}
-
-:deep(.el-timeline-item__content) {
-  margin-left: 24px;
-}
-
-/* 适配暗色主题 */
-:deep(.dark) {
-  .suggestion-card {
-    background-color: var(--el-bg-color);
-  }
-}
-
-/* 确保图表容器在折叠时平滑过渡 */
-.chart {
-  transition: height 0.3s ease-in-out;
-}
-
-.section-card {
-  margin-bottom: 24px;
-  border-radius: 8px;
-}
-
-.section-card:hover {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-.charts-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  padding: 16px;
-}
-
-.chart-wrapper {
-  background-color: var(--el-bg-color);
-  border-radius: 8px;
-  padding: 16px;
+  background-color: var(--el-color-primary-light-9);
 }
 </style>

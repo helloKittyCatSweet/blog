@@ -2,6 +2,7 @@ package com.kitty.blog.domain.service;
 
 import com.kitty.blog.application.dto.comment.CommentDto;
 import com.kitty.blog.application.dto.comment.CommentTreeBuilder;
+import com.kitty.blog.common.exception.ResourceNotFoundException;
 import com.kitty.blog.domain.model.Comment;
 import com.kitty.blog.domain.model.Post;
 import com.kitty.blog.domain.model.User;
@@ -9,9 +10,13 @@ import com.kitty.blog.domain.repository.CommentRepository;
 import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+import com.kitty.blog.infrastructure.utils.PageUtil;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -21,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -73,14 +79,13 @@ public class CommentService {
         }
 
         // 获取现有的评论对象
-        Comment existingComment = (Comment) commentRepository.
-                findById(updatedComment.getCommentId()).orElse(null);
+        Comment existingComment = (Comment) commentRepository.findById(updatedComment.getCommentId()).orElse(null);
         if (existingComment == null) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
 
         if (updatedComment.getContent() != null &&
-                !Objects.equals(updatedComment.getContent(), existingComment.getContent())){
+                !Objects.equals(updatedComment.getContent(), existingComment.getContent())) {
             log.info("评论内容更新，原内容：{}，新内容：{}", existingComment.getContent(), updatedComment.getContent());
             // 内容审核
             String s = baiduContentService.checkText(updatedComment.getContent());
@@ -89,7 +94,6 @@ public class CommentService {
                 return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
             }
         }
-
 
         // 获取帖子和用户是否匹配，父评论如果有也校验
         if (updatedComment.getPostId() != null &&
@@ -126,16 +130,17 @@ public class CommentService {
     }
 
     @Transactional
-    public ResponseEntity<List<CommentDto>> findByPostId(Integer postId) {
+    public Page<CommentDto> findByPostId(Integer postId, Integer page, Integer size, String[] sorts) {
         if (!postRepository.existsById(postId)) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0);
         }
 
-        List<Comment> comments = commentRepository.findByPostId(postId).orElse(new ArrayList<>());
+        PageRequest pageRequest = PageUtil.createPageRequest(page, size, sorts);
+        Page<Comment> comments = commentRepository.findByPostId(postId, pageRequest);
         List<CommentDto> commentDtos = new ArrayList<>();
 
         // 转换评论为 CommentDto
-        for (Comment comment : comments) {
+        for (Comment comment : comments.getContent()) {
             Post post = (Post) postRepository.findById(comment.getPostId()).orElse(new Post());
             User user = (User) userRepository.findById(comment.getUserId()).orElse(new User());
 
@@ -145,13 +150,11 @@ public class CommentService {
                     .parentId(comment.getParentCommentId())
                     .parentContent(
                             commentRepository.findById(comment.getParentCommentId())
-                                    .map(Comment::getContent).orElse(null)
-                    )
+                                    .map(Comment::getContent).orElse(null))
                     .parentUsername(
                             commentRepository.findById(comment.getParentCommentId())
                                     .map(c -> userRepository.findById(c.getUserId()).orElse(new User()).getUsername())
-                                    .orElse(null)
-                    )
+                                    .orElse(null))
                     .title(post.getTitle())
                     .content(comment.getContent())
                     .userId(comment.getUserId())
@@ -164,7 +167,7 @@ public class CommentService {
 
         // 构建树形结构
         List<CommentDto> treeComments = CommentTreeBuilder.buildCommentTree(commentDtos);
-        return new ResponseEntity<>(treeComments, HttpStatus.OK);
+        return new PageImpl<>(treeComments, pageRequest, comments.getTotalElements());
     }
 
     @Transactional
@@ -179,37 +182,25 @@ public class CommentService {
     }
 
     @Transactional
-    public ResponseEntity<List<CommentDto>> findByUserId(Integer userId) {
-        if (!userRepository.existsById(userId)) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        }
+    public Page<CommentDto> findByUserId(Integer userId, Integer page, Integer size, String[] sorts) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
+        PageRequest pageRequest = PageUtil.createPageRequest(page, size, sorts);
         List<Comment> comments = commentRepository.findByUserId(userId)
                 .orElse(Collections.emptyList());
 
-        List<CommentDto> commentDtos = new ArrayList<>();
-        for (Comment comment : comments) {
-            Post post = (Post) postRepository.findById(comment.getPostId()).orElse(new Post());
-            User user = (User) userRepository.findById(comment.getUserId()).orElse(new User());
-            CommentDto commentDto = CommentDto.builder()
-                    .commentId(comment.getCommentId())
-                    .postId(comment.getPostId())
-                    .parentId(comment.getParentCommentId())
-                    .parentContent(
-                            commentRepository.findById(comment.getParentCommentId())
-                                    .map(Comment::getContent).orElse(null)
-                    )
-                    .title(post.getTitle())
-                    .content(comment.getContent())
-                    .userId(comment.getUserId())
-                    .username(user.getUsername())
-                    .createdAt(comment.getCreatedAt().toString())
-                    .likes(comment.getLikes())
-                    .build();
-            commentDtos.add(commentDto);
-        }
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), comments.size());
+        List<CommentDto> commentDtos = comments.subList(start, end).stream()
+                .map(comment -> {
+                    Post post = postRepository.findById(comment.getPostId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+                    return CommentDto.fromComment(comment, post);
+                })
+                .collect(Collectors.toList());
 
-        return new ResponseEntity<>(commentDtos, HttpStatus.OK);
+        return new PageImpl<>(commentDtos, pageRequest, comments.size());
     }
 
     @Transactional
@@ -219,10 +210,9 @@ public class CommentService {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         }
 
-        List<Comment> comments = commentRepository.findByPostAuthorId(authorId)
-                .orElse(Collections.emptyList());
-
+        List<Comment> comments = commentRepository.findByPostAuthorId(authorId).orElse(Collections.emptyList());
         List<CommentDto> commentDtos = new ArrayList<>();
+
         for (Comment comment : comments) {
             Post post = (Post) postRepository.findById(comment.getPostId()).orElse(new Post());
             User user = (User) userRepository.findById(comment.getUserId()).orElse(new User());
@@ -284,8 +274,7 @@ public class CommentService {
                     .parentId(comment.getParentCommentId())
                     .parentContent(
                             commentRepository.findById(comment.getParentCommentId())
-                                    .map(Comment::getContent).orElse(null)
-                    )
+                                    .map(Comment::getContent).orElse(null))
                     .title(post.getTitle())
                     .content(comment.getContent())
                     .userId(comment.getUserId())
@@ -310,8 +299,8 @@ public class CommentService {
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
-   @Transactional
-   public ResponseEntity<Boolean> deleteBatch(List<Integer> commentIds){
+    @Transactional
+    public ResponseEntity<Boolean> deleteBatch(List<Integer> commentIds) {
         if (commentIds == null || commentIds.isEmpty()) {
             return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
         }
@@ -322,16 +311,16 @@ public class CommentService {
             commentRepository.deleteAllById(commentIds);
         }
         return new ResponseEntity<>(true, HttpStatus.OK);
-   }
+    }
 
     @Transactional
-    public boolean hasDeletePermission(Integer userId, Integer commentId){
-        if (!userRepository.existsById(userId) || !commentRepository.existsById(commentId)){
+    public boolean hasDeletePermission(Integer userId, Integer commentId) {
+        if (!userRepository.existsById(userId) || !commentRepository.existsById(commentId)) {
             return false;
         }
         Comment comment = commentRepository.findById(commentId).orElse(new Comment());
         if (comment.getUserId() == userId
-        || postRepository.findById(comment.getPostId()).orElse(new Post()).getUserId() == userId){
+                || postRepository.findById(comment.getPostId()).orElse(new Post()).getUserId() == userId) {
             return true;
         }
         return false;
