@@ -162,12 +162,16 @@ const goToLogin = () => {
 const refreshPost = async () => {
   if (post.value.postId) {
     await getPostDetail(post.value.postId);
-    
+
     // 刷新交互状态
     if (userStore.isLoggedIn) {
       try {
         // 重新获取点赞状态
-        const response = await findPostExplicit(userStore.user.id, post.value.postId, "LIKE");
+        const response = await findPostExplicit(
+          userStore.user.id,
+          post.value.postId,
+          "LIKE"
+        );
         const activityData = response.data.data;
         interactionState.value.isLiked = activityData?.activityId != null;
         interactionState.value.likeActivityId = activityData?.activityId || null;
@@ -185,6 +189,8 @@ const refreshPost = async () => {
         console.error("刷新交互状态失败:", error);
       }
     }
+    // 最后刷新文章详情
+    await getPostDetail(post.value.postId);
   }
 };
 
@@ -193,12 +199,6 @@ const refreshPost = async () => {
  */
 // 添加抽屉相关状态
 const drawerVisible = ref(false);
-const showAllComments = ref(false);
-
-// 添加计算属性来控制显示的评论数量
-const displayedComments = computed(() => {
-  return showAllComments.value ? null : 5;
-});
 
 // 添加评论数量状态
 const commentCount = ref(0);
@@ -270,9 +270,9 @@ const handleAuthorClick = (userId) => {
                 v-model:is-favorited="interactionState.isFavorited"
                 :post-id="post.postId"
                 :title="post.title"
-                :like-activity-id="interactionState.likeActivityId"
-                :favorite-activity-id="interactionState.favoriteActivityId"
-                @refresh="getPostDetail(post.postId)"
+                v-model:like-activity-id="interactionState.likeActivityId"
+                v-model:favorite-activity-id="interactionState.favoriteActivityId"
+                @refresh="refreshPost"
               />
             </div>
             <div class="interaction-right">
@@ -304,16 +304,17 @@ const handleAuthorClick = (userId) => {
           :post-id="post.postId"
           :title="post.title"
           :user-id="post.userId"
-          :display-limit="displayedComments"
+          :display-limit="drawerVisible ? null : 5"
           :show-view-more="true"
           @refresh="refreshPost"
           @update:comment-count="updateCommentCount"
+          @view-all="drawerVisible = true"
         />
 
         <!-- 添加查看更多按钮 -->
-        <div class="view-more-comments" v-if="!showAllComments && commentCount > 5">
+        <div class="view-more-comments" v-if="!drawerVisible && commentCount > 5">
           <el-button type="primary" text @click="drawerVisible = true">
-            查看全部评论
+            查看全部评论（{{ commentCount }}条）
           </el-button>
         </div>
       </div>
@@ -326,7 +327,6 @@ const handleAuthorClick = (userId) => {
           :title="post.title"
           :user-id="post.userId"
           :display-limit="null"
-          :show-view-more="false"
           @refresh="refreshPost"
         />
       </el-drawer>
@@ -433,6 +433,8 @@ const handleAuthorClick = (userId) => {
 
 :deep(.el-drawer__body) {
   padding: 0 24px;
+  height: calc(100% - 60px);
+  overflow-y: auto;
 }
 
 .post-interaction {

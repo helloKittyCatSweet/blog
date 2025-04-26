@@ -11,6 +11,7 @@ import {
   Reading,
   ArrowUp,
   ArrowDown,
+  ArrowRight,
 } from "@element-plus/icons-vue";
 import {
   getUserDashboard,
@@ -355,7 +356,7 @@ const hasData = computed(() => {
             <el-button type="primary" link @click="chartsVisible = !chartsVisible">
               {{ chartsVisible ? "收起" : "展开" }}
               <el-icon class="el-icon--right">
-                <component :is="chartsVisible ? 'ArrowUp' : 'ArrowDown'" />
+                <component :is="chartsVisible ? ArrowUp : ArrowDown" />
               </el-icon>
             </el-button>
           </div>
@@ -386,7 +387,7 @@ const hasData = computed(() => {
             >
               {{ suggestionsVisible ? "收起" : "展开" }}
               <el-icon class="el-icon--right">
-                <component :is="suggestionsVisible ? 'ArrowUp' : 'ArrowDown'" />
+                <component :is="suggestionsVisible ? ArrowUp : ArrowDown" />
               </el-icon>
             </el-button>
           </div>
@@ -408,7 +409,7 @@ const hasData = computed(() => {
             </div>
             <el-button type="primary" link @click="router.push(USER_POST_LIST_PATH)">
               查看全部
-              <el-icon class="el-icon--right"><arrow-right /></el-icon>
+              <el-icon class="el-icon--right"><ArrowRight /></el-icon>
             </el-button>
           </div>
         </template>
@@ -459,9 +460,11 @@ const hasData = computed(() => {
 }
 
 .stat-card {
-  transition: transform 0.3s;
-  border-radius: 8px;
+  transition: all 0.3s ease;
+  border-radius: 12px;
   overflow: hidden;
+  text-align: center;
+  background: var(--el-bg-color);
 }
 
 .stat-card:hover {
@@ -472,15 +475,106 @@ const hasData = computed(() => {
 .card-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+  font-weight: 600;
+  font-size: 16px;
+  color: #fff;
+  padding: 15px;
 }
 
 .stat-value {
-  font-size: 24px;
-  font-weight: bold;
-  color: var(--el-color-primary);
+  font-size: 36px;
+  font-weight: 700;
   text-align: center;
-  padding: 10px 0;
+  padding: 20px 0;
+  transition: all 0.3s ease;
+  font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+  letter-spacing: 1px;
+  position: relative;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card:hover .stat-value {
+  transform: scale(1.1);
+}
+
+/* 统计卡片的不同主题色 */
+.primary-card {
+  background: linear-gradient(135deg, #409EFF 0%, #85c5ff 100%);
+  :deep(.el-card__header) {
+    background: transparent;
+  }
+}
+
+.success-card {
+  background: linear-gradient(135deg, #67C23A 0%, #95d475 100%);
+  :deep(.el-card__header) {
+    background: transparent;
+  }
+}
+
+.warning-card {
+  background: linear-gradient(135deg, #E6A23C 0%, #f3c895 100%);
+  :deep(.el-card__header) {
+    background: transparent;
+  }
+}
+
+.danger-card {
+  background: linear-gradient(135deg, #F56C6C 0%, #f8a5a5 100%);
+  :deep(.el-card__header) {
+    background: transparent;
+  }
+}
+
+/* 卡片内的图标样式 */
+.card-header .el-icon {
+  font-size: 24px;
+  color: #fff;
+}
+
+/* 添加卡片内容的阴影效果 */
+:deep(.el-card__body) {
+  position: relative;
+  z-index: 1;
+}
+
+/* 暗色主题适配 */
+:deep(.dark) {
+  .primary-card {
+    background: linear-gradient(135deg, #336699 0%, #4a90e2 100%);
+  }
+  
+  .success-card {
+    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+  }
+  
+  .warning-card {
+    background: linear-gradient(135deg, #F57C00 0%, #FFB74D 100%);
+  }
+  
+  .danger-card {
+    background: linear-gradient(135deg, #C62828 0%, #EF5350 100%);
+  }
+  
+  .stat-value {
+    color: #fff;
+  }
+}
+
+/* 添加微妙的纹理效果 */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent);
+  background-size: 4px 4px;
+  opacity: 0.1;
 }
 
 .charts-container {
@@ -498,31 +592,6 @@ const hasData = computed(() => {
   margin-bottom: 24px;
 }
 
-/* 统计卡片的不同主题色 */
-.primary-card :deep(.el-card__header) {
-  background-color: var(--el-color-primary-light-8);
-}
-
-.success-card :deep(.el-card__header) {
-  background-color: var(--el-color-success-light-8);
-}
-
-.warning-card :deep(.el-card__header) {
-  background-color: var(--el-color-warning-light-8);
-}
-
-.danger-card :deep(.el-card__header) {
-  background-color: var(--el-color-danger-light-8);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  justify-content: space-between;
-}
-
 .header-left {
   display: flex;
   align-items: center;
@@ -531,14 +600,6 @@ const hasData = computed(() => {
 
 .header-icon {
   font-size: 18px;
-}
-
-.stat-value {
-  font-size: 28px;
-  font-weight: bold;
-  color: var(--el-text-color-primary);
-  text-align: center;
-  padding: 16px 0;
 }
 
 .charts-container {

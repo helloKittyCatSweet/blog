@@ -8,6 +8,7 @@ import com.aliyun.oss.model.ListObjectsV2Request;
 import com.aliyun.oss.model.ListObjectsV2Result;
 import com.aliyun.oss.model.OSSObjectSummary;
 import com.aliyun.oss.model.PutObjectRequest;
+import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
@@ -53,6 +54,10 @@ public class AliyunOSSUploader {
     private final AtomicInteger failureCount = new AtomicInteger(0);
     private volatile boolean usingInternalEndpoint = false;
 
+    // 添加连接池管理
+    private volatile OSS ossClient;
+    private final Object lock = new Object();
+
     private String getEffectiveEndpoint() {
         // 如果已经在使用内网endpoint，直接返回
         if (usingInternalEndpoint) {
@@ -82,23 +87,26 @@ public class AliyunOSSUploader {
     }
 
     private OSS createOSSClient() {
-        // 创建ClientConfiguration实例
-        ClientBuilderConfiguration conf = new ClientBuilderConfiguration();
+        if (ossClient == null) {
+            synchronized (lock) {
+                if (ossClient == null) {
+                    ClientBuilderConfiguration conf = new ClientBuilderConfiguration();
+                    conf.setConnectionTimeout(CONNECTION_TIMEOUT);
+                    conf.setSocketTimeout(SOCKET_TIMEOUT);
+                    conf.setMaxConnections(MAX_CONNECTIONS);
+                    conf.setMaxErrorRetry(MAX_ERROR_RETRY);
+                    conf.setRequestTimeout(REQUEST_TIMEOUT);
 
-        // 基础连接配置
-        conf.setConnectionTimeout(CONNECTION_TIMEOUT);
-        conf.setSocketTimeout(SOCKET_TIMEOUT);
-        conf.setMaxConnections(MAX_CONNECTIONS);
-        conf.setMaxErrorRetry(MAX_ERROR_RETRY);
-        conf.setRequestTimeout(REQUEST_TIMEOUT);
+                    // 开启连接池
+                    conf.setConnectionTTL(3600000); // 连接存活时间1小时
+                    conf.setIdleConnectionTime(60000); // 空闲连接超时时间
 
-        // 开启TCP连接复用
-        conf.setSupportCname(true);
-
-        // 使用当前有效的endpoint创建客户端
-        String currentEndpoint = getEffectiveEndpoint();
-        logger.debug("Creating OSS client with endpoint: {}", currentEndpoint);
-        return new OSSClientBuilder().build(currentEndpoint, accessKeyId, accessKeySecret, conf);
+                    String currentEndpoint = getEffectiveEndpoint();
+                    ossClient = new OSSClientBuilder().build(currentEndpoint, accessKeyId, accessKeySecret, conf);
+                }
+            }
+        }
+        return ossClient;
     }
 
     /**
@@ -109,19 +117,19 @@ public class AliyunOSSUploader {
             objectName = "posts/" + someId + "/" + System.currentTimeMillis() + "-" + file.getName();
         }
 
-        OSS ossClient = null;
         int retryCount = 0;
         Exception lastException = null;
+        OSS currentClient = createOSSClient();
 
         while (retryCount < MAX_ERROR_RETRY) {
             try {
-                ossClient = createOSSClient();
-
-                // 创建文件上传请求
                 PutObjectRequest putObjectRequest = new PutObjectRequest(bucketName, objectName, file);
 
-                // 上传文件到 OSS
-                ossClient.putObject(putObjectRequest);
+                // 设置上传回调
+                putObjectRequest.setCallback(null);
+
+                // 异步上传
+                currentClient.putObject(putObjectRequest);
 
                 // 上传成功，重置失败计数
                 failureCount.set(0);
@@ -130,29 +138,50 @@ public class AliyunOSSUploader {
             } catch (Exception e) {
                 lastException = e;
                 retryCount++;
-
-                // 增加失败计数
                 failureCount.incrementAndGet();
 
                 logger.warn("文件上传失败，正在进行第 {} 次重试: {}", retryCount, e.getMessage());
 
+                // 如果是连接问题，重新创建客户端
+                if (isConnectionError(e)) {
+                    synchronized (lock) {
+                        if (currentClient == ossClient) {
+                            ossClient.shutdown();
+                            ossClient = null;
+                            currentClient = createOSSClient();
+                        }
+                    }
+                }
+
+                // 使用较短的重试等待时间
                 try {
-                    // 指数退避策略，但最大等待时间不超过5秒
-                    long sleepTime = Math.min(1000 * (long) Math.pow(2, retryCount - 1), 5000);
-                    Thread.sleep(sleepTime);
+                    Thread.sleep(1000 * retryCount);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     throw new RuntimeException("上传被中断", ie);
                 }
-            } finally {
-                if (ossClient != null) {
-                    ossClient.shutdown();
-                }
             }
         }
 
-        throw new RuntimeException("文件上传失败，已重试 " + retryCount + " 次: " +
-                (lastException != null ? lastException.getMessage() : "未知错误"), lastException);
+        throw new RuntimeException("文件上传失败，已重试 " + retryCount + " 次", lastException);
+    }
+
+    // 添加连接错误判断方法
+    private boolean isConnectionError(Exception e) {
+        String message = e.getMessage().toLowerCase();
+        return message.contains("connection") ||
+                message.contains("timeout") ||
+                message.contains("socket") ||
+                message.contains("connection pool");
+    }
+
+    // 添加关闭方法
+    @PreDestroy
+    public void destroy() {
+        if (ossClient != null) {
+            ossClient.shutdown();
+            ossClient = null;
+        }
     }
 
     /**

@@ -48,7 +48,6 @@ public class LoginResponseDto implements Serializable, UserDetails {
         return password;
     }
 
-
     @Override
     public boolean isAccountNonExpired() {
         return UserDetails.super.isAccountNonExpired();

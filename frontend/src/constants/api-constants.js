@@ -5,6 +5,7 @@ export const reportPrefix = '/report'
 export const recommendationPrefix = '/recommendations'
 export const analyticsPrefix = '/analytics'
 export const postVersionPrefix = '/postVersion'
+export const exportPrefix = '/export'
 
 // 用户模块下面的api
 export const userPrefix = '/api/user'

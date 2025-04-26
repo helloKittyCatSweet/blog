@@ -669,11 +669,12 @@ public class PostService {
     @Transactional
     @CacheEvict(allEntries = true)
     public ResponseEntity<Post> save(Post post) {
+        Post pp = postRepository.save(post);
         postVersionRepository.save(
-                new PostVersion(post.getPostId(), post.getContent(),
+                new PostVersion(pp.getPostId(), post.getContent(),
                         post.getUserId(), post.getVersion()));
 
-        return new ResponseEntity<>((Post) postRepository.save(post), HttpStatus.OK);
+        return new ResponseEntity<>(pp , HttpStatus.OK);
     }
 
     @Transactional

@@ -2,7 +2,7 @@
 import { ref, defineProps, defineEmits } from "vue";
 import { ElMessage } from "element-plus";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
-import { handleGithubCallback } from "@/api/auth/oauth";
+import { completeGithubRegistration } from "@/api/auth/oauth";
 
 const props = defineProps({
   modelValue: {
@@ -69,22 +69,23 @@ const handleSetPassword = async () => {
     if (!props.oauthData?.code) {
       throw new Error("授权信息无效，请重新登录");
     }
-    const response = await handleGithubCallback(
-      props.oauthData.code,
+
+    // 调用完成注册的API
+    const response = await completeGithubRegistration(
       resetForm.value.newPassword,
       resetForm.value.email
     );
 
     if (response.data.status === 200) {
-      ElMessage.success("密码设置成功");
+      ElMessage.success("注册成功");
       emit("success", response.data.data);
       handleClose();
     } else {
-      throw new Error(response.data.message || "密码设置失败");
+      throw new Error(response.data.message || "注册失败");
     }
   } catch (error) {
-    console.error("设置密码失败:", error);
-    ElMessage.error(error.message || "设置密码失败");
+    console.error("注册失败:", error);
+    ElMessage.error(error.message || "注册失败");
   }
 };
 

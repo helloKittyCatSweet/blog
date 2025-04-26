@@ -1,5 +1,5 @@
 <script setup>
-import { User, Lock } from "@element-plus/icons-vue";
+import { User, Lock, InfoFilled } from "@element-plus/icons-vue";
 import { ref, watch, nextTick, onMounted, onUnmounted } from "vue";
 import { ElMessage } from "element-plus";
 import { useUserStore, useSettingsStore, useThemeStore } from "@/stores";
@@ -16,7 +16,11 @@ import { login, register } from "@/api/user/user";
 import { verify, send } from "@/api/user/security/emailVerification";
 import { CONTROL_PANEL_PATH, LOGIN_PATH } from "@/constants/routes/base";
 import { BLOG_HOME_PATH } from "@/constants/routes/blog.js";
-import { getGithubLoginUrl, handleGithubCallback } from "@/api/auth/oauth";
+import { 
+  getGithubLoginUrl, 
+  handleGithubCallback,
+  completeGithubRegistration 
+} from "@/api/auth/oauth";
 
 const isRegister = ref(false);
 
@@ -153,10 +157,11 @@ const githubLoading = ref(false);
 onMounted(async () => {
   // 检查是否是GitHub回调
   const code = new URLSearchParams(window.location.search).get("code");
-  if (code) {
+  const type = new URLSearchParams(window.location.search).get("type");
+
+  if (code && type === 'github-callback') {
     try {
-      // 先尝试直接登录（针对已注册用户）
-      oauthLoading.value = true; // 显示加载动画
+      oauthLoading.value = true;
       ElMessage({
         message: "正在处理GitHub登录...",
         type: "info",
@@ -165,8 +170,7 @@ onMounted(async () => {
       const res = await handleGithubCallback(code);
       if (res.data.status === 200) {
         const userData = res.data.data;
-        if (userData.isNewUser) {
-          // 新用户需要设置密码
+        if (userData.newUser) {
           oauthData.value = {
             code,
             email: userData.email || "",
@@ -174,13 +178,16 @@ onMounted(async () => {
           };
           oauthDialogVisible.value = true;
         } else {
-          // 已注册用户直接登录
           await handleOAuthLogin(userData);
         }
       }
     } catch (error) {
       console.error("GitHub登录回调处理失败:", error);
-      ElMessage.error("GitHub登录失败");
+      ElMessage.error(error.response?.data?.message || "GitHub登录失败");
+    } finally {
+      oauthLoading.value = false;
+      // 清除 URL 中的查询参数
+      router.replace({ path: LOGIN_PATH });
     }
   }
 
@@ -364,7 +371,7 @@ const loadUserTheme = async (userId) => {
         csdnAccount: data.csdnAccount,
         bilibiliAccount: data.biliBiliAccount,
       });
-      
+
       // 主题会通过 settingsStore 自动同步到 themeStore
     }
   } catch (error) {
@@ -603,42 +610,81 @@ const oauthLoading = ref(false);
 const handleGithubLogin = async () => {
   try {
     githubLoading.value = true;
-    oauthLoading.value = true; // 显示加载动画
-    ElMessage({
-      message: "正在跳转到 GitHub 授权页面...",
-      type: "info",
-      duration: 2000,
-    });
-
     const res = await getGithubLoginUrl();
     if (res.data.status === 200) {
-      window.location.href = res.data.data;
-    } else {
-      ElMessage.error("获取GitHub登录地址失败");
+      // 使用弹窗方式打开 GitHub 授权页面
+      const width = 600;
+      const height = 700;
+      const left = window.screen.width / 2 - width / 2;
+      const top = window.screen.height / 2 - height / 2;
+
+      // 添加 force_login 参数强制显示登录页面
+      const authUrl = new URL(res.data.data);
+      authUrl.searchParams.set('force_login', 'true');
+      authUrl.searchParams.set('prompt', 'consent');
+
+      window.open(
+        authUrl.toString(),
+        'GitHub 授权',
+        `width=${width},height=${height},top=${top},left=${left},menubar=no,toolbar=no,location=no,status=no`
+      );
+
+      // 添加消息监听器
+      const handleMessage = async (event) => {
+        if (event.origin !== window.location.origin) return;
+
+        if (event.data.type === 'github-oauth-callback' && event.data.code) {
+          try {
+            oauthLoading.value = true;
+            // 先尝试直接登录
+            const res = await handleGithubCallback(event.data.code);
+            console.log("res", res);
+            if (res.data.status === 200) {
+              const userData = res.data.data;
+              if (userData.newUser) {
+                // 如果是新用户，显示注册对话框
+                oauthData.value = {
+                  code: event.data.code,
+                  email: userData.email || "",
+                  username: userData.username || "",
+                };
+                oauthDialogVisible.value = true;
+              } else {
+                // 如果是已有用户，直接登录
+                ElMessage.success('GitHub 登录成功');
+                await handleOAuthLogin(userData);
+              }
+            }
+          } catch (error) {
+            console.error('GitHub 登录失败:', error);
+            ElMessage.error(error.response?.data?.message || 'GitHub 登录失败');
+          } finally {
+            oauthLoading.value = false;
+            window.removeEventListener('message', handleMessage);
+          }
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
     }
   } catch (error) {
-    console.error("GitHub登录失败:", error);
-    ElMessage.error("获取GitHub登录地址失败");
+    console.error('获取 GitHub 登录地址失败:', error);
+    ElMessage.error('获取 GitHub 登录地址失败');
   } finally {
     githubLoading.value = false;
   }
 };
 
-// 添加处理密码设置成功的回调
+// 处理新用户设置密码
 const handlePasswordSet = async (userData) => {
   try {
     if (userData) {
-      ElMessage({
-        message: "正在处理登录信息...",
-        type: "info",
-        duration: 2000,
-      });
       await handleOAuthLogin(userData);
       oauthDialogVisible.value = false;
     }
   } catch (error) {
-    console.error("处理密码设置失败:", error);
-    ElMessage.error("设置密码后登录失败");
+    console.error("登录失败:", error);
+    ElMessage.error(error.response?.data?.message || "登录失败");
   }
 };
 
@@ -861,6 +907,20 @@ const goToBlog = () => {
               <font-awesome-icon :icon="['fab', 'github']" />
               GitHub 登录
             </el-button>
+            
+            <!-- 更新GitHub账号提示 -->
+            <div class="github-tips">
+              <el-tooltip
+                content="在GitHub授权页面上可以选择或切换要使用的GitHub账号"
+                placement="bottom"
+                effect="light"
+              >
+                <span class="github-help">
+                  <el-icon><InfoFilled /></el-icon>
+                  点击登录后可选择GitHub账号
+                </span>
+              </el-tooltip>
+            </div>
           </div>
 
           <OAuthPasswordDialog
@@ -968,35 +1028,57 @@ const goToBlog = () => {
 
     .github-container {
       display: flex;
-      justify-content: center;
-      width: 100%;
-    }
-
-    .github-button {
-      width: 60%;
-      padding: 12px 24px;
-      display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
+      width: 100%;
       gap: 8px;
-      background-color: #24292e;
-      color: white !important;
-      border: none !important;
-      transition: all 0.3s ease;
 
-      &:hover {
-        background-color: #2f363d !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      .github-button {
+        width: 60%;
+        padding: 12px 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        background-color: #24292e;
+        color: white !important;
+        border: none !important;
+        transition: all 0.3s ease;
+
+        &:hover {
+          background-color: #2f363d !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        &:active {
+          background-color: #1b1f23 !important;
+          transform: translateY(0);
+        }
+
+        .fa-github {
+          font-size: 18px;
+        }
       }
 
-      &:active {
-        background-color: #1b1f23 !important;
-        transform: translateY(0);
-      }
-
-      .fa-github {
-        font-size: 18px;
+      .github-tips {
+        font-size: 12px;
+        color: #606266;
+        margin-top: 4px;
+        
+        .github-help {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          color: #909399;
+          font-size: 13px;
+          cursor: help;
+          
+          .el-icon {
+            font-size: 14px;
+            color: var(--el-color-primary);
+          }
+        }
       }
     }
   }

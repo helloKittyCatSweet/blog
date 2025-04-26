@@ -10,6 +10,7 @@ import com.kitty.blog.domain.model.*;
 import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.model.tag.PostTag;
 import com.kitty.blog.domain.repository.post.PostSearchCriteria;
+import com.kitty.blog.domain.service.post.PostExportService;
 import com.kitty.blog.domain.service.post.PostService;
 import com.kitty.blog.domain.service.post.UserStatisticsService;
 import com.kitty.blog.infrastructure.utils.Response;
@@ -21,6 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +33,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +47,6 @@ public class PostController {
 
     @Autowired
     private PostService postService;
-
     /**
      * 创建文章
      *
@@ -71,7 +74,8 @@ public class PostController {
      * @param postDto
      * @return
      */
-    @PreAuthorize("(hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER) and #postDto.post.userId == #user.id) " +
+    @PreAuthorize("(hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER) and #postDto.post.userId == #user.id) "
+            +
             "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_POST_MANAGER) " +
             "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
     @Operation(summary = "更新文章")
@@ -102,10 +106,8 @@ public class PostController {
     })
     @LogPostMetrics("上传文件")
     public ResponseEntity<Response<String>> uploadAttachment(
-            @Parameter(description = "文件", required = true)
-            @RequestPart(value = "file") @NotNull MultipartFile file,
-            @Parameter(description = "博客ID", required = true)
-            @RequestParam Integer postId,
+            @Parameter(description = "文件", required = true) @RequestPart(value = "file") @NotNull MultipartFile file,
+            @Parameter(description = "博客ID", required = true) @RequestParam Integer postId,
             @AuthenticationPrincipal LoginResponseDto user) {
         // 检查文件是否为空
         if (file.isEmpty()) {
@@ -155,8 +157,8 @@ public class PostController {
                     null, null, "文件处理失败");
         } catch (Exception e) {
             log.error("上传失败", e);
-            return Response.createResponse(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR)
-                    , HttpStatus.INTERNAL_SERVER_ERROR,
+            return Response.createResponse(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR),
+                    HttpStatus.INTERNAL_SERVER_ERROR,
                     null, null, "上传失败");
         }
     }
@@ -172,10 +174,8 @@ public class PostController {
             @ApiResponse(responseCode = "500", description = "上传失败")
     })
     public ResponseEntity<Response<String>> uploadCover(
-            @Parameter(description = "文件", required = true)
-            @RequestPart(value = "file") @NotNull MultipartFile file,
-            @Parameter(description = "博客ID", required = true)
-            @RequestParam Integer postId,
+            @Parameter(description = "文件", required = true) @RequestPart(value = "file") @NotNull MultipartFile file,
+            @Parameter(description = "博客ID", required = true) @RequestParam Integer postId,
             @AuthenticationPrincipal LoginResponseDto user) {
         // 检查文件是否为空
         if (file.isEmpty()) {
@@ -225,8 +225,8 @@ public class PostController {
                     null, null, "文件处理失败");
         } catch (Exception e) {
             log.error("上传失败", e);
-            return Response.createResponse(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR)
-                    , HttpStatus.INTERNAL_SERVER_ERROR,
+            return Response.createResponse(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR),
+                    HttpStatus.INTERNAL_SERVER_ERROR,
                     null, null, "上传失败");
         }
     }
@@ -264,11 +264,9 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "添加成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<Boolean>> addCategory
-    (@RequestBody PostCategory postCategory) {
-        ResponseEntity<Boolean> response =
-                postService.addCategory(postCategory.getId().getPostId(),
-                        postCategory.getId().getCategoryId());
+    public ResponseEntity<Response<Boolean>> addCategory(@RequestBody PostCategory postCategory) {
+        ResponseEntity<Boolean> response = postService.addCategory(postCategory.getId().getPostId(),
+                postCategory.getId().getCategoryId());
         return Response.createResponse(response,
                 HttpStatus.OK, "添加成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -287,11 +285,9 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "添加成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<Boolean>> addTag
-    (@RequestBody PostTag postTag) {
-        ResponseEntity<Boolean> response =
-                postService.addTag(postTag.getId().getPostId(),
-                        postTag.getId().getTagId());
+    public ResponseEntity<Response<Boolean>> addTag(@RequestBody PostTag postTag) {
+        ResponseEntity<Boolean> response = postService.addTag(postTag.getId().getPostId(),
+                postTag.getId().getTagId());
         return Response.createResponse(response,
                 HttpStatus.OK, "添加成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -310,10 +306,9 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "添加成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<PostVersion>> addVersion
-    (@RequestBody PostVersion postVersion) {
-        ResponseEntity<PostVersion> response = postService.addVersion
-                (postVersion.getPostId(), postVersion.getContent(), postVersion.getUserId());
+    public ResponseEntity<Response<PostVersion>> addVersion(@RequestBody PostVersion postVersion) {
+        ResponseEntity<PostVersion> response = postService.addVersion(postVersion.getPostId(),
+                postVersion.getContent(), postVersion.getUserId());
         return Response.createResponse(response,
                 HttpStatus.OK, "添加成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -327,16 +322,13 @@ public class PostController {
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     public ResponseEntity<Response<Boolean>> setVisibility(
-            @Parameter(description = "文章ID", required = true)
-            @RequestParam Integer postId,
-            @Parameter(description = "可见性", required = true)
-            @RequestParam String visibility) {
+            @Parameter(description = "文章ID", required = true) @RequestParam Integer postId,
+            @Parameter(description = "可见性", required = true) @RequestParam String visibility) {
         ResponseEntity<Boolean> response = postService.setVisibility(postId, visibility);
         return Response.createResponse(response,
                 HttpStatus.OK, "设置成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
     }
-
 
     /**
      * 根据文章ID查询文章详情
@@ -351,11 +343,9 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<Boolean>> deleteCategory
-    (@RequestBody PostCategory postCategory) {
-        ResponseEntity<Boolean> response =
-                postService.deleteCategory(postCategory.getId().getPostId(),
-                        postCategory.getId().getCategoryId());
+    public ResponseEntity<Response<Boolean>> deleteCategory(@RequestBody PostCategory postCategory) {
+        ResponseEntity<Boolean> response = postService.deleteCategory(postCategory.getId().getPostId(),
+                postCategory.getId().getCategoryId());
         return Response.createResponse(response,
                 HttpStatus.OK, "删除成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -375,9 +365,8 @@ public class PostController {
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     public ResponseEntity<Response<Boolean>> deleteTag(@RequestBody PostTag postTag) {
-        ResponseEntity<Boolean> response =
-                postService.deleteTag(postTag.getId().getPostId(),
-                        postTag.getId().getTagId());
+        ResponseEntity<Boolean> response = postService.deleteTag(postTag.getId().getPostId(),
+                postTag.getId().getTagId());
         return Response.createResponse(response,
                 HttpStatus.OK, "删除成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -396,11 +385,9 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "删除成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<Boolean>> deleteVersion
-    (@RequestBody PostVersion postVersion) {
-        ResponseEntity<Boolean> response =
-                postService.deleteVersion(postVersion.getPostId(),
-                        postVersion.getVersionId());
+    public ResponseEntity<Response<Boolean>> deleteVersion(@RequestBody PostVersion postVersion) {
+        ResponseEntity<Boolean> response = postService.deleteVersion(postVersion.getPostId(),
+                postVersion.getVersionId());
         return Response.createResponse(response,
                 HttpStatus.OK, "删除成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -439,8 +426,7 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<PostDto>>> findByTitleContaining
-    (@PathVariable String keyword) {
+    public ResponseEntity<Response<List<PostDto>>> findByTitleContaining(@PathVariable String keyword) {
         ResponseEntity<List<PostDto>> response = postService.findByTitleContaining(keyword);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
@@ -460,8 +446,7 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Post>>> findByContentContaining
-    (@PathVariable String keyword) {
+    public ResponseEntity<Response<List<Post>>> findByContentContaining(@PathVariable String keyword) {
         ResponseEntity<List<Post>> response = postService.findByContentContaining(keyword);
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
@@ -579,8 +564,7 @@ public class PostController {
     })
     public ResponseEntity<Response<Integer>> getLatestVersion(
             @PathVariable Integer postId,
-            @AuthenticationPrincipal LoginResponseDto user
-    ) {
+            @AuthenticationPrincipal LoginResponseDto user) {
         ResponseEntity<Integer> response = postService.getLatestVersion(postId);
         if (response.getBody() != null) {
             return ResponseEntity.ok(new Response<>(200, "查询成功", response.getBody()));
@@ -589,35 +573,35 @@ public class PostController {
         }
     }
 
-//    @Operation(summary = "置顶文章")
-//    @PostMapping("/top")
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200", description = "置顶成功"),
-//            @ApiResponse(responseCode = "500", description = "服务器内部错误")
-//    })
-//    public ResponseEntity<Response<Boolean>> top(Integer postId) {
-//        ResponseEntity<Boolean> response = postService.top(postId);
-//        if (Boolean.TRUE.equals(response.getBody())){
-//            return ResponseEntity.ok(new Response<>(200, "置顶成功", true));
-//        }else {
-//            return ResponseEntity.ok(new Response<>(500, "服务器内部错误", false));
-//        }
-//    }
-//
-//    @Operation(summary = "取消置顶文章")
-//    @PostMapping("/cancelTop")
-//    @ApiResponses(value = {
-//            @ApiResponse(responseCode = "200", description = "取消置顶成功"),
-//            @ApiResponse(responseCode = "500", description = "服务器内部错误")
-//    })
-//    public ResponseEntity<Response<Boolean>> cancelTop(Integer postId) {
-//        ResponseEntity<Boolean> response = postService.cancelTop(postId);
-//        if (Boolean.TRUE.equals(response.getBody())){
-//            return ResponseEntity.ok(new Response<>(200, "取消置顶成功", true));
-//        }else {
-//            return ResponseEntity.ok(new Response<>(500, "服务器内部错误", false));
-//        }
-//    }
+    // @Operation(summary = "置顶文章")
+    // @PostMapping("/top")
+    // @ApiResponses(value = {
+    // @ApiResponse(responseCode = "200", description = "置顶成功"),
+    // @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    // })
+    // public ResponseEntity<Response<Boolean>> top(Integer postId) {
+    // ResponseEntity<Boolean> response = postService.top(postId);
+    // if (Boolean.TRUE.equals(response.getBody())){
+    // return ResponseEntity.ok(new Response<>(200, "置顶成功", true));
+    // }else {
+    // return ResponseEntity.ok(new Response<>(500, "服务器内部错误", false));
+    // }
+    // }
+    //
+    // @Operation(summary = "取消置顶文章")
+    // @PostMapping("/cancelTop")
+    // @ApiResponses(value = {
+    // @ApiResponse(responseCode = "200", description = "取消置顶成功"),
+    // @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    // })
+    // public ResponseEntity<Response<Boolean>> cancelTop(Integer postId) {
+    // ResponseEntity<Boolean> response = postService.cancelTop(postId);
+    // if (Boolean.TRUE.equals(response.getBody())){
+    // return ResponseEntity.ok(new Response<>(200, "取消置顶成功", true));
+    // }else {
+    // return ResponseEntity.ok(new Response<>(500, "服务器内部错误", false));
+    // }
+    // }
 
     /**
      * 点赞文章
@@ -633,11 +617,9 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "点赞成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<Boolean>> like
-    (@RequestParam Integer postId,
-     @RequestParam Integer count) {
-        ResponseEntity<Boolean> response = postService.increaseLikes
-                (postId, count);
+    public ResponseEntity<Response<Boolean>> like(@RequestParam Integer postId,
+                                                  @RequestParam Integer count) {
+        ResponseEntity<Boolean> response = postService.increaseLikes(postId, count);
         return Response.createResponse(response,
                 HttpStatus.OK, count > 0 ? "点赞成功" : "取消点赞成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -658,12 +640,10 @@ public class PostController {
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     @LogPostMetrics("收藏文章")
-    public ResponseEntity<Response<Boolean>> increaseFavorites
-    (@RequestParam Integer postId,
-     @RequestParam Integer count,
-     @AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<Boolean> response = postService.increaseFavorites
-                (user.getId(), postId, count);
+    public ResponseEntity<Response<Boolean>> increaseFavorites(@RequestParam Integer postId,
+                                                               @RequestParam Integer count,
+                                                               @AuthenticationPrincipal LoginResponseDto user) {
+        ResponseEntity<Boolean> response = postService.increaseFavorites(user.getId(), postId, count);
         return Response.createResponse(response,
                 HttpStatus.OK, count > 0 ? "收藏成功" : "取消收藏成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -697,9 +677,8 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<List<Post>>> findByVisibility
-            (@PathVariable String visibility,
-             @AuthenticationPrincipal LoginResponseDto user) {
+    public ResponseEntity<Response<List<Post>>> findByVisibility(@PathVariable String visibility,
+                                                                 @AuthenticationPrincipal LoginResponseDto user) {
         ResponseEntity<List<Post>> response = postService.findByVisibility(visibility, user.getId());
         return Response.createResponse(response,
                 HttpStatus.OK, "查询成功",
@@ -731,11 +710,9 @@ public class PostController {
      * @param postId
      * @return
      */
-    @PreAuthorize(
-            "hasRole(T(com.kitty.blog.common.constant.Role).ROLE_POST_MANAGER) " +
-                    "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR) " +
-                    "or @postService.isAuthorOfOpenPost(#user.id, #postId)"
-    )
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_POST_MANAGER) " +
+            "or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR) " +
+            "or @postService.isAuthorOfOpenPost(#user.id, #postId)")
     @Operation(summary = "根据ID删除文章")
     @DeleteMapping("/public/delete/id/{postId}")
     @ApiResponses(value = {
@@ -819,8 +796,8 @@ public class PostController {
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "根据用户ID查询附件列表")
     @GetMapping("/public/find/attachments")
-    public ResponseEntity<Response<List<PostAttachmentDto>>>
-    findAttachmentsByPostId(@AuthenticationPrincipal LoginResponseDto user) {
+    public ResponseEntity<Response<List<PostAttachmentDto>>> findAttachmentsByPostId(
+            @AuthenticationPrincipal LoginResponseDto user) {
         List<PostAttachmentDto> attachments = postService.findAttachmentsByUserId(user.getId());
         return Response.createResponse(
                 new ResponseEntity<>(attachments, HttpStatus.OK),
@@ -849,8 +826,8 @@ public class PostController {
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or @postService.isAuthorOfOpenPost(#username, #user.id)")
     @PutMapping("/public/update/category/{postId}/{categoryId}")
-    public ResponseEntity<Response<PostDto>> updateCategory
-            (@PathVariable Integer postId, @PathVariable Integer categoryId) {
+    public ResponseEntity<Response<PostDto>> updateCategory(@PathVariable Integer postId,
+                                                            @PathVariable Integer categoryId) {
         ResponseEntity<PostDto> response = postService.updateCategory(postId, categoryId);
         return Response.createResponse(response,
                 HttpStatus.OK, "更新成功",
@@ -862,8 +839,8 @@ public class PostController {
             " or hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)" +
             " or @postService.isAuthorOfOpenPost(#username, #user.id)")
     @PutMapping("/public/update/tags/{postId}")
-    public ResponseEntity<Response<PostDto>> updateTags
-            (@PathVariable Integer postId, @RequestBody List<Integer> tags) {
+    public ResponseEntity<Response<PostDto>> updateTags(@PathVariable Integer postId,
+                                                        @RequestBody List<Integer> tags) {
         ResponseEntity<PostDto> response = postService.updateTags(postId, tags);
         return Response.createResponse(response,
                 HttpStatus.OK, "更新成功",
@@ -881,5 +858,4 @@ public class PostController {
                 HttpStatus.OK, "点赞成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "点赞失败");
     }
-
 }

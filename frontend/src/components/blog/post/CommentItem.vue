@@ -1,7 +1,7 @@
 <script setup>
 import { defineProps, defineEmits } from "vue";
 import { ElMessage } from "element-plus";
-import { Pointer, Thumb } from "@element-plus/icons-vue";
+import { Pointer } from "@element-plus/icons-vue";
 
 const props = defineProps({
   comment: {
@@ -86,7 +86,9 @@ const getAllReplies = (comment) => {
         >
           编辑
         </el-button>
-        <el-button type="danger" link @click="emit('delete', comment.commentId)">删除</el-button>
+        <el-button type="danger" link @click="emit('delete', comment.commentId)"
+          >删除</el-button
+        >
       </div>
     </div>
 
@@ -105,9 +107,7 @@ const getAllReplies = (comment) => {
       />
       <div class="edit-actions">
         <el-button @click="emit('cancel-edit', comment)">取消</el-button>
-        <el-button type="primary" @click="emit('save-edit', comment)">
-          保存
-        </el-button>
+        <el-button type="primary" @click="emit('save-edit', comment)"> 保存 </el-button>
       </div>
     </div>
 
@@ -117,11 +117,13 @@ const getAllReplies = (comment) => {
         link
         @click="emit('like', comment)"
       >
-        <el-icon><Thumb /></el-icon>
+        <el-icon><Pointer /></el-icon>
         {{ comment.likes || 0 }}
       </el-button>
 
-      <el-button type="primary" link @click="emit('reply', comment)">回复</el-button>
+      <el-button v-if="isLoggedIn" type="primary" link @click="emit('reply', comment)"
+        >回复</el-button
+      >
     </div>
 
     <!-- 修改子评论列表的渲染逻辑 -->

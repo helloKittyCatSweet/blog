@@ -107,8 +107,7 @@ public class UserService {
         user.setGender(2); // 默认保密
         user.setDeleted(false);
 
-        save(user); // 先保存以获取用户id
-        user = userRepository.findByUsername(user.getUsername()).get();
+        user = userRepository.save(user); // 先保存以获取用户id
 
         // 普通用户by default
         userRoleService.save(new UserRole(new UserRoleId(user.getUserId(), 1)));

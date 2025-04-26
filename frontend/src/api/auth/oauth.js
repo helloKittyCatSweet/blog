@@ -3,4 +3,16 @@ import { authPrefix, oauth2 } from '@/constants/api-constants'
 
 export const getGithubLoginUrl = () => request.get(`${authPrefix}${oauth2}/github/url`)
 
-export const handleGithubCallback = (code, password, email) => request.post(`${authPrefix}${oauth2}/github/callback`, { code, password, email })
+// 已注册用户的GitHub登录回调
+export const handleGithubCallback = (code) => request.get(`${authPrefix}${oauth2}/github/callback`, { params: { code } })
+
+// 新用户完成GitHub注册
+export const completeGithubRegistration = (password, email) => 
+  request({
+    url: `${authPrefix}${oauth2}/github/complete-registration`,
+    method: 'post',
+    data: {
+      password,
+      email
+    }
+  })

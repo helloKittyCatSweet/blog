@@ -42,16 +42,11 @@ const props = defineProps({
   displayLimit: {
     type: Number,
     required: false,
-    default: 5,
-  },
-  showViewMore: {
-    type: Boolean,
-    required: false,
-    default: true,
+    default: null,
   },
 });
 
-const emit = defineEmits(["refresh"]);
+const emit = defineEmits(["update:comment-count", "refresh"]);
 const userStore = useUserStore();
 
 // 添加评论列表状态
@@ -66,6 +61,8 @@ const fetchComments = async () => {
       const processedComments = await Promise.all(commentsData.map(processCommentLikes));
       comments.value = sortComments(processedComments);
     }
+    // 触发评论数量更新
+    emit("update:comment-count", total.value);
   } catch (error) {
     console.error("获取评论列表失败:", error);
     ElMessage.error("获取评论列表失败");
@@ -424,10 +421,30 @@ const processCommentLikes = async (comment) => {
  */
 // 添加计算属性来控制显示的评论
 const displayComments = computed(() => {
-  if (!props.displayLimit || comments.value.length <= props.displayLimit) {
+  if (!props.displayLimit) {
     return comments.value;
   }
-  return comments.value.slice(0, props.displayLimit);
+
+  // 递归计算评论总数
+  const countAllComments = (comment) => {
+    let count = 1; // 当前评论
+    if (comment.children && comment.children.length > 0) {
+      comment.children.forEach((child) => {
+        count += countAllComments(child);
+      });
+    }
+    return count;
+  };
+
+  let totalCount = 0;
+  return comments.value.filter((comment) => {
+    const currentCommentCount = countAllComments(comment);
+    if (totalCount + currentCommentCount > props.displayLimit) {
+      return false;
+    }
+    totalCount += currentCommentCount;
+    return true;
+  });
 });
 </script>
 
@@ -467,9 +484,7 @@ const displayComments = computed(() => {
         resize="none"
       />
       <div class="comment-actions">
-        <el-button type="primary" @click="submitComment">
-          发表评论
-        </el-button>
+        <el-button type="primary" @click="submitComment"> 发表评论 </el-button>
       </div>
     </div>
     <div v-else class="login-tip">登录后即可评论</div>
@@ -502,7 +517,10 @@ const displayComments = computed(() => {
         />
 
         <!-- 回复框 -->
-        <div v-if="replyingTo?.commentId === comment.commentId" class="reply-box">
+        <div
+          v-if="replyingTo?.commentId === comment.commentId && userStore.isLoggedIn"
+          class="reply-box"
+        >
           <el-input
             v-model="replyContent"
             type="textarea"
@@ -512,18 +530,9 @@ const displayComments = computed(() => {
           />
           <div class="reply-actions">
             <el-button @click="cancelReply">取消</el-button>
-            <el-button type="primary" @click="submitReply(comment)">
-              发表回复
-            </el-button>
+            <el-button type="primary" @click="submitReply(comment)"> 发表回复 </el-button>
           </div>
         </div>
-      </div>
-
-      <!-- 显示查看更多按钮 -->
-      <div v-if="showViewMore && comments.length > displayLimit" class="view-more">
-        <el-button type="primary" link @click="$emit('view-all')">
-          查看全部评论
-        </el-button>
       </div>
     </div>
 

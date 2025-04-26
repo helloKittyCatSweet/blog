@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from "vue";
-import { ChatLineRound, Star, Pointer, Thumb } from "@element-plus/icons-vue";
+import { ChatLineRound, Star, Pointer } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import {
   create as createUserActivity,
@@ -21,17 +21,15 @@ const props = defineProps({
   isFavorited: Boolean,
   likeActivityId: Number,
   favoriteActivityId: Number,
-  likes: {
-    type: Number,
-    default: 0
-  },
-  favorites: {
-    type: Number,
-    default: 0
-  }
 });
 
-const emit = defineEmits(["update:isLiked", "update:isFavorited", "refresh"]);
+const emit = defineEmits([
+  "update:isLiked",
+  "update:isFavorited",
+  "update:likeActivityId",
+  "update:favoriteActivityId",
+  "refresh",
+]);
 
 const userStore = useUserStore();
 
@@ -49,19 +47,28 @@ const handleLike = async () => {
       console.log("取消点赞:likeActivityId", props.likeActivityId);
       await deleteUserActivity(props.likeActivityId);
       emit("update:isLiked", false);
+      // 清除点赞活动ID
+      emit("update:likeActivityId", null);
       ElMessage.success("取消点赞成功");
     } else {
-      await createUserActivity({
+      const response = await createUserActivity({
         userId: userStore.user.id,
         activityType: "LIKE",
         postId: props.postId,
-        activityDetail: `${userStore.user.username}点赞了文章《${props.title}》`
+        activityDetail: `${userStore.user.username}点赞了文章《${props.title}》`,
       });
-      emit("update:isLiked", true);
-      ElMessage.success("点赞成功");
+
+      if (response.data.status === 200) {
+        const activityId = response.data.data.activityId;
+        emit("update:isLiked", true);
+        // 更新点赞活动ID
+        emit("update:likeActivityId", activityId);
+        ElMessage.success("点赞成功");
+      }
     }
     emit("refresh");
   } catch (error) {
+    console.error("点赞操作失败:", error);
     ElMessage.error(props.isLiked ? "取消点赞失败" : "点赞失败");
   }
 };
@@ -103,14 +110,16 @@ const handleFavorite = async () => {
       // 删除收藏记录
       if (favoriteId) {
         await deleteFavorite(favoriteId);
+        emit("update:isFavorited", false);
+        // 清除收藏活动ID
+        emit("update:favoriteActivityId", null);
+        ElMessage.success("取消收藏成功");
+        emit("refresh");
+      } else {
+        ElMessage.error("收藏记录不存在");
       }
-      // 删除收藏活动
-      await deleteUserActivity(props.favoriteActivityId);
-
-      emit("update:isFavorited", false);
-      ElMessage.success("取消收藏成功");
-      emit("refresh");
     } catch (error) {
+      console.error("取消收藏失败:", error);
       ElMessage.error("取消收藏失败");
     }
   } else {
@@ -144,19 +153,24 @@ const confirmFavorite = async () => {
 
     if (favoriteResponse.data.status === 200) {
       // 创建收藏活动
-      await createUserActivity({
+      const activityResponse = await createUserActivity({
         userId: userStore.user.id,
         activityType: "FAVORITE",
         postId: props.postId,
         activityDetail: `${userStore.user.username}将文章《${props.title}》收藏到"${folderName}"`,
       });
 
-      emit("update:isFavorited", true);
-      ElMessage.success("收藏成功");
-      emit("refresh");
-      showFolderDialog.value = false;
-      newFolderName.value = "";
-      selectedFolder.value = "默认收藏夹";
+      if (activityResponse.data.status === 200) {
+        const activityId = activityResponse.data.data.activityId;
+        emit("update:isFavorited", true);
+        // 更新收藏活动ID
+        emit("update:favoriteActivityId", activityId);
+        ElMessage.success("收藏成功");
+        emit("refresh");
+        showFolderDialog.value = false;
+        newFolderName.value = "";
+        selectedFolder.value = "默认收藏夹";
+      }
     }
   } catch (error) {
     console.error("收藏失败:", error.response?.data || error);
@@ -170,19 +184,19 @@ const confirmFavorite = async () => {
     <div class="interaction-buttons">
       <el-button
         :type="isLiked ? 'primary' : 'default'"
-        link
+        :class="{ 'interaction-button': true, 'liked-button': isLiked }"
         @click="handleLike"
       >
-        <el-icon><Thumb /></el-icon>
-        {{ likes || 0 }}
+        <el-icon class="interaction-icon"><Pointer /></el-icon>
+        <span class="interaction-text">{{ isLiked ? "已点赞" : "点赞" }}</span>
       </el-button>
       <el-button
         :type="isFavorited ? 'primary' : 'default'"
-        link
+        :class="{ 'interaction-button': true, 'favorited-button': isFavorited }"
         @click="handleFavorite"
       >
-        <el-icon><Star /></el-icon>
-        {{ favorites || 0 }}
+        <el-icon class="interaction-icon"><Star /></el-icon>
+        <span class="interaction-text">{{ isFavorited ? "已收藏" : "收藏" }}</span>
       </el-button>
     </div>
 
@@ -276,5 +290,66 @@ const confirmFavorite = async () => {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.interaction-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.interaction-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+.interaction-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.interaction-icon {
+  font-size: 18px;
+}
+
+.interaction-text {
+  font-size: 14px;
+  margin: 0 4px;
+}
+
+.interaction-count {
+  font-size: 14px;
+  font-weight: 500;
+  min-width: 20px;
+  text-align: center;
+}
+
+.liked-button,
+.favorited-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.liked-button::before,
+.favorited-button::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120%;
+  height: 120%;
+  background: rgba(64, 158, 255, 0.1);
+  transform: translate(-50%, -50%) scale(0);
+  border-radius: 50%;
+  transition: transform 0.3s ease-out;
+}
+
+.liked-button:hover::before,
+.favorited-button:hover::before {
+  transform: translate(-50%, -50%) scale(1);
 }
 </style>

@@ -153,7 +153,7 @@ spring:
             client-id: Ov23liY8AiP9uI5DsZCR  # 你的 GitHub OAuth App client id
             client-secret: bef4b57011303aaa891724856954bc050b3d8c4a  # 你的 GitHub OAuth App client secret
             scope: user:email, read:user
-            redirect-uri: http://localhost:5173/login
+            redirect-uri: http://localhost:5173/auth/github/callback
         provider:
           github:
             authorization-uri: https://github.com/login/oauth/authorize

@@ -53,7 +53,7 @@ public class SecurityConfig {
      * BCrypt是一种迭代的哈希算法，它的工作原理如下：
      * <p>
      * 加盐：BCrypt在哈希过程中会自动生成一个盐值（通常是128位），然后将盐值与用户密码组合在一起。
-     * 迭代哈希：BCrypt使用一个称为“工作因子”的参数来决定哈希操作的迭代次数。这个参数越高，哈希计算的时间就越长，从而增加破解的难度。
+     * 迭代哈希：BCrypt使用一个称为"工作因子"的参数来决定哈希操作的迭代次数。这个参数越高，哈希计算的时间就越长，从而增加破解的难度。
      * 哈希生成：BCrypt将盐值和用户密码组合后，经过多次哈希运算生成最终的哈希值。
      * 哈希存储：生成的哈希值（包括盐值和工作因子）会被存储在数据库中。
      * 验证密码
@@ -73,9 +73,10 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)// 禁用 CSRF (仅在开发阶段时使用); // 开启基本的 HTTP 认证 (如需要)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
-                      .authenticationEntryPoint(unauthorizedHandler)) // 认证失败处理器
+                        .authenticationEntryPoint(unauthorizedHandler)) // 认证失败处理器
                 .sessionManagement(sessionManagement -> sessionManagement
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // 禁用 session
+                .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(authorize -> authorize
                         /**
                          * Ant 风格的路径模式使用了一些特殊的字符来表示不同级别的路径匹配：
@@ -112,42 +113,42 @@ public class SecurityConfig {
 
                                 "/api/tag/public/find/all",
 
-                                "/api/search/**").permitAll()
+                                "/api/search/**")
+                        .permitAll()
                         // Swagger 开放访问
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
-                                "/swagger-ui.html").permitAll()
+                                "/swagger-ui.html")
+                        .permitAll()
                         // WebSocket 接口需要登录
                         .requestMatchers("/ws/**").authenticated()
                         // 所有用户都可以访问的接口
                         .requestMatchers("/api/*/public/**").hasRole(Role.ROLE_USER)
                         // 管理员接口
-                        .requestMatchers("/api/*/admin/**").
-                            hasAnyRole(Role.ROLE_CATEGORY_MANAGER, Role.ROLE_TAG_MANAGER,
-                                    Role.ROLE_POST_MANAGER, Role.ROLE_COMMENT_MANAGER,
-                                    Role.ROLE_MESSAGE_MANAGER, Role.ROLE_REPORT_MANAGER,
-                                    Role.ROLE_ROLE_MANAGER, Role.ROLE_SYSTEM_ADMINISTRATOR)
-                        .anyRequest().authenticated()
-                )
+                        .requestMatchers("/api/*/admin/**")
+                        .hasAnyRole(Role.ROLE_CATEGORY_MANAGER, Role.ROLE_TAG_MANAGER,
+                                Role.ROLE_POST_MANAGER, Role.ROLE_COMMENT_MANAGER,
+                                Role.ROLE_MESSAGE_MANAGER, Role.ROLE_REPORT_MANAGER,
+                                Role.ROLE_ROLE_MANAGER, Role.ROLE_SYSTEM_ADMINISTRATOR)
+                        .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(webSocketAuthFilter(), ChannelProcessingFilter.class)
                 .cors(Customizer.withDefaults())
                 // 添加WebSocket支持
                 .securityMatcher(new AndRequestMatcher(
                         new NegatedRequestMatcher(new AntPathRequestMatcher("/ws/**")),
-                        new AntPathRequestMatcher("/**")
-                ));
+                        new AntPathRequestMatcher("/**")));
         // 添加WebSocket认证拦截器
         return http.build();
     }
 
     @Bean
-    public Filter webSocketAuthFilter(){
-        return new OncePerRequestFilter(){
+    public Filter webSocketAuthFilter() {
+        return new OncePerRequestFilter() {
             @Override
             protected void doFilterInternal(HttpServletRequest request,
-                                            HttpServletResponse response,
-                                            FilterChain filterChain) throws ServletException, IOException {
-                if (request.getRequestURI().startsWith("/ws/")){
+                    HttpServletResponse response,
+                    FilterChain filterChain) throws ServletException, IOException {
+                if (request.getRequestURI().startsWith("/ws/")) {
                     // 复用 JWT 过滤器时需重置安全上下文
                     SecurityContextHolder.clearContext();
 
@@ -169,8 +170,6 @@ public class SecurityConfig {
         };
     }
 
-
-
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
@@ -184,12 +183,9 @@ public class SecurityConfig {
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-
         authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
-
         return authProvider;
     }
-
 
 }
