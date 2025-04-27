@@ -113,7 +113,7 @@ const handleSetActive = async (version) => {
       await loadVersions();
       // 更新选中的版本
       selectedVersion.value = version;
-      emit("update:modelValue", version);
+      emit("update:modelValue", { ...version, isActivating: true });
     }
   } catch (error) {
     ElMessage.error("设置活动版本失败");

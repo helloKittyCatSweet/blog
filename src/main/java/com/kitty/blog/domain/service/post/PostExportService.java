@@ -5,6 +5,7 @@ import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
@@ -23,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -148,9 +150,10 @@ public class PostExportService {
 
             // 优化签名样式
             String signature = userService.getSignatureUrl(postDto.getPost().getUserId()).getBody();
+            Image signatureImage = null;
             if (signature != null && !signature.isEmpty()) {
                 try {
-                    Image signatureImage = new Image(ImageDataFactory.create(new URL(signature)))
+                    signatureImage = new Image(ImageDataFactory.create(new URL(signature)))
                             .setWidth(150)
                             .setHeight(50)
                             .setHorizontalAlignment(HorizontalAlignment.RIGHT)
@@ -160,10 +163,27 @@ public class PostExportService {
                     log.error("Failed to add signature", e);
                 }
             }
-        } finally {
             document.close();
-        }
+            // 重新打开 PDF 以添加签名（如果只有一页）
+            if (signatureImage != null) {
+                PdfDocument pdfToModify = new PdfDocument(new PdfReader(new ByteArrayInputStream(baos.toByteArray())), new PdfWriter(baos));
+                if (pdfToModify.getNumberOfPages() == 1) {
+                    // 固定签名在底部右侧
+                    float sigWidth = 150f;
+                    float sigHeight = 50f;
+                    float x = PageSize.A4.getWidth() - MARGIN - sigWidth;
+                    float y = MARGIN + 5f;
+                    signatureImage.setFixedPosition(1, x, y);
 
+                    Document docToModify = new Document(pdfToModify, PageSize.A4);
+                    docToModify.add(signatureImage);
+                    docToModify.close();
+                }
+                pdfToModify.close();
+            }
+        } finally {
+            document.close(); // 先关闭，才能准确获取页数
+        }
         return baos.toByteArray();
     }
 

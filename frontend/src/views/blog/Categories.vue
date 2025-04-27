@@ -283,14 +283,20 @@ const querySearchAsync = async (queryString, cb) => {
   if (queryString) {
     try {
       const response = await searchCategorySuggestions(queryString);
+      console.log("搜索建议：", response.data?.data, "查询内容：", queryString);
+
       if (response.data?.status === 200) {
-        const suggestions = response.data.data.map((item) => ({
-          value: item.category.name,
-          ...item,
+        // 处理字符串数组的情况
+        const suggestions = response.data.data.map(item => ({
+          value: typeof item === 'string' ? item : item.category?.name || item.name || '',
+          ...(typeof item === 'object' ? item : {}) // 保留原始对象属性（如果有）
         }));
         cb(suggestions);
+      } else {
+        cb([]); // 状态码不是200时返回空数组
       }
     } catch (error) {
+      console.error("获取搜索建议失败:", error);
       ElMessage.error("获取搜索建议失败");
       cb([]);
     }

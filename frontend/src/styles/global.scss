@@ -1,44 +1,82 @@
 /* Element Plus 全局样式覆盖 */
 
-/* 设置主题色 - 更明亮的蓝色 */
-:root {
-  --el-color-primary: #1890ff !important;         /* 更明亮的主题蓝 */
-  --el-color-primary-light-3: #40a9ff !important; /* 明亮的悬停色 */
-  --el-color-primary-light-5: #69c0ff !important; /* 更浅的蓝色 */
-  --el-color-primary-light-7: #91d5ff !important; /* 非常浅的蓝色 */
-  --el-color-primary-light-9: #e6f7ff !important; /* 最浅的背景蓝 */
-  --el-color-primary-dark-2: #096dd9 !important;  /* 深蓝色用于激活状态 */
-}
-
-/* 所有按钮默认使用主题色 */
+/* 按钮基础样式 */
 .el-button {
-  --el-button-bg-color: var(--el-color-primary) !important;
-  --el-button-border-color: var(--el-color-primary) !important;
-  --el-button-text-color: white !important;
-  --el-button-hover-text-color: white !important;
-  --el-button-active-text-color: white !important;
-  
+  transition: all 0.3s ease !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+
+  /* 添加微弱阴影增加立体感 */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+
   &:hover {
-    --el-button-hover-bg-color: var(--el-color-primary-light-3) !important;
-    --el-button-hover-border-color: var(--el-color-primary-light-3) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
   }
-  
+
   &:active {
-    --el-button-active-bg-color: var(--el-color-primary-dark-2) !important;
-    --el-button-active-border-color: var(--el-color-primary-dark-2) !important;
+    transform: translateY(0) !important;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
   }
 }
 
-/* 次要按钮样式 */
-.el-button.el-button--default {
-  --el-button-bg-color: white !important;
-  --el-button-text-color: var(--el-text-color-regular) !important;
-  --el-button-border-color: var(--el-border-color) !important;
-  
+/* 主要按钮样式 */
+.el-button--primary {
+  background-color: var(--button-primary) !important;
+  border-color: var(--button-primary) !important;
+  color: white !important;
+
   &:hover {
-    --el-button-hover-bg-color: var(--el-color-primary-light-9) !important;
-    --el-button-hover-text-color: var(--el-color-primary) !important;
-    --el-button-hover-border-color: var(--el-color-primary) !important;
+    background-color: var(--button-primary-hover) !important;
+    border-color: var(--button-primary-hover) !important;
+  }
+}
+
+/* 成功按钮样式 */
+.el-button--success {
+  background-color: var(--button-success) !important;
+  border-color: var(--button-success) !important;
+  color: white !important;
+
+  &:hover {
+    background-color: var(--button-success-hover) !important;
+    border-color: var(--button-success-hover) !important;
+  }
+}
+
+/* 警告按钮样式 */
+.el-button--warning {
+  background-color: var(--button-warning) !important;
+  border-color: var(--button-warning) !important;
+  color: white !important;
+
+  &:hover {
+    background-color: var(--button-warning-hover) !important;
+    border-color: var(--button-warning-hover) !important;
+  }
+}
+
+/* 危险按钮样式 */
+.el-button--danger {
+  background-color: var(--button-danger) !important;
+  border-color: var(--button-danger) !important;
+  color: white !important;
+
+  &:hover {
+    background-color: var(--button-danger-hover) !important;
+    border-color: var(--button-danger-hover) !important;
+  }
+}
+
+/* 信息按钮样式 */
+.el-button--info {
+  background-color: var(--button-info) !important;
+  border-color: var(--button-info) !important;
+  color: white !important;
+
+  &:hover {
+    background-color: var(--button-info-hover) !important;
+    border-color: var(--button-info-hover) !important;
   }
 }
 
@@ -46,38 +84,94 @@
 .el-button.is-text {
   background: transparent !important;
   border-color: transparent !important;
-  color: var(--el-color-primary) !important;
-  
+  color: var(--button-primary) !important;
+  box-shadow: none !important;
+
   &:hover {
-    color: var(--el-color-primary-light-3) !important;
-    background-color: var(--el-color-primary-light-9) !important;
-  }
-  
-  &:active {
-    color: var(--el-color-primary-dark-2) !important;
+    color: var(--button-primary-hover) !important;
+    background-color: rgba(var(--button-primary), 0.1) !important;
+    transform: none !important;
   }
 }
 
 /* 链接按钮样式 */
 .el-button.is-link {
-  border: none !important;
   background: transparent !important;
-  color: var(--el-color-primary) !important;
-  
+  border: none !important;
+  color: var(--button-primary) !important;
+  box-shadow: none !important;
+
   &:hover {
-    color: var(--el-color-primary-light-3) !important;
-  }
-  
-  &:active {
-    color: var(--el-color-primary-dark-2) !important;
+    color: var(--button-primary-hover) !important;
+    transform: none !important;
   }
 }
 
 /* 禁用状态 */
 .el-button.is-disabled {
   &, &:hover, &:active {
-    background-color: var(--el-button-disabled-bg-color) !important;
-    border-color: var(--el-button-disabled-border-color) !important;
-    color: var(--el-button-disabled-text-color) !important;
+    background-color: #f5f7fa !important;
+    border-color: #e4e7ed !important;
+    color: #c0c4cc !important;
+    transform: none !important;
+    box-shadow: none !important;
   }
-} 
+}
+
+/* 卡片样式 */
+.el-card {
+  background-color: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+  box-shadow: 0 2px 12px 0 var(--shadow-color) !important;
+}
+
+/* 菜单样式 */
+.el-menu {
+  background-color: var(--menu-bg) !important;
+
+  .el-menu-item:hover {
+    background-color: var(--hover-bg) !important;
+  }
+
+  .el-menu-item.is-active {
+    background-color: var(--active-bg) !important;
+  }
+}
+
+/* 主要容器样式 */
+.el-main {
+  background-color: var(--primary-bg) !important;
+}
+
+.el-header {
+  background-color: var(--secondary-bg) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.el-footer {
+  background-color: var(--secondary-bg) !important;
+  border-top: 1px solid var(--border-color) !important;
+}
+
+/* 表格样式 */
+.el-table {
+  background-color: var(--card-bg) !important;
+
+  th.el-table__cell {
+    background-color: var(--secondary-bg) !important;
+  }
+
+  tr:hover > td.el-table__cell {
+    background-color: var(--hover-bg) !important;
+  }
+}
+
+/* 下拉菜单样式 */
+.el-dropdown-menu {
+  background-color: var(--card-bg) !important;
+  border-color: var(--card-border) !important;
+
+  .el-dropdown-menu__item:hover {
+    background-color: var(--hover-bg) !important;
+  }
+}

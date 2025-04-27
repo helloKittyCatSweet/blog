@@ -28,11 +28,8 @@ const roleOptions = computed(() => {
     return [
       { label: "普通用户", value: ROLES.USER },
       { label: "分类管理员", value: ROLES.CATEGORY_MANAGER },
-      { label: "权限管理员", value: ROLES.PERMISSION_MANAGER },
-      { label: "权限映射管理员", value: ROLES.PERMISSION_MAPPING_MANAGER },
       { label: "标签管理员", value: ROLES.TAG_MANAGER },
       { label: "文章管理员", value: ROLES.POST_MANAGER },
-      { label: "用户活动管理员", value: ROLES.USER_ACTIVITY_MANAGER },
       { label: "评论管理员", value: ROLES.COMMENT_MANAGER },
       { label: "消息管理员", value: ROLES.MESSAGE_MANAGER },
       { label: "举报管理员", value: ROLES.REPORT_MANAGER },

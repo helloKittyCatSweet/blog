@@ -341,67 +341,10 @@ const handleExport = () => {
   XLSX.writeFile(workbook, `用户列表_${new Date().toLocaleDateString()}.xlsx`);
 };
 
-// 批量操作相关方法
-const selectedRows = computed(() => selectedUsers.value || []);
-
 const handleSelectionChange = (val) => {
   selectedUsers.value = val || [];
 };
 
-const handleBatchActivate = async (isActive) => {
-  if (!selectedUsers.value?.length) {
-    ElMessage.warning('请先选择用户');
-    return;
-  }
-
-  try {
-    const message = isActive ? "激活" : "禁用";
-    await ElMessageBox.confirm(`确定要批量${message}选中的用户吗？`, "提示", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning",
-    });
-
-    for (const item of selectedUsers.value) {
-      if (item?.user?.userId) {
-        await activate(item.user.userId, isActive);
-      }
-    }
-    ElMessage.success(`批量${message}成功`);
-    getUserList();
-  } catch (error) {
-    if (error !== "cancel") {
-      ElMessage.error(`批量${isActive ? "激活" : "禁用"}失败`);
-    }
-  }
-};
-
-const handleBatchDelete = async () => {
-  if (!selectedUsers.value?.length) {
-    ElMessage.warning('请先选择用户');
-    return;
-  }
-
-  try {
-    await ElMessageBox.confirm("确定要删除选中的用户吗？", "警告", {
-      confirmButtonText: "确定",
-      cancelButtonText: "取消",
-      type: "warning",
-    });
-
-    for (const item of selectedUsers.value) {
-      if (item?.user?.userId) {
-        await deleteById(item.user.userId);
-      }
-    }
-    ElMessage.success("批量删除成功");
-    getUserList();
-  } catch (error) {
-    if (error !== "cancel") {
-      ElMessage.error("批量删除失败");
-    }
-  }
-};
 
 // 用户详情
 const showUserDetail = (row) => {

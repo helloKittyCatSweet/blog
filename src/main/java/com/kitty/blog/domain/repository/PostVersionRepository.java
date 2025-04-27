@@ -22,6 +22,8 @@ public interface PostVersionRepository extends BaseRepository<PostVersion, Integ
             "THEN true ELSE false END FROM PostVersion pv WHERE pv.versionId = ?1")
     boolean existsById(Integer versionId);
 
+    boolean existsByPostIdAndVersion(Integer postId, Integer version);
+
     /**
      * find
      */

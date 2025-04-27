@@ -90,24 +90,22 @@ const handlePostClick = (post) => {
     <el-card v-for="post in posts" :key="post.id" class="post-item">
       <div class="post-content">
         <div class="post-main">
-          <h3 class="post-title">
+          <h3 class="post-title" @click="handlePostClick(post)">
             <span
               v-if="showKeyword"
               v-html="post.highlightTitle || post.title"
-              @click="handlePostClick(post)"
             ></span>
             <span v-else>{{ post.title }}</span>
           </h3>
-          <p class="post-abstract">
+          <p class="post-abstract" @click="handlePostClick(post)">
             <span
               v-if="showKeyword"
               v-html="post.highlightContent || post.excerpt"
-              @click="handlePostClick(post)"
             ></span>
             <span v-else>{{ post.excerpt }}</span>
           </p>
           <div class="post-info">
-            <div class="post-meta">
+            <div class="post-meta"  >
               <span
                 class="post-author"
                 @click.stop="handleAuthorClick($event, post.userId)"
@@ -137,14 +135,13 @@ const handlePostClick = (post) => {
             </div>
           </div>
         </div>
-        <div class="post-thumbnail">
+        <div class="post-thumbnail" @click="handlePostClick(post)">
           <el-image
             :src="post.cover || getRandomCover()"
             :alt="post.title"
             fit="cover"
             loading="lazy"
             @error="handleImageError"
-            @click="handlePostClick(post)"
           />
         </div>
       </div>

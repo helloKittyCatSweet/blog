@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import * as echarts from "echarts";
-import { Document, View, ChatRound, Star } from "@element-plus/icons-vue";
+import { Document, View, ChatRound, Star, ArrowDown, ArrowUp, DataLine, PieChart } from "@element-plus/icons-vue";
 import {
   getUserDashboard,
   getUserMonthlyStats,
@@ -10,10 +10,15 @@ import {
   getUserInteractions,
 } from "@/api/user/userStat";
 import { ElMessage } from "element-plus";
+import {USER_POST_LIST_PATH} from "@/constants/routes/user.js"
+import AuthorAnalytics from "@/components/user/AuthorAnalytics.vue";
 
 const router = useRouter();
+const postChartVisible = ref(true);
 const postChartRef = ref(null);
 const interactionChartRef = ref(null);
+const interactionChartVisible = ref(true);
+const analyticsVisible = ref(true);
 const loading = ref(true);
 
 // Add chart container refs
@@ -167,14 +172,14 @@ const initInteractionChart = async () => {
 
 // 监听窗口大小变化，重绘图表
 const handleResize = () => {
-  if (postChartRef.value) {
+  if (postChartRef.value && postChartVisible.value) {
     const postChart = echarts.getInstanceByDom(postChartRef.value);
     if (postChart) {
       postChart.resize();
     }
   }
 
-  if (interactionChartRef.value) {
+  if (interactionChartRef.value && interactionChartVisible.value) {
     const interactionChart = echarts.getInstanceByDom(interactionChartRef.value);
     if (interactionChart) {
       interactionChart.resize();
@@ -250,20 +255,78 @@ onUnmounted(() => {
       </el-card>
     </div>
 
-    <!-- 图表区域 -->
-    <div class="charts-container">
-      <el-card class="chart-card" shadow="hover">
-        <div ref="postChartContainer" class="chart-wrapper">
+  <!-- 图表区域 -->
+  <div class="charts-container">
+    <el-card class="chart-card" shadow="hover">
+      <template #header>
+        <div class="card-header">
+          <div class="header-left">
+            <el-icon><DataLine /></el-icon>
+            <span>文章数据统计</span>
+          </div>
+          <el-button type="primary" link @click="postChartVisible = !postChartVisible">
+            {{ postChartVisible ? '收起' : '展开' }}
+            <el-icon class="el-icon--right">
+              <ArrowDown v-if="!postChartVisible" />
+              <ArrowUp v-else />
+            </el-icon>
+          </el-button>
+        </div>
+      </template>
+      <el-collapse-transition>
+        <div v-show="postChartVisible" ref="postChartContainer" class="chart-wrapper">
           <div ref="postChartRef" class="chart"></div>
         </div>
-      </el-card>
+      </el-collapse-transition>
+    </el-card>
 
-      <el-card class="chart-card" shadow="hover">
-        <div ref="interactionChartContainer" class="chart-wrapper">
+    <el-card class="chart-card" shadow="hover">
+      <template #header>
+        <div class="card-header">
+          <div class="header-left">
+            <el-icon><PieChart /></el-icon>
+            <span>互动数据分布</span>
+          </div>
+          <el-button type="primary" link @click="interactionChartVisible = !interactionChartVisible">
+            {{ interactionChartVisible ? '收起' : '展开' }}
+            <el-icon class="el-icon--right">
+              <ArrowDown v-if="!interactionChartVisible" />
+              <ArrowUp v-else />
+            </el-icon>
+          </el-button>
+        </div>
+      </template>
+      <el-collapse-transition>
+        <div v-show="interactionChartVisible" ref="interactionChartContainer" class="chart-wrapper">
           <div ref="interactionChartRef" class="chart"></div>
         </div>
-      </el-card>
-    </div>
+      </el-collapse-transition>
+    </el-card>
+  </div>
+
+  <!-- 作者分析组件 -->
+  <el-card class="analytics-card" shadow="hover">
+    <template #header>
+      <div class="card-header">
+        <div class="header-left">
+          <el-icon><User /></el-icon>
+          <span>作者分析</span>
+        </div>
+        <el-button type="primary" link @click="analyticsVisible = !analyticsVisible">
+          {{ analyticsVisible ? '收起' : '展开' }}
+          <el-icon class="el-icon--right">
+            <ArrowDown v-if="!analyticsVisible" />
+            <ArrowUp v-else />
+          </el-icon>
+        </el-button>
+      </div>
+    </template>
+    <el-collapse-transition>
+      <div v-show="analyticsVisible">
+        <AuthorAnalytics />
+      </div>
+    </el-collapse-transition>
+  </el-card>
 
     <!-- 最近文章 -->
     <el-card class="recent-posts" shadow="hover">
@@ -273,7 +336,7 @@ onUnmounted(() => {
             <el-icon class="header-icon"><Document /></el-icon>
             <span>最近发布</span>
           </div>
-          <el-button type="primary" link @click="router.push('/posts')">
+          <el-button type="primary" link @click="router.push(USER_POST_LIST_PATH)">
             查看全部
             <el-icon class="el-icon--right"><arrow-right /></el-icon>
           </el-button>
@@ -349,8 +412,23 @@ onUnmounted(() => {
 .card-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   padding: 12px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.analytics-card {
+  margin-bottom: 24px;
+}
+
+/* 添加过渡动画 */
+.el-collapse-transition {
+  transition: all 0.3s ease;
 }
 
 .header-icon {
@@ -408,5 +486,10 @@ onUnmounted(() => {
 
 :deep(.el-table__row:hover) {
   background-color: var(--el-color-primary-light-9);
+}
+
+/* 添加作者分析组件的间距 */
+:deep(.author-analytics) {
+  margin-bottom: 24px;
 }
 </style>

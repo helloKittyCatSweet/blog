@@ -131,7 +131,7 @@ const loadMessages = async () => {
           receiverId: item.userId,
           receiverName: item.username,
           receiverAvatar: item.avatar,
-          lastMessage: item.lastMessage,
+          lastMessage: item.message,
           unreadCount: Number(item.unreadCount) || 0,
           lastMessageTime: item.lastMessageTime == null ? "-" : item.lastMessageTime,
         }));

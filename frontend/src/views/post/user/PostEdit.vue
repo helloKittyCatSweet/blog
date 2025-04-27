@@ -384,12 +384,20 @@ const handleVersionChange = (version) => {
     // 更新选中的版本
     selectedVersion.value = version;
 
-    // 更新表单内容，但不更新版本号（因为这只是预览）
-    form.value = {
-      ...form.value,
-      content: version.content,
-      // 不更新 version，保持原版本号不变
-    };
+     // 如果是激活版本操作，则更新版本号
+     if (version.isActivating) {
+      form.value = {
+        ...form.value,
+        content: version.content,
+        version: version.version // 更新版本号
+      };
+    } else {
+      // 如果是普通的版本切换，只更新内容
+      form.value = {
+        ...form.value,
+        content: version.content
+      };
+    }
 
     // 强制重新渲染编辑器
     editorKey.value += 1;

@@ -198,8 +198,8 @@ const getTagType = (weight) => {
 
 // 搜索处理
 const handleSearch = async (selectedItem) => {
-  // 统一获取查询内容（支持从建议项选择或直接输入）
-  const query =
+  // 统一获取查询内容
+  let query =
     typeof selectedItem === "string"
       ? selectedItem
       : selectedItem?.value || searchQuery.value;
@@ -215,44 +215,59 @@ const handleSearch = async (selectedItem) => {
 
   loading.value = true;
   try {
-    // 检查是否是标签
-    const isTag = tags.value.some((tag) => tag.name === query);
+    // 检查是否是标签建议（从自动完成中选择）
+    const isTagSuggestion = tags.value.some((tag) => tag.name === query);
 
-    if (isTag) {
-      // 标签搜索逻辑
+    if (isTagSuggestion) {
+      // 处理标签选择
       const matchedTag = tags.value.find((tag) => tag.name === query);
       if (matchedTag && !selectedTags.value.includes(matchedTag.tagId)) {
+        // 添加新标签到选中列表
         selectedTags.value.push(matchedTag.tagId);
+        // 更新 URL
+        const tagNames = tags.value
+          .filter(t => selectedTags.value.includes(t.tagId))
+          .map(t => t.name);
+        router.push({
+          query: { tag: tagNames.join(',') }
+        });
         await loadTagPosts();
       }
     } else {
+      // 处理手动输入的搜索（构建完整查询）
       let finalQuery = query;
-      // 如果已选择标签，在搜索内容前面加上标签搜索条件
+
+      // 如果已选标签但查询中未指定#标签，自动附加标签条件
       if (selectedTags.value.length > 0 && !query.includes("#")) {
         const tagNames = selectedTagObjects.value.map((tag) => tag.name);
         finalQuery = `#${tagNames.join(",")}# ${query}`;
       }
-      // 如果输入的是纯分类(以#开头)，保持原样
-      else if (query.startsWith("#")) {
+      // 如果输入的是纯分类（以@开头），保持原样
+      else if (query.startsWith("@")) {
         finalQuery = query;
       }
 
-      console.log("Final query:", finalQuery);
+      console.log("Final search query:", finalQuery);
 
-      // 非标签内容，执行全文搜索
-      const response = await searchPosts(finalQuery, 0, 10);
-      console.log("response:", response);
+      const response = await searchPosts(finalQuery, currentPage.value - 1, pageSize.value);
       if (response.data?.status === 200) {
-        tagPosts.value = transformPostData(response.data.data.content);
-        console.log("Tag posts loaded:", tagPosts.value);
+        const data = response.data.data;
+        if (data.content) {
+          tagPosts.value = transformPostData(data.content);
+          total.value = data.totalElements;
+        } else {
+          tagPosts.value = transformPostData(data);
+          total.value = data.length;
+        }
       }
     }
   } catch (error) {
     console.error("搜索失败:", error);
     ElMessage.error("搜索失败");
+  } finally {
+    loading.value = false;
   }
 };
-
 onMounted(() => {
   loadTags();
 });

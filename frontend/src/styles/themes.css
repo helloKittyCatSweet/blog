@@ -1,137 +1,130 @@
-/* 浅色主题 */
+/* 浅色主题 - 清新淡雅 */
 .theme-light {
-  --primary-bg: #ffffff;
+  --primary-bg: #f8f9fa;
   --primary-text: #303133;
-  --secondary-bg: #f5f7fa;
-  --border-color: #dcdfe6;
-  
-  /* 马卡龙色系按钮颜色 */
-  --button-primary: #94c2f3;  /* 淡天蓝色 */
-  --button-primary-hover: #afd4f8;
-  --button-success: #9ed3ab;  /* 薄荷绿 */
-  --button-success-hover: #b5e0c1;
-  --button-warning: #f8d0a0;  /* 杏色 */
-  --button-warning-hover: #fde0bd;
-  --button-danger: #f4a7a7;   /* 淡珊瑚色 */
-  --button-danger-hover: #f9c2c2;
-  --button-info: #bdc8d0;     /* 淡灰蓝色 */
-  --button-info-hover: #d1dbe2;
+  --secondary-bg: #ffffff;
+  --border-color: #e4e7ed;
+  --menu-bg: #ffffff;
+  --hover-bg: #f2f6fc;
+  --active-bg: #ecf5ff;
+  --card-bg: #ffffff;
+  --card-border: #ebeef5;
+  --shadow-color: rgba(0, 0, 0, 0.05);
+
+  /* 按钮颜色 - 马卡龙色系 */
+  --button-primary: #7eb6e6;    /* 天蓝色 */
+  --button-primary-hover: #95c5ee;
+  --button-success: #7fc5a3;    /* 薄荷绿 */
+  --button-success-hover: #98d4b7;
+  --button-warning: #e6b980;    /* 杏色 */
+  --button-warning-hover: #edc89c;
+  --button-danger: #e69898;     /* 珊瑚粉 */
+  --button-danger-hover: #edb3b3;
+  --button-info: #9dacb7;       /* 灰蓝色 */
+  --button-info-hover: #b5c2cc;
 }
 
-/* 深色主题 */
+/* 深色主题 - 优雅深邃 */
 .theme-dark {
   --primary-bg: #1a1a1a;
   --primary-text: #ffffff;
-  --secondary-bg: #2c2c2c;
-  --border-color: #4c4c4c;
+  --secondary-bg: #242424;
+  --border-color: #333333;
+  --menu-bg: #2c2c2c;
+  --hover-bg: #363636;
+  --active-bg: #404040;
+  --card-bg: #2c2c2c;
+  --card-border: #404040;
+  --shadow-color: rgba(0, 0, 0, 0.2);
+
+  /* 按钮颜色 - 霓虹色系 */
+  --button-primary: #4a90e2;    /* 霓虹蓝 */
+  --button-primary-hover: #5fa1e8;
+  --button-success: #47b881;    /* 霓虹绿 */
+  --button-success-hover: #5fc695;
+  --button-warning: #e6a23c;    /* 霓虹橙 */
+  --button-warning-hover: #edb556;
+  --button-danger: #e66767;     /* 霓虹红 */
+  --button-danger-hover: #ed8282;
+  --button-info: #909399;       /* 霓虹灰 */
+  --button-info-hover: #a6a9ad;
 }
 
-/* 蓝色主题 */
+/* 蓝色主题 - 海洋气息 */
 .theme-blue {
   --primary-bg: #ecf5ff;
   --primary-text: #303133;
-  --secondary-bg: #d9ecff;
-  --border-color: #409eff;
+  --secondary-bg: #f5f9ff;
+  --border-color: #d9ecff;
+  --menu-bg: #ffffff;
+  --hover-bg: #e6f1fc;
+  --active-bg: #d9ecff;
+  --card-bg: #ffffff;
+  --card-border: #b3d8ff;
+  --shadow-color: rgba(64, 158, 255, 0.1);
+
+  /* 按钮颜色 - 海洋色系 */
+  --button-primary: #409eff;    /* 海蓝 */
+  --button-primary-hover: #66b1ff;
+  --button-success: #5ac8a9;    /* 海藻绿 */
+  --button-success-hover: #7dd4bc;
+  --button-warning: #e6a23c;    /* 贝壳橙 */
+  --button-warning-hover: #edb556;
+  --button-danger: #f56c6c;     /* 珊瑚红 */
+  --button-danger-hover: #f78989;
+  --button-info: #909399;       /* 海雾灰 */
+  --button-info-hover: #a6a9ad;
 }
 
-/* 粉色主题 */
+/* 粉色主题 - 甜美浪漫 */
 .theme-pink {
   --primary-bg: #fff0f6;
   --primary-text: #303133;
-  --secondary-bg: #ffd6e7;
-  --border-color: #ff69b4;
+  --secondary-bg: #fff5f8;
+  --border-color: #ffd6e7;
+  --menu-bg: #ffffff;
+  --hover-bg: #fff0f6;
+  --active-bg: #ffe4ef;
+  --card-bg: #ffffff;
+  --card-border: #ffb3c7;
+  --shadow-color: rgba(255, 133, 173, 0.1);
+
+  /* 按钮颜色 - 糖果色系 */
+  --button-primary: #ff85ad;    /* 草莓粉 */
+  --button-primary-hover: #ff9dbd;
+  --button-success: #8dd087;    /* 薄荷糖绿 */
+  --button-success-hover: #a5dba0;
+  --button-warning: #ffb366;    /* 橙子糖 */
+  --button-warning-hover: #ffc285;
+  --button-danger: #ff8585;     /* 樱桃红 */
+  --button-danger-hover: #ff9d9d;
+  --button-info: #b4b8c5;       /* 奶糖灰 */
+  --button-info-hover: #c8cbd5;
 }
 
-/* 绿色主题 */
+/* 绿色主题 - 自然清新 */
 .theme-green {
   --primary-bg: #f0f9eb;
   --primary-text: #303133;
-  --secondary-bg: #e1f3d8;
-  --border-color: #67c23a;
+  --secondary-bg: #f5faf0;
+  --border-color: #e1f3d8;
+  --menu-bg: #ffffff;
+  --hover-bg: #f0f9eb;
+  --active-bg: #e7f6e1;
+  --card-bg: #ffffff;
+  --card-border: #b3e0b5;
+  --shadow-color: rgba(103, 194, 58, 0.1);
+
+  /* 按钮颜色 - 森林色系 */
+  --button-primary: #67c23a;    /* 青草绿 */
+  --button-primary-hover: #85cf60;
+  --button-success: #4caf50;    /* 叶绿 */
+  --button-success-hover: #6dbf71;
+  --button-warning: #d4b157;    /* 向日葵 */
+  --button-warning-hover: #dfc278;
+  --button-danger: #e67c73;     /* 野莓红 */
+  --button-danger-hover: #eb958e;
+  --button-info: #95a5a6;       /* 青苔灰 */
+  --button-info-hover: #adb9ba;
 }
 
-/* 应用主题变量 */
-body {
-  background-color: var(--primary-bg);
-  color: var(--primary-text);
-}
-
-.el-card {
-  background-color: var(--secondary-bg);
-  border-color: var(--border-color);
-}
-
-/* Element Plus 组件主题适配 */
-.el-menu {
-  background-color: var(--secondary-bg) !important;
-}
-
-.el-header {
-  background-color: var(--primary-bg) !important;
-}
-
-.el-main {
-  background-color: var(--primary-bg) !important;
-}
-
-.el-footer {
-  background-color: var(--secondary-bg) !important;
-}
-
-/* 按钮样式 */
-.el-button--primary {
-  background-color: var(--button-primary) !important;
-  border-color: var(--button-primary) !important;
-  color: #ffffff !important;
-}
-
-.el-button--primary:hover {
-  background-color: var(--button-primary-hover) !important;
-  border-color: var(--button-primary-hover) !important;
-}
-
-.el-button--success {
-  background-color: var(--button-success) !important;
-  border-color: var(--button-success) !important;
-  color: #ffffff !important;
-}
-
-.el-button--success:hover {
-  background-color: var(--button-success-hover) !important;
-  border-color: var(--button-success-hover) !important;
-}
-
-.el-button--warning {
-  background-color: var(--button-warning) !important;
-  border-color: var(--button-warning) !important;
-  color: #ffffff !important;
-}
-
-.el-button--warning:hover {
-  background-color: var(--button-warning-hover) !important;
-  border-color: var(--button-warning-hover) !important;
-}
-
-.el-button--danger {
-  background-color: var(--button-danger) !important;
-  border-color: var(--button-danger) !important;
-  color: #ffffff !important;
-}
-
-.el-button--danger:hover {
-  background-color: var(--button-danger-hover) !important;
-  border-color: var(--button-danger-hover) !important;
-}
-
-.el-button--info {
-  background-color: var(--button-info) !important;
-  border-color: var(--button-info) !important;
-  color: #ffffff !important;
-}
-
-.el-button--info:hover {
-  background-color: var(--button-info-hover) !important;
-  border-color: var(--button-info-hover) !important;
-}
-
-/* 可以继续添加其他组件的主题样式 */

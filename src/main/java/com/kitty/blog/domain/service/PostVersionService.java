@@ -67,7 +67,7 @@ public class PostVersionService {
         if (!postRepository.existsById(postId)) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
-        if (!postVersionRepository.existsById(versionId)) {
+        if (!postVersionRepository.existsByPostIdAndVersion(postId, versionId)) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         postVersionRepository.activateVersion(postId, versionId);
