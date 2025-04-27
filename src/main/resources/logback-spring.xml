@@ -55,12 +55,12 @@
 
     <!-- 错误日志 -->
     <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/blog-error-${CURRENT_DATE}.json</file>
+        <file>${LOG_PATH}/blog-error-logs-${CURRENT_DATE}.json</file>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/blog-error-%d{yyyy.MM.dd}.json</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/blog-error-logs-%d{yyyy.MM.dd}.json</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">

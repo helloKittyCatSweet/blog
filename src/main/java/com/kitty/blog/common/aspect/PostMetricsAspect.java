@@ -2,11 +2,14 @@ package com.kitty.blog.common.aspect;
 
 import com.kitty.blog.common.annotation.LogPostMetrics;
 import com.kitty.blog.common.constant.LogConstants;
+import com.kitty.blog.domain.model.Post;
+import com.kitty.blog.domain.repository.post.PostRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -18,6 +21,9 @@ import java.util.Map;
 @Component
 @Slf4j
 public class PostMetricsAspect {
+
+    @Autowired
+    private PostRepository postRepository;
 
     @Around("@annotation(com.kitty.blog.common.annotation.LogPostMetrics)")
     public Object logPostMetrics(ProceedingJoinPoint joinPoint) throws Throwable {
@@ -66,6 +72,9 @@ public class PostMetricsAspect {
             // 操作信息
             metrics.put("operation", operation);
             metrics.put("post_id", postId);
+            Post post = postRepository.findById(postId.intValue()).get();
+            metrics.put("post_title", post.getTitle());
+            metrics.put("user_id", post.getUserId());
             metrics.put("success", success);
             metrics.put("duration", duration);
 

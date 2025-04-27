@@ -27,12 +27,17 @@ const getFavorites = async () => {
       for (const folder of folders.value) {
         try {
           const response = await getPostsByFolder(folder);
-          if (response.data?.status === 200) {
+          if (response.data?.status === 200 && response.data.data?.content) {
             favorites.value[folder] = response.data.data.content.slice(0, 5); // 只显示前5篇文章
+          } else {
+            favorites.value[folder] = []; // 如果没有内容，设置为空数组
           }
         } catch (error) {
           console.error(`获取文件夹 ${folder} 的文章失败:`, error);
           favorites.value[folder] = []; // 设置为空数组，避免undefined
+          if (error.response?.status === 401) {
+            ElMessage.warning(`获取 ${folder} 的文章需要登录`);
+          }
         }
       }
     }
@@ -94,7 +99,7 @@ onMounted(() => {
                 v-for="post in posts"
                 :key="post.post.postId"
                 :command="post.post.postId"
-                @click.native="goToPost(post.postId)"
+                @click.native="goToPost(post.post.postId)"
               >
                 {{ post.post.title }}
               </el-dropdown-item>

@@ -29,6 +29,12 @@
         "post_id": {
           "type": "long"
         },
+        "post_title": {
+          "type": "keyword"
+        },
+        "user_id": {
+          "type": "long"
+        },
         "success": {
           "type": "boolean"
         },

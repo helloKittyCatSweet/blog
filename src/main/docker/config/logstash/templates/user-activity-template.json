@@ -26,6 +26,9 @@
         "user_id": {
           "type": "keyword"
         },
+        "username": {
+          "type": "keyword"
+        },
         "activity_type": {
           "type": "keyword"
         },

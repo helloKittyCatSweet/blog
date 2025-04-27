@@ -85,13 +85,19 @@ const newFolderName = ref("");
 // 获取收藏夹列表
 const getFolders = async () => {
   try {
-    const { data } = await getFolderNames();
-    folders.value = data;
-    if (!folders.value.includes("默认收藏夹")) {
-      folders.value = ["默认收藏夹", ...folders.value];
+    const response = await getFolderNames();
+    if (response.data?.status === 200) {
+      folders.value = response.data.data || [];  // 确保有数据
+      if (!folders.value.includes("默认收藏夹")) {
+        folders.value = ["默认收藏夹", ...folders.value];
+      }
+    } else {
+      folders.value = ["默认收藏夹"];  // 如果获取失败，至少显示默认收藏夹
     }
   } catch (error) {
     console.error("获取收藏夹列表失败:", error);
+    folders.value = ["默认收藏夹"];  // 发生错误时也显示默认收藏夹
+    ElMessage.warning("获取收藏夹列表失败，将使用默认收藏夹");
   }
 };
 

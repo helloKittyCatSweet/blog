@@ -1,6 +1,7 @@
 package com.kitty.blog.application.controller.post;
 
 import com.kitty.blog.application.dto.post.PostDto;
+import com.kitty.blog.common.annotation.LogPostMetrics;
 import com.kitty.blog.domain.service.post.PostExportService;
 import com.kitty.blog.domain.service.post.PostService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,6 +39,7 @@ public class PostExportController {
             @ApiResponse(responseCode = "404", description = "文章不存在"),
             @ApiResponse(responseCode = "500", description = "导出失败")
     })
+    @LogPostMetrics("导出文章为PDF")
     public ResponseEntity<byte[]> exportToPdf(@PathVariable Integer postId) {
         try {
             PostDto postDto = postService.findById(postId).getBody();
@@ -69,6 +71,7 @@ public class PostExportController {
             @ApiResponse(responseCode = "404", description = "文章不存在"),
             @ApiResponse(responseCode = "500", description = "导出失败")
     })
+    @LogPostMetrics("导出文章为Markdown")
     public ResponseEntity<byte[]> exportToMarkdown(@PathVariable Integer postId) {
         try {
             PostDto postDto = postService.findById(postId).getBody();
