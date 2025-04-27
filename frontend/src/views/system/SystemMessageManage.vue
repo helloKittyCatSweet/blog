@@ -170,8 +170,8 @@ const messageHistory = ref([]);
 const loadMessageHistory = async () => {
   try {
     const response = await getAdminSystemMessages();
-    messageHistory.value = response.data.data;
-    totalMessages.value = messageHistory.value.length;
+    messageHistory.value = response.data.data.content;
+    totalMessages.value = response.data.data.totalElements;
   } catch (error) {
     console.error("获取消息历史失败:", error);
     ElMessage.error("获取消息历史失败");

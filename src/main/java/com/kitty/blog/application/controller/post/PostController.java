@@ -3,6 +3,7 @@ package com.kitty.blog.application.controller.post;
 import com.kitty.blog.application.dto.common.FileDto;
 import com.kitty.blog.application.dto.post.PostAttachmentDto;
 import com.kitty.blog.application.dto.post.PostDto;
+import com.kitty.blog.application.dto.post.PostTagsRequestDto;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.common.annotation.LogPostMetrics;
 import com.kitty.blog.common.annotation.LogPostMetrics;
@@ -48,6 +49,7 @@ public class PostController {
 
     @Autowired
     private PostService postService;
+
     /**
      * 创建文章
      *
@@ -429,10 +431,9 @@ public class PostController {
     })
     public ResponseEntity<Response<Page<PostDto>>> findByTitleContaining(
             @PathVariable String keyword,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sorts", required = false) String[] sorts
-    ) {
+            @RequestParam(value = "sorts", required = false) String[] sorts) {
         Page<PostDto> response = postService.findByTitleContaining(keyword, page, size, sorts);
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
@@ -454,10 +455,9 @@ public class PostController {
     })
     public ResponseEntity<Response<Page<PostDto>>> findByContentContaining(
             @PathVariable String keyword,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sorts", required = false) String[] sorts
-    ) {
+            @RequestParam(value = "sorts", required = false) String[] sorts) {
         Page<PostDto> response = postService.findByContentContaining(keyword, page, size, sorts);
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
@@ -479,10 +479,9 @@ public class PostController {
     })
     public ResponseEntity<Response<Page<PostDto>>> findByUsernameIsPublished(
             @PathVariable Integer userId,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sorts", required = false) String[] sorts
-    ) {
+            @RequestParam(value = "sorts", required = false) String[] sorts) {
         Page<PostDto> response = postService.findByUserIdIsPublished(userId, page, size, sorts);
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
@@ -504,10 +503,9 @@ public class PostController {
     })
     public ResponseEntity<Response<Page<PostDto>>> findByCategory(
             @PathVariable String category,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sorts", required = false) String[] sorts
-    ) {
+            @RequestParam(value = "sorts", required = false) String[] sorts) {
         Page<PostDto> response = postService.findByCategory(category, page, size, sorts);
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
@@ -529,10 +527,9 @@ public class PostController {
     })
     public ResponseEntity<Response<Page<PostDto>>> findByTag(
             @PathVariable String tag,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sorts", required = false) String[] sorts
-    ) {
+            @RequestParam(value = "sorts", required = false) String[] sorts) {
         Page<PostDto> response = postService.findByTag(tag, page, size, sorts);
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
@@ -545,13 +542,13 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<Page<PostDto>>> findByTags(
-            @RequestBody List<String> tags,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sorts", required = false) String[] sorts
-    ) {
-        Page<PostDto> response = postService.findByTags(tags, page, size, sorts);
+    public ResponseEntity<Response<Page<PostDto>>> findByTags(@RequestBody PostTagsRequestDto request) {
+        Page<PostDto> response = postService.findByTags(
+                request.getTags(),
+                request.getPage(),
+                request.getSize(),
+                request.getSorts());
+
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -711,12 +708,10 @@ public class PostController {
     public ResponseEntity<Response<Page<PostDto>>> findByVisibility(
             @PathVariable String visibility,
             @AuthenticationPrincipal LoginResponseDto user,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sorts", required = false) String[] sorts
-    ) {
-        Page<PostDto> response =
-                postService.findByVisibility(visibility, user.getId(), page, size, sorts);
+            @RequestParam(value = "sorts", required = false) String[] sorts) {
+        Page<PostDto> response = postService.findByVisibility(visibility, user.getId(), page, size, sorts);
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -735,10 +730,9 @@ public class PostController {
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     public ResponseEntity<Response<Page<PostDto>>> findAll(
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sorts", required = false) String[] sorts
-    ) {
+            @RequestParam(value = "sorts", required = false) String[] sorts) {
         Page<PostDto> response = postService.findAll(page, size, sorts);
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
@@ -839,12 +833,11 @@ public class PostController {
     @GetMapping("/public/find/attachments")
     public ResponseEntity<Response<Page<PostAttachmentDto>>> findAttachmentsByPostId(
             @AuthenticationPrincipal LoginResponseDto user,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sorts", required = false) String[] sorts
-    ) {
-        Page<PostAttachmentDto> attachments =
-                postService.findAttachmentsByUserId(user.getId(), page, size, sorts);
+            @RequestParam(value = "sorts", required = false, defaultValue = "createdTime,desc") String[] sorts) {
+        Page<PostAttachmentDto> attachments = postService.findAttachmentsByUserId(user.getId(), page, size,
+                sorts);
         return Response.createResponse(
                 new ResponseEntity<>(attachments, HttpStatus.OK),
                 HttpStatus.OK, "查询成功",

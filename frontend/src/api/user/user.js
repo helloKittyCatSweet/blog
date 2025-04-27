@@ -65,7 +65,8 @@ export const findByEmailSuffix = (emailSuffix) =>
 export const findUserById = (userId) => request.get(`${userPrefix}/public/find/id/${userId}`)
 
 // 查询所有用户
-export const findAllUser = () => request.get(`${userPrefix}/admin/find/all`)
+export const findAllUser = ({page = 0, size = 10, sort = "createdAt,desc"} = {}) =>
+  request.get(`${userPrefix}/admin/find/all`, {params: {page, size, sort}})
 
 // 判断用户是否存在
 export const existsById = (userId) => request.get(`${userPrefix}/admin/exist/${userId}`)

@@ -135,8 +135,8 @@ public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecif
          * 根据用户ID和发布状态查询未删除的文章
          */
         Page<Post> findByUserIdAndIsPublishedTrueAndIsDeletedFalse(
-                @Param("userId") Integer userId,
-                Pageable pageable);
+                        @Param("userId") Integer userId,
+                        Pageable pageable);
 
         /**
          * 标题模糊搜索（分页）

@@ -32,7 +32,7 @@ const loadData = async () => {
       followingList.value = followingRes.data.data;
     }
     if (followersRes.data?.status === 200) {
-      followersList.value = followersRes.data.data;
+      followersList.value = followersRes.data.data.content;
     }
   } catch (error) {
     ElMessage.error('加载数据失败');

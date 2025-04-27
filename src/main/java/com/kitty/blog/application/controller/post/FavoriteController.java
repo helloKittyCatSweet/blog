@@ -65,7 +65,7 @@ public class FavoriteController {
             @ApiResponse(responseCode = "404", description = "用户不存在")})
     public ResponseEntity<Response<Page<FavoriteDto>>> findByUserId(
             @AuthenticationPrincipal LoginResponseDto user,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sorts", required = false) String[] sorts
     ) {
@@ -100,8 +100,8 @@ public class FavoriteController {
     @Operation(summary = "获取用户的所有收藏夹名称")
     @GetMapping("/public/find/folder")
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
-    public ResponseEntity<List<String>> getFolderNames(@AuthenticationPrincipal LoginResponseDto user) {
-        return favoriteService.getFolderNames(user.getId());
+    public ResponseEntity<Response<List<String>>> getFolderNames(@AuthenticationPrincipal LoginResponseDto user) {
+        return Response.ok(favoriteService.getFolderNames(user.getId()).getBody());
     }
 
     @Operation(summary = "获取用户特定收藏夹中的文章")
@@ -110,7 +110,7 @@ public class FavoriteController {
     public ResponseEntity<Response<Page<FavoriteDto>>> getPostsByFolder(
             @AuthenticationPrincipal LoginResponseDto user,
             @PathVariable String folderName,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sorts", required = false) String[] sorts
             ) {
@@ -218,7 +218,7 @@ public class FavoriteController {
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "404", description = "收藏不存在")})
     public ResponseEntity<Response<Page<Post>>> findAll(
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sorts", required = false) String[] sorts
     ) {

@@ -37,7 +37,7 @@ const loadMessages = async () => {
     const res = await findAll(
       pagination.value.currentPage - 1,
       pagination.value.pageSize,
-      ['createdAt,desc']
+      "createdAt,desc"
     );
     if (res.data.status === 200) {
       messageList.value = res.data.data.content;
@@ -409,10 +409,10 @@ const handleExport = () => {
             >
               {{ row.operation ? "标记未审核" : "标记已审核" }}
             </el-button>
-            <el-button 
+            <el-button
               v-if="!row.operation"
-              type="danger" 
-              link 
+              type="danger"
+              link
               @click="deleteMessage(row)"
             >删除</el-button>
           </template>

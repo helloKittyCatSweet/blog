@@ -39,7 +39,20 @@ const externalRoutes = [
     meta: {
       roles: [ROLES.SYSTEM_ADMINISTRATOR]
     }
+  },
+  {
+    path: '/swagger-api',
+    name:'SwaggerApi',
+    component: {
+      beforeRouteEnter(to, from, next) {
+        window.open('http://localhost:8080/swagger-ui/index.html', '_blank');
+        next(false);
+      }
+    },
+    meta: {
+      roles: [ROLES.SYSTEM_ADMINISTRATOR]
+    }
   }
 ];
 
-export default externalRoutes; 
+export default externalRoutes;

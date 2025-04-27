@@ -836,7 +836,7 @@ public class PostService {
         List<Post> userPosts = postRepository.findByUserId(userId)
                 .orElse(Collections.emptyList());
 
-        Sort sorting = createSort(sort);
+        Sort sorting = PageUtil.createSort(sort);
         PageRequest pageRequest = PageRequest.of(page, size, sorting);
 
         // 2. 收集所有文章的附件

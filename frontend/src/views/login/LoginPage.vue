@@ -651,8 +651,8 @@ const handleGithubLogin = async () => {
                 oauthDialogVisible.value = true;
               } else {
                 // 如果是已有用户，直接登录
-                ElMessage.success('GitHub 登录成功');
-                await handleOAuthLogin(userData);
+              ElMessage.success('GitHub 登录成功');
+              await handleOAuthLogin(userData);
               }
             }
           } catch (error) {
@@ -1033,31 +1033,31 @@ const goToBlog = () => {
       width: 100%;
       gap: 8px;
 
-      .github-button {
-        width: 60%;
-        padding: 12px 24px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 8px;
-        background-color: #24292e;
-        color: white !important;
-        border: none !important;
-        transition: all 0.3s ease;
+    .github-button {
+      width: 60%;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      background-color: #24292e;
+      color: white !important;
+      border: none !important;
+      transition: all 0.3s ease;
 
-        &:hover {
-          background-color: #2f363d !important;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
+      &:hover {
+        background-color: #2f363d !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
 
-        &:active {
-          background-color: #1b1f23 !important;
-          transform: translateY(0);
-        }
+      &:active {
+        background-color: #1b1f23 !important;
+        transform: translateY(0);
+      }
 
-        .fa-github {
-          font-size: 18px;
+      .fa-github {
+        font-size: 18px;
         }
       }
 

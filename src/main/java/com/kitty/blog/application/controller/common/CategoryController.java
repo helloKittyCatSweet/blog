@@ -179,7 +179,7 @@ public class CategoryController {
             @PathVariable("name") String name,
             @RequestParam(value = "page", defaultValue = "0", required = false) int page,
             @RequestParam(value = "size", defaultValue = "10", required = false) int size,
-            @RequestParam(value = "sorts", required = false) String[] sorts) {
+            @RequestParam(value = "sorts", defaultValue = "useCount,desc", required = false) String[] sorts) {
         // TODO: find categories by parent id
         ResponseEntity<Page<TreeDto>> response= categoryService.findDescendantsByParentNameLike(name, page,size, sorts);
         return Response.createResponse(response,
@@ -239,7 +239,7 @@ public class CategoryController {
     public ResponseEntity<Response<Page<TreeDto>>> findAll(
             @RequestParam(value = "page", defaultValue = "0", required = false) int page,
             @RequestParam(value = "size", defaultValue = "10", required = false) int size,
-            @RequestParam(value = "sorts", required = false) String[] sorts
+            @RequestParam(value = "sorts", defaultValue = "useCount,desc", required = false) String[] sorts
     ) {
         ResponseEntity<Page<TreeDto>> response = categoryService.findAll(page, size, sorts);
         return Response.createResponse(response,

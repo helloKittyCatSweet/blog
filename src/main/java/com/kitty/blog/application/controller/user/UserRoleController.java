@@ -109,7 +109,7 @@ public class UserRoleController {
     })
     public ResponseEntity<Response<Page<User>>> findByRoleId(
             @PathVariable("roleId") Integer id,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sort", required = false, defaultValue = "id") String[] sort
     ) {

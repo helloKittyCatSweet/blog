@@ -12,7 +12,8 @@ export const update = (data) => request.put(`${commentPrefix}/public/update`, da
 export const create = (data) => request.post(`${commentPrefix}/public/create`, data)
 
 // 获取评论列表
-export const findByPostId = (postId) => request.get(`${commentPrefix}/public/find/${postId}/list`)
+export const findByPostId = (postId, {page = 0, size = 10, sort = "createdAt,desc"} = {}) =>
+  request.get(`${commentPrefix}/public/find/${postId}/list`, {params: {page, size, sort}})
 
 // 获取评论详情
 export const findById = (commentId) => request.get(`${commentPrefix}/public/find/${commentId}`)
@@ -41,4 +42,7 @@ export const batchDelete = (commentIds) =>
 export const findByAuthor = () => request.get(`${commentPrefix}/public/find/author`)
 
 // 根据用户id获取评论
-export const findByUserId = () => request.get(`${commentPrefix}/public/find/user`)
+export const findByUserId = ({ page = 0, size = 10, sorts = "createdAt,desc" } = {}) =>
+  request.get(`${commentPrefix}/public/find/user`, {
+    params: { page, size, sorts }
+  });

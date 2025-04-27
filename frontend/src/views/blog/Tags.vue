@@ -38,7 +38,7 @@ const loadTags = async () => {
   try {
     const response = await findAll();
     if (response.data?.status === 200) {
-      tags.value = response.data.data;
+      tags.value = response.data.data.content;
 
       // 在标签数据加载完成后处理选择
       const tagParam = router.currentRoute.value.query.tag;
@@ -46,7 +46,7 @@ const loadTags = async () => {
         // 如果URL中有标签参数，可能是单个标签或逗号分隔的多个标签
         const tagNames = decodeURIComponent(tagParam).split(',').filter(Boolean);
         const matchedTags = tags.value.filter(tag => tagNames.includes(tag.name));
-        
+
         if (matchedTags.length > 0) {
           selectedTags.value = matchedTags.map(tag => tag.tagId);
           await loadTagPosts();
@@ -81,7 +81,7 @@ watch(
         // 处理多个标签的情况
         const tagNames = decodeURIComponent(newTag).split(',').filter(Boolean);
         const matchedTags = tags.value.filter(tag => tagNames.includes(tag.name));
-        
+
         if (matchedTags.length > 0) {
           selectedTags.value = matchedTags.map(tag => tag.tagId);
           await loadTagPosts();
@@ -113,7 +113,7 @@ const handleTagClick = async (tag) => {
   } else {
     router.push({ query: {} });
   }
-  
+
   await loadTagPosts();
 };
 
@@ -163,10 +163,14 @@ const loadTagPosts = async () => {
   try {
     // Changed: Use findByTags API with tag names array
     const tagNames = selectedTagObjects.value.map((tag) => tag.name);
-    const response = await findByTags(tagNames, currentPage.value - 1, pageSize.value);
+    const response = await findByTags(tagNames, {
+      page: currentPage.value - 1,
+      size: pageSize.value,
+      sorts: ["createdAt,desc"]
+    });
 
     if (response.data?.status === 200) {
-      const data = response.data.data;
+      const data = response.data.data.content;
       // 如果是分页数据
       if (data.content) {
         tagPosts.value = transformPostData(data.content);
@@ -348,7 +352,7 @@ const removeTag = async (tagToRemove) => {
   const index = selectedTags.value.indexOf(tagToRemove.tagId);
   if (index > -1) {
     selectedTags.value.splice(index, 1);
-    
+
     // 统一处理URL更新
     if (selectedTags.value.length > 0) {
       const tagNames = tags.value
@@ -360,7 +364,7 @@ const removeTag = async (tagToRemove) => {
     } else {
       router.push({ query: {} });
     }
-    
+
     await loadTagPosts();
   }
 };

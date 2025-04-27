@@ -340,7 +340,8 @@ const previewSignature = () => {
           </el-form>
           <!-- 添加弹窗组件 -->
           <ChangeEmailDialog
-            v-model="showEmailDialog"
+            :model-value="showEmailDialog"
+  @update:model-value="showEmailDialog = $event"
             :current-email="userInfo.email"
             @success="handleEmailChange"
           />

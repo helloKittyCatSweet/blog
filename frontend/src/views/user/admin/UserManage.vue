@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import {
   Search,
@@ -14,6 +14,7 @@ import {
   Lock,
   Unlock,
   Key,
+  InfoFilled
 } from "@element-plus/icons-vue";
 import PageContainer from "@/components/PageContainer.vue";
 import {
@@ -59,8 +60,12 @@ const getUserList = async () => {
       // 只有状态筛选
       res = await findActivatedUser(activeFilter.value);
     } else {
-      // 获取所有用户
-      res = await findAllUser();
+      // 获取所有用户，使用分页参数
+      res = await findAllUser({
+        page: currentPage.value - 1, // 前端页码从1开始，后端从0开始
+        size: pageSize.value,
+        sort: "createdAt,desc"
+      });
     }
 
     // 检查响应格式
@@ -71,15 +76,21 @@ const getUserList = async () => {
     const responseData = res.data;
 
     if (responseData.status === 200 && responseData.data) {
-      if (Array.isArray(responseData.data)) {
+      if (Array.isArray(responseData.data.content)) {
+        // 处理分页数据
+        tableData.value = responseData.data.content;
+        total.value = responseData.data.totalElements;
+      } else if (Array.isArray(responseData.data)) {
+        // 处理非分页数据（搜索结果）
         tableData.value = responseData.data;
         total.value = responseData.data.length;
-        if (responseData.data.length === 0) {
-          ElMessage.warning("没有找到符合条件的用户");
-        }
       } else {
         tableData.value = [responseData.data];
         total.value = 1;
+      }
+
+      if (tableData.value.length === 0) {
+        ElMessage.warning("没有找到符合条件的用户");
       }
     } else {
       tableData.value = [];
@@ -331,11 +342,18 @@ const handleExport = () => {
 };
 
 // 批量操作相关方法
+const selectedRows = computed(() => selectedUsers.value || []);
+
 const handleSelectionChange = (val) => {
-  selectedUsers.value = val;
+  selectedUsers.value = val || [];
 };
 
 const handleBatchActivate = async (isActive) => {
+  if (!selectedUsers.value?.length) {
+    ElMessage.warning('请先选择用户');
+    return;
+  }
+
   try {
     const message = isActive ? "激活" : "禁用";
     await ElMessageBox.confirm(`确定要批量${message}选中的用户吗？`, "提示", {
@@ -345,7 +363,9 @@ const handleBatchActivate = async (isActive) => {
     });
 
     for (const item of selectedUsers.value) {
-      await activate(item.user.userId, isActive);
+      if (item?.user?.userId) {
+        await activate(item.user.userId, isActive);
+      }
     }
     ElMessage.success(`批量${message}成功`);
     getUserList();
@@ -357,6 +377,11 @@ const handleBatchActivate = async (isActive) => {
 };
 
 const handleBatchDelete = async () => {
+  if (!selectedUsers.value?.length) {
+    ElMessage.warning('请先选择用户');
+    return;
+  }
+
   try {
     await ElMessageBox.confirm("确定要删除选中的用户吗？", "警告", {
       confirmButtonText: "确定",
@@ -365,7 +390,9 @@ const handleBatchDelete = async () => {
     });
 
     for (const item of selectedUsers.value) {
-      await deleteById(item.user.userId);
+      if (item?.user?.userId) {
+        await deleteById(item.user.userId);
+      }
     }
     ElMessage.success("批量删除成功");
     getUserList();
@@ -387,64 +414,92 @@ const showUserDetail = (row) => {
   <page-container>
     <el-card class="box-card">
       <!-- 搜索区域 -->
-      <el-form :inline="true" :model="searchForm" class="search-form">
-        <el-form-item>
-          <el-input
-            v-model="searchKey"
-            placeholder="搜索用户名/邮箱"
-            class="search-input"
-            clearable
-            @keyup.enter="handleSearch"
-          >
-            <template #prefix>
-              <el-icon><Search /></el-icon>
-            </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item>
-          <el-select
-            v-model="activeFilter"
-            placeholder="状态筛选"
-            clearable
-            class="status-select"
-          >
-            <el-option label="已激活" :value="true" />
-            <el-option label="已禁用" :value="false" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
-          <el-button :icon="Refresh" @click="handleReset">重置</el-button>
-          <el-button type="success" :icon="Download" @click="handleExport">导出</el-button>
-        </el-form-item>
-      </el-form>
+      <div class="search-bar">
+  <el-input
+    v-model="searchKey"
+    placeholder="搜索用户名/邮箱"
+    class="search-input"
+    clearable
+    @keyup.enter="handleSearch"
+  >
+    <template #prefix>
+      <el-icon><Search /></el-icon>
+    </template>
+  </el-input>
+  <el-select
+    v-model="activeFilter"
+    placeholder="状态筛选"
+    clearable
+    class="status-select"
+  >
+    <el-option label="已激活" :value="true" />
+    <el-option label="已禁用" :value="false" />
+  </el-select>
+  <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
+  <el-button @click="handleReset">重置</el-button>
+  <el-button type="success" @click="handleExport">
+    <el-icon><Download /></el-icon>
+    导出用户
+  </el-button>
 
-      <!-- 工具栏 -->
-      <div class="toolbar">
-        <div class="left">
-          <el-upload
-            class="upload-demo"
-            :action="uploadUrl"
-            :headers="headers"
-            :on-success="handleUploadSuccess"
-            :on-error="handleUploadError"
-            :show-file-list="false"
-          >
-            <el-button type="primary" :icon="Upload">导入用户</el-button>
-          </el-upload>
-          <el-tooltip
-            content="点击下载用户导入模板"
-            placement="top"
-          >
-            <el-button type="success" :icon="Download" @click="downloadTemplate">下载模板</el-button>
-          </el-tooltip>
-        </div>
-        <div class="right">
-          <el-button type="warning" :disabled="!selectedRows.length" @click="handleBatchActivate(false)">批量禁用</el-button>
-          <el-button type="success" :disabled="!selectedRows.length" @click="handleBatchActivate(true)">批量激活</el-button>
-          <el-button type="danger" :disabled="!selectedRows.length" @click="handleBatchDelete">批量删除</el-button>
-        </div>
+  <el-upload
+    class="upload-button"
+    :show-file-list="false"
+    :before-upload="handleFileUpload"
+    accept=".xlsx,.xls"
+  >
+    <el-button type="primary" :icon="Upload">导入用户</el-button>
+  </el-upload>
+
+  <!-- 导入说明 -->
+  <el-popover
+    placement="bottom"
+    :width="400"
+    trigger="hover"
+    title="Excel 导入说明"
+    :show-after="100"
+  >
+    <template #reference>
+      <el-button type="info" circle>
+        <el-icon><info-filled /></el-icon>
+      </el-button>
+    </template>
+
+    <div class="import-guide">
+      <div class="guide-section">
+        <h4>Excel 文件格式要求：</h4>
+        <el-table :data="excelColumns" border size="small">
+          <el-table-column prop="column" label="列" width="60" align="center" />
+          <el-table-column prop="field" label="字段" width="100" />
+          <el-table-column prop="required" label="必填" width="60" align="center">
+            <template #default="scope">
+              <el-tag :type="scope.row.required ? 'danger' : 'info'" size="small">
+                {{ scope.row.required ? "是" : "否" }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="description" label="说明" />
+        </el-table>
       </div>
+
+      <div class="guide-section">
+        <h4>注意事项：</h4>
+        <ul class="guide-tips">
+          <li>默认密码为：123456</li>
+          <li>状态可填：已激活、已禁用（默认已激活）</li>
+          <li>角色为可选项，多个角色用逗号分隔</li>
+          <li>重复的用户名或邮箱将被自动跳过</li>
+        </ul>
+      </div>
+
+      <div class="guide-footer">
+        <el-alert type="warning" :closable="false" show-icon>
+          建议先导出现有数据作为模板使用
+        </el-alert>
+      </div>
+    </div>
+  </el-popover>
+</div>
 
       <!-- 用户列表 -->
       <el-table
@@ -456,17 +511,24 @@ const showUserDetail = (row) => {
         <el-table-column type="selection" width="55" />
         <el-table-column prop="user.userId" label="ID" width="80" />
         <el-table-column prop="user.username" label="用户名" width="120">
-          <template #default="scope">
-            <el-button
-              link
-              type="primary"
-              class="custom-username"
-              @click="showUserDetail(scope.row)"
-            >
-              {{ scope.row.user.username }}
-            </el-button>
-          </template>
-        </el-table-column>
+  <template #default="scope">
+    <el-tooltip
+      :content="scope.row.user.username"
+      placement="top"
+      :show-after="200"
+      :hide-after="2000"
+    >
+      <el-button
+        link
+        type="primary"
+        class="custom-username text-ellipsis"
+        @click="showUserDetail(scope.row)"
+      >
+        {{ scope.row.user.username }}
+      </el-button>
+    </el-tooltip>
+  </template>
+</el-table-column>
         <el-table-column prop="user.nickname" label="昵称" width="120" />
         <el-table-column prop="user.email" label="邮箱" width="180" />
         <el-table-column prop="user.lastLoginIp" label="最后登录IP" width="140" />
@@ -516,33 +578,35 @@ const showUserDetail = (row) => {
           </template>
         </el-table-column>
         <!-- 操作列 -->
-        <el-table-column label="操作" width="280" fixed="right">
-          <template #default="{ row }">
-            <el-button
-              type="primary"
-              :icon="Edit"
-              circle
-              @click="handleEdit(row)"
-            />
-            <el-button
-              :type="row.status ? 'warning' : 'success'"
-              :icon="row.status ? Lock : Unlock"
-              circle
-              @click="handleActivate(row)"
-            />
-            <el-button
-              type="danger"
-              :icon="Delete"
-              circle
-              @click="handleDelete(row)"
-            />
-            <el-button
-              :icon="Key"
-              circle
-              @click="handleResetPassword(row)"
-            />
-          </template>
-        </el-table-column>
+       <el-table-column label="操作" width="120" fixed="right">
+  <template #default="scope">
+    <el-dropdown trigger="click">
+      <el-button type="primary" size="small">
+        操作
+        <el-icon class="el-icon--right"><arrow-down /></el-icon>
+      </el-button>
+      <template #dropdown>
+        <el-dropdown-menu>
+          <el-dropdown-item @click="handleActivate(scope.row.user)">
+            <el-icon :class="scope.row.user.isActive ? 'warning-icon' : 'success-icon'">
+              <warning v-if="scope.row.user.isActive" />
+              <check v-else />
+            </el-icon>
+            {{ scope.row.user.isActive ? "禁用" : "激活" }}
+          </el-dropdown-item>
+          <el-dropdown-item @click="handleEditRoles(scope.row)">
+            <el-icon><edit /></el-icon>
+            编辑角色
+          </el-dropdown-item>
+          <el-dropdown-item divided @click="handleDelete(scope.row.user)">
+            <el-icon class="danger-icon"><delete /></el-icon>
+            删除
+          </el-dropdown-item>
+        </el-dropdown-menu>
+      </template>
+    </el-dropdown>
+  </template>
+</el-table-column>
       </el-table>
 
       <!-- 分页 -->
@@ -812,5 +876,13 @@ const showUserDetail = (row) => {
 
 .mb-1 {
   margin-bottom: 4px;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  display: block;
 }
 </style>

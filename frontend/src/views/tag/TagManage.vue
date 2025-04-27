@@ -79,8 +79,8 @@ const getTagList = async () => {
         pageSize: pageSize.value,
       });
       if (res.data.status === 200) {
-        tableData.value = res.data.data;
-        total.value = res.data.total || tableData.value.length;
+        tableData.value = res.data.data.content;
+        total.value = res.data.data.totalElements || tableData.value.length;
       }
     }
   } catch (error) {

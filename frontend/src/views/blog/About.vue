@@ -178,6 +178,9 @@ import { User, Edit, Share, Message, Link } from "@element-plus/icons-vue";
 .about-container {
   padding: 40px 20px;
   background-color: var(--el-bg-color-page);
+  max-width: 1150px; // 改用 max-width
+  margin: 0 auto; // 添加居中对齐
+  width: 100%; // 使用百分比宽度
 
   .about-card {
     .about-header {

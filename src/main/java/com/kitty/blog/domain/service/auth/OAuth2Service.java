@@ -67,39 +67,39 @@ public class OAuth2Service {
      */
     public LoginResponseDto checkGithubUser(String code) {
         try {
-            // 1. 使用 code 获取 access token
+        // 1. 使用 code 获取 access token
             String token = getGithubAccessToken(code);
 
-            // 2. 使用 access token 获取用户信息
+        // 2. 使用 access token 获取用户信息
             Map<String, Object> githubUser = getGithubUserInfo(token);
 
             // 3. 获取GitHub用户信息
-            String username = (String) githubUser.get("login");
+        String username = (String) githubUser.get("login");
             usernameLocal.set(username);
 
             // 保存GitHub用户信息到ThreadLocal
             avatarUrlLocal.set((String) githubUser.get("avatar_url"));
 
             // 4. 检查用户是否存在
-            Optional<User> existingUser = userRepository.findByUsername(username);
+        Optional<User> existingUser = userRepository.findByUsername(username);
 
-            if (existingUser.isPresent()) {
+        if (existingUser.isPresent()) {
                 // 已存在用户，直接返回登录信息
-                User user = existingUser.get();
-                UserDetails userDetails = myUserDetailService.loadUserByUsername(user.getUsername());
+            User user = existingUser.get();
+            UserDetails userDetails = myUserDetailService.loadUserByUsername(user.getUsername());
                 String jwtToken = jwtTokenUtil.generateToken(userDetails);
 
                 // 清理ThreadLocal
                 cleanupThreadLocals();
 
-                return LoginResponseDto.builder()
-                        .id(user.getUserId())
-                        .username(user.getUsername())
+            return LoginResponseDto.builder()
+                    .id(user.getUserId())
+                    .username(user.getUsername())
                         .token(jwtToken)
-                        .roles(userDetails.getAuthorities())
-                        .isNewUser(false)
-                        .build();
-            } else {
+                    .roles(userDetails.getAuthorities())
+                    .isNewUser(false)
+                    .build();
+        } else {
                 // 新用户，返回需要注册的标志
                 return LoginResponseDto.builder()
                         .username(username)
@@ -206,7 +206,7 @@ public class OAuth2Service {
         while (retryCount < maxRetries) {
             try {
                 log.debug("Attempting to get GitHub access token (attempt {}/{})", retryCount + 1, maxRetries);
-                ResponseEntity<String> response = restTemplate.postForEntity(tokenUrl, request, String.class);
+        ResponseEntity<String> response = restTemplate.postForEntity(tokenUrl, request, String.class);
 
                 // 检查响应状态
                 if (!response.getStatusCode().is2xxSuccessful()) {
@@ -219,9 +219,9 @@ public class OAuth2Service {
                     throw new RuntimeException("Empty response from GitHub API");
                 }
 
-                // 解析响应
-                ObjectMapper mapper = new ObjectMapper();
-                JsonNode root = mapper.readTree(response.getBody());
+        // 解析响应
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response.getBody());
                 JsonNode accessToken = root.get("access_token");
                 JsonNode error = root.get("error");
                 JsonNode errorDescription = root.get("error_description");
@@ -265,7 +265,7 @@ public class OAuth2Service {
                         throw new RuntimeException("Retry interrupted", ie);
                     }
                 }
-            } catch (Exception e) {
+        } catch (Exception e) {
                 log.error("Unexpected error while getting GitHub access token: {}", e.getMessage());
                 throw new RuntimeException("Failed to get GitHub access token", e);
             }

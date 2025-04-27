@@ -107,7 +107,7 @@ const getPostList = async () => {
       response = await findByUserId(userStore.user.id);
       if (response.data.status === 200 && searchForm.value.status) {
         // 如果选择了状态，进行过滤
-        response.data.data = response.data.data.filter((item) =>
+        response.data.data = response.data.content.filter((item) =>
           searchForm.value.status === "PUBLISHED"
             ? item.post.isPublished
             : !item.post.isPublished
@@ -281,7 +281,7 @@ const fetchCategoriesAndTags = async () => {
   try {
     const tagsRes = await getAllTags();
     if (tagsRes.data.status === 200) {
-      tags.value = tagsRes.data.data;
+      tags.value = tagsRes.data.data.content;
     }
   } catch (error) {
     console.error("获取标签失败:", error);

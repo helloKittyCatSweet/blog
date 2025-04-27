@@ -43,8 +43,8 @@ const currentFolder = ref("默认收藏夹");
 const getFolders = async () => {
   try {
     const { data } = await getFolderNames();
-    console.log(data);
-    folders.value = data;
+    // console.log("folderNames:", data);
+    folders.value = data.data;
     // 如果后端没有返回默认收藏夹，才添加
     if (!folders.value.includes("默认收藏夹")) {
       folders.value = ["默认收藏夹", ...folders.value];
@@ -103,18 +103,28 @@ const getFavoriteList = async () => {
   loading.value = true;
   try {
     const { data } = await getPostsByFolder(currentFolder.value);
-    console.log(data);
-    favorites.value = data;
-    total.value = data.length;
+    // console.log("收藏列表数据:", data);
+    // 修改数据获取逻辑
+    if (data.data && data.data.content) {
+      favorites.value = data.data.content;
+      total.value = data.data.totalElements;
+    } else {
+      favorites.value = data.content || [];
+      total.value = data.totalElements || 0;
+    }
+
     // 如果当前页超出范围，重置为第一页
     if (
       searchForm.value.currentPage > Math.ceil(total.value / searchForm.value.pageSize)
     ) {
       searchForm.value.currentPage = 1;
     }
-    loading.value = false;
   } catch (error) {
+    console.error("获取收藏列表失败:", error);
     ElMessage.error("获取收藏列表失败");
+    favorites.value = [];
+    total.value = 0;
+  } finally {
     loading.value = false;
   }
 };
@@ -130,15 +140,14 @@ const handleSearch = async () => {
   loading.value = true;
   try {
     const { data } = await findByUserId();
-    favorites.value = data.data;
-    console.log("favorites.value", favorites.value);
+    favorites.value = data.data.content; // 修改这里以适应分页结构
     const filtered = filteredFavorites.value;
 
     if (filtered.length === 0) {
       ElMessage.info("未找到匹配的文章");
     } else {
       total.value = filtered.length;
-      currentFolder.value = ""; // 清空当前选中的文件夹
+      currentFolder.value = "";
       searchForm.value.isGlobalSearch = true;
     }
   } catch (error) {
@@ -204,8 +213,8 @@ const handleCurrentChange = (val) => {
 onMounted(async () => {
   await getFolders();
 
-    // Add query parameter handling
-    const folderFromQuery = route.query.folder;
+  // Add query parameter handling
+  const folderFromQuery = route.query.folder;
   if (folderFromQuery && folders.value.includes(folderFromQuery)) {
     currentFolder.value = folderFromQuery;
   }
@@ -232,7 +241,9 @@ const getFolderStats = async () => {
       byFolder: {},
     };
 
-    data.data.forEach((item) => {
+    // console.log("收藏数据:", data); // Log the data to check its structure
+    const items = data.data.content;
+    items.forEach((item) => {
       stats.total++;
       const folder = item.folderName || "默认收藏夹";
       stats.byFolder[folder] = (stats.byFolder[folder] || 0) + 1;
@@ -329,7 +340,10 @@ const getFolderStats = async () => {
                   >
                     移动到 {{ folder }}
                   </el-dropdown-item>
-                  <el-dropdown-item :divided="folders.length > 1" @click="handleDelete(item)">
+                  <el-dropdown-item
+                    :divided="folders.length > 1"
+                    @click="handleDelete(item)"
+                  >
                     <span style="color: var(--el-color-danger)">取消收藏</span>
                   </el-dropdown-item>
                 </el-dropdown-menu>

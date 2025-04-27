@@ -131,6 +131,7 @@ public class TagService {
             return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, 10), 0);
         }
         PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
+        log.info("pageRequest: " + pageRequest);
         return tagRepository.findAll(pageRequest);
     }
 

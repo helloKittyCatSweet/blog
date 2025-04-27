@@ -57,7 +57,7 @@ const fetchComments = async () => {
   try {
     const response = await findByPostId(props.postId);
     if (response.data.status === 200) {
-      const commentsData = response.data.data;
+      const commentsData = response.data.data.content;
       const processedComments = await Promise.all(commentsData.map(processCommentLikes));
       comments.value = sortComments(processedComments);
     }

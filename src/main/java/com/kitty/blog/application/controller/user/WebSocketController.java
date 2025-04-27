@@ -170,9 +170,9 @@ public class WebSocketController {
     // 获取系统消息历史（管理员）
     @GetMapping("/admin/system-messages")
     public ResponseEntity<Response<Page<SystemMessageDto>>> getSystemMessages(
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sort", required = false, defaultValue = "id") String[] sort
+            @RequestParam(value = "sort", required = false, defaultValue = "createdAt, desc") String[] sort
     ) {
         return Response.ok(webSocketService.getSystemMessages(page, size, sort));
     }
@@ -180,9 +180,9 @@ public class WebSocketController {
     // 获取用户系统消息
     @GetMapping("/system-messages")
     public ResponseEntity<Response<Page<SystemMessageDto>>> getUserSystemMessages(
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sort", required = false, defaultValue = "id") String[] sort
+            @RequestParam(value = "sort", required = false, defaultValue = "createdAt,desc") String[] sort
     ) {
         // 直接从 SecurityContext 获取当前用户
         LoginResponseDto currentUser = getCurrentUser(null);

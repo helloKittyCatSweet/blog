@@ -8,8 +8,8 @@ export const update = (data) => request.put(`${tagPrefix}/public/update`, data)
 export const create = (data) => request.post(`${tagPrefix}/public/create`, data)
 
 // 根据权重查询标签
-export const findByWeight = ({ weight, compare }) =>
-  request.get(`${tagPrefix}/public/find/weight/${weight}/${compare}`)
+export const findByWeight = ({ weight, compare, page = 0, size = 10, sorts = ["useCount", "desc"] } = {}) =>
+  request.get(`${tagPrefix}/public/find/weight/${weight}/${compare}`, {params: {page, size, sorts}})
 
 // 根据名称查询标签
 export const findByName = (name) => request.get(`${tagPrefix}/public/find/name/${name}`)
@@ -18,11 +18,12 @@ export const findByName = (name) => request.get(`${tagPrefix}/public/find/name/$
 export const findById = (tagId) => request.get(`${tagPrefix}/admin/find/id/${tagId}`)
 
 // 查询所有标签
-export const findAll = () => request.get(`${tagPrefix}/public/find/all`)
+export const findAll = ({page = 0, size = 10, sorts = "useCount,desc"} = {}) =>
+  request.get(`${tagPrefix}/public/find/all`, {params: {page, size, sorts}})
 
 // 根据标签名称和权值查询
 export const findByCombined = (params) =>
-  request.get(`${tagPrefix}/public/find/combined`, { params })
+  request.get(`${tagPrefix}/public/find/combined`, { params})
 
 // 根据id查询标签是否存在
 export const existsById = (tagId) => request.get(`${tagPrefix}/public/exists/id/${tagId}`)

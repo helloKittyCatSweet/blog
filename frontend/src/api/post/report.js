@@ -18,26 +18,27 @@ export const existById = (id) => request.get(`${postPrefix}${reportPrefix}/admin
 export const count = () => request.get(`${postPrefix}${reportPrefix}/admin/count`)
 
 // 根据用户名查询报告列表
-export const findByUserList = () =>
-  request.get(`${postPrefix}${reportPrefix}/public/find/user/list`)
+export const findByUserList = (page = 0, size = 10, sorts = "createdAt,desc") =>
+  request.get(`${postPrefix}${reportPrefix}/public/find/user/list`, { params: { page, size, sorts } })
 
 // 根据状态查询报告列表
-export const findByStatus = (status) =>
-  request.get(`${postPrefix}${reportPrefix}/admin/find/status/${status}`)
+export const findByStatus = (status, { page = 0, size = 10, sort = ["createdAt,desc"] } = {}) =>
+  request.get(`${postPrefix}${reportPrefix}/admin/find/status/${status}`, { params: { page, size, sort } })
 
 // 根据原因查询报告列表
-export const findByReason = (reason) =>
-  request.get(`${postPrefix}${reportPrefix}/admin/find/reason/${reason}`)
+export const findByReason = (reason, { page = 0, size = 10, sort = ["createdAt,desc"] } = {}) =>
+  request.get(`${postPrefix}${reportPrefix}/admin/find/reason/${reason}`, { params: { page, size, sort } })
 
 // 根据id查询举报详情
 export const findById = (id) => request.get(`${postPrefix}${reportPrefix}/admin/find/id/${id}`)
 
 // 根据文章id查询报告列表
-export const findByPostId = (postId) =>
-  request.get(`${postPrefix}${reportPrefix}/admin/find/article/${postId}`)
+export const findByPostId = (postId, { page = 0, size = 10, sort = ["createdAt,desc"] } = {}) =>
+  request.get(`${postPrefix}${reportPrefix}/admin/find/article/${postId}`, { params: { page, size, sort } })
 
 // 查询所有报告列表
-export const findAll = () => request.get(`${postPrefix}${reportPrefix}/admin/find/all`)
+export const findAll = ({ page = 0, size = 10, sort = "createdAt,desc" } = {}) =>
+  request.get(`${postPrefix}${reportPrefix}/admin/find/all`, { params: { page, size, sort } })
 
 // 根据举报id删除举报
 export const deleteById = (id) => request.delete(`${postPrefix}${reportPrefix}/public/delete/id/${id}`)

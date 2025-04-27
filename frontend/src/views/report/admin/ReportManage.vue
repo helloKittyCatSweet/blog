@@ -48,8 +48,8 @@ const getReportList = async () => {
       res = await findAll();
     }
     if (res.data.status === 200) {
-      tableData.value = res.data.data || [];
-      total.value = Number(res.data.total || res.data.data.length) || 0;
+      tableData.value = res.data.data.content || res.data.data || [];
+      total.value = Number(res.data.data.totalElement || res.data.length || res.data.data.length) || 0;
     } else {
       ElMessage.error("获取数据失败：" + res.data.message);
       tableData.value = [];

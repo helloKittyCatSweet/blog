@@ -11,10 +11,32 @@ public class CorsConfig {
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        config.addAllowedOrigin("http://localhost:5173");
+        // 允许的域名，开发环境下允许多个域名
+        config.addAllowedOrigin("http://localhost:5173"); // Vue开发服务器
+        // 允许的头信息
         config.addAllowedHeader("*");
+        // 允许的HTTP方法
         config.addAllowedMethod("*");
+        // 允许发送认证信息
         config.setAllowCredentials(true);
+        // 预检请求的有效期，单位为秒
+        config.setMaxAge(3600L);
+        // 允许的请求头
+        config.addExposedHeader("Authorization");
+        config.addExposedHeader("Content-Type");
+        config.addExposedHeader("X-Requested-With");
+        config.addExposedHeader("accept");
+        config.addExposedHeader("Origin");
+        config.addExposedHeader("Access-Control-Request-Method");
+        config.addExposedHeader("Access-Control-Request-Headers");
+        // 添加常用的响应头
+        config.addExposedHeader("Cache-Control");
+        config.addExposedHeader("Content-Language");
+        config.addExposedHeader("Content-Length");
+        config.addExposedHeader("Content-Type");
+        config.addExposedHeader("Expires");
+        config.addExposedHeader("Last-Modified");
+        config.addExposedHeader("Pragma");
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

@@ -40,20 +40,20 @@ export const create = async (data) => {
 };
 
 // 根据内容为发送方查询消息
-export const findContentForSender = (data) =>
-  request.post(`${userPrefix}${messagePrefix}/public/find/sender/${data.content}`)
+export const findContentForSender = (data, { page = 0, size = 10, sort = ["createdAt,desc"] } = {}) =>
+  request.post(`${userPrefix}${messagePrefix}/public/find/sender/${data.content}`, { params: { page, size, sort } })
 
 // 查询发送方消息列表
-export const findSenderList = (data) =>
-  request.post(`${userPrefix}${messagePrefix}/public/find/sender/list/${data}`)
+export const findSenderList = (data, { page = 0, size = 10, sort = ["createdAt,desc"] } = {}) =>
+  request.post(`${userPrefix}${messagePrefix}/public/find/sender/list/${data}`, { params: { page, size, sort } })
 
 // 根据内容为接收方查询消息
-export const findContentForReceiver = (data) =>
-  request.post(`${userPrefix}${messagePrefix}/public/find/receiver/${data.content}`)
+export const findContentForReceiver = (data, { page = 0, size = 10, sort = ["createdAt,desc"] } = {}) =>
+  request.post(`${userPrefix}${messagePrefix}/public/find/receiver/${data.content}`, { params: { page, size, sort } })
 
 // 查询接收方消息列表
-export const findReceiverList = (data) =>
-  request.post(`${userPrefix}${messagePrefix}/public/find/receiver/list/${data}`)
+export const findReceiverList = (data, { page = 0, size = 10, sort = ["createdAt,desc"] } = {}) =>
+  request.post(`${userPrefix}${messagePrefix}/public/find/receiver/list/${data}`, { params: { page, size, sort } })
 
 // 根据用户查找联系人列表
 export const findContactedUserNames = () =>
@@ -67,7 +67,8 @@ export const findConversation = (data) =>
   request.get(`${userPrefix}${messagePrefix}/public/find/conversation/${data.userId}/${data.receiverId}`)
 
 // 查询所有消息
-export const findAll = () => request.get(`${userPrefix}${messagePrefix}/admin/find/all`)
+export const findAll = ({ page = 0, size = 10, sort = "createdAt,desc" } = {}) =>
+  request.get(`${userPrefix}${messagePrefix}/admin/find/all`, { params: { page, size, sort } })
 
 // 查询消息是否存在
 export const existsById = (id) => request.get(`${userPrefix}${messagePrefix}/admin/exists/${id}`)
@@ -444,15 +445,15 @@ export function checkWebSocketConnection() {
  * 获取管理员发送的系统消息历史
  * @returns {Promise} 返回系统消息列表
  */
-export const getAdminSystemMessages = () =>
-  request.get(`/ws/admin/system-messages`);
+export const getAdminSystemMessages = ({ page = 0, size = 10, sort = "createdAt,desc" } = {}) =>
+  request.get(`/ws/admin/system-messages`, { params: { page, size, sort } });
 
 /**
  * 获取用户收到的系统消息
  * @returns {Promise} 返回系统消息列表
  */
-export const getUserSystemMessages = () =>
-  request.get(`/ws/system-messages`);
+export const getUserSystemMessages = ({ page = 0, size = 10, sort = "createdAt,desc" } = {}) =>
+  request.get(`/ws/system-messages`, { params: { page, size, sort } });
 
 export const deleteSystemMessage = (messageId) =>
   request.delete(`/ws/system-message/${messageId}`);

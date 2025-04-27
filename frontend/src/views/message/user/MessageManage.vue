@@ -35,6 +35,8 @@ const searchForm = ref({
   content: "",
   startDate: "",
   endDate: "",
+  page: 0,
+  size: 10,
 });
 
 // 表格列配置
@@ -81,12 +83,9 @@ const loadMessages = async () => {
 
     if (isSearchMode.value) {
       const params = {
-        receiverName: searchForm.value.receiverName,
-        content: searchForm.value.content,
-        startDate: searchForm.value.startDate,
-        endDate: searchForm.value.endDate,
+        ...searchForm.value,
         page: pagination.value.currentPage - 1,
-        size: pagination.value.pageSize
+        size: pagination.value.pageSize,
       };
 
       const { data } = await findMessagePage(params);
@@ -116,7 +115,7 @@ const loadMessages = async () => {
               createdAt: message.createdAt,
               isRead: message.isRead,
               receiverName: receiverName || "未知用户",
-              receiverAvatar: receiverAvatar
+              receiverAvatar: receiverAvatar,
             };
           })
         );
@@ -134,7 +133,7 @@ const loadMessages = async () => {
           receiverAvatar: item.avatar,
           lastMessage: item.lastMessage,
           unreadCount: Number(item.unreadCount) || 0,
-          lastMessageTime: item.lastMessageTime == null ? "-" : item.lastMessageTime
+          lastMessageTime: item.lastMessageTime == null ? "-" : item.lastMessageTime,
         }));
         pagination.value.total = chatList.value.length;
       } else {
@@ -225,7 +224,7 @@ const handleMarkAsRead = async (row) => {
   try {
     const count = row.unreadCount;
     const response = await readMessage(row.receiverId);
-    
+
     if (response.data.status === 200) {
       ElMessage.success(`已将 ${count} 条消息标记为已读`);
       // 等待消息列表刷新完成
@@ -242,7 +241,7 @@ const handleMarkAsRead = async (row) => {
 const handleMarkAsUnread = async (row) => {
   try {
     const response = await unReadMessage(row.receiverId);
-    
+
     if (response.data.status === 200) {
       ElMessage.success("已标记为未读");
       // 等待消息列表刷新完成
@@ -281,8 +280,8 @@ const loadSystemMessages = async () => {
       page: systemPagination.value.currentPage - 1,
       size: systemPagination.value.pageSize,
     });
-    systemMessages.value = data.data;
-    systemPagination.value.total = data.data.length; // 设置总数为数组长度
+    systemMessages.value = data.data.content;
+    systemPagination.value.total = data.data.totalElements; // 设置总数为数组长度
   } catch (error) {
     ElMessage.error("加载系统消息失败");
   } finally {

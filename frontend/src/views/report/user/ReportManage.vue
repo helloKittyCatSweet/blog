@@ -37,8 +37,8 @@ const getReportList = async () => {
   try {
     const res = await findByUserList();
     if (res.data.status === 200) {
-      tableData.value = res.data.data;
-      total.value = res.data.data.length;
+      tableData.value = res.data.data.content;
+      total.value = res.data.data.totalElements;
     }
   } catch (error) {
     ElMessage.error("获取举报列表失败");
@@ -103,7 +103,12 @@ const reasonFilter = ref("");
 const handleSearch = async () => {
   loading.value = true;
   try {
-    const params = {};
+    const params = {
+      page: currentPage.value - 1,
+      size: pageSize.value,
+      sorts: ["createdAt,desc"], // 默认按创建时间降序
+    };
+
     if (searchKey.value.trim()) {
       params.keyword = searchKey.value.trim();
     }
@@ -112,14 +117,15 @@ const handleSearch = async () => {
     }
     params.isAdmin = false;
     params.reason = reasonFilter.value;
-    console.log("搜索参数：", params); // 调试用
+
+    console.log("搜索参数：", params);
     const res = await searchReports(params);
     if (res.data.status === 200) {
-      tableData.value = res.data.data;
-      total.value = res.data.data.length;
+      tableData.value = res.data.data.content;
+      total.value = res.data.data.totalElements;
     }
   } catch (error) {
-    console.error("搜索错误：", error.response?.data || error); // 增加错误详情
+    console.error("搜索错误：", error.response?.data || error);
     ElMessage.error("搜索失败");
   }
   loading.value = false;

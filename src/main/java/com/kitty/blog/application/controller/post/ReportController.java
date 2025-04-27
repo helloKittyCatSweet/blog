@@ -91,7 +91,7 @@ public class ReportController {
     })
     public ResponseEntity<Response<Page<ReportDto>>> findByUserId(
             @AuthenticationPrincipal LoginResponseDto user,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sorts", required = false) String[] sorts
     ) {
@@ -119,7 +119,7 @@ public class ReportController {
     public ResponseEntity<Response<Page<ReportDto>>> findByArticleId(
             @PathVariable(value = "postId") Integer postId,
             @AuthenticationPrincipal LoginResponseDto user,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sorts", required = false) String[] sorts
     ) {
@@ -145,7 +145,7 @@ public class ReportController {
     })
     public ResponseEntity<Response<Page<ReportDto>>> findByReason(
             @RequestParam(value = "reason") String reason,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sorts", required = false) String[] sorts
             ) {
@@ -166,7 +166,7 @@ public class ReportController {
     })
     public ResponseEntity<Response<Page<ReportDto>>> findByStatus(
             @PathVariable(value = "status") ReportStatus status,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sorts", required = false) String[] sorts
     ) {
@@ -232,7 +232,7 @@ public class ReportController {
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
     public ResponseEntity<Response<Page<ReportDto>>> findAll(
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sorts", required = false) String[] sorts
     ) {
@@ -368,7 +368,7 @@ public class ReportController {
             @RequestParam(required = false) ReportReason reason,
             @RequestParam(required = true) boolean isAdmin,
             @AuthenticationPrincipal LoginResponseDto user,
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sorts", required = false) String[] sorts
     ) {

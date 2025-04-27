@@ -16,16 +16,25 @@ const favorites = ref({}); // 用对象存储每个文件夹的收藏文章
 const getFavorites = async () => {
   loading.value = true;
   try {
-    const { data } = await getFolderNames();
-    folders.value = data;
-    if (!folders.value.includes("默认收藏夹")) {
-      folders.value = ["默认收藏夹", ...folders.value];
-    }
+    const response = await getFolderNames();
+    if (response.data?.status === 200) {
+      folders.value = response.data.data;
+      if (!folders.value.includes("默认收藏夹")) {
+        folders.value = ["默认收藏夹", ...folders.value];
+      }
 
-    // 获取每个文件夹的收藏
-    for (const folder of folders.value) {
-      const { data: posts } = await getPostsByFolder(folder);
-      favorites.value[folder] = posts.slice(0, 5); // 只显示前5篇文章
+      // 获取每个文件夹的收藏
+      for (const folder of folders.value) {
+        try {
+          const response = await getPostsByFolder(folder);
+          if (response.data?.status === 200) {
+            favorites.value[folder] = response.data.data.content.slice(0, 5); // 只显示前5篇文章
+          }
+        } catch (error) {
+          console.error(`获取文件夹 ${folder} 的文章失败:`, error);
+          favorites.value[folder] = []; // 设置为空数组，避免undefined
+        }
+      }
     }
   } catch (error) {
     ElMessage.error("获取收藏夹失败");

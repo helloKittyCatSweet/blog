@@ -7,7 +7,7 @@ import {
   getUserDashboard,
   getUserMonthlyStats,
   getUserRecentPosts,
-  getUserInteractions
+  getUserInteractions,
 } from "@/api/user/userStat";
 import { ElMessage } from "element-plus";
 
@@ -25,7 +25,7 @@ const dashboardStats = ref({
   totalPosts: 0,
   totalViews: 0,
   totalComments: 0,
-  totalLikes: 0
+  totalLikes: 0,
 });
 
 // 最近文章列表
@@ -48,6 +48,7 @@ const fetchRecentPosts = async () => {
   try {
     const res = await getUserRecentPosts();
     if (res.data.status === 200) {
+      // console.log("recent posts:", res.data.data);
       recentPosts.value = res.data.data;
     }
   } catch (error) {
@@ -62,47 +63,40 @@ const initPostChart = async () => {
     const monthlyData = res.data.data;
 
     const chart = echarts.init(postChartRef.value, null, {
-      renderer: 'canvas'
+      renderer: "canvas",
     });
-    
-    // Add wheel event options
-    if (postChartContainer.value) {
-      postChartContainer.value.addEventListener('wheel', (e) => {
-        e.preventDefault();
-      }, { passive: false });
-    }
 
     const option = {
       title: {
         text: "文章数据统计",
-        left: "center"
+        left: "center",
       },
       tooltip: {
-        trigger: "axis"
+        trigger: "axis",
       },
       legend: {
         bottom: "0%",
-        data: ["发布量", "访问量"]
+        data: ["发布量", "访问量"],
       },
       xAxis: {
         type: "category",
-        data: monthlyData.months || ["1月", "2月", "3月", "4月", "5月", "6月"]
+        data: monthlyData.months || ["1月", "2月", "3月", "4月", "5月", "6月"],
       },
       yAxis: {
-        type: "value"
+        type: "value",
       },
       series: [
         {
           name: "发布量",
           type: "bar",
-          data: monthlyData.posts || [0, 0, 0, 0, 0, 0]
+          data: monthlyData.posts || [0, 0, 0, 0, 0, 0],
         },
         {
           name: "访问量",
           type: "line",
-          data: monthlyData.views || [0, 0, 0, 0, 0, 0]
-        }
-      ]
+          data: monthlyData.views || [0, 0, 0, 0, 0, 0],
+        },
+      ],
     };
     chart.setOption(option);
     return chart;
@@ -118,26 +112,19 @@ const initInteractionChart = async () => {
     const interactionData = res.data.data;
 
     const chart = echarts.init(interactionChartRef.value, null, {
-      renderer: 'canvas'
+      renderer: "canvas",
     });
-
-    // Add wheel event options
-    if (interactionChartContainer.value) {
-      interactionChartContainer.value.addEventListener('wheel', (e) => {
-        e.preventDefault();
-      }, { passive: false });
-    }
 
     const option = {
       title: {
         text: "互动数据分布",
-        left: "center"
+        left: "center",
       },
       tooltip: {
-        trigger: "item"
+        trigger: "item",
       },
       legend: {
-        bottom: "0%"
+        bottom: "0%",
       },
       series: [
         {
@@ -147,29 +134,29 @@ const initInteractionChart = async () => {
           itemStyle: {
             borderRadius: 10,
             borderColor: "#fff",
-            borderWidth: 2
+            borderWidth: 2,
           },
           label: {
             show: false,
-            position: "center"
+            position: "center",
           },
           emphasis: {
             label: {
               show: true,
               fontSize: "20",
-              fontWeight: "bold"
-            }
+              fontWeight: "bold",
+            },
           },
           labelLine: {
-            show: false
+            show: false,
           },
           data: [
             { value: interactionData.likes || 0, name: "点赞" },
             { value: interactionData.comments || 0, name: "评论" },
-            { value: interactionData.favorites || 0, name: "收藏" }
-          ]
-        }
-      ]
+            { value: interactionData.favorites || 0, name: "收藏" },
+          ],
+        },
+      ],
     };
     chart.setOption(option);
     return chart;
@@ -180,10 +167,19 @@ const initInteractionChart = async () => {
 
 // 监听窗口大小变化，重绘图表
 const handleResize = () => {
-  const postChart = echarts.init(postChartRef.value);
-  const interactionChart = echarts.init(interactionChartRef.value);
-  postChart.resize();
-  interactionChart.resize();
+  if (postChartRef.value) {
+    const postChart = echarts.getInstanceByDom(postChartRef.value);
+    if (postChart) {
+      postChart.resize();
+    }
+  }
+
+  if (interactionChartRef.value) {
+    const interactionChart = echarts.getInstanceByDom(interactionChartRef.value);
+    if (interactionChart) {
+      interactionChart.resize();
+    }
+  }
 };
 
 onMounted(async () => {
@@ -193,7 +189,7 @@ onMounted(async () => {
       fetchDashboardStats(),
       initPostChart(),
       initInteractionChart(),
-      fetchRecentPosts()
+      fetchRecentPosts(),
     ]);
   } catch (error) {
     ElMessage.error("加载数据失败");
@@ -285,14 +281,14 @@ onUnmounted(() => {
       </template>
 
       <el-table :data="recentPosts" style="width: 100%">
-        <el-table-column prop="title" label="标题">
+        <el-table-column prop="post.title" label="标题">
           <template #default="{ row }">
             <el-link
               type="primary"
               :underline="false"
-              @click="router.push(`/post/${row.id}`)"
+              @click="router.push(`/post/${row.post.postId}`)"
             >
-              {{ row.title }}
+              {{ row.post.title }}
             </el-link>
           </template>
         </el-table-column>
@@ -303,8 +299,8 @@ onUnmounted(() => {
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="views" label="浏览" width="100" />
-        <el-table-column prop="createTime" label="发布时间" width="180" />
+        <el-table-column prop="post.views" label="浏览" width="100" />
+        <el-table-column prop="post.createdAt" label="发布时间" width="180" />
       </el-table>
     </el-card>
   </div>

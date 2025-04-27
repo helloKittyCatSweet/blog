@@ -394,7 +394,7 @@ public class UserController {
             @ApiResponse(responseCode = "500", description = "查询失败")
     })
     public ResponseEntity<Response<Page<WholeUserInfo>>> findAll(
-            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sort", required = false, defaultValue = "id") String[] sort
     ) {

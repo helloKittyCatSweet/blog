@@ -8,14 +8,15 @@ export const create = (data) => request.post(`${postPrefix}${favoritePrefix}/pub
 export const update = (data) => request.put(`${postPrefix}${favoritePrefix}/public/update`, data)
 
 // 根据用户id查询所有收藏
-export const findByUserId = () => request.get(`${postPrefix}${favoritePrefix}/public/find/list`)
+export const findByUserId = (page = 0, size = 10, sort = "createdAt,desc") =>
+  request.get(`${postPrefix}${favoritePrefix}/public/find/list`, {params: {page, size, sort}})
 
 // 获取用户的所有收藏夹名称
 export const getFolderNames = () => request.get(`${postPrefix}${favoritePrefix}/public/find/folder`)
 
 // 获取用户特定收藏夹中的文章
-export const getPostsByFolder = (folderName) =>
-  request.get(`${postPrefix}${favoritePrefix}/public/find/folder/${folderName}`)
+export const getPostsByFolder = (folderName, {page = 0, size = 10, sorts = "createdAt,desc"} = {}) =>
+  request.get(`${postPrefix}${favoritePrefix}/public/find/folder/${folderName}`, {params: {page, size, sorts}})
 
 // 移动收藏夹到指定文件夹
 export const moveToFolder = (favoriteIds, folderName) =>
@@ -40,7 +41,8 @@ export const count = () => request.get(`${postPrefix}${favoritePrefix}/admin/cou
 export const findById = (id) => request.get(`${postPrefix}${favoritePrefix}/admin/find/id/${id}`)
 
 // 查询所有收藏
-export const findAll = () => request.get(`${postPrefix}${favoritePrefix}/admin/find/all`)
+export const findAll = ({page = 0, size = 10, sort = ["createdAt,desc"]} = {} ) =>
+  request.get(`${postPrefix}${favoritePrefix}/admin/find/all`, {params: {page, size, sort}})
 
 // 查询收藏是否存在
 export const exists = (id) => request.get(`${postPrefix}${favoritePrefix}/admin/exists/id/${id}`)

@@ -82,39 +82,57 @@ export const addCategory = (data) =>
   request.post(`${postPrefix}/public/add/category`, data);
 
 // 根据标签查询文章列表
-export const findByTag = (tag) => request.get(`${postPrefix}/public/find/tag/${tag}`);
+export const findByTag = (tag, { page = 0, size = 10, sort = ["createdAt,desc"] } = {}) =>
+  request.get(`${postPrefix}/public/find/tag/${tag}`, {
+    params: { page, size, sort }
+  });
 
 // 根据标签列表查询文章列表
-export const findByTags = (tags) => request.post(`${postPrefix}/public/find/tags`, tags);
+export const findByTags = (tags, { page = 0, size = 10, sorts = ["createdAt", "desc"] } = {}) =>
+
+  request.post(`${postPrefix}/public/find/tags`, {
+
+  tags,
+
+  page,
+
+  size,
+
+  sorts
+
+  });
 
 // 根据分类查询文章列表
-export const findByCategory = (category) =>
-  request.get(`${postPrefix}/public/find/category/${category}`);
+export const findByCategory = (category, { page = 0, size = 10, sort = "createdAt,desc" } = {}) =>
+  request.get(`${postPrefix}/public/find/category/${category}`, {
+    params: { page, size, sort }
+  });
 
 // 根据用户名和发布状态查询文章列表
-export const findByUserList = (userId) => request.get(`${postPrefix}/public/find/${userId}/list`);
+export const findByUserList = (userId, { page = 0, size = 10, sort = "createdAt,desc" } = {}) =>
+  request.get(`${postPrefix}/public/find/${userId}/list`, {
+    params: { page, size, sort }
+  });
 
 // 根据用户名查找文章列表
-export const findByUserId = (userId) =>
-  request.get(`${postPrefix}/public/find/user/${userId}`);
+export const findByUserId = (userId, { page = 0, size = 10, sort = "createdAt,desc" } = {}) =>
+  request.get(`${postPrefix}/public/find/user/${userId}`, {
+    params: { page, size, sort }
+  });
 
 // 根据标题关键字查询文章列表
-
-export const findByKeysInTitle = async (keyword, isPublished = null) => {
+export const findByKeysInTitle = async (keyword, { page = 0, size = 10, sort = ["createdAt,desc"] } = {}) => {
   const url = `${postPrefix}/public/find/title/${keyword}`;
-  // 如果提供了发布状态，在前端进行过滤
-  const response = await request.get(url);
-  if (isPublished !== null && response.data?.data) {
-    response.data.data = response.data.data.filter(
-      (post) => post.isPublished === isPublished
-    );
-  }
-  return response;
+  return request.get(url, {
+    params: { page, size, sort }
+  });
 };
 
 // 根据内容关键字查询文章列表
-export const findByKeysInContent = (keyword) =>
-  request.get(`${postPrefix}/public/find/content/${keyword}`);
+export const findByKeysInContent = (keyword, { page = 0, size = 10, sort = ["createdAt,desc"] } = {}) =>
+  request.get(`${postPrefix}/public/find/content/${keyword}`, {
+    params: { page, size, sort }
+  });
 
 // 获取文章最新版本号
 export const getLatestVersion = (postId) =>
@@ -124,7 +142,10 @@ export const getLatestVersion = (postId) =>
 export const findById = (postId) => request.get(`${postPrefix}/public/find/id/${postId}`);
 
 // 查询所有文章
-export const findAll = () => request.get(`${postPrefix}/public/find/all`);
+export const findAll = ({ page = 0, size = 10, sorts = "createdAt,desc" } = {}) =>
+  request.get(`${postPrefix}/public/find/all`, {
+    params: { page, size, sorts }
+  });
 
 // 根据id查询文章是否存在
 export const existById = (postId) =>
@@ -150,12 +171,14 @@ export const deleteById = (postId) =>
   request.delete(`${postPrefix}/public/delete/id/${postId}`);
 
 // 搜索文章
-export const searchPosts = (criteria) =>
-  request.post(`${postPrefix}/public/search`, criteria);
+export const searchPosts = (criteria, { page = 0, size = 10, sort = ["createdAt,desc"] } = {}) =>
+  request.post(`${postPrefix}/public/search`, { ...criteria, page, size, sort });
 
 // 根据用户id查询附件列表
-export const findAttachmentsByUserId = () =>
-  request.get(`${postPrefix}/public/find/attachments`);
+export const findAttachmentsByUserId = ({ page = 0, size = 10, sorts = "createdTime,desc" } = {}) =>
+  request.get(`${postPrefix}/public/find/attachments`, {
+    params: { page, size, sorts  }
+  });
 
 // 生成文章摘要
 export const generateSummary = (content) =>

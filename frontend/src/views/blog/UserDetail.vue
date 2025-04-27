@@ -87,7 +87,7 @@ const loadUserPosts = async (userId) => {
   try {
     const response = await findByUserList(userId);
     if (response.data?.status === 200) {
-      posts.value = response.data.data.map((item) => ({
+      posts.value = response.data.data.content.map((item) => ({
         postId: item.post.postId,
         title: item.post.title,
         content: item.post.content,
@@ -241,7 +241,7 @@ const loadFollowData = async (userId) => {
     }
 
     if (followersRes.data?.status === 200) {
-      followersCount.value = followersRes.data.data.length;
+      followersCount.value = followersRes.data.data.totalElements;
     }
   } catch (error) {
     console.error("加载关注数据失败:", error);
@@ -261,7 +261,7 @@ const loadFollowersList = async (userId) => {
   try {
     const response = await getFollowersList(userId);
     if (response.data?.status === 200) {
-      followersList.value = response.data.data;
+      followersList.value = response.data.data.content;
     }
   } catch (error) {
     console.error("加载粉丝列表失败:", error);

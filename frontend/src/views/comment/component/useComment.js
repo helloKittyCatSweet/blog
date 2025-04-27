@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { formatDate } from '@/utils/date.js'
-import { deleteById } from '@/api/post/comment'
+import { deleteById, findByUserId } from '@/api/post/comment'
 
 export function useComment(fetchCommentsFn) {
   const pagination = ref({
@@ -60,7 +60,13 @@ export function useComment(fetchCommentsFn) {
   const fetchComments = async () => {
     try {
       loading.value = true
-      const params = {
+      const params = fetchCommentsFn === findByUserId ?
+      {
+        page: pagination.value.current - 1,
+        size: pagination.value.size,
+        userId: fetchCommentsFn
+      }:
+      {
         ...searchForm.value,
         page: pagination.value.current,
         size: pagination.value.size,
@@ -71,10 +77,12 @@ export function useComment(fetchCommentsFn) {
       const res = await fetchCommentsFn(params)
       if (res.data.status === 200) {
         replyCountCache.value.clear()
-        commentList.value = res.data.data
-        pagination.value.total = res.data.data.length
+        // 根据不同的请求函数处理不同的响应格式
+        const data = fetchCommentsFn === findByUserId ? res.data.data.content : res.data.data
+        commentList.value = data
+        pagination.value.total = fetchCommentsFn === findByUserId ? res.data.totalElements : data.length
 
-        const uniqueTitles = [...new Set(res.data.data.map(item => item.title))]
+        const uniqueTitles = [...new Set(data.map(item => item.title))]
         titleOptions.value = uniqueTitles.map(title => ({
           value: title,
           label: title

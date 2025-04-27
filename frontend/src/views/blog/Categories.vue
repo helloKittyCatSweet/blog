@@ -130,7 +130,7 @@ watch(
         const matchedCategory = flattenedCategories.find(
           category => category.name === decodedCategoryName
         );
-        
+
         if (matchedCategory) {
           selectedCategory.value = matchedCategory;
           await loadPosts();
@@ -146,7 +146,7 @@ const loadCategories = async () => {
   try {
     const response = await findAll();
     if (response.data?.status === 200) {
-      categoriesTree.value = response.data.data.map((item) => ({
+      categoriesTree.value = response.data.data.content.map((item) => ({
         ...item,
         label: item.category.name,
         children: item.children?.map((child) => ({
@@ -164,7 +164,7 @@ const loadCategories = async () => {
         const matchedCategory = flattenedCategories.find(
           category => category.name === decodedCategoryName
         );
-        
+
         if (matchedCategory) {
           selectedCategory.value = matchedCategory;
         } else {

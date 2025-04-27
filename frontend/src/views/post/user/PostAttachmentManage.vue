@@ -65,7 +65,7 @@ const getAttachmentList = async () => {
   try {
     const response = await findAttachmentsByUserId();
     if (response.data?.status === 200) {
-      attachmentList.value = response.data.data.map((item) => ({
+      attachmentList.value = response.data.data.content.map((item) => ({
         id: item.attachmentId,
         name: item.attachmentName,
         type: item.attachmentType,

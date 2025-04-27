@@ -33,20 +33,47 @@ const latestPosts = ref([]);
 const categories = ref([]);
 const tags = ref([]);
 
+// 分页参数
+const postPageParams = ref({
+  page: 0,
+  size: 10,
+  sort: "createdAt,desc"
+});
+
+const categoryPageParams = ref({
+  page: 0,
+  size: 10,
+  sort: "useCount,desc"
+});
+
+const tagPageParams = ref({
+  page: 0,
+  size: 50,
+  sort: "weight,desc"
+});
+
 // 获取文章列表
 const getPostList = async () => {
   loading.value = true;
   try {
     const response = await getAllPosts();
-    if (response.data.status === 200) {
-      const posts = response.data.data.map((item) => ({
+    if (response?.data?.status === 200) {
+      console.log("response.data:", response.data);
+      const { content } = response.data.data;
+      if (!content || !Array.isArray(content)) {
+        console.error("Invalid content in response:", response.data);
+        latestPosts.value = [];
+        return;
+      }
+      
+      const posts = content.map((item) => ({
         postId: item.post.postId,
         title: item.post.title,
         content: item.post.content,
         coverImage: item.post.coverImage || getRandomCover(),
-        views: item.post.views,
-        likes: item.post.likes,
-        favorites: item.post.favorites,
+        views: item.post.views || 0,
+        likes: item.post.likes || 0,
+        favorites: item.post.favorites || 0,
         createdAt: item.post.createdAt,
         updatedAt: item.post.updatedAt,
         category: item.category?.categoryId
@@ -55,21 +82,29 @@ const getPostList = async () => {
               name: item.category.name,
             }
           : null,
-        tags: item.tags?.filter((tag) => tag.tagId && tag.name) || [],
-        author: item.author,
-        excerpt: item.post.abstractContent || item.post.content.substring(0, 200) + "...",
+        tags: item.tags || [],
+        author: item.author || "匿名",
+        excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
+        comments: item.comments || [],
+        attachments: item.attachments || []
       }));
 
-      // 按照浏览量排序获取推荐文章
-      // featuredPosts.value = [...posts].sort((a, b) => b.views - a.views).slice(0, 3);
+      // 直接使用返回的文章列表
+      latestPosts.value = posts;
 
-      // 按照创建时间排序获取最新文章
-      latestPosts.value = [...posts]
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 5);
+      // 获取推荐文章（按照浏览量排序）
+      featuredPosts.value = [...posts]
+        .sort((a, b) => b.views - a.views)
+        .slice(0, 3);
+    } else {
+      console.error("Failed to fetch posts:", response.data);
+      latestPosts.value = [];
+      featuredPosts.value = [];
     }
   } catch (error) {
     console.error("获取文章列表失败:", error);
+    latestPosts.value = [];
+    featuredPosts.value = [];
   } finally {
     loading.value = false;
   }
@@ -79,7 +114,14 @@ const getPostList = async () => {
 const getCategories = async () => {
   try {
     const response = await getAllCategories();
-    if (response.data.status === 200) {
+    if (response?.data?.status === 200) {
+      const { content } = response.data.data;
+      if (!content) {
+        console.error("No content in response:", response.data.data);
+        categories.value = [];
+        return;
+      }
+      
       // 处理分类数据，将嵌套结构展平
       const flattenCategories = [];
       const processCategory = (categoryData) => {
@@ -89,7 +131,7 @@ const getCategories = async () => {
             name: categoryData.category.name,
             description: categoryData.category.description,
             parentCategoryId: categoryData.category.parentCategoryId,
-            useCount: categoryData.category.useCount || 0, // 这里可以后续添加文章计数
+            useCount: categoryData.category.useCount || 0,
           });
         }
         // 递归处理子分类
@@ -98,25 +140,35 @@ const getCategories = async () => {
         }
       };
 
-      response.data.data.forEach((category) => processCategory(category));
+      content.forEach((category) => processCategory(category));
       categories.value = flattenCategories;
     }
   } catch (error) {
     console.error("获取分类列表失败:", error);
+    categories.value = [];
   }
 };
+
 // 获取标签列表
 const getTags = async () => {
   try {
     const response = await getAllTags();
-    if (response.data.status === 200) {
-      tags.value = response.data.data.map((tag) => ({
+    if (response?.data?.status === 200) {
+      const { content } = response.data.data;
+      if (!content) {
+        console.error("No content in response:", response.data.data);
+        tags.value = [];
+        return;
+      }
+      
+      tags.value = content.map((tag) => ({
         ...tag,
         size: Math.floor(Math.random() * 8) + 12, // 12-20px的随机字体大小
       }));
     }
   } catch (error) {
     console.error("获取标签列表失败:", error);
+    tags.value = [];
   }
 };
 
@@ -167,9 +219,7 @@ const handleImageError = (event, post) => {
   event.target.src = getRandomCover();
 };
 
-/**
- * 文章点击处理函数
- */
+// 文章点击处理函数
 const handlePostClick = async (postId) => {
   try {
     await addViews(postId);

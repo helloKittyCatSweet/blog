@@ -11,7 +11,8 @@ export const unfollowUser = (userId) => request.delete(`${userPrefix}${userFollo
 export const getFollowingList = (userId) => request.get(`${userPrefix}${userFollowPrefix}/public/following/${userId}`);
 
 // 获取用户的粉丝列表
-export const getFollowersList = (userId) => request.get(`${userPrefix}${userFollowPrefix}/public/followers/${userId}`);
+export const getFollowersList = (userId, {page = 0, size = 10, sorts = "createTime,desc"} = {}) =>
+    request.get(`${userPrefix}${userFollowPrefix}/public/followers/${userId}`, {params: {page, size, sorts}});
 
 // 检查是否关注
 /**

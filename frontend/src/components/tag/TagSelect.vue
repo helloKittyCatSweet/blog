@@ -53,7 +53,7 @@ const getAllTags = async () => {
   try {
     const response = await findAllTags();
     if (response.data.status === 200) {
-      tags.value = response.data.data;
+      tags.value = response.data.data.content;
     }
   } catch (error) {
     ElMessage.error("获取标签列表失败");
@@ -145,10 +145,10 @@ const handleDialogOpen = () => {
       :disabled="disabled"
     >
       <template #prefix>
-        <el-button 
-          type="primary" 
-          link 
-          :icon="Plus" 
+        <el-button
+          type="primary"
+          link
+          :icon="Plus"
           @click.stop="dialogVisible = true"
           :disabled="disabled"
         >

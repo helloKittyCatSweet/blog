@@ -56,7 +56,7 @@ const fetchUsers = async () => {
   try {
     const response = await findAllUser();
     if (response.data.status === 200) {
-      users.value = response.data.data.map((item) => item.user);
+      users.value = response.data.data.content.map((item) => item.user);
     }
   } catch (error) {
     console.error("获取用户列表失败:", error);

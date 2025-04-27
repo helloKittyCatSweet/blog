@@ -353,6 +353,12 @@ export const adminMenus = [
               ROLES.ROLE_MANAGER,
               ROLES.SYSTEM_ADMINISTRATOR
             ]
+          },
+          {
+            icon: MagicStick,
+            title: 'Swagger API',
+            index: '/swagger-api',
+            roles: [ROLES.SYSTEM_ADMINISTRATOR],
           }
         ]
       }

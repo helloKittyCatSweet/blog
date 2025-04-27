@@ -23,7 +23,7 @@ const posts = ref([]);
 
 // 搜索过滤
 const filter = reactive({
-  sort: "newest",
+  sort: ["createdAt,desc"],
   keyword: route.query.search || "",
 });
 
@@ -65,64 +65,74 @@ const handleSearch = () => {
   fetchPosts();
 };
 
+// 处理排序变化
+const handleSortChange = (value) => {
+  switch (value) {
+    case "newest":
+      filter.sort = ["createdAt,desc"];
+      break;
+    case "views":
+      filter.sort = ["views,desc"];
+      break;
+    case "likes":
+      filter.sort = ["likes,desc"];
+      break;
+  }
+  fetchPosts();
+};
+
 // 获取文章列表
 const fetchPosts = async () => {
   loading.value = true;
   try {
     let response;
+    const pageParams = {
+      page: currentPage.value - 1,
+      size: pageSize.value,
+      sort: filter.sort
+    };
 
     if (filter.keyword?.trim()) {
       // 有搜索条件时使用搜索接口
-      response = await searchPosts(filter.keyword, currentPage.value - 1, pageSize.value);
+      response = await searchPosts(filter.keyword, pageParams);
       if (response.data?.status === 200) {
-        posts.value = response.data.data.content.map((item) => ({
+        const { content, totalElements } = response.data.data;
+        posts.value = content.map(item => ({
           id: item.post.postId,
           title: item.post.title,
           content: item.post.content,
           cover: item.post.coverImage,
-          excerpt:
-            item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
-          category: item.category?.categoryId
-            ? {
+          excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
+          category: item.category?.categoryId ? {
                 categoryId: item.category.categoryId,
                 name: item.category.name,
-              }
-            : null,
-          tags: item.tags?.map((tag) => tag.name) || [],
+          } : null,
+          tags: item.tags?.map(tag => tag.name) || [],
           views: item.post.views || 0,
           likes: item.post.likes || 0,
           comments: item.comments?.length || 0,
           createTime: item.post.createdAt,
           author: item.author,
           userId: item.post.userId,
-
-          highlightTitle: item.post.title,
-          highlightContent: item.post.content,
         }));
-        total.value = response.data.data.totalElements || 0;
+        total.value = totalElements;
       }
     } else {
       // 无搜索条件时使用获取所有文章接口
-      response = await getAllPosts({
-        pageNum: currentPage.value,
-        pageSize: pageSize.value,
-        orderBy: filter.sort,
-      });
+      response = await getAllPosts(pageParams);
       if (response.data?.status === 200) {
-        posts.value = response.data.data.map((item) => ({
+        const { content, totalElements } = response.data.data;
+        posts.value = content.map(item => ({
           id: item.post.postId,
           title: item.post.title,
           content: item.post.content,
           cover: item.post.coverImage,
-          excerpt:
-            item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
-          category: item.category?.categoryId
-            ? {
+          excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
+          category: item.category?.categoryId ? {
                 categoryId: item.category.categoryId,
                 name: item.category.name,
-              }
-            : null,
-          tags: item.tags?.map((tag) => tag.name) || [],
+          } : null,
+          tags: item.tags?.map(tag => tag.name) || [],
           views: item.post.views || 0,
           likes: item.post.likes || 0,
           comments: item.comments?.length || 0,
@@ -130,7 +140,7 @@ const fetchPosts = async () => {
           author: item.author,
           userId: item.post.userId,
         }));
-        total.value = response.data.total || posts.value.length;
+        total.value = totalElements;
       }
     }
   } catch (error) {
@@ -185,6 +195,7 @@ onMounted(() => {
             placeholder="排序方式"
             class="sort-select"
             size="large"
+            @change="handleSortChange"
           >
             <el-option label="最新发布" value="newest" />
             <el-option label="最多浏览" value="views" />
@@ -197,19 +208,19 @@ onMounted(() => {
     <!-- 文章列表 -->
     <div class="posts-list" v-loading="loading">
       <PostListItem :posts="posts" :show-keyword="!!filter.keyword" />
-    </div>
 
-    <!-- 分页 -->
-    <div class="pagination">
+      <!-- 分页器 -->
+      <div class="pagination-container">
       <el-pagination
         v-model:current-page="currentPage"
         v-model:page-size="pageSize"
-        :page-sizes="[10, 20, 30, 50]"
+          :page-sizes="[10, 20, 50, 100]"
         :total="total"
         layout="total, sizes, prev, pager, next, jumper"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
       />
+      </div>
     </div>
   </div>
 </template>
@@ -283,12 +294,10 @@ onMounted(() => {
   margin: 0 auto;
 }
 
-.pagination {
-  margin-top: 32px;
+.pagination-container {
+  margin-top: 20px;
   display: flex;
   justify-content: center;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 :deep(.highlight) {

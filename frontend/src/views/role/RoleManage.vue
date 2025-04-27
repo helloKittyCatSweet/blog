@@ -105,7 +105,7 @@ const loadRoleUsers = async (roleId) => {
   try {
     const response = await findRoleUsers(roleId);
     if (response.data.status === 200) {
-      roleUsers.value = response.data.data;
+      roleUsers.value = response.data.data.content;
     } else {
       ElMessage.warning(response.data.message || "获取用户列表失败");
     }
@@ -131,7 +131,7 @@ const handleAddUsers = async () => {
     const res = await findAllUser();
     if (res.data.status === 200) {
       // 过滤掉已经有这个角色的用户
-      allUsers.value = res.data.data
+      allUsers.value = res.data.data.content
         .filter(
           (item) => !item.roles.some((role) => role.roleId === currentRole.value.roleId)
         )
@@ -204,7 +204,7 @@ const handleExportRoles = async () => {
     // 获取所有角色的用户数据
     const roleDataPromises = tableData.value.map(async (role) => {
       const response = await findRoleUsers(role.roleId);
-      const users = response.data.status === 200 ? response.data.data : [];
+      const users = response.data.status === 200 ? response.data.data.content : [];
       return {
         role,
         users,
@@ -452,9 +452,9 @@ const handleImportError = () => {
       <template #header>
         <div style="flex: 1; display: flex; align-items: center; justify-content: space-between;">
           <span>{{ currentRole?.roleName || "" }} - 用户列表</span>
-          <el-button 
-            v-if="currentRole?.roleName !== '普通用户'" 
-            type="primary" 
+          <el-button
+            v-if="currentRole?.roleName !== '普通用户'"
+            type="primary"
             @click="handleAddUsers"
           >添加用户</el-button>
         </div>
@@ -484,7 +484,7 @@ const handleImportError = () => {
         <el-table-column v-if="currentRole?.roleName !== '普通用户'" label="操作" width="100" align="center">
           <template #default="{ row }">
             <el-button
-             
+
               type="danger"
               :icon="Delete"
               circle

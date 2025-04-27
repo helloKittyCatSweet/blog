@@ -23,11 +23,12 @@ export const findCategoryByNameLike = (name) =>
 export const findCategoryById = (id) => request.get(`${categoryPrefix}/public/find/id/${id}`)
 
 // 根据父分类id查询所有子分类（包含子孙）
-export const findDescendantsByParentName = (name) =>
-  request.get(`${categoryPrefix}/public/find/descendants/${name}`)
+export const findDescendantsByParentName = (name, {page = 0, size = 10, sort = "useCount,desc"} = {}) =>
+  request.get(`${categoryPrefix}/public/find/descendants/${name}`, {params: {page, size, sort}})
 
 // 查询所有分类
-export const findAll = () => request.get(`${categoryPrefix}/public/find/all`)
+export const findAll = ({page = 0, size = 10, sort = "useCount,desc"} = {}) => 
+  request.get(`${categoryPrefix}/public/find/all`, {params: {page, size, sort}})
 
 // 检查分类是否存在
 export const existById = (id) => request.get(`${categoryPrefix}/public/exists/${id}`)

@@ -20,6 +20,13 @@ const categories = ref([]);
 // 确保初始值不为 undefined
 const selectedValue = ref(props.modelValue ?? null);
 
+// 分页参数
+const pageParams = ref({
+  page: 0,
+  size: 100, // 获取较多分类以支持树形结构
+  sort: "useCount,desc" // 按使用次数降序排序
+});
+
 // 深度处理树形数据，确保每个节点结构正确
 const processTreeData = (items) => {
   if (!Array.isArray(items)) return [];
@@ -36,16 +43,14 @@ const processTreeData = (items) => {
 
 const getAllCategories = async () => {
   try {
-    const response = await findAllCategories();
-    // console.log("获取到的分类数据:", response.data);
+    const response = await findAllCategories(pageParams.value);
     if (response.data.status === 200) {
-      categories.value = processTreeData(response.data.data);
-      // console.log("处理后的分类数据:", categories.value);
+      const { content } = response.data.data;
+      categories.value = processTreeData(content);
     } else {
       categories.value = [];
     }
   } catch (error) {
-    // console.error("获取分类列表失败:", error);
     ElMessage.error("获取分类列表失败");
     categories.value = [];
   }

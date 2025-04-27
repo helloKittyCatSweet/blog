@@ -50,7 +50,7 @@ const tags = ref([]);
 
 // 添加统一的响应处理函数
 const handlePostResponse = (response) => {
-  tableData.value = response.data.data.map((item) => ({
+  tableData.value = response.data.data.content.map((item) => ({
     postId: item.post.postId,
     title: item.post.title,
     isPublished: item.post.isPublished,
@@ -281,7 +281,7 @@ const fetchTags = async () => {
   try {
     const response = await getAllTags();
     if (response.data.status === 200) {
-      tags.value = response.data.data;
+      tags.value = response.data.data.content;
     }
   } catch (error) {
     console.error("获取标签列表失败:", error);

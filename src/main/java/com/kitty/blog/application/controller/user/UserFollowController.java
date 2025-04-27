@@ -92,9 +92,9 @@ public class UserFollowController {
     })
     public ResponseEntity<Response<Page<User>>> getFollowers(
             @PathVariable Integer userId,
-            @RequestParam(required = false, defaultValue = "1") Integer page,
+            @RequestParam(required = false, defaultValue = "0") Integer page,
             @RequestParam(required = false, defaultValue = "10") Integer size,
-            @RequestParam(required = false) String[] sorts
+            @RequestParam(required = false, defaultValue = "createTime,desc" ) String[] sorts
             ) {
         try {
             Page<User> followers = userFollowService.getFollowers(userId, page, size, sorts);

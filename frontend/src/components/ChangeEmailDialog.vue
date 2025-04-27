@@ -103,7 +103,8 @@ const handleSubmit = async () => {
 
 <template>
   <el-dialog
-    v-model="modelValue"
+    :model-value="modelValue"
+  @update:model-value="emit('update:modelValue', $event)"
     title="更换邮箱"
     width="500px"
     :close-on-click-modal="false"

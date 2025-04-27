@@ -9,8 +9,8 @@ export const findUserRoles = (userId) =>
   request.get(`${userPrefix}${userRolePrefix}/admin/find/user/${userId}`)
 
 // 查询一个角色都有哪些用户
-export const findRoleUsers = (roleId) =>
-  request.get(`${userPrefix}${userRolePrefix}/admin/find/role/${roleId}`)
+export const findRoleUsers = (roleId, {page = 0, size = 10, sort = "ur.id.userId,desc"} = {}) =>
+  request.get(`${userPrefix}${userRolePrefix}/admin/find/role/${roleId}`, {params: {page, size, sort}})
 
 // 查询所有角色
 export const findAll = () => request.get(`${userPrefix}${userRolePrefix}/admin/find/all`)

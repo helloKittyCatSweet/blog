@@ -55,9 +55,9 @@ const getCategoryList = async () => {
     console.log("getCategoryList res: ", res);
     if (res.data.status === 200) {
       // 直接使用返回的树状结构数据
-      tableData.value = res.data.data;
+      tableData.value = res.data.data.content;
       // 获取所有分类用于父分类选择
-      categoryOptions.value = flattenCategories(res.data.data);
+      categoryOptions.value = flattenCategories(tableData.value);
       total.value = categoryOptions.value.length;
     }
   } catch (error) {
@@ -226,8 +226,8 @@ const handleSearch = async () => {
       case "all":
         res = await findDescendantsByParentName(searchKey.value);
         if (res.data.status === 200) {
-          tableData.value = res.data.data;
-          total.value = res.data.data.length;
+          tableData.value = res.data.data.content;
+          total.value = res.data.data.totalElements;
         }
         break;
     }

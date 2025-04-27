@@ -81,25 +81,31 @@ public class PageUtil {
             return Sort.by(DEFAULT_SORT_DIRECTION, DEFAULT_SORT_FIELD);
         }
 
-        List<Sort.Order> orders = Arrays.stream(sort)
-                .filter(StringUtils::hasText)
-                .map(str -> {
-                    String[] parts = str.split(",");
-                    if (parts.length != 2) {
-                        return Sort.Order.desc(DEFAULT_SORT_FIELD);
-                    }
-                    String field = parts[0];
-                    String direction = parts[1];
+        // 处理单个元素的情况 ["field,direction"]
+        if (sort.length == 1 && sort[0].contains(",")) {
+            String[] parts = sort[0].split(",");
+            if (parts.length == 2) {
+                String field = parts[0];
+                String direction = parts[1];
+                return direction.equalsIgnoreCase("asc")
+                        ? Sort.by(Sort.Direction.ASC, field)
+                        : Sort.by(Sort.Direction.DESC, field);
+            }
+        }
 
-                    return direction.equalsIgnoreCase("asc")
-                            ? Sort.Order.asc(field)
-                            : Sort.Order.desc(field);
-                })
-                .collect(Collectors.toList());
+        // 处理两个元素的情况 ["field", "direction"]
+        if (sort.length == 2) {
+            String field = sort[0];
+            String direction = sort[1];
+            if (StringUtils.hasText(field) && StringUtils.hasText(direction)) {
+                return direction.equalsIgnoreCase("asc")
+                        ? Sort.by(Sort.Direction.ASC, field)
+                        : Sort.by(Sort.Direction.DESC, field);
+            }
+        }
 
-        return orders.isEmpty()
-                ? Sort.by(DEFAULT_SORT_DIRECTION, DEFAULT_SORT_FIELD)
-                : Sort.by(orders);
+        // 如果格式不正确，使用默认排序
+        return Sort.by(DEFAULT_SORT_DIRECTION, DEFAULT_SORT_FIELD);
     }
 
     /**
