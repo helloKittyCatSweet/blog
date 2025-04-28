@@ -35,7 +35,11 @@ const rules = {
 const getReportList = async () => {
   loading.value = true;
   try {
-    const res = await findByUserList();
+    const res = await findByUserList({
+      page: currentPage.value - 1,  // 后端分页从0开始
+      size: pageSize.value,
+      sort: ['createdTime,desc']
+    });
     if (res.data.status === 200) {
       tableData.value = res.data.data.content;
       total.value = res.data.data.totalElements;
@@ -136,7 +140,9 @@ const resetSearch = () => {
   searchKey.value = "";
   statusFilter.value = "";
   reasonFilter.value = "";
-  getReportList(); // 重置后调用获取列表接口
+  currentPage.value = 1;  // 重置为第一页
+  pageSize.value = 10;    // 重置每页条数
+  getReportList();
 };
 
 /**
@@ -166,12 +172,21 @@ const getReasonLabel = (reason) => {
 // 分页处理也需要修改
 const handleSizeChange = (val) => {
   pageSize.value = val;
-  handleSearch(); // 改用搜索接口
+  currentPage.value = 1;  // 切换每页条数时重置为第一页
+  if (searchKey.value || statusFilter.value || reasonFilter.value) {
+    handleSearch();
+  } else {
+    getReportList();
+  }
 };
 
 const handleCurrentChange = (val) => {
   currentPage.value = val;
-  handleSearch(); // 改用搜索接口
+  if (searchKey.value || statusFilter.value || reasonFilter.value) {
+    handleSearch();
+  } else {
+    getReportList();
+  }
 };
 
 // 查看文章

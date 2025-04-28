@@ -5,7 +5,7 @@ import { View, Star, ArrowRight, Folder } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/modules/user";
 
 import { formatDate } from "@/utils/date";
-import { findAll as getAllPosts, addViews } from "@/api/post/post.js";
+import { findAllNoPage as getAllPosts, addViews } from "@/api/post/post.js";
 import { findAll as getAllCategories } from "@/api/common/category.js";
 import { findAll as getAllTags } from "@/api/common/tag.js";
 import {
@@ -33,24 +33,6 @@ const latestPosts = ref([]);
 const categories = ref([]);
 const tags = ref([]);
 
-// 分页参数
-const postPageParams = ref({
-  page: 0,
-  size: 10,
-  sort: "createdAt,desc"
-});
-
-const categoryPageParams = ref({
-  page: 0,
-  size: 10,
-  sort: "useCount,desc"
-});
-
-const tagPageParams = ref({
-  page: 0,
-  size: 50,
-  sort: "weight,desc"
-});
 
 // 获取文章列表
 const getPostList = async () => {
@@ -59,13 +41,13 @@ const getPostList = async () => {
     const response = await getAllPosts();
     if (response?.data?.status === 200) {
       console.log("response.data:", response.data);
-      const { content } = response.data.data;
+      const  content  = response.data.data;
       if (!content || !Array.isArray(content)) {
         console.error("Invalid content in response:", response.data);
         latestPosts.value = [];
         return;
       }
-      
+
       const posts = content.map((item) => ({
         postId: item.post.postId,
         title: item.post.title,
@@ -121,7 +103,7 @@ const getCategories = async () => {
         categories.value = [];
         return;
       }
-      
+
       // 处理分类数据，将嵌套结构展平
       const flattenCategories = [];
       const processCategory = (categoryData) => {
@@ -160,7 +142,7 @@ const getTags = async () => {
         tags.value = [];
         return;
       }
-      
+
       tags.value = content.map((tag) => ({
         ...tag,
         size: Math.floor(Math.random() * 8) + 12, // 12-20px的随机字体大小

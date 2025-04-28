@@ -11,6 +11,7 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.*;
+import com.itextpdf.layout.properties.BorderRadius;
 import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.io.image.ImageDataFactory;
@@ -41,6 +42,7 @@ public class PostExportService {
     private UserService userService;
 
     private static final String FONT_PATH = "static/fonts/simsun.ttf";
+    private static final String CODE_FONT_PATH = "static/fonts/JetBrainsMono-Regular.ttf";
     private static final float MARGIN = 36.0f;
     private static final float HEADER_HEIGHT = 20.0f;
     private static final float FOOTER_HEIGHT = 20.0f;
@@ -56,13 +58,14 @@ public class PostExportService {
 
         try {
             PdfFont font = PdfFontFactory.createFont(FONT_PATH);
+            PdfFont codeFont = PdfFontFactory.createFont(CODE_FONT_PATH);
 
             // 添加装饰线
             document.add(new Paragraph("").setHeight(2)
                     .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 1))
                     .setMarginBottom(20));
 
-            // 优化标题样式
+            // 添加标题
             Paragraph title = new Paragraph(postDto.getPost().getTitle())
                     .setFont(font)
                     .setFontSize(28)
@@ -72,7 +75,7 @@ public class PostExportService {
                     .setMarginBottom(30);
             document.add(title);
 
-            // 优化作者信息区域
+            // 添加作者信息
             Table infoTable = new Table(2).useAllAvailableWidth();
             infoTable.setMarginBottom(40);
             infoTable.setBorder(Border.NO_BORDER);
@@ -97,63 +100,212 @@ public class PostExportService {
             infoTable.addCell(dateCell);
             document.add(infoTable);
 
+            // 添加摘要
+            document.add(new Paragraph(postDto.getPost().getAbstractContent())
+                    .setFont(font)
+                    .setFontSize(12)
+                    .setFontColor(ColorConstants.GRAY)
+                    .setMarginTop(10)
+                    .setMarginBottom(20)
+                    .setFirstLineIndent(28)
+                    .setMultipliedLeading(1.2f));
+
             // 处理文章内容
             String content = postDto.getPost().getContent();
-            Pattern pattern = Pattern.compile("!\\[(.*?)\\]\\((.*?)\\)");
-            Matcher matcher = pattern.matcher(content);
-            int lastIndex = 0;
+            String[] lines = content.split("\n");
+            boolean inCodeBlock = false;
 
-            while (matcher.find()) {
-                String textBefore = content.substring(lastIndex, matcher.start());
-                if (!textBefore.trim().isEmpty()) {
-                    // 优化正文段落样式
-                    document.add(new Paragraph(textBefore)
+            for (String line : lines) {
+                if (line.trim().isEmpty()) {
+                    document.add(new Paragraph("\n"));
+                    continue;
+                }
+
+                // 处理代码块
+                if (line.startsWith("```")) {
+                    inCodeBlock = !inCodeBlock;
+                    document.add(new Paragraph(line)
+                            .setFont(codeFont)
+                            .setFontSize(12)
+                            .setFontColor(ColorConstants.DARK_GRAY)
+                            .setBackgroundColor(ColorConstants.LIGHT_GRAY, 0.3f)
+                            .setPadding(8)
+                            .setMarginTop(10)
+                            .setMarginBottom(10));
+                    continue;
+                }
+
+                if (inCodeBlock) {
+                    document.add(new Paragraph(line)
+                            .setFont(codeFont)
+                            .setFontSize(12)
+                            .setFontColor(ColorConstants.DARK_GRAY)
+                            .setBackgroundColor(ColorConstants.LIGHT_GRAY, 0.3f)
+                            .setPadding(8));
+                    continue;
+                }
+
+                // 处理标题
+                if (line.matches("^#{1,6}\\s.*")) {
+                    int level = 0;
+                    while (level < line.length() && line.charAt(level) == '#') {
+                        level++;
+                    }
+                    String titleText = line.substring(level).trim();
+                    float fontSize = Math.max(32 - (level * 4), 14);
+                    document.add(new Paragraph(titleText)
+                            .setFont(font)
+                            .setFontSize(fontSize)
+                            .setBold()
+                            .setMarginTop(20)
+                            .setMarginBottom(10));
+                    continue;
+                }
+
+                // 处理引用
+                if (line.startsWith(">")) {
+                    document.add(new Paragraph(line.substring(1).trim())
                             .setFont(font)
                             .setFontSize(14)
-                            .setFirstLineIndent(28)
-                            .setMultipliedLeading(1.5f));
+                            .setFontColor(ColorConstants.GRAY)
+                            .setMarginLeft(30)
+                            .setMarginTop(5)
+                            .setMarginBottom(5)
+                            .setBorderLeft(new SolidBorder(ColorConstants.LIGHT_GRAY, 3))
+                            .setPaddingLeft(15)
+                            .setBackgroundColor(ColorConstants.LIGHT_GRAY, 0.1f));
+                    continue;
                 }
 
-                String imageUrl = matcher.group(2);
-                try {
-                    Image image = new Image(ImageDataFactory.create(new URL(imageUrl)));
-                    float maxWidth = PageSize.A4.getWidth() - 2 * MARGIN;
-                    if (image.getImageWidth() > maxWidth) {
-                        image.setWidth(maxWidth);
+                // 处理列表
+                if (line.matches("^[*-+]\\s.*")) {
+                    document.add(new Paragraph(line)
+                            .setFont(font)
+                            .setFontSize(14)
+                            .setMarginLeft(30)
+                            .setFirstLineIndent(-15)
+                            .setMarginTop(3)
+                            .setMarginBottom(3));
+                    continue;
+                }
+
+                // 处理图片
+                if (line.contains("![") && line.contains("](")) {
+                    Pattern pattern = Pattern.compile("!\\[(.*?)\\]\\((.*?)\\)");
+                    Matcher matcher = pattern.matcher(line);
+                    int lastIndex = 0;
+
+                    while (matcher.find()) {
+                        // 处理图片前的文本
+                        String textBefore = line.substring(lastIndex, matcher.start());
+                        if (!textBefore.trim().isEmpty()) {
+                            document.add(new Paragraph(textBefore)
+                                    .setFont(font)
+                                    .setFontSize(14)
+                                    .setMultipliedLeading(1.5f));
+                        }
+
+                        String imageUrl = matcher.group(2);
+                        try {
+                            Image image = new Image(ImageDataFactory.create(new URL(imageUrl)));
+                            float maxWidth = PageSize.A4.getWidth() - 2 * MARGIN;
+                            if (image.getImageWidth() > maxWidth) {
+                                float ratio = maxWidth / image.getImageWidth();
+                                image.setWidth(maxWidth)
+                                        .setHeight(image.getImageHeight() * ratio);
+                            }
+                            image.setHorizontalAlignment(HorizontalAlignment.CENTER)
+                                    .setMarginTop(20)
+                                    .setMarginBottom(20);
+                            document.add(image);
+                        } catch (Exception e) {
+                            log.error("Failed to add image: " + imageUrl, e);
+                            document.add(new Paragraph("[图片加载失败: " + matcher.group(1) + "]")
+                                    .setFont(font)
+                                    .setFontSize(12)
+                                    .setFontColor(ColorConstants.RED));
+                        }
+                        lastIndex = matcher.end();
                     }
-                    // 优化图片样式
-                    image.setHorizontalAlignment(HorizontalAlignment.CENTER)
-                            .setMarginTop(20)
-                            .setMarginBottom(20);
-                    document.add(image);
-                } catch (Exception e) {
-                    log.error("Failed to add image: " + imageUrl, e);
+
+                    // 处理图片后的文本
+                    if (lastIndex < line.length()) {
+                        String remainingText = line.substring(lastIndex).trim();
+                        if (!remainingText.isEmpty()) {
+                            document.add(new Paragraph(remainingText)
+                                    .setFont(font)
+                                    .setFontSize(14)
+                                    .setMultipliedLeading(1.5f));
+                        }
+                    }
+                    continue;
                 }
 
-                lastIndex = matcher.end();
+                // 处理加粗文本
+                if (line.contains("**")) {
+                    Pattern pattern = Pattern.compile("\\*\\*(.*?)\\*\\*");
+                    Matcher matcher = pattern.matcher(line);
+                    int lastIndex = 0;
+                    StringBuilder paragraph = new StringBuilder();
+
+                    while (matcher.find()) {
+                        // 添加加粗前的普通文本
+                        paragraph.append(line.substring(lastIndex, matcher.start()));
+                        // 添加加粗文本
+                        String boldText = matcher.group(1);
+                        paragraph.append("[bold]").append(boldText).append("[/bold]");
+                        lastIndex = matcher.end();
+                    }
+
+                    if (lastIndex < line.length()) {
+                        paragraph.append(line.substring(lastIndex));
+                    }
+
+                    // 将处理后的文本转换为带格式的段落
+                    String[] parts = paragraph.toString().split("\\[bold\\]|\\[/bold\\]");
+                    Paragraph p = new Paragraph()
+                            .setFont(font)
+                            .setFontSize(14)
+                            .setMultipliedLeading(1.0f) // 减小行距
+                            .setFirstLineIndent(28); // 首行缩进
+
+                    boolean isBold = false;
+                    for (String part : parts) {
+                        Text text = new Text(part);
+                        if (isBold) {
+                            text.setBold();
+                        }
+                        p.add(text);
+                        isBold = !isBold;
+                    }
+                    document.add(p);
+                    continue;
+                }
+
+                // 处理普通文本
+                if (!line.trim().isEmpty()) {
+                    document.add(new Paragraph(line)
+                            .setFont(font)
+                            .setFontSize(14)
+                            .setMultipliedLeading(1.0f) // 减小行距
+                            .setFirstLineIndent(28) // 首行缩进
+                            .setMarginTop(0)
+                            .setMarginBottom(6));
+                }
             }
 
-            if (lastIndex < content.length()) {
-                document.add(new Paragraph(content.substring(lastIndex))
-                        .setFont(font)
-                        .setFontSize(14)
-                        .setFirstLineIndent(28)
-                        .setMultipliedLeading(1.5f));
-            }
-
-            // 添加底部分隔线
+            // 添加底部分隔线和签名
             document.add(new Paragraph("\n"));
             document.add(new Paragraph("").setHeight(2)
                     .setBorder(new SolidBorder(ColorConstants.LIGHT_GRAY, 1))
                     .setMarginTop(20)
                     .setMarginBottom(20));
 
-            // 优化签名样式
+            // 添加签名
             String signature = userService.getSignatureUrl(postDto.getPost().getUserId()).getBody();
-            Image signatureImage = null;
             if (signature != null && !signature.isEmpty()) {
                 try {
-                    signatureImage = new Image(ImageDataFactory.create(new URL(signature)))
+                    Image signatureImage = new Image(ImageDataFactory.create(new URL(signature)))
                             .setWidth(150)
                             .setHeight(50)
                             .setHorizontalAlignment(HorizontalAlignment.RIGHT)
@@ -163,26 +315,8 @@ public class PostExportService {
                     log.error("Failed to add signature", e);
                 }
             }
-            document.close();
-            // 重新打开 PDF 以添加签名（如果只有一页）
-            if (signatureImage != null) {
-                PdfDocument pdfToModify = new PdfDocument(new PdfReader(new ByteArrayInputStream(baos.toByteArray())), new PdfWriter(baos));
-                if (pdfToModify.getNumberOfPages() == 1) {
-                    // 固定签名在底部右侧
-                    float sigWidth = 150f;
-                    float sigHeight = 50f;
-                    float x = PageSize.A4.getWidth() - MARGIN - sigWidth;
-                    float y = MARGIN + 5f;
-                    signatureImage.setFixedPosition(1, x, y);
-
-                    Document docToModify = new Document(pdfToModify, PageSize.A4);
-                    docToModify.add(signatureImage);
-                    docToModify.close();
-                }
-                pdfToModify.close();
-            }
         } finally {
-            document.close(); // 先关闭，才能准确获取页数
+            document.close();
         }
         return baos.toByteArray();
     }
@@ -192,6 +326,9 @@ public class PostExportService {
 
         // 添加标题
         markdown.append("# ").append(postDto.getPost().getTitle()).append("\n\n");
+
+        // 添加摘要
+        markdown.append("> ").append(postDto.getPost().getAbstractContent()).append("\n\n");
 
         // 添加正文内容
         markdown.append(postDto.getPost().getContent()).append("\n\n");

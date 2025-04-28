@@ -49,6 +49,8 @@ const resetSearch = () => {
   searchKey.value = "";
   weightValue.value = null;
   weightOperator.value = "GREATER_THAN";
+  currentPage.value = 1;
+  pageSize.value = 10;
   getTagList();
 };
 
@@ -65,22 +67,24 @@ const getTagList = async () => {
         name: searchKey.value,
         weightOperator: weightValue.value !== null ? weightOperator.value : null,
         weightValue: weightValue.value,
-        pageNum: currentPage.value,
-        pageSize: pageSize.value,
+        page: currentPage.value - 1,
+        size: pageSize.value,
+        sort: ['useCount,desc']
       });
       if (res.data.status === 200) {
-        tableData.value = res.data.data;
-        total.value = res.data.total || tableData.value.length;
+        tableData.value = res.data.data.content;
+        total.value = res.data.data.totalElements;
       }
     } else {
       // 无搜索条件时使用findAll
       const res = await findAll({
-        pageNum: currentPage.value,
-        pageSize: pageSize.value,
+        page: currentPage.value - 1,
+        size: pageSize.value,
+        sort: ['weight,desc']
       });
       if (res.data.status === 200) {
         tableData.value = res.data.data.content;
-        total.value = res.data.data.totalElements || tableData.value.length;
+        total.value = res.data.data.totalElements;
       }
     }
   } catch (error) {

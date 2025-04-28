@@ -39,7 +39,10 @@ export const batchDelete = (commentIds) =>
   request.delete(`${commentPrefix}/public/delete/batch`, { data: commentIds })
 
 // 根据作者获取评论
-export const findByAuthor = () => request.get(`${commentPrefix}/public/find/author`)
+export const findByAuthor = ({ page = 0, size = 10, sorts = "createdAt,desc" } = {}) =>
+  request.get(`${commentPrefix}/public/find/author`, {
+    params: { page, size, sorts }
+  })
 
 // 根据用户id获取评论
 export const findByUserId = ({ page = 0, size = 10, sorts = "createdAt,desc" } = {}) =>

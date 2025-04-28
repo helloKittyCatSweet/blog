@@ -186,12 +186,12 @@ const emit = defineEmits([
     <el-pagination
       v-model:current-page="pagination.current"
       v-model:page-size="pagination.size"
-      :page-sizes="[10, 20, 30, 50]"
+      :page-sizes="pagination.pageSizes"
       :total="pagination.total"
+      :layout="pagination.layout"
       background
-      layout="total, sizes, prev, pager, next, jumper"
-      @size-change="(size) => emit('size-change', size)"
-      @current-change="(page) => emit('page-change', page)"
+      @size-change="$emit('size-change', $event)"
+      @current-change="$emit('page-change', $event)"
     />
   </div>
 
@@ -307,10 +307,6 @@ const emit = defineEmits([
 </style>
 
 <style lang="scss" scoped>
-.login-page {
-  // ... existing styles ...
-}
-
 .comment-content {
   word-break: break-word;
   line-height: 1.5;
@@ -326,7 +322,7 @@ const emit = defineEmits([
 
     .article-title {
       color: var(--el-text-color-regular);
-      
+
       &.clickable {
         cursor: pointer;
         color: var(--el-color-primary);
@@ -339,9 +335,11 @@ const emit = defineEmits([
       }
     }
   }
-
-  // ... existing styles ...
 }
 
-// ... existing styles ...
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
 </style>

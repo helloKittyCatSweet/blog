@@ -51,7 +51,11 @@ const rules = {
 const getCategoryList = async () => {
   loading.value = true;
   try {
-    const res = await findAll();
+    const res = await findAll({
+      page: currentPage.value - 1,
+      size: pageSize.value,
+      sort: 'useCount,desc'
+    });
     console.log("getCategoryList res: ", res);
     if (res.data.status === 200) {
       // 直接使用返回的树状结构数据
@@ -250,6 +254,17 @@ const resetSearch = () => {
   advancedSearch.value = false;
   getCategoryList();
 };
+
+const handleSizeChange = (val) => {
+  pageSize.value = val;
+  currentPage.value = 1;  // 切换每页条数时重置为第一页
+  getCategoryList();
+};
+
+const handleCurrentChange = (val) => {
+  currentPage.value = val;
+  getCategoryList();
+};
 </script>
 
 <template>
@@ -355,8 +370,8 @@ const resetSearch = () => {
           :page-sizes="[10, 20, 50, 100]"
           :background="true"
           layout="total, sizes, prev, pager, next, jumper"
-          @update:current-page="getCategoryList"
-          @update:page-size="getCategoryList"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
         />
       </div>
     </el-card>

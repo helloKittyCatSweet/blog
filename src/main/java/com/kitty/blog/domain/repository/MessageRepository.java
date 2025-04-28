@@ -102,7 +102,7 @@ public interface MessageRepository extends BaseRepository<Message, Integer> {
          */
         @Query("select m from Message m where m.content LIKE %?1% and m.senderId = ?2")
         Page<Message> findByContentForSender(String content, Integer senderId,
-                                                             Pageable pageable);
+                        Pageable pageable);
 
         /**
          * 根据内容和收件人查找消息
@@ -219,4 +219,10 @@ public interface MessageRepository extends BaseRepository<Message, Integer> {
         Optional<Message> findFirstBySenderIdAndReceiverIdOrReceiverIdAndSenderIdOrderByCreatedAtDesc(
                         Integer senderId1, Integer receiverId1,
                         Integer senderId2, Integer receiverId2);
+
+        /**
+         * 查询可疑消息（可疑标记为true或评分大于等于60）
+         */
+        @Query("SELECT m FROM Message m WHERE m.suspicious = true OR m.score >= 60 ORDER BY m.createdAt DESC")
+        Page<Message> findSuspiciousMessages(Pageable pageable);
 }

@@ -141,79 +141,48 @@ public class WebSocketService {
     }
 
     @Transactional
-    public Page<SystemMessageDto> getSystemMessages(Integer page, Integer size, String[] sort) {
+    public Page<SystemMessageDto> getSystemMessages(Integer page, Integer size, String keyword, String targetRole,
+            String[] sort) {
         PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
-        Page<SystemMessage> systemMessages = systemMessageRepository.findAllByOrderByCreatedAtDesc(pageRequest);
+        Page<SystemMessage> systemMessages;
 
-        return systemMessages.map(systemMessage -> {
-            SystemMessageDto dto = new SystemMessageDto();
-            dto.setId(systemMessage.getId());
-            dto.setTargetRole(systemMessage.getTargetRole());
-            dto.setMessage(systemMessage.getMessage());
-            dto.setSenderId(systemMessage.getSenderId());
+        if (keyword != null && !keyword.trim().isEmpty() || targetRole != null && !targetRole.trim().isEmpty()) {
+            systemMessages = systemMessageRepository.findByMessageContainingAndTargetRole(
+                    keyword == null ? "" : keyword.trim(),
+                    targetRole == null ? "" : targetRole.trim(),
+                    pageRequest);
+        } else {
+            systemMessages = systemMessageRepository.findAllByOrderByCreatedAtDesc(pageRequest);
+        }
 
-            User user = userRepository.findById(systemMessage.getSenderId()).orElse(null);
-            dto.setSenderName(user != null ? user.getUsername() : null);
-
-            List<UserRole> userRoles = userRoleRepository.findByUserId(systemMessage.getSenderId())
-                    .orElse(new ArrayList<>());
-            if (userRoles.isEmpty()) {
-                throw new IllegalArgumentException("用户角色为空");
-            }
-            List<String> administratorName = new ArrayList<>();
-            for (UserRole userRole : userRoles) {
-                roleRepository.findById(userRole.getId().getRoleId()).ifPresent(role -> administratorName.add(role.getAdministratorName()));
-            }
-            dto.setSenderRoles(administratorName);
-            dto.setCreatedAt(systemMessage.getCreatedAt());
-            return dto;
-        });
+        return systemMessages.map(this::convertToDtoForAdmin);
     }
 
     @Transactional
-    public Page<SystemMessageDto> getUserSystemMessages(LoginResponseDto user, Integer page, Integer size,
+    public Page<SystemMessageDto> getUserSystemMessages(LoginResponseDto user,
+            Integer page,
+            Integer size,
+            String keyword,
+            String targetRole,
             String[] sort) {
         List<String> userRoles = user.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.toList());
 
         PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
-        Page<SystemMessage> systemMessages = systemMessageRepository
-                .findByTargetRoleInOrderByCreatedAtDesc(userRoles, pageRequest);
+        Page<SystemMessage> systemMessages;
 
-        return systemMessages.map(systemMessage -> {
-            SystemMessageDto dto = new SystemMessageDto();
-            dto.setId(systemMessage.getId());
-            dto.setMessage(systemMessage.getMessage());
-            dto.setTargetRole(systemMessage.getTargetRole());
-            dto.setSenderId(systemMessage.getSenderId());
+        if (keyword != null && !keyword.trim().isEmpty() || targetRole != null && !targetRole.trim().isEmpty()) {
+            systemMessages = systemMessageRepository.findByTargetRoleInAndMessageContainingAndTargetRole(
+                    userRoles,
+                    keyword == null ? "" : keyword.trim(),
+                    targetRole == null ? "" : targetRole.trim(),
+                    pageRequest);
+        } else {
+            systemMessages = systemMessageRepository.findByTargetRoleInOrderByCreatedAtDesc(userRoles, pageRequest);
+        }
 
-            User sender = userRepository.findById(systemMessage.getSenderId()).orElse(null);
-            if (sender != null) {
-                dto.setSenderName(sender.getUsername());
-                List<UserRole> senderRoles = userRoleRepository.findByUserId(systemMessage.getSenderId())
-                        .orElse(new ArrayList<>());
-                if (!senderRoles.isEmpty()) {
-                    List<String> administratorNames = senderRoles.stream()
-                            .map(role -> roleRepository.findById(role.getId().getRoleId())
-                                    .map(com.kitty.blog.domain.model.Role::getAdministratorName)
-                                    .orElse(null))
-                            .filter(Objects::nonNull)
-                            .collect(Collectors.toList());
-                    dto.setSenderRoles(administratorNames);
-                }
-            }
-            dto.setCreatedAt(systemMessage.getCreatedAt());
-
-            boolean isRead = false;
-            if (systemMessage.getReadUserIds() != null && !systemMessage.getReadUserIds().isEmpty()) {
-                isRead = Arrays.stream(systemMessage.getReadUserIds().split(","))
-                        .filter(s -> !s.isEmpty())
-                        .anyMatch(readUserId -> readUserId.equals(user.getId().toString()));
-            }
-            dto.setRead(isRead);
-            return dto;
-        });
+        return systemMessages.map(message -> convertToDtoForUser(message, user.getId()));
     }
 
     @Transactional
@@ -296,5 +265,64 @@ public class WebSocketService {
         } catch (Exception e) {
             log.error("Failed to send notification to user {}: {}", userId, e.getMessage());
         }
+    }
+
+    private SystemMessageDto convertToDtoForAdmin(SystemMessage systemMessage) {
+        SystemMessageDto dto = new SystemMessageDto();
+        dto.setId(systemMessage.getId());
+        dto.setTargetRole(systemMessage.getTargetRole());
+        dto.setMessage(systemMessage.getMessage());
+        dto.setSenderId(systemMessage.getSenderId());
+
+        User user = userRepository.findById(systemMessage.getSenderId()).orElse(null);
+        dto.setSenderName(user != null ? user.getUsername() : null);
+
+        List<UserRole> userRoles = userRoleRepository.findByUserId(systemMessage.getSenderId())
+                .orElse(new ArrayList<>());
+        if (userRoles.isEmpty()) {
+            throw new IllegalArgumentException("用户角色为空");
+        }
+        List<String> administratorName = new ArrayList<>();
+        for (UserRole userRole : userRoles) {
+            roleRepository.findById(userRole.getId().getRoleId())
+                    .ifPresent(role -> administratorName.add(role.getAdministratorName()));
+        }
+        dto.setSenderRoles(administratorName);
+        dto.setCreatedAt(systemMessage.getCreatedAt());
+        return dto;
+    }
+
+    private SystemMessageDto convertToDtoForUser(SystemMessage systemMessage, Integer userId) {
+            SystemMessageDto dto = new SystemMessageDto();
+            dto.setId(systemMessage.getId());
+            dto.setMessage(systemMessage.getMessage());
+            dto.setTargetRole(systemMessage.getTargetRole());
+            dto.setSenderId(systemMessage.getSenderId());
+
+            User sender = userRepository.findById(systemMessage.getSenderId()).orElse(null);
+            if (sender != null) {
+                dto.setSenderName(sender.getUsername());
+                List<UserRole> senderRoles = userRoleRepository.findByUserId(systemMessage.getSenderId())
+                        .orElse(new ArrayList<>());
+                if (!senderRoles.isEmpty()) {
+                    List<String> administratorNames = senderRoles.stream()
+                            .map(role -> roleRepository.findById(role.getId().getRoleId())
+                                    .map(com.kitty.blog.domain.model.Role::getAdministratorName)
+                                    .orElse(null))
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.toList());
+                    dto.setSenderRoles(administratorNames);
+                }
+            }
+            dto.setCreatedAt(systemMessage.getCreatedAt());
+
+            boolean isRead = false;
+            if (systemMessage.getReadUserIds() != null && !systemMessage.getReadUserIds().isEmpty()) {
+                isRead = Arrays.stream(systemMessage.getReadUserIds().split(","))
+                        .filter(s -> !s.isEmpty())
+                        .anyMatch(readUserId -> readUserId.equals(userId.toString()));
+            }
+            dto.setRead(isRead);
+            return dto;
     }
 }

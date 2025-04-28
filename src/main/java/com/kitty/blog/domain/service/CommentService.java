@@ -204,35 +204,15 @@ public class CommentService {
     }
 
     @Transactional
-    public ResponseEntity<List<CommentDto>> findByPostAuthor(Integer authorId) {
+    public Page<CommentDto> findByPostAuthor(Integer authorId, Integer page, Integer size, String[] sorts) {
         // 验证作者是否存在
         if (!userRepository.existsById(authorId)) {
-            return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
+            return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0);
         }
 
-        List<Comment> comments = commentRepository.findByPostAuthorId(authorId).orElse(Collections.emptyList());
-        List<CommentDto> commentDtos = new ArrayList<>();
-
-        for (Comment comment : comments) {
-            Post post = (Post) postRepository.findById(comment.getPostId()).orElse(new Post());
-            User user = (User) userRepository.findById(comment.getUserId()).orElse(new User());
-            Comment temp = commentRepository.findById(comment.getParentCommentId()).orElse(null);
-            CommentDto commentDto = CommentDto.builder()
-                    .commentId(comment.getCommentId())
-                    .parentId(temp == null ? null : temp.getCommentId())
-                    .parentContent(temp == null ? null : temp.getContent())
-                    .postId(comment.getPostId())
-                    .title(post.getTitle())
-                    .content(comment.getContent())
-                    .userId(comment.getUserId())
-                    .username(user.getUsername())
-                    .createdAt(comment.getCreatedAt().toString())
-                    .likes(comment.getLikes())
-                    .build();
-            commentDtos.add(commentDto);
-        }
-
-        return new ResponseEntity<>(commentDtos, HttpStatus.OK);
+        PageRequest pageRequest = PageUtil.createPageRequest(page, size, sorts);
+        Page<Comment> comments = commentRepository.findByPostAuthorId(authorId, pageRequest);
+        return comments.map(this::convertToCommentDto);
     }
 
     /**
@@ -292,7 +272,7 @@ public class CommentService {
 
     @Transactional
     public ResponseEntity<Boolean> deleteById(Integer commentId) {
-        if (!existsById(commentId).getBody()) {
+        if (Boolean.FALSE.equals(existsById(commentId).getBody())) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         commentRepository.deleteById(commentId);
@@ -334,5 +314,23 @@ public class CommentService {
     @Transactional
     public ResponseEntity<Boolean> existsById(Integer commentId) {
         return new ResponseEntity<>(commentRepository.existsById(commentId), HttpStatus.OK);
+    }
+
+    private CommentDto convertToCommentDto(Comment comment) {
+        Post post = (Post) postRepository.findById(comment.getPostId()).orElse(new Post());
+        User user = (User) userRepository.findById(comment.getUserId()).orElse(new User());
+        return CommentDto.builder()
+                .commentId(comment.getCommentId())
+                .parentId(comment.getParentCommentId())
+                .parentContent(commentRepository.findById(comment.getParentCommentId())
+                        .map(Comment::getContent).orElse(null))
+                .postId(comment.getPostId())
+                .title(post.getTitle())
+                .content(comment.getContent())
+                .userId(comment.getUserId())
+                .username(user.getUsername())
+                .createdAt(comment.getCreatedAt().toString())
+                .likes(comment.getLikes())
+                .build();
     }
 }

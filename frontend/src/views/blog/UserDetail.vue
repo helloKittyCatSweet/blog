@@ -9,7 +9,7 @@ import UserActivityHeatmap from "@/components/blog/user/UserActivityHeatmap.vue"
 import UserCategoryStats from "@/components/blog/user/UserCategoryStats.vue";
 
 import { findUserById } from "@/api/user/user.js";
-import { findByUserList } from "@/api/post/post.js";
+import { findByUserListNoPage } from "@/api/post/post.js";
 import { GENDER_OPTIONS } from "@/constants/user-constants";
 import { USER_MESSAGE_DETAIL_PATH } from "@/constants/routes/user.js";
 import { useUserStore, useMessageStore, useSettingsStore } from "@/stores";
@@ -85,9 +85,9 @@ const posts = ref([]);
 
 const loadUserPosts = async (userId) => {
   try {
-    const response = await findByUserList(userId);
+    const response = await findByUserListNoPage(userId);
     if (response.data?.status === 200) {
-      posts.value = response.data.data.content.map((item) => ({
+      posts.value = response.data.data.map((item) => ({
         postId: item.post.postId,
         title: item.post.title,
         content: item.post.content,

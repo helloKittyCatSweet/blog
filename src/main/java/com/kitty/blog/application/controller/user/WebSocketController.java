@@ -172,9 +172,10 @@ public class WebSocketController {
     public ResponseEntity<Response<Page<SystemMessageDto>>> getSystemMessages(
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sort", required = false, defaultValue = "createdAt, desc") String[] sort
-    ) {
-        return Response.ok(webSocketService.getSystemMessages(page, size, sort));
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "targetRole", required = false) String targetRole,
+            @RequestParam(value = "sort", required = false, defaultValue = "createdAt,desc") String[] sort) {
+        return Response.ok(webSocketService.getSystemMessages(page, size, keyword, targetRole, sort));
     }
 
     // 获取用户系统消息
@@ -182,12 +183,12 @@ public class WebSocketController {
     public ResponseEntity<Response<Page<SystemMessageDto>>> getUserSystemMessages(
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sort", required = false, defaultValue = "createdAt,desc") String[] sort
-    ) {
-        // 直接从 SecurityContext 获取当前用户
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "targetRole", required = false) String targetRole,
+            @RequestParam(value = "sort", required = false, defaultValue = "createdAt,desc") String[] sort) {
         LoginResponseDto currentUser = getCurrentUser(null);
         assert currentUser != null;
-        return Response.ok(webSocketService.getUserSystemMessages(currentUser, page, size, sort));
+        return Response.ok(webSocketService.getUserSystemMessages(currentUser, page, size, keyword, targetRole, sort));
     }
 
     private LoginResponseDto getCurrentUser(StompHeaderAccessor headerAccessor) {

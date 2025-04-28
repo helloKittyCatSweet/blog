@@ -18,7 +18,7 @@ export const existById = (id) => request.get(`${postPrefix}${reportPrefix}/admin
 export const count = () => request.get(`${postPrefix}${reportPrefix}/admin/count`)
 
 // 根据用户名查询报告列表
-export const findByUserList = (page = 0, size = 10, sorts = "createdAt,desc") =>
+export const findByUserList = ({ page = 0, size = 10, sorts = "createdAt,desc" } = {}) =>
   request.get(`${postPrefix}${reportPrefix}/public/find/user/list`, { params: { page, size, sorts } })
 
 // 根据状态查询报告列表

@@ -7,7 +7,9 @@ export function useComment(fetchCommentsFn) {
   const pagination = ref({
     current: 1,
     size: 10,
-    total: 0
+    total: 0,
+    pageSizes: [10, 20, 50],
+    layout: "total, sizes, prev, pager, next, jumper"
   })
 
   const commentList = ref([])
@@ -60,16 +62,10 @@ export function useComment(fetchCommentsFn) {
   const fetchComments = async () => {
     try {
       loading.value = true
-      const params = fetchCommentsFn === findByUserId ?
-      {
-        page: pagination.value.current - 1,
+      const params = {
+        page: pagination.value.current - 1,  // 后端分页从0开始
         size: pagination.value.size,
-        userId: fetchCommentsFn
-      }:
-      {
         ...searchForm.value,
-        page: pagination.value.current,
-        size: pagination.value.size,
         startDate: searchForm.value.dateRange?.[0],
         endDate: searchForm.value.dateRange?.[1]
       }
@@ -77,12 +73,12 @@ export function useComment(fetchCommentsFn) {
       const res = await fetchCommentsFn(params)
       if (res.data.status === 200) {
         replyCountCache.value.clear()
-        // 根据不同的请求函数处理不同的响应格式
-        const data = fetchCommentsFn === findByUserId ? res.data.data.content : res.data.data
-        commentList.value = data
-        pagination.value.total = fetchCommentsFn === findByUserId ? res.data.totalElements : data.length
+        // 直接使用后端返回的分页数据
+        commentList.value = res.data.data.content
+        pagination.value.total = res.data.data.totalElements
 
-        const uniqueTitles = [...new Set(data.map(item => item.title))]
+        // 更新标题选项
+        const uniqueTitles = [...new Set(commentList.value.map(item => item.title))]
         titleOptions.value = uniqueTitles.map(title => ({
           value: title,
           label: title

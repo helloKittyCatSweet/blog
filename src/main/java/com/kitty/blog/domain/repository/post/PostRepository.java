@@ -138,6 +138,8 @@ public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecif
                         @Param("userId") Integer userId,
                         Pageable pageable);
 
+        List<Post> findByUserIdAndIsPublishedTrueAndIsDeletedFalse(@Param("userId") Integer userId);
+
         /**
          * 标题模糊搜索（分页）
          *

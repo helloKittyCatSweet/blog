@@ -177,10 +177,8 @@ const handlePageChange = (page) => {
 // 处理每页条数变化
 const handleSizeChange = (size) => {
   pagination.value.pageSize = size;
-  pagination.value.currentPage = 1;
+  pagination.value.currentPage = 1; // 切换每页条数时重置为第一页
   loadMessages();
-  // 添加键盘事件监听
-  window.addEventListener("keydown", handleKeydown);
 };
 
 onMounted(() => {
@@ -309,6 +307,17 @@ const handleSystemMessageUnread = async (row) => {
   } catch (error) {
     ElMessage.error("标记未读失败");
   }
+};
+
+const handleSystemPageChange = (page) => {
+  systemPagination.value.currentPage = page;
+  loadSystemMessages();
+};
+
+const handleSystemSizeChange = (size) => {
+  systemPagination.value.pageSize = size;
+  systemPagination.value.currentPage = 1;
+  loadSystemMessages();
 };
 </script>
 
@@ -478,6 +487,8 @@ const handleSystemMessageUnread = async (row) => {
               :page-sizes="[10, 20, 50, 100]"
               :total="pagination.total"
               layout="total, sizes, prev, pager, next, jumper"
+              @size-change="handleSizeChange"
+              @current-change="handlePageChange"
             />
           </div>
         </el-tab-pane>
@@ -535,6 +546,8 @@ const handleSystemMessageUnread = async (row) => {
               :page-sizes="[10, 20, 50, 100]"
               :total="systemPagination.total"
               layout="total, sizes, prev, pager, next, jumper"
+              @size-change="handleSystemSizeChange"
+              @current-change="handleSystemPageChange"
             />
           </div>
         </el-tab-pane>

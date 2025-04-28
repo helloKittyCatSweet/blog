@@ -81,11 +81,19 @@ const getPostList = async () => {
   loading.value = true;
   try {
     let response;
+    const pageParams = {
+      page: searchForm.value.currentPage - 1, // 后端分页从0开始
+      size: searchForm.value.pageSize,
+      sort: ['updatedAt,desc'] // 默认按更新时间降序
+    };
 
     // 根据搜索条件决定使用哪个 API
     if (searchForm.value.keyword) {
       // 如果有关键词，使用标题搜索，并在前端处理状态过滤
-      response = await findByKeysInTitle(searchForm.value.keyword);
+      response = await findByKeysInTitle({
+        ...pageParams,
+        keyword: searchForm.value.keyword
+      });
       if (response.data.status === 200) {
         let filteredData = response.data.data;
         // 如果选择了状态，进行过滤
@@ -104,7 +112,7 @@ const getPostList = async () => {
       }
     } else {
       // 没有关键词时使用用户名查询
-      response = await findByUserId(userStore.user.id);
+      response = await findByUserId(userStore.user.id, pageParams);
       if (response.data.status === 200 && searchForm.value.status) {
         // 如果选择了状态，进行过滤
         response.data.data = response.data.content.filter((item) =>
@@ -132,7 +140,7 @@ const getPostList = async () => {
         tags: item.tags || [],
         content: item.post.content || "无内容",
       }));
-      total.value = tableData.value.length;
+      total.value = response.data.data.totalElements || tableData.value.length;
     }
   } catch (error) {
     console.error("获取文章列表失败:", error);
@@ -181,11 +189,17 @@ const handleView = (postId) => {
 // 处理分页
 const handleSizeChange = (val) => {
   searchForm.value.pageSize = val;
+  searchForm.value.currentPage = 1; // 切换每页显示数量时重置为第一页
   getPostList();
 };
 
 const handleCurrentChange = (val) => {
   searchForm.value.currentPage = val;
+  // 滚动到页面顶部
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
   getPostList();
 };
 
@@ -233,6 +247,9 @@ const handleSearch = async () => {
   searchForm.value.currentPage = 1; // 搜索时重置页码
   try {
     const response = await searchPosts({
+      page: searchForm.value.currentPage - 1,
+      size: searchForm.value.pageSize,
+      sort: ['updatedAt,desc'],
       ...searchForm.value,
       isPrivate: true,
     });
@@ -251,7 +268,7 @@ const handleSearch = async () => {
         visibility: item.post.visibility,
         content: item.post.content || "无内容",
       }));
-      total.value = response.data.total || tableData.value.length;
+      total.value = response.data.data.totalElements || tableData.value.length;
     }
   } catch (error) {
     console.error("搜索失败:", error);

@@ -358,120 +358,91 @@ const showUserDetail = (row) => {
     <el-card class="box-card">
       <!-- 搜索区域 -->
       <div class="search-bar">
-  <el-input
-    v-model="searchKey"
-    placeholder="搜索用户名/邮箱"
-    class="search-input"
-    clearable
-    @keyup.enter="handleSearch"
-  >
-    <template #prefix>
-      <el-icon><Search /></el-icon>
-    </template>
-  </el-input>
-  <el-select
-    v-model="activeFilter"
-    placeholder="状态筛选"
-    clearable
-    class="status-select"
-  >
-    <el-option label="已激活" :value="true" />
-    <el-option label="已禁用" :value="false" />
-  </el-select>
-  <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
-  <el-button @click="handleReset">重置</el-button>
-  <el-button type="success" @click="handleExport">
-    <el-icon><Download /></el-icon>
-    导出用户
-  </el-button>
+        <el-input v-model="searchKey" placeholder="搜索用户名/邮箱" class="search-input" clearable @keyup.enter="handleSearch">
+          <template #prefix>
+            <el-icon>
+              <Search />
+            </el-icon>
+          </template>
+        </el-input>
+        <el-select v-model="activeFilter" placeholder="状态筛选" clearable class="status-select">
+          <el-option label="已激活" :value="true" />
+          <el-option label="已禁用" :value="false" />
+        </el-select>
+        <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
+        <el-button @click="handleReset">重置</el-button>
+        <el-button type="success" @click="handleExport">
+          <el-icon>
+            <Download />
+          </el-icon>
+          导出用户
+        </el-button>
 
-  <el-upload
-    class="upload-button"
-    :show-file-list="false"
-    :before-upload="handleFileUpload"
-    accept=".xlsx,.xls"
-  >
-    <el-button type="primary" :icon="Upload">导入用户</el-button>
-  </el-upload>
+        <el-upload class="upload-button" :show-file-list="false" :before-upload="handleFileUpload" accept=".xlsx,.xls">
+          <el-button type="primary" :icon="Upload">导入用户</el-button>
+        </el-upload>
 
-  <!-- 导入说明 -->
-  <el-popover
-    placement="bottom"
-    :width="400"
-    trigger="hover"
-    title="Excel 导入说明"
-    :show-after="100"
-  >
-    <template #reference>
-      <el-button type="info" circle>
-        <el-icon><info-filled /></el-icon>
-      </el-button>
-    </template>
+        <!-- 导入说明 -->
+        <el-popover placement="bottom" :width="400" trigger="hover" title="Excel 导入说明" :show-after="100">
+          <template #reference>
+            <el-button type="info" circle>
+              <el-icon><info-filled /></el-icon>
+            </el-button>
+          </template>
 
-    <div class="import-guide">
-      <div class="guide-section">
-        <h4>Excel 文件格式要求：</h4>
-        <el-table :data="excelColumns" border size="small">
-          <el-table-column prop="column" label="列" width="60" align="center" />
-          <el-table-column prop="field" label="字段" width="100" />
-          <el-table-column prop="required" label="必填" width="60" align="center">
-            <template #default="scope">
-              <el-tag :type="scope.row.required ? 'danger' : 'info'" size="small">
-                {{ scope.row.required ? "是" : "否" }}
-              </el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column prop="description" label="说明" />
-        </el-table>
+          <div class="import-guide">
+            <div class="guide-section">
+              <h4>Excel 文件格式要求：</h4>
+              <el-table :data="excelColumns" border size="small">
+                <el-table-column prop="column" label="列" width="60" align="center" />
+                <el-table-column prop="field" label="字段" width="100" />
+                <el-table-column prop="required" label="必填" width="60" align="center">
+                  <template #default="scope">
+                    <el-tag :type="scope.row.required ? 'danger' : 'info'" size="small">
+                      {{ scope.row.required ? "是" : "否" }}
+                    </el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="description" label="说明" />
+              </el-table>
+            </div>
+
+            <div class="guide-section">
+              <h4>注意事项：</h4>
+              <ul class="guide-tips">
+                <li>默认密码为：123456</li>
+                <li>状态可填：已激活、已禁用（默认已激活）</li>
+                <li>角色为可选项，多个角色用逗号分隔</li>
+                <li>重复的用户名或邮箱将被自动跳过</li>
+              </ul>
+            </div>
+
+            <div class="guide-footer">
+              <el-alert type="warning" :closable="false" show-icon>
+                建议先导出现有数据作为模板使用
+              </el-alert>
+            </div>
+          </div>
+        </el-popover>
       </div>
-
-      <div class="guide-section">
-        <h4>注意事项：</h4>
-        <ul class="guide-tips">
-          <li>默认密码为：123456</li>
-          <li>状态可填：已激活、已禁用（默认已激活）</li>
-          <li>角色为可选项，多个角色用逗号分隔</li>
-          <li>重复的用户名或邮箱将被自动跳过</li>
-        </ul>
-      </div>
-
-      <div class="guide-footer">
-        <el-alert type="warning" :closable="false" show-icon>
-          建议先导出现有数据作为模板使用
-        </el-alert>
-      </div>
-    </div>
-  </el-popover>
-</div>
 
       <!-- 用户列表 -->
-      <el-table
-        :data="tableData"
-        v-loading="loading"
-        style="width: 100%"
-        @selection-change="handleSelectionChange"
-      >
+      <el-table :data="tableData" v-loading="loading" style="width: 100%" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="user.userId" label="ID" width="80" />
+        <el-table-column type="index" label="序号" width="80" align="center">
+          <template #default="scope">
+            {{ (currentPage - 1) * pageSize + scope.$index + 1 }}
+          </template>
+        </el-table-column>
         <el-table-column prop="user.username" label="用户名" width="120">
-  <template #default="scope">
-    <el-tooltip
-      :content="scope.row.user.username"
-      placement="top"
-      :show-after="200"
-      :hide-after="2000"
-    >
-      <el-button
-        link
-        type="primary"
-        class="custom-username text-ellipsis"
-        @click="showUserDetail(scope.row)"
-      >
-        {{ scope.row.user.username }}
-      </el-button>
-    </el-tooltip>
-  </template>
-</el-table-column>
+          <template #default="scope">
+            <el-tooltip :content="scope.row.user.username" placement="top" :show-after="200" :hide-after="2000">
+              <el-button link type="primary" class="custom-username text-ellipsis" @click="showUserDetail(scope.row)">
+                {{ scope.row.user.username }}
+              </el-button>
+            </el-tooltip>
+          </template>
+        </el-table-column>
         <el-table-column prop="user.nickname" label="昵称" width="120" />
         <el-table-column prop="user.email" label="邮箱" width="180" />
         <el-table-column prop="user.lastLoginIp" label="最后登录IP" width="140" />
@@ -484,13 +455,8 @@ const showUserDetail = (row) => {
             <el-popover placement="top" trigger="hover" :width="300" :show-after="100">
               <template #reference>
                 <div class="role-tags-container">
-                  <el-tag
-                    v-for="role in scope.row.roles"
-                    :key="role.roleId"
-                    class="mx-1"
-                    size="small"
-                    :type="getRoleTagType(role.administratorName)"
-                  >
+                  <el-tag v-for="role in scope.row.roles" :key="role.roleId" class="mx-1" size="small"
+                    :type="getRoleTagType(role.administratorName)">
                     {{ role.roleName }}
                   </el-tag>
                 </div>
@@ -499,13 +465,8 @@ const showUserDetail = (row) => {
               <div class="role-popover-content">
                 <h4>所有角色：</h4>
                 <div class="role-tags-full">
-                  <el-tag
-                    v-for="role in scope.row.roles"
-                    :key="role.roleId"
-                    class="mx-1 mb-1"
-                    size="small"
-                    :type="getRoleTagType(role.administratorName)"
-                  >
+                  <el-tag v-for="role in scope.row.roles" :key="role.roleId" class="mx-1 mb-1" size="small"
+                    :type="getRoleTagType(role.administratorName)">
                     {{ role.roleName }}
                   </el-tag>
                 </div>
@@ -521,57 +482,51 @@ const showUserDetail = (row) => {
           </template>
         </el-table-column>
         <!-- 操作列 -->
-       <el-table-column label="操作" width="120" fixed="right">
-  <template #default="scope">
-    <el-dropdown trigger="click">
-      <el-button type="primary" size="small">
-        操作
-        <el-icon class="el-icon--right"><arrow-down /></el-icon>
-      </el-button>
-      <template #dropdown>
-        <el-dropdown-menu>
-          <el-dropdown-item @click="handleActivate(scope.row.user)">
-            <el-icon :class="scope.row.user.isActive ? 'warning-icon' : 'success-icon'">
-              <warning v-if="scope.row.user.isActive" />
-              <check v-else />
-            </el-icon>
-            {{ scope.row.user.isActive ? "禁用" : "激活" }}
-          </el-dropdown-item>
-          <el-dropdown-item @click="handleEditRoles(scope.row)">
-            <el-icon><edit /></el-icon>
-            编辑角色
-          </el-dropdown-item>
-          <el-dropdown-item divided @click="handleDelete(scope.row.user)">
-            <el-icon class="danger-icon"><delete /></el-icon>
-            删除
-          </el-dropdown-item>
-        </el-dropdown-menu>
-      </template>
-    </el-dropdown>
-  </template>
-</el-table-column>
+        <el-table-column label="操作" width="120" fixed="right">
+          <template #default="scope">
+            <el-dropdown trigger="click">
+              <el-button type="primary" size="small">
+                操作
+                <el-icon class="el-icon--right"><arrow-down /></el-icon>
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="handleActivate(scope.row.user)">
+                    <el-icon :class="scope.row.user.isActive ? 'warning-icon' : 'success-icon'">
+                      <warning v-if="scope.row.user.isActive" />
+                      <check v-else />
+                    </el-icon>
+                    {{ scope.row.user.isActive ? "禁用" : "激活" }}
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="handleEditRoles(scope.row)">
+                    <el-icon>
+                      <edit />
+                    </el-icon>
+                    编辑角色
+                  </el-dropdown-item>
+                  <el-dropdown-item divided @click="handleDelete(scope.row.user)">
+                    <el-icon class="danger-icon">
+                      <delete />
+                    </el-icon>
+                    删除
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </template>
+        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
       <div class="pagination">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="total"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+        <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange"
+          @current-change="handleCurrentChange" />
       </div>
     </el-card>
 
     <!-- 添加角色编辑对话框 -->
-    <el-dialog
-      v-model="roleDialogVisible"
-      title="分配角色"
-      width="500px"
-    >
+    <el-dialog v-model="roleDialogVisible" title="分配角色" width="500px">
       <el-form label-width="80px">
         <el-form-item label="角色">
           <el-checkbox-group v-model="selectedRoles">
@@ -596,37 +551,28 @@ const showUserDetail = (row) => {
     </el-dialog>
 
     <!-- 用户详情对话框 -->
-    <el-dialog
-      v-model="userDetailVisible"
-      :title="'用户详情 - ' + currentUser?.user?.username"
-      width="600px"
-    >
+    <el-dialog v-model="userDetailVisible" :title="'用户详情 - ' + currentUser?.user?.username" width="600px">
       <el-descriptions :column="2" border>
         <el-descriptions-item label="用户ID">{{
           currentUser?.user?.userId
         }}</el-descriptions-item>
         <el-descriptions-item label="用户名">{{
-          currentUser?.user?.username
-        }}</el-descriptions-item>
+            currentUser?.user?.username
+          }}</el-descriptions-item>
         <el-descriptions-item label="昵称">{{
-          currentUser?.user?.nickname
-        }}</el-descriptions-item>
+            currentUser?.user?.nickname
+          }}</el-descriptions-item>
         <el-descriptions-item label="邮箱">{{
-          currentUser?.user?.email
-        }}</el-descriptions-item>
+            currentUser?.user?.email
+          }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="currentUser?.user?.isActive ? 'success' : 'danger'">
             {{ currentUser?.user?.isActive ? "已激活" : "已禁用" }}
           </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="角色">
-          <el-tag
-            v-for="role in currentUser?.roles"
-            :key="role.roleId"
-            class="mx-1"
-            size="small"
-            :type="getRoleTagType(role.administratorName)"
-          >
+          <el-tag v-for="role in currentUser?.roles" :key="role.roleId" class="mx-1" size="small"
+            :type="getRoleTagType(role.administratorName)">
             {{ role.roleName }}
           </el-tag>
         </el-descriptions-item>
@@ -634,14 +580,14 @@ const showUserDetail = (row) => {
           currentUser?.user?.createdAt
         }}</el-descriptions-item>
         <el-descriptions-item label="最后登录">{{
-          currentUser?.user?.lastLoginTime
-        }}</el-descriptions-item>
+            currentUser?.user?.lastLoginTime
+          }}</el-descriptions-item>
         <el-descriptions-item label="登录IP">{{
-          currentUser?.user?.lastLoginIp
-        }}</el-descriptions-item>
+            currentUser?.user?.lastLoginIp
+          }}</el-descriptions-item>
         <el-descriptions-item label="登录地点">{{
-          currentUser?.user?.lastLoginLocation
-        }}</el-descriptions-item>
+            currentUser?.user?.lastLoginLocation
+          }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
   </page-container>
@@ -686,9 +632,11 @@ const showUserDetail = (row) => {
 .warning-icon {
   color: var(--el-color-warning);
 }
+
 .success-icon {
   color: var(--el-color-success);
 }
+
 .danger-icon {
   color: var(--el-color-danger);
 }

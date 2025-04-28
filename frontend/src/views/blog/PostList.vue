@@ -154,11 +154,17 @@ const fetchPosts = async () => {
 // 处理分页
 const handleSizeChange = (val) => {
   pageSize.value = val;
+  currentPage.value = 1; // 切换每页显示数量时重置为第一页
   fetchPosts();
 };
 
 const handleCurrentChange = (val) => {
   currentPage.value = val;
+  // 滚动到页面顶部
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth'
+  });
   fetchPosts();
 };
 

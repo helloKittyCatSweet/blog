@@ -59,11 +59,20 @@ const goToEditPage = (row) => {
 // 附件列表数据
 const attachmentList = ref([]);
 
+// 分页
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
+
 // 获取附件列表
 const getAttachmentList = async () => {
   loading.value = true;
   try {
-    const response = await findAttachmentsByUserId();
+    const response = await findAttachmentsByUserId({
+      page: currentPage.value - 1,  // 后端分页从0开始
+      size: pageSize.value,
+      sort: ['createdTime,desc']  // 默认按创建时间降序
+    });
     if (response.data?.status === 200) {
       attachmentList.value = response.data.data.content.map((item) => ({
         id: item.attachmentId,
@@ -75,12 +84,25 @@ const getAttachmentList = async () => {
         postId: item.postId,
         postTitle: item.postTitle,
       }));
+      total.value = response.data.data.totalElements; // 设置总条数
     }
     loading.value = false;
   } catch (error) {
     ElMessage.error("获取附件列表失败");
     loading.value = false;
   }
+};
+
+// 添加分页处理函数
+const handleSizeChange = (val) => {
+  pageSize.value = val;
+  currentPage.value = 1; // 切换每页显示数量时重置为第一页
+  getAttachmentList();
+};
+
+const handleCurrentChange = (val) => {
+  currentPage.value = val;
+  getAttachmentList();
 };
 
 // 删除附件
@@ -240,6 +262,19 @@ const formatFileType = (type) => {
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 添加分页器 -->
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </el-card>
 
     <!-- 上传对话框 -->
@@ -272,5 +307,11 @@ const formatFileType = (type) => {
 
 .upload-demo {
   text-align: center;
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
 }
 </style>

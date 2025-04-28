@@ -102,22 +102,16 @@ const filteredFavorites = computed(() => {
 const getFavoriteList = async () => {
   loading.value = true;
   try {
-    const { data } = await getPostsByFolder(currentFolder.value);
+    const { data } = await getPostsByFolder(currentFolder.value, {
+      page: searchForm.value.currentPage - 1,  // 后端分页从0开始
+      size: searchForm.value.pageSize,
+      sort: ['createdTime,desc']
+    });
     // console.log("收藏列表数据:", data);
     // 修改数据获取逻辑
-    if (data.data && data.data.content) {
+    if (data.status === 200) {
       favorites.value = data.data.content;
       total.value = data.data.totalElements;
-    } else {
-      favorites.value = data.content || [];
-      total.value = data.totalElements || 0;
-    }
-
-    // 如果当前页超出范围，重置为第一页
-    if (
-      searchForm.value.currentPage > Math.ceil(total.value / searchForm.value.pageSize)
-    ) {
-      searchForm.value.currentPage = 1;
     }
   } catch (error) {
     console.error("获取收藏列表失败:", error);
@@ -139,16 +133,20 @@ const handleSearch = async () => {
 
   loading.value = true;
   try {
-    const { data } = await findByUserId();
-    favorites.value = data.data.content; // 修改这里以适应分页结构
-    const filtered = filteredFavorites.value;
-
-    if (filtered.length === 0) {
-      ElMessage.info("未找到匹配的文章");
-    } else {
-      total.value = filtered.length;
+    const { data } = await findByUserId({
+      page: searchForm.value.currentPage - 1,
+      size: searchForm.value.pageSize,
+      keyword: searchForm.value.keyword
+    });
+    if (data.status === 200) {
+      favorites.value = data.data.content;
+      total.value = data.data.totalElements;
       currentFolder.value = "";
       searchForm.value.isGlobalSearch = true;
+
+      if (favorites.value.length === 0) {
+        ElMessage.info("未找到匹配的文章");
+      }
     }
   } catch (error) {
     console.error("搜索出错:", error);
@@ -160,8 +158,12 @@ const handleSearch = async () => {
 
 // 修改重置搜索
 const resetSearch = async () => {
-  searchForm.value.keyword = "";
-  searchForm.value.isGlobalSearch = false;
+  searchForm.value = {
+    keyword: "",
+    currentPage: 1,
+    pageSize: searchForm.value.pageSize,
+    isGlobalSearch: false
+  };
   currentFolder.value = "默认收藏夹";
   await getFavoriteList();
 };
@@ -202,6 +204,7 @@ const handleView = (row) => {
 // 处理分页
 const handleSizeChange = (val) => {
   searchForm.value.pageSize = val;
+  searchForm.value.currentPage = 1; // 切换每页显示数量时重置为第一页
   getFavoriteList();
 };
 

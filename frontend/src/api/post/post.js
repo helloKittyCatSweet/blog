@@ -89,18 +89,7 @@ export const findByTag = (tag, { page = 0, size = 10, sort = ["createdAt,desc"] 
 
 // 根据标签列表查询文章列表
 export const findByTags = (tags, { page = 0, size = 10, sorts = ["createdAt", "desc"] } = {}) =>
-
-  request.post(`${postPrefix}/public/find/tags`, {
-
-  tags,
-
-  page,
-
-  size,
-
-  sorts
-
-  });
+  request.post(`${postPrefix}/public/find/tags`, {tags ,page, size, sorts });
 
 // 根据分类查询文章列表
 export const findByCategory = (category, { page = 0, size = 10, sort = "createdAt,desc" } = {}) =>
@@ -113,6 +102,10 @@ export const findByUserList = (userId, { page = 0, size = 10, sort = "createdAt,
   request.get(`${postPrefix}/public/find/${userId}/list`, {
     params: { page, size, sort }
   });
+
+  // 根据用户名和发布状态查询文章列表
+export const findByUserListNoPage = (userId) =>
+  request.get(`${postPrefix}/public/find/${userId}/list-all`, );
 
 // 根据用户名查找文章列表
 export const findByUserId = (userId, { page = 0, size = 10, sort = "createdAt,desc" } = {}) =>
@@ -146,6 +139,9 @@ export const findAll = ({ page = 0, size = 10, sorts = "createdAt,desc" } = {}) 
   request.get(`${postPrefix}/public/find/all`, {
     params: { page, size, sorts }
   });
+
+// 查询所有文章（无分页）
+export const findAllNoPage = () => request.get(`${postPrefix}/public/find/all/no-paging`);
 
 // 根据id查询文章是否存在
 export const existById = (postId) =>

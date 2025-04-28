@@ -395,14 +395,15 @@ public class MessageService {
             return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0);
         }
         PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
-        Page<Message> all = messageRepository.findAll(pageRequest);
 
-        List<MessageDto> messageDtos = all.getContent().stream()
-                .filter(message -> message.isSuspicious() || message.getScore() > 60)
+        // 在数据库层面进行筛选
+        Page<Message> filteredMessages = messageRepository.findSuspiciousMessages(pageRequest);
+
+        List<MessageDto> messageDtos = filteredMessages.getContent().stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(messageDtos, pageRequest, all.getTotalElements());
+        return new PageImpl<>(messageDtos, pageRequest, filteredMessages.getTotalElements());
     }
 
     @Transactional

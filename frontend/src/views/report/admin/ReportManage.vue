@@ -38,18 +38,31 @@ const getReportList = async () => {
   loading.value = true;
   try {
     let res;
-    const params = {};
+    const params = {
+      page: currentPage.value - 1, // 前端页码从1开始，后端从0开始
+      size: pageSize.value,
+      sort: 'createdAt,desc'
+    };
+
     if (searchKey.value.trim() || statusFilter.value) {
       params.keyword = searchKey.value.trim();
       params.status = statusFilter.value;
       params.isAdmin = true;
       res = await searchReports(params);
     } else {
-      res = await findAll();
+      res = await findAll(params);
     }
+
     if (res.data.status === 200) {
-      tableData.value = res.data.data.content || res.data.data || [];
-      total.value = Number(res.data.data.totalElement || res.data.length || res.data.data.length) || 0;
+      if (Array.isArray(res.data.data.content)) {
+        // 处理分页数据
+        tableData.value = res.data.data.content;
+        total.value = res.data.data.totalElements;
+      } else if (Array.isArray(res.data.data)) {
+        // 处理非分页数据
+        tableData.value = res.data.data;
+        total.value = res.data.data.length;
+      }
     } else {
       ElMessage.error("获取数据失败：" + res.data.message);
       tableData.value = [];
@@ -304,7 +317,6 @@ const getReasonLabel = (reason) => {
 <template>
   <page-container title="举报管理">
     <!-- 搜索栏 -->
-
     <el-card class="search-card">
       <el-row :gutter="20">
         <el-col :span="5">
@@ -447,20 +459,20 @@ const getReasonLabel = (reason) => {
           </template>
         </el-table-column>
       </el-table>
-
-      <!-- 分页 -->
-      <div class="pagination">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :total="total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          @update:page-size="handleSizeChange"
-          @update:current-change="handleCurrentChange"
-        />
-      </div>
     </el-card>
+
+          <!-- 分页 -->
+    <div class="pagination">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :total="total"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
 
     <!-- 详情对话框 -->
     <el-dialog v-model="detailDialogVisible" title="举报详情" width="500px">
@@ -535,11 +547,30 @@ const getReasonLabel = (reason) => {
 
 .table-card {
   margin-bottom: 20px;
+  height: calc(100vh - 280px); /* 设置固定高度 */
+  display: flex;
+  flex-direction: column;
 }
 
-.pagination {
+/* 固定表格高度 */
+.table-card :deep(.el-table) {
+  flex: 1;
+  height: 100% !important;;
+}
+
+/* 禁用表格纵向滚动 */
+.table-card :deep(.el-table__body-wrapper) {
+  overflow-y: hidden;
+}
+
+.pagination-container {
   margin-top: 20px;
-  text-align: right;
+  display: flex;
+  justify-content: flex-end;
+  background: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .dialog-footer {

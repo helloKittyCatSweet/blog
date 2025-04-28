@@ -551,6 +551,13 @@ public class PostService {
 
     @Transactional
     @Cacheable(key = "#postId")
+    public List<PostDto> findByUserIdIsPublished(Integer userId) {
+       return postRepository.findByUserIdAndIsPublishedTrueAndIsDeletedFalse(userId)
+               .stream().map(this::convertToPostDto).collect(Collectors.toList());
+    }
+
+    @Transactional
+    @Cacheable(key = "#postId")
     public Page<PostDto> findByCategory(String category, Integer page, Integer size, String[] sort) {
         Category targetCategory = categoryRepository.findByName(category).orElse(new Category());
         if (!categoryRepository.existsById(targetCategory.getCategoryId())) {
@@ -751,7 +758,7 @@ public class PostService {
     @Transactional
     @CacheEvict(allEntries = true)
     public ResponseEntity<Boolean> deleteById(Integer postId) {
-        if (!existsById(postId).getBody()) {
+        if (Boolean.FALSE.equals(existsById(postId).getBody())) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         postRepository.findById(postId).orElse(new Post()).setDeleted(true);

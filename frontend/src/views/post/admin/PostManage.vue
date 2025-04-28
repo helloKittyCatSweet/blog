@@ -72,9 +72,14 @@ const handlePostResponse = (response) => {
 const getPostList = async () => {
   loading.value = true;
   try {
-    const response = await findAll();
+    const response = await findAll({
+      page: searchForm.value.currentPage - 1,  // 后端分页从0开始
+      size: searchForm.value.pageSize,
+      sort: ['updatedAt,desc']
+    });
     if (response.data.status === 200) {
       handlePostResponse(response);
+      total.value = response.data.data.totalElements;
     }
   } catch (error) {
     console.error("获取文章列表失败:", error);
@@ -200,11 +205,13 @@ const handleSearch = async () => {
     loading.value = true;
     const response = await searchPosts({
       ...searchForm.value,
+      page: searchForm.value.currentPage - 1,
+      size: searchForm.value.pageSize,
       isPrivate: false,
     });
     if (response.data.status === 200) {
       handlePostResponse(response);
-      total.value = tableData.value.length;
+      total.value = response.data.data.totalElements;
     }
   } catch (error) {
     console.error("搜索文章失败:", error);
@@ -382,6 +389,15 @@ const handleSave = async () => {
         <template #empty>
           <el-empty description="暂无文章" />
         </template>
+
+         <!-- 序号列 -->
+         <el-table-column
+          type="index"
+          label="序号"
+          width="60"
+          align="center"
+          :index="(index) => (searchForm.currentPage - 1) * searchForm.pageSize + index + 1"
+        />
 
         <!-- 标题列 -->
         <el-table-column

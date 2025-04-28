@@ -152,10 +152,13 @@ public class CommentController {
             @ApiResponse(responseCode = "403", description = "无权限访问"),
             @ApiResponse(responseCode = "404", description = "作者不存在")
     })
-    public ResponseEntity<Response<List<CommentDto>>> getAuthorPostComments
-            (@AuthenticationPrincipal LoginResponseDto user) {
-        ResponseEntity<List<CommentDto>> response = commentService.findByPostAuthor(user.getId());
-        return Response.createResponse(response,
+    public ResponseEntity<Response<Page<CommentDto>>> getAuthorPostComments
+            (@AuthenticationPrincipal LoginResponseDto user,
+             @RequestParam(required = false, defaultValue = "0") Integer page,
+             @RequestParam(required = false, defaultValue = "10") Integer size,
+             @RequestParam(required = false, defaultValue = "createdAt,desc") String[] sorts) {
+        Page<CommentDto> response = commentService.findByPostAuthor(user.getId(), page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "获取成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
     }

@@ -81,5 +81,5 @@ public interface CommentRepository extends BaseRepository<Comment, Integer> {
   Optional<List<Comment>> findByUserId(Integer userId);
 
   @Query("SELECT c FROM Comment c JOIN Post p ON c.postId = p.postId WHERE p.userId = ?1")
-  Optional<List<Comment>> findByPostAuthorId(Integer authorId);
+  Page<Comment> findByPostAuthorId(Integer authorId, Pageable pageable);
 }

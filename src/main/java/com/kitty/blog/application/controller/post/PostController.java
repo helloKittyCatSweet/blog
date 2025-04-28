@@ -477,12 +477,25 @@ public class PostController {
             @ApiResponse(responseCode = "200", description = "查询成功"),
             @ApiResponse(responseCode = "500", description = "服务器内部错误")
     })
-    public ResponseEntity<Response<Page<PostDto>>> findByUsernameIsPublished(
+    public ResponseEntity<Response<Page<PostDto>>> findByUserIdIsPublished(
             @PathVariable Integer userId,
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sorts", required = false) String[] sorts) {
         Page<PostDto> response = postService.findByUserIdIsPublished(userId, page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
+                HttpStatus.OK, "查询成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
+    }
+
+    @Operation(summary = "根据用户名和发布状态查询文章列表")
+    @GetMapping("/public/find/{userId}/list-all")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    public ResponseEntity<Response<List<PostDto>>> findByUserIdIsPublished(@PathVariable Integer userId) {
+        List<PostDto> response = postService.findByUserIdIsPublished(userId);
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
@@ -734,6 +747,20 @@ public class PostController {
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
             @RequestParam(value = "sorts", required = false) String[] sorts) {
         Page<PostDto> response = postService.findAll(page, size, sorts);
+        return Response.createResponse(ResponseEntity.ok(response),
+                HttpStatus.OK, "查询成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");
+    }
+
+    // 前台展示界面
+    @Operation(summary = "查询所有文章")
+    @GetMapping("/public/find/all/no-paging")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
+    public ResponseEntity<Response<List<PostDto>>> findAll() {
+        List<PostDto> response = postService.findAll();
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器内部错误");

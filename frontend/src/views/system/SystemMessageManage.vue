@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, onUnmounted, computed } from "vue";
-import { ElMessage, ElDrawer, ElButton, ElInput, ElPagination } from "element-plus";
+import { ElMessage, ElDrawer, ElButton, ElInput, ElPagination, ElMessageBox } from "element-plus";
 import { useUserStore } from "@/stores/modules/user";
 import {
   sendSystemMessage,
@@ -20,26 +20,19 @@ const form = ref({
 
 // 当前用户角色
 const userStore = useUserStore();
-const userRoles = userStore.user.roles;
+const userRoles = computed(() => userStore.user.roles || []);
 
 // 角色选项，根据用户角色进行过滤
 const roleOptions = computed(() => {
-  if (userRoles.some((role) => role.authority === ROLES.SYSTEM_ADMINISTRATOR)) {
-    return [
-      { label: "普通用户", value: ROLES.USER },
-      { label: "分类管理员", value: ROLES.CATEGORY_MANAGER },
-      { label: "标签管理员", value: ROLES.TAG_MANAGER },
-      { label: "文章管理员", value: ROLES.POST_MANAGER },
-      { label: "评论管理员", value: ROLES.COMMENT_MANAGER },
-      { label: "消息管理员", value: ROLES.MESSAGE_MANAGER },
-      { label: "举报管理员", value: ROLES.REPORT_MANAGER },
-      { label: "角色管理员", value: ROLES.ROLE_MANAGER },
-      { label: "系统管理员", value: ROLES.SYSTEM_ADMINISTRATOR },
-    ];
+  if (userRoles.value.some((role) => role.authority === ROLES.SYSTEM_ADMINISTRATOR)) {
+    return Object.entries(roleOptionsMap).map(([value, label]) => ({
+      value,
+      label
+    }));
   } else {
     const availableRoles = [{ label: "普通用户", value: ROLES.USER }];
 
-    userRoles.forEach((role) => {
+    userRoles.value.forEach((role) => {
       if (roleOptionsMap[role.authority]) {
         availableRoles.push({
           label: roleOptionsMap[role.authority],
@@ -149,8 +142,8 @@ onMounted(async () => {
   }
 
   console.log("ROLES.SYSTEM_ADMINISTRATOR:", ROLES.SYSTEM_ADMINISTRATOR);
-  console.log("用户角色列表:", userRoles);
-  console.log("是否包含系统管理员:", userRoles.includes(ROLES.SYSTEM_ADMINISTRATOR));
+  console.log("用户角色列表:", userRoles.value);
+  console.log("是否包含系统管理员:", userRoles.value.some(role => role.authority === ROLES.SYSTEM_ADMINISTRATOR));
 });
 
 // 组件卸载时断开连接
@@ -166,7 +159,17 @@ const messageHistory = ref([]);
 // 加载系统消息历史
 const loadMessageHistory = async () => {
   try {
-    const response = await getAdminSystemMessages();
+    const params = {
+      page: currentPage.value - 1,
+      size: pageSize.value,
+      keyword: searchKeyword.value || '',
+      targetRole: searchTargetRole.value || ''
+    };
+    console.log('搜索参数:', params);  // 添加日志
+
+    const response = await getAdminSystemMessages(params);
+    console.log('搜索结果:', response.data);  // 添加日志
+
     messageHistory.value = response.data.data.content;
     totalMessages.value = response.data.data.totalElements;
   } catch (error) {
@@ -174,6 +177,7 @@ const loadMessageHistory = async () => {
     ElMessage.error("获取消息历史失败");
   }
 };
+
 
 /**
  * 搜索
@@ -183,24 +187,20 @@ const searchTargetRole = ref("");
 
 // 搜索功能
 const handleSearch = () => {
-  // 触发搜索逻辑
-  console.log("搜索:", searchKeyword.value, searchTargetRole.value);
+  console.log('执行搜索，关键词:', searchKeyword.value, '目标角色:', searchTargetRole.value);  // 添加日志
+  currentPage.value = 1;
+  loadMessageHistory();
 };
+
+
 
 // 重置搜索条件
 const resetSearch = () => {
   searchKeyword.value = "";
   searchTargetRole.value = "";
+  currentPage.value = 1;
+  loadMessageHistory();
 };
-
-// 过滤消息历史
-const filteredMessages = computed(() => {
-  return messageHistory.value.filter(
-    (message) =>
-      message.message.includes(searchKeyword.value) &&
-      (searchTargetRole.value === "" || message.targetRole === searchTargetRole.value)
-  );
-});
 
 /**
  * 分页
@@ -209,12 +209,16 @@ const currentPage = ref(1);
 const pageSize = ref(10);
 const totalMessages = ref(0);
 
-// 当前页消息
-const paginatedMessages = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  const end = start + pageSize.value;
-  return filteredMessages.value.slice(start, end);
-});
+// 修改分页相关的处理函数
+const handleSizeChange = (val) => {
+  pageSize.value = val;
+  loadMessageHistory();
+};
+
+const handleCurrentChange = (val) => {
+  currentPage.value = val;
+  loadMessageHistory();
+};
 
 /**
  * 删除消息
@@ -246,7 +250,7 @@ const deleteMessage = async (messageId) => {
  */
 const exportMessages = () => {
   const headers = ["消息内容", "接收角色", "发送时间", "发送者", "发送者角色"];
-  const csvContent = paginatedMessages.value.map((message) => {
+  const csvContent = messageHistory.value.map((message) => {
     // 使用 roleOptionsMap 获取映射后的角色名称
     const targetRoleLabel = roleOptionsMap[message.targetRole] || "普通用户";
     const senderRolesLabel = message.senderRoles
@@ -354,12 +358,12 @@ const handleReconnectWebSocket = async () => {
         </template>
 
         <el-empty
-          v-if="paginatedMessages.length === 0"
+          v-if="messageHistory.length === 0"
           :image-size="100"
           description="暂无发送记录"
         />
 
-        <el-table v-else :data="paginatedMessages" style="width: 100%">
+        <el-table v-else :data="messageHistory" style="width: 100%">
           <el-table-column
             prop="message"
             label="消息内容"
@@ -407,10 +411,11 @@ const handleReconnectWebSocket = async () => {
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
-          :total="filteredMessages.length"
+          :total="totalMessages"
+          :page-sizes="[10, 20, 50, 100]"
           layout="total, sizes, prev, pager, next, jumper"
-          @size-change="pageSize = $event"
-          @current-change="currentPage = $event"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
         />
       </el-card>
 

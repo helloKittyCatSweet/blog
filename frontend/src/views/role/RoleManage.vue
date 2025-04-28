@@ -96,16 +96,26 @@ const getRoleList = async () => {
 const handleViewUsers = async (row) => {
   currentRole.value = row;
   userDrawerVisible.value = true;
+  currentPage.value = 1;
+  pageSize.value = 10;
   await loadRoleUsers(row.roleId);
 };
+
+const currentPage = ref(1);
+const pageSize = ref(10);
+const total = ref(0);
 
 // 加载角色用户列表
 const loadRoleUsers = async (roleId) => {
   roleUsersLoading.value = true;
   try {
-    const response = await findRoleUsers(roleId);
+    const response = await findRoleUsers(roleId, {
+      page: currentPage.value - 1, // 前端从1开始，后端从0开始
+      size: pageSize.value,
+    });
     if (response.data.status === 200) {
       roleUsers.value = response.data.data.content;
+      total.value = response.data.data.totalElements;
     } else {
       ElMessage.warning(response.data.message || "获取用户列表失败");
     }
@@ -114,6 +124,16 @@ const loadRoleUsers = async (roleId) => {
   } finally {
     roleUsersLoading.value = false;
   }
+};
+
+const handleSizeChange = (val) => {
+  pageSize.value = val;
+  loadRoleUsers(currentRole.value.roleId);
+};
+
+const handleCurrentChange = (val) => {
+  currentPage.value = val;
+  loadRoleUsers(currentRole.value.roleId);
 };
 
 /**
@@ -412,6 +432,8 @@ const handleImportError = () => {
       </el-table>
     </el-card>
 
+
+
     <!-- 编辑对话框 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
@@ -494,6 +516,19 @@ const handleImportError = () => {
           </template>
         </el-table-column>
       </el-table>
+
+           <!-- 添加分页组件 -->
+     <div class="pagination" style="margin-top: 20px; text-align: right;">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
 
       <!-- 添加用户对话框 -->
       <el-dialog

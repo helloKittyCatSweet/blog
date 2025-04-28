@@ -445,15 +445,15 @@ export function checkWebSocketConnection() {
  * 获取管理员发送的系统消息历史
  * @returns {Promise} 返回系统消息列表
  */
-export const getAdminSystemMessages = ({ page = 0, size = 10, sort = "createdAt,desc" } = {}) =>
-  request.get(`/ws/admin/system-messages`, { params: { page, size, sort } });
+export const getAdminSystemMessages = ({ page = 0, size = 10, sort = "createdAt,desc", keyword = '', targetRole = '' } = {}) =>
+  request.get(`/ws/admin/system-messages`, { params: { page, size, sort, keyword, targetRole } });
 
 /**
  * 获取用户收到的系统消息
  * @returns {Promise} 返回系统消息列表
  */
-export const getUserSystemMessages = ({ page = 0, size = 10, sort = "createdAt,desc" } = {}) =>
-  request.get(`/ws/system-messages`, { params: { page, size, sort } });
+export const getUserSystemMessages = ({ page = 0, size = 10, sort = "createdAt,desc", keyword = '', targetRole = '' } = {}) =>
+  request.get(`/ws/system-messages`, { params: { page, size, sort, keyword, targetRole } });
 
 export const deleteSystemMessage = (messageId) =>
   request.delete(`/ws/system-message/${messageId}`);
