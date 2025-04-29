@@ -691,6 +691,8 @@ const handlePasswordSet = async (userData) => {
 const goToBlog = () => {
   router.push(BLOG_HOME_PATH);
 };
+
+const userNoticeVisible = ref(false);  // 控制用户须知对话框的显示
 </script>
 
 <template>
@@ -847,37 +849,15 @@ const goToBlog = () => {
           <el-button @click="loginUser" class="button" type="primary" auto-insert-space>登录</el-button>
         </el-form-item>
         <!-- 添加用户须知 -->
-        <el-collapse class="user-notice">
-          <el-collapse-item>
-            <template #title>
-              <div class="notice-title">
-                <el-icon>
-                  <InfoFilled />
-                </el-icon>
-                <span>用户须知</span>
-              </div>
-            </template>
-            <div class="notice-content">
-              <p>1. 账号安全</p>
-              <ul>
-                <li>请使用安全性高的密码，建议包含字母、数字和特殊字符</li>
-                <li>请勿将账号密码分享给他人</li>
-                <li>建议定期更换密码</li>
-              </ul>
-              <p>2. 数据使用说明</p>
-              <ul>
-                <li>我们会收集必要的用户信息用于账号管理</li>
-                <li>您的密码将经过加密存储</li>
-                <li>邮箱仅用于账号验证和重要通知</li>
-              </ul>
-              <p>3. 第三方登录</p>
-              <ul>
-                <li>支持 GitHub 账号登录</li>
-                <li>首次使用第三方登录需要设置密码</li>
-              </ul>
-            </div>
-          </el-collapse-item>
-        </el-collapse>
+        <el-form-item class="user-notice-link">
+      <el-link
+        type="info"
+        :underline="true"
+        @click="userNoticeVisible = true"
+      >
+        用户须知
+      </el-link>
+    </el-form-item>
 
         <!-- 返回注册 -->
         <el-form-item class="flex">
@@ -885,6 +865,41 @@ const goToBlog = () => {
             注册 →
           </el-link>
         </el-form-item>
+
+         <!-- 添加用户须知对话框 -->
+    <el-dialog
+      v-model="userNoticeVisible"
+      title="用户须知"
+      width="500px"
+      align-center
+    >
+      <div class="notice-content">
+        <h4>1. 账号安全</h4>
+        <ul>
+          <li>请使用安全性高的密码，建议包含字母、数字和特殊字符</li>
+          <li>请勿将账号密码分享给他人</li>
+          <li>建议定期更换密码</li>
+        </ul>
+        <h4>2. 数据使用说明</h4>
+        <ul>
+          <li>我们会收集必要的用户信息用于账号管理</li>
+          <li>您的密码将经过加密存储</li>
+          <li>邮箱仅用于账号验证和重要通知</li>
+        </ul>
+        <h4>3. 第三方登录</h4>
+        <ul>
+          <li>支持 GitHub 账号登录</li>
+          <li>首次使用第三方登录需要设置密码</li>
+        </ul>
+      </div>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button type="primary" @click="userNoticeVisible = false">
+            我已了解
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
       </el-form>
     </el-col>
   </el-row>
@@ -1026,51 +1041,38 @@ const goToBlog = () => {
     }
   }
 
-  .user-notice {
-    margin: 20px 0;
-    border: none;
+  .user-notice-link {
+  text-align: center;
+  margin-top: 10px;
+}
 
-    :deep(.el-collapse-item__header) {
-      border: none;
+.notice-content {
+  h4 {
+    color: var(--el-color-primary);
+    margin: 16px 0 8px;
+    font-size: 15px;
 
-      .notice-title {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--el-color-primary);
-        font-size: 14px;
-
-        .el-icon {
-          font-size: 16px;
-        }
-      }
-    }
-
-    :deep(.el-collapse-item__content) {
-      padding: 10px 15px;
-
-      .notice-content {
-        font-size: 13px;
-        color: var(--el-text-color-regular);
-
-        p {
-          margin: 10px 0 5px;
-          color: var(--el-text-color-primary);
-          font-weight: 500;
-        }
-
-        ul {
-          margin: 0;
-          padding-left: 20px;
-
-          li {
-            margin: 5px 0;
-            line-height: 1.5;
-          }
-        }
-      }
+    &:first-child {
+      margin-top: 0;
     }
   }
+
+  ul {
+    margin: 8px 0;
+    padding-left: 20px;
+
+    li {
+      margin: 6px 0;
+      color: var(--el-text-color-regular);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  }
+}
+
+.dialog-footer {
+  text-align: center;
+}
 }
 
 .loading-overlay {

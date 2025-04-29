@@ -97,7 +97,7 @@ public class User implements Serializable {
     @Column(name = "last_login_location")
     private String lastLoginLocation;
 
-    @Column(nullable = false, columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "LONGTEXT")
     @Lob
     private String signature;
 
