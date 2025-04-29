@@ -16,10 +16,10 @@ import { login, register } from "@/api/user/user";
 import { verify, send } from "@/api/user/security/emailVerification";
 import { CONTROL_PANEL_PATH, LOGIN_PATH } from "@/constants/routes/base";
 import { BLOG_HOME_PATH } from "@/constants/routes/blog.js";
-import { 
-  getGithubLoginUrl, 
+import {
+  getGithubLoginUrl,
   handleGithubCallback,
-  completeGithubRegistration 
+  completeGithubRegistration
 } from "@/api/auth/oauth";
 
 const isRegister = ref(false);
@@ -651,8 +651,8 @@ const handleGithubLogin = async () => {
                 oauthDialogVisible.value = true;
               } else {
                 // 如果是已有用户，直接登录
-              ElMessage.success('GitHub 登录成功');
-              await handleOAuthLogin(userData);
+                ElMessage.success('GitHub 登录成功');
+                await handleOAuthLogin(userData);
               }
             }
           } catch (error) {
@@ -722,104 +722,57 @@ const goToBlog = () => {
     <el-col :span="12" class="bg" @click="goToBlog"></el-col>
     <el-col :span="7" :offset="2" class="form">
       <!-- 注册相关表单 -->
-      <el-form
-        :model="formModel"
-        :rules="rules"
-        ref="form"
-        size="large"
-        autocomplete="off"
-        v-if="isRegister"
-        @keyup.enter="isRegister ? registerUser() : loginUser()"
-      >
+      <el-form :model="formModel" :rules="rules" ref="form" size="large" autocomplete="off" v-if="isRegister"
+        @keyup.enter="isRegister ? registerUser() : loginUser()">
         <el-form-item>
           <h1>注册</h1>
         </el-form-item>
         <!-- 用户名 -->
         <el-form-item prop="username">
-          <el-input
-            v-model="formModel.username"
-            :prefix-icon="User"
-            placeholder="请输入用户名"
-          ></el-input>
+          <el-input v-model="formModel.username" :prefix-icon="User" placeholder="请输入用户名"></el-input>
         </el-form-item>
         <!-- 密码 -->
         <el-form-item prop="password">
-          <el-input
-            v-model="formModel.password"
-            :prefix-icon="Lock"
-            type="password"
-            show-password
-            placeholder="请输入密码"
-          ></el-input>
+          <el-input v-model="formModel.password" :prefix-icon="Lock" type="password" show-password
+            placeholder="请输入密码"></el-input>
         </el-form-item>
         <!-- 再次输入密码 -->
         <el-form-item prop="repassword">
-          <el-input
-            v-model="formModel.repassword"
-            :prefix-icon="Lock"
-            type="password"
-            show-password
-            placeholder="请输入再次密码"
-          ></el-input>
+          <el-input v-model="formModel.repassword" :prefix-icon="Lock" type="password" show-password
+            placeholder="请输入再次密码"></el-input>
         </el-form-item>
         <!-- 邮箱 -->
         <el-form-item prop="email">
           <div class="flex-input-button">
             <!--添加类以使用flex增长-->
-            <el-input
-              v-model="formModel.email"
-              placeholder="请输入邮箱地址"
-              type="email"
-              class="flex-grow"
-            >
+            <el-input v-model="formModel.email" placeholder="请输入邮箱地址" type="email" class="flex-grow">
               <!-- 使用 Font Awesome 图标 -->
               <template #prefix>
                 <font-awesome-icon :icon="['fas', 'envelope']" />
               </template>
             </el-input>
             <!--添加类以使用flex缩小-->
-            <el-button
-              :disabled="buttonDisabled"
-              @click="sendCodeToEmail"
-              class="button flex-shrink"
-              type="primary"
-              auto-insert-space
-            >
+            <el-button :disabled="buttonDisabled" @click="sendCodeToEmail" class="button flex-shrink" type="primary"
+              auto-insert-space>
               {{ buttonStatus }}
             </el-button>
           </div>
         </el-form-item>
         <!-- 邮箱验证码 -->
         <el-form-item prop="emailCheck">
-          <el-input
-            v-model="formModel.emailCheck"
-            placeholder="请输入邮箱验证码"
-          ></el-input>
+          <el-input v-model="formModel.emailCheck" placeholder="请输入邮箱验证码"></el-input>
         </el-form-item>
         <!-- 验证码 -->
         <el-form-item prop="captcha">
           <div style="display: flex; align-items: center">
-            <el-input
-              v-model="formModel.captcha"
-              placeholder="请输入图片验证码"
-              style="width: 60%"
-            ></el-input>
-            <img
-              :src="captchaUrl"
-              alt="验证码"
-              @click="generateCaptcha"
-              style="cursor: pointer; width: 40%; margin-left: 10px"
-            />
+            <el-input v-model="formModel.captcha" placeholder="请输入图片验证码" style="width: 60%"></el-input>
+            <img :src="captchaUrl" alt="验证码" @click="generateCaptcha"
+              style="cursor: pointer; width: 40%; margin-left: 10px" />
           </div>
         </el-form-item>
         <!-- 注册按钮 -->
         <el-form-item>
-          <el-button
-            @click="registerUser"
-            class="button"
-            type="primary"
-            auto-insert-space
-          >
+          <el-button @click="registerUser" class="button" type="primary" auto-insert-space>
             注册
           </el-button>
         </el-form-item>
@@ -832,63 +785,33 @@ const goToBlog = () => {
       </el-form>
 
       <!-- 登录相关表单 -->
-      <el-form
-        :model="formModel"
-        :rules="rules"
-        ref="form"
-        size="large"
-        autocomplete="off"
-        v-else
-      >
+      <el-form :model="formModel" :rules="rules" ref="form" size="large" autocomplete="off" v-else>
         <el-form-item class="centered-title">
           <h1>登录</h1>
         </el-form-item>
         <!-- 用户名 -->
         <el-form-item prop="username">
-          <el-input
-            v-model="formModel.username"
-            :prefix-icon="User"
-            placeholder="请输入用户名"
-          ></el-input>
+          <el-input v-model="formModel.username" :prefix-icon="User" placeholder="请输入用户名"></el-input>
         </el-form-item>
         <!-- 密码 -->
         <el-form-item prop="password">
-          <el-input
-            v-model="formModel.password"
-            name="password"
-            :prefix-icon="Lock"
-            type="password"
-            show-password
-            placeholder="请输入密码"
-          ></el-input>
+          <el-input v-model="formModel.password" name="password" :prefix-icon="Lock" type="password" show-password
+            placeholder="请输入密码"></el-input>
         </el-form-item>
         <!-- 验证码 -->
         <el-form-item prop="captcha">
           <div style="display: flex; align-items: center">
-            <el-input
-              v-model="formModel.captcha"
-              placeholder="请输入验证码"
-              style="width: 60%"
-            ></el-input>
-            <img
-              :src="captchaUrl"
-              alt="验证码"
-              @click="generateCaptcha"
-              style="cursor: pointer; width: 40%; margin-left: 10px"
-            />
+            <el-input v-model="formModel.captcha" placeholder="请输入验证码" style="width: 60%"></el-input>
+            <img :src="captchaUrl" alt="验证码" @click="generateCaptcha"
+              style="cursor: pointer; width: 40%; margin-left: 10px" />
           </div>
         </el-form-item>
         <!-- 记住我 -->
         <el-form-item class="flex">
           <div class="flex">
             <el-checkbox v-model="rememberMe">记住我</el-checkbox>
-            <el-link type="primary" :underline="false" @click="resetDialogVisible = true"
-              >忘记密码？</el-link
-            >
-            <ResetPasswordDialog
-              v-model="resetDialogVisible"
-              @success="handlePasswordSet"
-            />
+            <el-link type="primary" :underline="false" @click="resetDialogVisible = true">忘记密码？</el-link>
+            <ResetPasswordDialog v-model="resetDialogVisible" @success="handlePasswordSet" />
           </div>
         </el-form-item>
 
@@ -897,45 +820,65 @@ const goToBlog = () => {
 
         <el-form-item class="social-login">
           <div class="github-container">
-            <el-button
-              @click="handleGithubLogin"
-              class="github-button"
-              type="default"
-              auto-insert-space
-              :loading="githubLoading"
-            >
+            <el-button @click="handleGithubLogin" class="github-button" type="default" auto-insert-space
+              :loading="githubLoading">
               <font-awesome-icon :icon="['fab', 'github']" />
               GitHub 登录
             </el-button>
-            
+
             <!-- 更新GitHub账号提示 -->
             <div class="github-tips">
-              <el-tooltip
-                content="在GitHub授权页面上可以选择或切换要使用的GitHub账号"
-                placement="bottom"
-                effect="light"
-              >
+              <el-tooltip content="在GitHub授权页面上可以选择或切换要使用的GitHub账号" placement="bottom" effect="light">
                 <span class="github-help">
-                  <el-icon><InfoFilled /></el-icon>
+                  <el-icon>
+                    <InfoFilled />
+                  </el-icon>
                   点击登录后可选择GitHub账号
                 </span>
               </el-tooltip>
             </div>
           </div>
 
-          <OAuthPasswordDialog
-            v-model="oauthDialogVisible"
-            :oauth-data="oauthData"
-            @success="handlePasswordSet"
-          />
+          <OAuthPasswordDialog v-model="oauthDialogVisible" :oauth-data="oauthData" @success="handlePasswordSet" />
         </el-form-item>
 
         <!-- 登录 -->
         <el-form-item>
-          <el-button @click="loginUser" class="button" type="primary" auto-insert-space
-            >登录</el-button
-          >
+          <el-button @click="loginUser" class="button" type="primary" auto-insert-space>登录</el-button>
         </el-form-item>
+        <!-- 添加用户须知 -->
+        <el-collapse class="user-notice">
+          <el-collapse-item>
+            <template #title>
+              <div class="notice-title">
+                <el-icon>
+                  <InfoFilled />
+                </el-icon>
+                <span>用户须知</span>
+              </div>
+            </template>
+            <div class="notice-content">
+              <p>1. 账号安全</p>
+              <ul>
+                <li>请使用安全性高的密码，建议包含字母、数字和特殊字符</li>
+                <li>请勿将账号密码分享给他人</li>
+                <li>建议定期更换密码</li>
+              </ul>
+              <p>2. 数据使用说明</p>
+              <ul>
+                <li>我们会收集必要的用户信息用于账号管理</li>
+                <li>您的密码将经过加密存储</li>
+                <li>邮箱仅用于账号验证和重要通知</li>
+              </ul>
+              <p>3. 第三方登录</p>
+              <ul>
+                <li>支持 GitHub 账号登录</li>
+                <li>首次使用第三方登录需要设置密码</li>
+              </ul>
+            </div>
+          </el-collapse-item>
+        </el-collapse>
+
         <!-- 返回注册 -->
         <el-form-item class="flex">
           <el-link type="info" :underline="false" @click="isRegister = true">
@@ -1033,31 +976,31 @@ const goToBlog = () => {
       width: 100%;
       gap: 8px;
 
-    .github-button {
-      width: 60%;
-      padding: 12px 24px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      background-color: #24292e;
-      color: white !important;
-      border: none !important;
-      transition: all 0.3s ease;
+      .github-button {
+        width: 60%;
+        padding: 12px 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 8px;
+        background-color: #24292e;
+        color: white !important;
+        border: none !important;
+        transition: all 0.3s ease;
 
-      &:hover {
-        background-color: #2f363d !important;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      }
+        &:hover {
+          background-color: #2f363d !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
 
-      &:active {
-        background-color: #1b1f23 !important;
-        transform: translateY(0);
-      }
+        &:active {
+          background-color: #1b1f23 !important;
+          transform: translateY(0);
+        }
 
-      .fa-github {
-        font-size: 18px;
+        .fa-github {
+          font-size: 18px;
         }
       }
 
@@ -1065,7 +1008,7 @@ const goToBlog = () => {
         font-size: 12px;
         color: #606266;
         margin-top: 4px;
-        
+
         .github-help {
           display: flex;
           align-items: center;
@@ -1073,10 +1016,56 @@ const goToBlog = () => {
           color: #909399;
           font-size: 13px;
           cursor: help;
-          
+
           .el-icon {
             font-size: 14px;
             color: var(--el-color-primary);
+          }
+        }
+      }
+    }
+  }
+
+  .user-notice {
+    margin: 20px 0;
+    border: none;
+
+    :deep(.el-collapse-item__header) {
+      border: none;
+
+      .notice-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--el-color-primary);
+        font-size: 14px;
+
+        .el-icon {
+          font-size: 16px;
+        }
+      }
+    }
+
+    :deep(.el-collapse-item__content) {
+      padding: 10px 15px;
+
+      .notice-content {
+        font-size: 13px;
+        color: var(--el-text-color-regular);
+
+        p {
+          margin: 10px 0 5px;
+          color: var(--el-text-color-primary);
+          font-weight: 500;
+        }
+
+        ul {
+          margin: 0;
+          padding-left: 20px;
+
+          li {
+            margin: 5px 0;
+            line-height: 1.5;
           }
         }
       }
