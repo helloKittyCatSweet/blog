@@ -61,9 +61,9 @@ spring:
       repositories:
         enabled: false
     redis:
-      host: 127.0.0.1
+      host: redis
       port: 6379
-      password:  # 如果有密码，请设置
+      password: 123456
       database: 0
       timeout: 10000
       lettuce:
