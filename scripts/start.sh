@@ -70,7 +70,7 @@ start_containers() {
     if [ $? -ne 0 ]; then
         print_color "$RED" "Docker容器启动失败，请检查docker-compose配置"
         exit 1
-    }
+    fi
     print_color "$YELLOW" "等待 Elasticsearch 和 Kibana 启动（约60秒）..."
     sleep 60
     print_color "$GREEN" "Docker容器已启动！"
