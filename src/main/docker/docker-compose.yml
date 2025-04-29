@@ -94,7 +94,7 @@ services:
     volumes:
       - redis_data:/data
       - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
-    command: redis-server /usr/local/etc/redis/redis.conf --requirepass 123456
+    command: redis-server /usr/local/etc/redis/redis.conf
     environment:
       - TZ=Asia/Shanghai
     networks:
