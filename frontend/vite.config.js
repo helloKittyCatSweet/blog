@@ -6,7 +6,6 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
-import { all } from 'axios'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -31,6 +30,11 @@ export default defineConfig({
   build: {
     chunkSizeWarningLimit: 2000,
     rollupOptions: {
+      onwarn(warning, warn) {
+        // 添加构建警告日志
+        console.log('Build warning:', warning);
+        warn(warning);
+      },
       output: {
         manualChunks: {
           'element-plus': ['element-plus'],
@@ -44,6 +48,14 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
+    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue', '.scss']
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        charset: false
+      }
+    }
   },
   base: '/',  // 如果有自己的域名前缀，请配置在这里,
   define: {
