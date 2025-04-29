@@ -12,7 +12,8 @@ public class CorsConfig {
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
         // 允许的域名，开发环境下允许多个域名
-        config.addAllowedOrigin("http://localhost:5173"); // Vue开发服务器
+        config.addAllowedOrigin("http://localhost:5173"); // 本地开发
+        config.addAllowedOrigin("http://47.94.57.175:5173"); // Vue开发服务器
         // 允许的头信息
         config.addAllowedHeader("*");
         // 允许的HTTP方法

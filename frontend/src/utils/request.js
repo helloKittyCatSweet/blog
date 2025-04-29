@@ -3,16 +3,20 @@ import axios from 'axios'
 import router from '@/router'
 
 
-// const baseURL = 'http://localhost:8080'
-const baseURL = 'http://47.94.57.175:8080'
+const baseURL = import.meta.env.MODE === 'development'
+  ? 'http://localhost:8080'
+  : 'http://47.94.57.175:8080'
 
 const instance = axios.create({
   baseURL,
   timeout: 100000,
   withCredentials: true,
-  // headers: {
-  //   'ngrok-skip-browser-warning': 'true',
-  // }
+  headers: {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Origin, Content-Type, Accept, Authorization'
+  }
 })
 
 // 请求拦截器
