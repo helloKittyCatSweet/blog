@@ -65,7 +65,9 @@ start_docker() {
 # 启动Docker容器
 start_containers() {
     print_color "$GREEN" "正在启动Docker容器..."
-    docker-compose up -d
+    # 使用脚本所在目录的父目录作为项目根目录
+    local project_root="$(dirname "$(dirname "$(readlink -f "$0")")")"
+    docker-compose -f "${project_root}/src/main/docker/docker-compose.yml" up -d
     if [ $? -ne 0 ]; then
         print_color "$RED" "Docker容器启动失败，请检查docker-compose配置"
         exit 1

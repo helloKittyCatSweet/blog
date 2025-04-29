@@ -55,7 +55,8 @@ Write-ColorOutput Green "Docker已就绪！"
 
 # 检查并启动必要的Docker容器
 Write-ColorOutput Green "正在检查并启动必要的Docker容器..."
-docker-compose up -d
+$projectRoot = Split-Path -Parent $PSScriptRoot
+docker-compose -f "$projectRoot\src\main\docker\docker-compose.yml" up -d
 if ($LASTEXITCODE -ne 0) {
     Write-ColorOutput Red "Docker容器启动失败，请检查docker-compose配置"
     exit 1
@@ -64,8 +65,7 @@ Write-ColorOutput Green "Docker容器已启动！"
 
 # 启动后端服务
 Write-ColorOutput Green "正在启动后端服务..."
-$backendPath = ".\blog"
-Set-Location $backendPath
+Set-Location $projectRoot
 Start-Process "cmd.exe" "/c mvn spring-boot:run" -NoNewWindow
 Write-ColorOutput Yellow "等待后端服务启动（约20秒）..."
 Start-Sleep -Seconds 20
@@ -73,7 +73,7 @@ Write-ColorOutput Green "后端服务已启动！"
 
 # 启动前端服务
 Write-ColorOutput Green "正在启动前端服务..."
-Set-Location ..\frontend
+Set-Location "$projectRoot\frontend"
 # 检查是否需要安装依赖
 if (-not (Test-Path "node_modules")) {
     Write-ColorOutput Yellow "正在安装前端依赖..."
@@ -103,5 +103,5 @@ Write-ColorOutput Yellow "正在关闭所有服务..."
 # 先关闭应用服务
 Get-Process | Where-Object { $_.ProcessName -match 'java|node' } | Stop-Process -Force
 # 再关闭 Docker 容器
-docker-compose down
+docker-compose -f "$projectRoot\src\main\docker\docker-compose.yml" down
 Write-ColorOutput Green "所有服务已关闭！"
