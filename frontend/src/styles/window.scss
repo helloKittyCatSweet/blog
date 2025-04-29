@@ -1,0 +1,24 @@
+// 窗口相关样式
+.window {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.window-header {
+  border-bottom: 1px solid #ebeef5;
+  padding-bottom: 15px;
+  margin-bottom: 15px;
+}
+
+.window-content {
+  min-height: 100px;
+}
+
+.window-footer {
+  border-top: 1px solid #ebeef5;
+  padding-top: 15px;
+  margin-top: 15px;
+}
