@@ -131,7 +131,8 @@ cleanup() {
     pkill -f "spring-boot:run" || true
     
     # 关闭Docker容器
-    docker-compose down || true
+    local project_root="$(dirname "$(dirname "$(readlink -f "$0")")")"
+    docker-compose -f "${project_root}/src/main/docker/docker-compose.yml" down || true
     
     print_color "$GREEN" "所有服务已关闭！"
     exit 0
