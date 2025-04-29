@@ -65,13 +65,14 @@ start_docker() {
 # 启动Docker容器
 start_containers() {
     print_color "$GREEN" "正在启动Docker容器..."
-    # 使用脚本所在目录的父目录作为项目根目录
     local project_root="$(dirname "$(dirname "$(readlink -f "$0")")")"
     docker-compose -f "${project_root}/src/main/docker/docker-compose.yml" up -d
     if [ $? -ne 0 ]; then
         print_color "$RED" "Docker容器启动失败，请检查docker-compose配置"
         exit 1
-    fi
+    }
+    print_color "$YELLOW" "等待 Elasticsearch 和 Kibana 启动（约60秒）..."
+    sleep 60
     print_color "$GREEN" "Docker容器已启动！"
 }
 
@@ -79,7 +80,7 @@ start_containers() {
 start_backend() {
     print_color "$GREEN" "正在启动后端服务..."
     cd ~/blog
-    nohup mvn spring-boot:run > backend.log 2>&1 &
+     nohup mvn spring-boot:run -Dspring.redis.password=123456 > backend.log 2>&1 &
     backend_pid=$!
     print_color "$YELLOW" "等待后端服务启动（约20秒）..."
     sleep 20

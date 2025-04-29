@@ -82,6 +82,11 @@ services:
       - XPACK_REPORTING_ENCRYPTIONKEY=something_at_least_32_characters
       - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=something_at_least_32_characters
       - XPACK_REPORTING_ENABLED=false
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
     networks:
       - elk-network
   
