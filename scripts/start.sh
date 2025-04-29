@@ -28,25 +28,25 @@ check_dependencies() {
     if ! command -v docker-compose &> /dev/null; then
         print_color "$RED" "Docker Compose未安装，请先安装Docker Compose"
         exit 1
-    }
+    fi
     
     # 检查 Maven
     if ! command -v mvn &> /dev/null; then
         print_color "$RED" "Maven未安装，请先安装Maven"
         exit 1
-    }
+    fi
     
     # 检查 Node.js
     if ! command -v node &> /dev/null; then
         print_color "$RED" "Node.js未安装，请先安装Node.js"
         exit 1
-    }
+    fi
     
     # 检查 yarn
     if ! command -v yarn &> /dev/null; then
         print_color "$RED" "Yarn未安装，请先安装Yarn"
         exit 1
-    }
+    fi
     
     print_color "$GREEN" "所有依赖检查完成！"
 }
