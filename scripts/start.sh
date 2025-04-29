@@ -80,7 +80,11 @@ start_containers() {
 start_backend() {
     print_color "$GREEN" "正在启动后端服务..."
     cd ~/blog
-     nohup mvn spring-boot:run -Dspring.redis.password=123456 > backend.log 2>&1 &
+    nohup mvn spring-boot:run \
+        -Dspring.redis.password=123456 \
+        -Dspring.redis.username=default \
+        -Dspring.redis.host=localhost \
+        -Dspring.redis.port=6379 > backend.log 2>&1 &
     backend_pid=$!
     print_color "$YELLOW" "等待后端服务启动（约20秒）..."
     sleep 20

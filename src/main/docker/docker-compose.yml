@@ -66,14 +66,13 @@ services:
     image: kibana:8.11.1
     depends_on:
       elasticsearch:
-          condition: service_healthy
+        condition: service_healthy
     ports:
       - "5601:5601"
     environment:
-      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200 # 使用内部容器端口
-      - NODE_OPTIONS=--openssl-legacy-provider
-      - ELASTICSEARCH_USERNAME=kibana_system
-      - ELASTICSEARCH_PASSWORD=kibana123
+      - ELASTICSEARCH_HOSTS=["http://elasticsearch:9200"]
+      - ELASTICSEARCH_USERNAME=elastic
+      - ELASTICSEARCH_PASSWORD=123456
       - SERVER_NAME=kibana
       - SERVER_HOST=0.0.0.0
       - XPACK_SECURITY_ENCRYPTIONKEY=something_at_least_32_characters
@@ -82,6 +81,7 @@ services:
       - XPACK_REPORTING_ENCRYPTIONKEY=something_at_least_32_characters
       - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=something_at_least_32_characters
       - XPACK_REPORTING_ENABLED=false
+      - ELASTICSEARCH_SSL_VERIFICATIONMODE=none
     healthcheck:
       test: ["CMD-SHELL", "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'"]
       interval: 10s

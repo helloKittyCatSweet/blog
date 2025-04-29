@@ -3,6 +3,7 @@ package com.kitty.blog.infrastructure.utils.component;
 import com.kitty.blog.domain.repository.PermissionRepository;
 import com.kitty.blog.domain.repository.RolePermissionRepository;
 import com.kitty.blog.domain.repository.RoleRepository;
+import com.kitty.blog.domain.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.io.Resource;
@@ -29,6 +30,9 @@ public class CustomDatabaseInitializer implements CommandLineRunner {
     private RoleRepository roleRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private RolePermissionRepository rolePermissionRepository;
 
     public CustomDatabaseInitializer(DataSource dataSource, ResourceLoader resourceLoader) {
@@ -39,14 +43,17 @@ public class CustomDatabaseInitializer implements CommandLineRunner {
     @Transactional
     @Override
     public void run(String... args) throws Exception {
-        if (permissionRepository.count() == 0){
-            executeSqlFile("classpath:sql/init/permission_init.sql");
-        }
+//        if (permissionRepository.count() == 0){
+//            executeSqlFile("classpath:sql/init/permission_init.sql");
+//        }
         if (roleRepository.count() == 0){
             executeSqlFile("classpath:sql/init/role_init.sql");
         }
-        if (rolePermissionRepository.count() == 0){
-            executeSqlFile("classpath:sql/init/role_permission_init.sql");
+//        if (rolePermissionRepository.count() == 0){
+//            executeSqlFile("classpath:sql/init/role_permission_init.sql");
+//        }
+        if (userRepository.count() == 0){
+            executeSqlFile("classpath:sql/init/admin_init.sql");
         }
     }
 
