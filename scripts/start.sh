@@ -94,7 +94,9 @@ start_backend() {
 # 启动前端服务
 start_frontend() {
     print_color "$GREEN" "正在启动前端服务..."
-    cd ~/blog/frontend
+    # 使用脚本所在目录的父目录作为项目根目录
+    local project_root="$(dirname "$(dirname "$(readlink -f "$0")")")"
+    cd "${project_root}/frontend"
     
     # 检查是否需要安装依赖
     if [ ! -d "node_modules" ]; then
@@ -106,8 +108,8 @@ start_frontend() {
         fi
     fi
     
-    # 启动前端开发服务器
-    nohup yarn dev > frontend.log 2>&1 &
+    # 启动前端开发服务器，指定 host 为 0.0.0.0
+    nohup yarn dev --host 0.0.0.0 > frontend.log 2>&1 &
     frontend_pid=$!
     sleep 5
     if ps -p $frontend_pid > /dev/null; then

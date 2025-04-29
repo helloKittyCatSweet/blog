@@ -74,6 +74,14 @@ services:
       - NODE_OPTIONS=--openssl-legacy-provider
       - ELASTICSEARCH_USERNAME=kibana_system
       - ELASTICSEARCH_PASSWORD=kibana123
+      - SERVER_NAME=kibana
+      - SERVER_HOST=0.0.0.0
+      - XPACK_SECURITY_ENCRYPTIONKEY=something_at_least_32_characters
+      - SERVER_PUBLICBASEURL=http://47.94.57.175:5601
+      - XPACK_SECURITY_SAMLTOKENIZATION=true
+      - XPACK_REPORTING_ENCRYPTIONKEY=something_at_least_32_characters
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=something_at_least_32_characters
+      - XPACK_REPORTING_ENABLED=false
     networks:
       - elk-network
   
