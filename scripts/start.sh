@@ -76,7 +76,7 @@ start_containers() {
 # 启动后端服务
 start_backend() {
     print_color "$GREEN" "正在启动后端服务..."
-    cd ./blog
+    cd ~/blog
     nohup mvn spring-boot:run > backend.log 2>&1 &
     backend_pid=$!
     print_color "$YELLOW" "等待后端服务启动（约20秒）..."
@@ -92,7 +92,7 @@ start_backend() {
 # 启动前端服务
 start_frontend() {
     print_color "$GREEN" "正在启动前端服务..."
-    cd ../frontend
+    cd ~/blog/frontend
     
     # 检查是否需要安装依赖
     if [ ! -d "node_modules" ]; then
@@ -121,13 +121,13 @@ cleanup() {
     print_color "$YELLOW" "正在关闭所有服务..."
     
     # 关闭前端服务
-    pkill -f "node.*dev"
+    pkill -f "node.*dev" || true
     
     # 关闭后端服务
-    pkill -f "spring-boot:run"
+    pkill -f "spring-boot:run" || true
     
     # 关闭Docker容器
-    docker-compose down
+    docker-compose down || true
     
     print_color "$GREEN" "所有服务已关闭！"
     exit 0

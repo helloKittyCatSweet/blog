@@ -8,6 +8,40 @@ function Write-ColorOutput($ForegroundColor) {
     $host.UI.RawUI.ForegroundColor = $fc
 }
 
+# 添加依赖检查
+function Check-Dependencies {
+    Write-ColorOutput Yellow "检查必要的依赖..."
+    
+    # 检查 Docker
+    if (-not (Get-Command "docker" -ErrorAction SilentlyContinue)) {
+        Write-ColorOutput Red "Docker未安装，请先安装Docker"
+        exit 1
+    }
+    
+    # 检查 Maven
+    if (-not (Get-Command "mvn" -ErrorAction SilentlyContinue)) {
+        Write-ColorOutput Red "Maven未安装，请先安装Maven"
+        exit 1
+    }
+    
+    # 检查 Node.js
+    if (-not (Get-Command "node" -ErrorAction SilentlyContinue)) {
+        Write-ColorOutput Red "Node.js未安装，请先安装Node.js"
+        exit 1
+    }
+    
+    # 检查 Yarn
+    if (-not (Get-Command "yarn" -ErrorAction SilentlyContinue)) {
+        Write-ColorOutput Red "Yarn未安装，请先安装Yarn"
+        exit 1
+    }
+    
+    Write-ColorOutput Green "所有依赖检查完成！"
+}
+
+# 在主程序开始前调用依赖检查
+Check-Dependencies
+
 # 检查Docker是否运行
 Write-ColorOutput Green "正在检查Docker状态..."
 $dockerStatus = docker info 2>&1
@@ -66,7 +100,8 @@ $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
 
 # 关闭服务
 Write-ColorOutput Yellow "正在关闭所有服务..."
+# 先关闭应用服务
+Get-Process | Where-Object { $_.ProcessName -match 'java|node' } | Stop-Process -Force
+# 再关闭 Docker 容器
 docker-compose down
-Stop-Process -Name "java" -ErrorAction SilentlyContinue
-Stop-Process -Name "node" -ErrorAction SilentlyContinue
-Write-ColorOutput Green "所有服务已关闭！" 
+Write-ColorOutput Green "所有服务已关闭！"
