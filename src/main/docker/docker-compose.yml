@@ -3,7 +3,6 @@ version: '3.8'
 services:
   elasticsearch:
     image: elasticsearch:8.11.1
-    user: "1000:1000"
     environment:
       - discovery.type=single-node
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
@@ -20,9 +19,17 @@ services:
       - "9201:9200"
       - "9300:9300"
     volumes:
-      - elasticsearch_data:/usr/share/elasticsearch/data
-      - ./config/elasticsearch/plugins/analysis-ik:/usr/share/elasticsearch/plugins/analysis-ik
-      - ./config/elasticsearch/setup:/usr/share/elasticsearch/setup
+      - type: volume
+        source: elasticsearch_data
+        target: /usr/share/elasticsearch/data
+      - type: bind
+        source: ./config/elasticsearch/plugins/analysis-ik
+        target: /usr/share/elasticsearch/plugins/analysis-ik
+        read_only: true
+      - type: bind
+        source: ./config/elasticsearch/setup
+        target: /usr/share/elasticsearch/setup
+        read_only: true
     networks:
       - elk-network
     healthcheck:
