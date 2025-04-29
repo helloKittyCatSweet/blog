@@ -1,6 +1,6 @@
 /* 浅色主题 - 清新淡雅 */
 .theme-light {
-  --primary-bg: #f8f9fa;
+  --primary-bg: #f8f4f1;  /* 温暖的米白色 */
   --primary-text: #303133;
   --secondary-bg: #ffffff;
   --border-color: #e4e7ed;
@@ -22,6 +22,32 @@
   --button-danger-hover: #edb3b3;
   --button-info: #9dacb7;       /* 灰蓝色 */
   --button-info-hover: #b5c2cc;
+
+   /* 添加精致的背景图案 */
+   background-color: var(--primary-bg);
+   background-image:
+     radial-gradient(#f0e9e9 1px, transparent 1px),
+     radial-gradient(#f0e9e9 1px, transparent 1px);
+   background-size: 50px 50px;
+   background-position: 0 0, 25px 25px;
+   position: relative;
+
+   &::before {
+     content: "";
+     position: absolute;
+     top: 0;
+     left: 0;
+     right: 0;
+     bottom: 0;
+     background-image:
+       linear-gradient(45deg, #fff6 25%, transparent 25%),
+       linear-gradient(-45deg, #fff6 25%, transparent 25%),
+       linear-gradient(45deg, transparent 75%, #fff6 75%),
+       linear-gradient(-45deg, transparent 75%, #fff6 75%);
+     background-size: 100px 100px;
+     background-position: 0 0, 0 50px, 50px -50px, -50px 0px;
+     pointer-events: none;
+   }
 }
 
 /* 深色主题 - 优雅深邃 */
@@ -48,6 +74,16 @@
   --button-danger-hover: #ed8282;
   --button-info: #909399;       /* 霓虹灰 */
   --button-info-hover: #a6a9ad;
+
+  background-color: var(--primary-bg);
+  background-image:
+    linear-gradient(30deg, #222222 12%, transparent 12.5%, transparent 87%, #222222 87.5%, #222222),
+    linear-gradient(150deg, #222222 12%, transparent 12.5%, transparent 87%, #222222 87.5%, #222222),
+    linear-gradient(30deg, #222222 12%, transparent 12.5%, transparent 87%, #222222 87.5%, #222222),
+    linear-gradient(150deg, #222222 12%, transparent 12.5%, transparent 87%, #222222 87.5%, #222222),
+    linear-gradient(60deg, #22222277 25%, transparent 25.5%, transparent 75%, #22222277 75%, #22222277);
+  background-size: 80px 140px;
+  background-position: 0 0, 0 0, 40px 70px, 40px 70px, 0 0;
 }
 
 /* 蓝色主题 - 海洋气息 */
@@ -74,6 +110,15 @@
   --button-danger-hover: #f78989;
   --button-info: #909399;       /* 海雾灰 */
   --button-info-hover: #a6a9ad;
+
+  background-color: var(--primary-bg);
+  background-image:
+    linear-gradient(45deg, #f5f9ff 25%, transparent 25%),
+    linear-gradient(-45deg, #f5f9ff 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #f5f9ff 75%),
+    linear-gradient(-45deg, transparent 75%, #f5f9ff 75%);
+  background-size: 40px 40px;
+  background-position: 0 0, 20px 0, 20px -20px, 0px 20px;
 }
 
 /* 粉色主题 - 甜美浪漫 */
@@ -100,6 +145,13 @@
   --button-danger-hover: #ff9d9d;
   --button-info: #b4b8c5;       /* 奶糖灰 */
   --button-info-hover: #c8cbd5;
+
+  background-color: var(--primary-bg);
+  background-image:
+    radial-gradient(#ffe4ef 15%, transparent 16%),
+    radial-gradient(#ffe4ef 15%, transparent 16%);
+  background-size: 60px 60px;
+  background-position: 0 0, 30px 30px;
 }
 
 /* 绿色主题 - 自然清新 */
@@ -126,5 +178,13 @@
   --button-danger-hover: #eb958e;
   --button-info: #95a5a6;       /* 青苔灰 */
   --button-info-hover: #adb9ba;
+
+  background-color: var(--primary-bg);
+  background-image:
+    linear-gradient(120deg, #e7f6e1 25%, transparent 25%) 50px 0,
+    linear-gradient(240deg, #e7f6e1 25%, transparent 25%) 50px 0,
+    linear-gradient(0deg, #e7f6e1 25%, transparent 25%) 0 50px,
+    linear-gradient(0deg, #e7f6e1 25%, transparent 25%) 50px 50px;
+  background-size: 100px 100px;
 }
 
