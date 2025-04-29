@@ -19,17 +19,9 @@ services:
       - "9201:9200"
       - "9300:9300"
     volumes:
-      - type: volume
-        source: elasticsearch_data
-        target: /usr/share/elasticsearch/data
-      - type: bind
-        source: ./config/elasticsearch/plugins/analysis-ik
-        target: /usr/share/elasticsearch/plugins/analysis-ik
-        read_only: true
-      - type: bind
-        source: ./config/elasticsearch/setup
-        target: /usr/share/elasticsearch/setup
-        read_only: true
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./config/elasticsearch/plugins/analysis-ik:/usr/share/elasticsearch/plugins/analysis-ik:ro
+      - ./config/elasticsearch/setup:/usr/share/elasticsearch/setup:ro
     networks:
       - elk-network
     healthcheck:
