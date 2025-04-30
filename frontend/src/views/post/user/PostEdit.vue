@@ -287,10 +287,11 @@ const coverUploading = ref(false);
 const handleCoverUpload = async (options) => {
   try {
     coverUploading.value = true;
+    let currentPostId = form.value.postId;
 
-    // 自动创建文章（如果不存在）
-    if (!form.value.postId) {
-      const createRes = await savePost({
+    // 如果还没有博客ID，先创建临时博客
+    if (!currentPostId) {
+      const createResponse = await savePost({
         title: form.value.title || "未命名文章",
         userId: userStore.user.id,
         content: form.value.content || "正在编辑...",
@@ -299,21 +300,27 @@ const handleCoverUpload = async (options) => {
         visibility: form.value.visibility,
         version: 1,
       });
-      form.value.postId = createRes.data.data.postId;
+      if (createResponse.data.status === 200) {
+        currentPostId = createResponse.data.data.postId;
+        form.value.postId = currentPostId;
+        isAutoCreated.value = true;
+      }
     }
 
-    // 使用专用封面图片接口
-    const response = await uploadPostCover(
-      options.file, // 直接获取文件对象
-      form.value.postId
-    );
+    const response = await uploadPostCover(options.file, currentPostId);
 
-    form.value.coverImage = response.data.data;
-    ElMessage.success("封面更新成功");
+    // 检查响应中的 data
+    if (response.data?.data) {
+      form.value.coverImage = response.data.data;
+      ElMessage.success("封面更新成功");
+    } else {
+      throw new Error("上传失败：未获取到图片URL");
+    }
   } catch (error) {
     console.error("封面上传失败:", error);
-    form.value.coverImage = error.response.data.data || "";
-    // ElMessage.error(`封面上传失败: ${error.response?.data?.message || "服务器错误"}`);
+    if (error.response?.data?.data) {
+      form.value.coverImage = error.response.data.data;
+    }
   } finally {
     coverUploading.value = false;
   }
