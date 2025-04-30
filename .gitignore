@@ -35,3 +35,6 @@ frontend/.VSCodeCounter/**
 .VSCodeCounter/
 /.VSCodeCounter
 /.VSCodeCounter
+
+### logs ###
+logs
