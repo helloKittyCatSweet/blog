@@ -358,11 +358,10 @@ const showUserDetail = (row) => {
  * 创建用户
  */
 
-const createUserDialogVisible = ref(false);
+const createDialogVisible = ref(false);
 
 const handleUserCreated = () => {
   getUserList();
-  createUserDialogVisible.value = false;
 };
 </script>
 
