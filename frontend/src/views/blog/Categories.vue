@@ -146,37 +146,46 @@ const loadCategories = async () => {
   try {
     const response = await findAll();
     if (response.data?.status === 200) {
-      categoriesTree.value = response.data.data.content.map((item) => ({
-        ...item,
-        label: item.category.name,
-        children: item.children?.map((child) => ({
-          ...child,
-          label: child.category.name,
-        })),
-      }));
+      // 检查并处理数据结构
+      const content = response.data.data.content || response.data.data;
+      categoriesTree.value = content.map((item) => {
+        // 检查 item 是否直接就是 category 对象
+        const category = item.category || item;
+        const children = item.children || [];
 
-      // 在分类数据加载完成后立即处理选择
+        return {
+          category: {
+            categoryId: category.categoryId,
+            name: category.name,
+            useCount: category.useCount || 0
+          },
+          label: category.name,
+          children: children.map((child) => ({
+            category: {
+              categoryId: child.categoryId,
+              name: child.name,
+              useCount: child.useCount || 0
+            },
+            label: child.name
+          }))
+        };
+      });
+
+      // 处理选择逻辑
       const categoryParam = router.currentRoute.value.query.category;
-      if (categoryParam) {
-        // 如果URL中有分类参数
+      if (categoryParam && categoriesTree.value.length > 0) {
         const decodedCategoryName = decodeURIComponent(categoryParam);
         const flattenedCategories = flattenCategoryTree(categoriesTree.value);
         const matchedCategory = flattenedCategories.find(
           category => category.name === decodedCategoryName
         );
 
-        if (matchedCategory) {
-          selectedCategory.value = matchedCategory;
-        } else {
-          // 如果找不到匹配的分类，选择第一个
-          selectedCategory.value = categoriesTree.value[0].category;
-        }
-      } else {
-        // 如果URL中没有分类参数，直接选择第一个
+        selectedCategory.value = matchedCategory || categoriesTree.value[0].category;
+      } else if (categoriesTree.value.length > 0) {
         selectedCategory.value = categoriesTree.value[0].category;
       }
 
-      // 加载选中分类的文章
+      // 加载文章
       if (selectedCategory.value) {
         await loadPosts();
       } else if (categoriesTree.value.length === 0) {
