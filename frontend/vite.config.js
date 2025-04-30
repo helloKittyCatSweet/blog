@@ -45,7 +45,9 @@ export default defineConfig({
          assetFileNames: (assetInfo) => {
           const info = assetInfo.name.split('.');
           let extType = info[info.length - 1];
-          if (/\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/i.test(assetInfo.name)) {
+          if (/\.(css|scss)$/i.test(assetInfo.name)) {
+            extType = 'css';
+          } else if (/\.(mp4|webm|ogg|mp3|wav|flac|aac)(\?.*)?$/i.test(assetInfo.name)) {
             extType = 'media';
           } else if (/\.(png|jpe?g|gif|svg|ico|webp)(\?.*)?$/i.test(assetInfo.name)) {
             extType = 'img';
@@ -70,7 +72,11 @@ export default defineConfig({
       scss: {
         charset: false
       }
-    }
+    },
+    modules: {
+      localsConvention: 'camelCase'
+    },
+    extract: true
   },
   base: '/',  // 如果有自己的域名前缀，请配置在这里,
   define: {
