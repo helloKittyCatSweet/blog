@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { Reading, Timer, EditPen, DataAnalysis, User } from "@element-plus/icons-vue";
 import { getAuthorAnalytics } from "@/api/post/authorAnalytics";
@@ -95,12 +95,18 @@ const router = useRouter();
 const goToUserDetail = (userId) => {
   router.push(BLOG_USER_DETAIL_PATH.replace(":id", userId));
 };
+
+
+// 添加计算属性判断是否有文章
+const hasPublishedPosts = computed(() => {
+  return analytics.value?.writingSuggestions?.[0] !== "您还没有发表任何文章，开始创作第一篇文章吧!";
+});
 </script>
 
 <template>
   <div class="author-analytics" v-loading="loading">
     <!-- 用户行为分析卡片 -->
-    <el-card class="behavior-card" shadow="hover" v-if="analytics.userBehavior">
+    <el-card class="behavior-card" shadow="hover" v-if="analytics.userBehavior && hasPublishedPosts">
       <template #header>
         <div class="card-header">
           <div class="header-left">
@@ -157,6 +163,16 @@ const goToUserDetail = (userId) => {
         </el-row>
       </div>
     </el-card>
+
+     <!-- 添加无文章提示 -->
+     <el-empty
+      v-if="!hasPublishedPosts && !loading"
+      description="暂无数据分析，发表文章后即可查看"
+    >
+      <template #image>
+        <el-icon :size="60" style="margin-bottom: 15px"><DataAnalysis /></el-icon>
+      </template>
+    </el-empty>
 
     <!-- 写作建议卡片 -->
     <el-card

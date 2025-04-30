@@ -1,12 +1,16 @@
 import { ROLES } from '@/constants/role-constants';
 
+// 获取环境变量或使用默认值
+const KIBANA_URL = import.meta.env.VITE_KIBANA_URL || 'http://localhost:5601';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+
 const externalRoutes = [
   {
     path: '/kibana-dashboard',
     name: 'KibanaDashboard',
     component: {
       beforeRouteEnter(to, from, next) {
-        window.open('http://localhost:5601/app/dashboards#', '_blank');
+        window.open(`${KIBANA_URL}/app/dashboards#`, '_blank');
         next(false);
       }
     },
@@ -19,7 +23,7 @@ const externalRoutes = [
     name: 'KibanaIndices',
     component: {
       beforeRouteEnter(to, from, next) {
-        window.open('http://localhost:5601/app/management/data/index_management/indices', '_blank');
+        window.open(`${KIBANA_URL}/app/management/data/index_management/indices`, '_blank');
         next(false);
       }
     },
@@ -32,7 +36,7 @@ const externalRoutes = [
     name: 'KibanaDataViews',
     component: {
       beforeRouteEnter(to, from, next) {
-        window.open('http://localhost:5601/app/management/kibana/dataViews', '_blank');
+        window.open(`${KIBANA_URL}/app/management/kibana/dataViews`, '_blank');
         next(false);
       }
     },
@@ -45,7 +49,7 @@ const externalRoutes = [
     name:'SwaggerApi',
     component: {
       beforeRouteEnter(to, from, next) {
-        window.open('http://localhost:8080/swagger-ui/index.html', '_blank');
+        window.open(`${API_URL}/swagger-ui/index.html`, '_blank');
         next(false);
       }
     },
