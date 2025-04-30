@@ -102,7 +102,7 @@ const handleEdit = (row) => {
     form.value = {
       tagId: row.tagId,
       name: row.name,
-      adminWeight: row.adminWeight,
+      adminWeight: Number(row.adminWeight),
     };
   } else {
     form.value = {
