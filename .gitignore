@@ -38,3 +38,6 @@ frontend/.VSCodeCounter/**
 
 ### logs ###
 logs
+
+### config ###
+src/main/resources/application-dev.yml

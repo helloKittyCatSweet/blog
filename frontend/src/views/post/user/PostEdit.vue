@@ -292,9 +292,11 @@ const handleCoverUpload = async (options) => {
     if (!form.value.postId) {
       const createRes = await savePost({
         title: form.value.title || "未命名文章",
+        userId: userStore.user.id,
         content: form.value.content || "正在编辑...",
         isDraft: true,
         isPublished: false,
+        visibility: form.value.visibility,
         version: 1,
       });
       form.value.postId = createRes.data.data.postId;
