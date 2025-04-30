@@ -14,7 +14,8 @@ import {
   Lock,
   Unlock,
   Key,
-  InfoFilled
+  InfoFilled,
+  Plus
 } from "@element-plus/icons-vue";
 import PageContainer from "@/components/PageContainer.vue";
 import {
@@ -28,6 +29,7 @@ import {
 import { findAll } from "@/api/user/role.js";
 import { save, deleteRole } from "@/api/user/userRole.js";
 import * as XLSX from "xlsx";
+import CreateUserDialog from "@/views/user/admin/CreateUserDialog.vue";
 
 // 表格数据
 const loading = ref(false);
@@ -351,6 +353,17 @@ const showUserDetail = (row) => {
   currentUser.value = row;
   userDetailVisible.value = true;
 };
+
+/**
+ * 创建用户
+ */
+
+const createUserDialogVisible = ref(false);
+
+const handleUserCreated = () => {
+  getUserList();
+  createUserDialogVisible.value = false;
+};
 </script>
 
 <template>
@@ -358,6 +371,10 @@ const showUserDetail = (row) => {
     <el-card class="box-card">
       <!-- 搜索区域 -->
       <div class="search-bar">
+        <el-button type="primary" @click="createDialogVisible = true">
+          <el-icon><Plus /></el-icon>
+          创建用户
+        </el-button>
         <el-input v-model="searchKey" placeholder="搜索用户名/邮箱" class="search-input" clearable @keyup.enter="handleSearch">
           <template #prefix>
             <el-icon>
@@ -523,6 +540,12 @@ const showUserDetail = (row) => {
           layout="total, sizes, prev, pager, next, jumper" :total="total" @size-change="handleSizeChange"
           @current-change="handleCurrentChange" />
       </div>
+
+      <!-- 创建用户对话框 -->
+      <create-user-dialog
+        v-model:visible="createDialogVisible"
+        @created="handleUserCreated"
+      />
     </el-card>
 
     <!-- 添加角色编辑对话框 -->
