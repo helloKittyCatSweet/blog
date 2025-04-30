@@ -96,9 +96,11 @@ public class SecurityConfig {
                         // 静态资源可以直接访问
                         // 文章资源、分类资源、标签资源
                         .requestMatchers("/api/post/public/find/all",
+                                "/api/post/public/find/all/no-paging",
                                 "/api/post/public/find/id/**",
                                 "/api/post/public/add/views/**",
                                 "/api/post/public/find/*/list",
+                                "/api/post/public/find/*/list-all",
                                 "/api/post/public/find/category/**",
                                 "/api/post/public/find/tag/**",
                                 "/api/post/public/find/tags/**",
