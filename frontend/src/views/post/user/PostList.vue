@@ -84,7 +84,7 @@ const getPostList = async () => {
     const pageParams = {
       page: searchForm.value.currentPage - 1, // 后端分页从0开始
       size: searchForm.value.pageSize,
-      sort: ['updatedAt,desc'] // 默认按更新时间降序
+      sort: 'updatedAt,desc' // 默认按更新时间降序
     };
 
     // 根据搜索条件决定使用哪个 API
@@ -249,7 +249,7 @@ const handleSearch = async () => {
     const response = await searchPosts({
       page: searchForm.value.currentPage - 1,
       size: searchForm.value.pageSize,
-      sort: ['updatedAt,desc'],
+      sort: 'updatedAt,desc',
       ...searchForm.value,
       isPrivate: true,
     });
