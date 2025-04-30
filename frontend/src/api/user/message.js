@@ -3,6 +3,7 @@ import request from '@/utils/request'
 import { userPrefix, messagePrefix } from '@/constants/api-constants.js'
 import SockJS from 'sockjs-client'
 import { Client } from '@stomp/stompjs'
+import {getWsUrl} from "@/config/websocket"
 
 import { useUserStore } from '@/stores'
 import { ROLES } from '@/constants/role-constants'
@@ -102,7 +103,6 @@ export const setMessageOperation = (messageId, operation) =>
  */
 let stompClient = null;
 let reconnectTimeout = null;
-const wsPrefix = 'http://localhost:8080';
 const MAX_RECONNECT_ATTEMPTS = 5;
 let reconnectAttempts = 0;
 
@@ -138,7 +138,8 @@ const getStompClient = () => {
     }
 
     try {
-      const socket = new SockJS(`${wsPrefix}/ws?token=${token}`);
+      const wsUrl = getWsUrl(`?token=${token}`);
+      const socket = new SockJS(wsUrl);
       const client = new Client({
         webSocketFactory: () => socket,
         connectHeaders: {
