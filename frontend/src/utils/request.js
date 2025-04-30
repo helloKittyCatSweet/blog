@@ -5,7 +5,7 @@ import router from '@/router'
 
 const baseURL = import.meta.env.MODE === 'development'
   ? 'http://localhost:8080'
-  : '/api'
+  : 'http://47.94.57.175:8080'
 
 const instance = axios.create({
   baseURL,
