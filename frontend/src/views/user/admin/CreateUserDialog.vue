@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { register } from '@/api/user/user';
 
@@ -31,7 +31,7 @@ const rules = {
 };
 
 const handleClose = () => {
-  emit('update:visible', false);
+  dialogVisible.value = false;
   form.value = {
     username: '',
     email: '',
@@ -65,11 +65,26 @@ const handleSubmit = async () => {
     }
   });
 };
+
+const dialogVisible = ref(props.visible);
+
+// 监听 props 变化
+watch(() => props.visible, (newVal) => {
+  dialogVisible.value = newVal;
+});
+
+// 监听本地状态变化
+watch(dialogVisible, (newVal) => {
+  if (newVal !== props.visible) {
+    emit('update:visible', newVal);
+  }
+});
+
 </script>
 
 <template>
   <el-dialog
-    v-model="visible"
+    v-model="dialogVisible"
     title="创建用户"
     width="500px"
     @close="handleClose"
