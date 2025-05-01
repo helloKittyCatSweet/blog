@@ -572,7 +572,8 @@ const registerUser = async () => {
   // console.log("开始注册请求");
 
   // 检验邮箱验证码是否正确
-  if (!verifyEmailCode()) {
+  const emailVerified = await verifyEmailCode();
+  if (!emailVerified) {
     ElMessage.error("邮箱验证码错误，请重新输入");
     return;
   }
@@ -683,31 +684,34 @@ const handleGithubLogin = async () => {
   }
 };
 
-// 修改 handlePasswordSet 函数
-const handlePasswordSet = async (formData) => {
-  try {
-    const registrationData = {
-      password: formData.password,
-      email: formData.email,
-      state: oauthData.value.redisState  // 使用 Redis state
-    };
-
-    const res = await completeGithubRegistration(registrationData);
-    if (res.data.status === 200) {
-      await handleOAuthLogin(res.data.data);
-      oauthDialogVisible.value = false;
-    }
-  } catch (error) {
-    console.error("注册失败:", error);
-    ElMessage.error(error.response?.data?.message || "注册失败");
-  }
-};
-
 const goToBlog = () => {
   router.push(BLOG_HOME_PATH);
 };
 
 const userNoticeVisible = ref(false);  // 控制用户须知对话框的显示
+
+// 添加处理重置密码的函数
+const handleResetPassword = async (userData) => {
+  try {
+    ElMessage.success("密码重置成功");
+    resetDialogVisible.value = false;
+  } catch (error) {
+    console.error("密码重置失败:", error);
+    ElMessage.error(error.response?.data?.message || "密码重置失败");
+  }
+};
+
+// 添加处理 OAuth 密码设置的函数
+const handleOAuthPasswordSet = async (userData) => {
+  try {
+    await handleOAuthLogin(userData);
+    oauthDialogVisible.value = false;
+  } catch (error) {
+    console.error("设置密码失败:", error);
+    ElMessage.error(error.response?.data?.message || "设置密码失败");
+  }
+};
+
 </script>
 
 <template>
@@ -828,7 +832,7 @@ const userNoticeVisible = ref(false);  // 控制用户须知对话框的显示
           <div class="flex">
             <el-checkbox v-model="rememberMe">记住我</el-checkbox>
             <el-link type="primary" :underline="false" @click="resetDialogVisible = true">忘记密码？</el-link>
-            <ResetPasswordDialog v-model="resetDialogVisible" @success="handlePasswordSet" />
+            <ResetPasswordDialog v-model="resetDialogVisible" @success="handleResetPassword" />
           </div>
         </el-form-item>
 
@@ -856,7 +860,7 @@ const userNoticeVisible = ref(false);  // 控制用户须知对话框的显示
             </div>
           </div>
 
-          <OAuthPasswordDialog v-model="oauthDialogVisible" :oauth-data="oauthData" @success="handlePasswordSet" />
+          <OAuthPasswordDialog v-model="oauthDialogVisible" :oauth-data="oauthData" @success="handleOAuthPasswordSet" />
         </el-form-item>
 
         <!-- 登录 -->

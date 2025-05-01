@@ -66,15 +66,18 @@ const handleSetPassword = async () => {
     await resetFormRef.value.validate();
 
     // 添加空值检查
-    if (!props.oauthData?.code) {
+    if (!props.oauthData?.redisState) {
       throw new Error("授权信息无效，请重新登录");
     }
 
-    // 调用完成注册的API
-    const response = await completeGithubRegistration(
-      resetForm.value.newPassword,
-      resetForm.value.email
-    );
+    // 调用完成注册的API，传递正确的参数结构
+    const registrationData = {
+      password: resetForm.value.newPassword,
+      email: resetForm.value.email,
+      state: props.oauthData.redisState
+    };
+
+    const response = await completeGithubRegistration(registrationData);
 
     if (response.data.status === 200) {
       ElMessage.success("注册成功");
