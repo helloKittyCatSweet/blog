@@ -15,7 +15,7 @@ import PostReport from "@/components/blog/post/PostReport.vue";
 import { MdPreview } from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
 
-import { findById, findAttachmentsByPostId } from "@/api/post/post.js";
+import { findById } from "@/api/post/post.js";
 import { findPostExplicit } from "@/api/user/userActivity.js";
 import { useUserStore } from "@/stores/modules/user.js";
 import { LOGIN_PATH } from "@/constants/routes/base.js";
@@ -105,28 +105,6 @@ const interactionState = ref({
 const attachments = ref([]);
 const attachmentsLoading = ref(false);
 
-// 获取文章附件
-const getPostAttachments = async (postId) => {
-  attachmentsLoading.value = true;
-  try {
-    const response = await findAttachmentsByPostId(postId);
-    if (response.data?.status === 200) {
-      attachments.value = response.data.data.map(item => ({
-        id: item.attachmentId,
-        name: formatFileName(item.attachmentName),
-        type: item.attachmentType,
-        url: item.attachmentUrl,
-        size: item.size || 0,
-        uploadTime: item.createdTime
-      }));
-    }
-  } catch (error) {
-    ElMessage.error("获取文章附件失败");
-  } finally {
-    attachmentsLoading.value = false;
-  }
-};
-
 // 格式化文件名 - 去掉时间戳
 const formatFileName = (name) => {
   const match = name.match(/tmp\d+-?(.*)/);
@@ -160,7 +138,6 @@ onMounted(async () => {
   if (postId) {
     await getPostDetail(postId);
     await refreshPost();
-    await getPostAttachments(postId); // 获取文章附件
 
     // 设置默认的交互状态
     interactionState.value = {
@@ -310,7 +287,7 @@ const handleAuthorClick = (userId) => {
       </div>
 
       <!-- 在文章内容后，交互区域前添加附件展示区域 -->
-      <div v-if="attachments.length > 0" class="post-attachments">
+      <div v-if="post.attachments.length > 0" class="post-attachments">
         <div class="attachments-header">
           <h3>文章附件</h3>
           <span class="attachment-count">共 {{ attachments.length }} 个附件</span>
@@ -341,7 +318,7 @@ const handleAuthorClick = (userId) => {
           </el-table-column>
           <el-table-column prop="uploadTime" label="上传时间" width="180">
             <template #default="{ row }">
-              {{ formatDateTime(row.uploadTime) }}
+              {{ row.uploadTime }}
             </template>
           </el-table-column>
           <el-table-column label="操作" width="100" fixed="right">
