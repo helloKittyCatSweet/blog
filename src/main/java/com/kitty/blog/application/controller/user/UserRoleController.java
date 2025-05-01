@@ -111,7 +111,7 @@ public class UserRoleController {
             @PathVariable("roleId") Integer id,
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sort", required = false, defaultValue = "id") String[] sort
+            @RequestParam(value = "sort", required = false, defaultValue = "ur.id.userId,desc") String[] sort
     ) {
         Page<User> response = userRoleService.findByRoleId(id, page, size, sort);
         return Response.createResponse(ResponseEntity.ok(response),

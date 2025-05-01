@@ -63,7 +63,7 @@ public class SwaggerConfig {
     public GroupedOpenApi webSocketApi() {
         return GroupedOpenApi.builder()
                 .group("WebSocket") // Swagger UI 下拉框中显示的名字
-                .pathsToMatch("/ws/**")
+                .pathsToMatch("/api/ws/**")
                 .build();
     }
 

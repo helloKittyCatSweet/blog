@@ -150,14 +150,14 @@ const handleAddUsers = async () => {
   try {
     const res = await findAllUser();
     if (res.data.status === 200) {
+      console.log('当前角色:', currentRole.value); // 添加调试日志
       // 过滤掉已经有这个角色的用户
-      allUsers.value = res.data.data.content
-        .filter(
-          (item) => !item.roles.some((role) => role.roleId === currentRole.value.roleId)
-        )
-        .map((item) => item.user);
+      allUsers.value = res.data.data.content.filter(user =>
+        !user.roles || !user.roles.some(role => role.roleId === currentRole.value?.roleId)
+      );
     }
   } catch (error) {
+    console.error('获取用户列表失败:', error);
     ElMessage.error("获取用户列表失败");
   }
 };
