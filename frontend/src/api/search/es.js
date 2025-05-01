@@ -2,8 +2,8 @@ import request from "@/utils/request"
 import { searchPrefix } from "@/constants/api-constants"
 
 // 搜索文章
-export const searchPosts = (keyword, page = 0, size = 10) =>
-  request.get(`${searchPrefix}/public/posts`, { params: { keyword, page, size } })
+export const searchPosts = (keyword, { page = 0, size = 10, sorts = "createdAt,desc" } = {}) =>
+  request.get(`${searchPrefix}/public/posts`, { params: { keyword, page, size, sorts } })
 
 // 搜索建议
 export const searchPostSuggestions = (keyword) =>

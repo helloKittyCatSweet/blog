@@ -1,5 +1,6 @@
 package com.kitty.blog.domain.service;
 
+import com.kitty.blog.domain.model.Post;
 import com.kitty.blog.domain.model.PostVersion;
 import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.PostVersionRepository;
@@ -67,10 +68,13 @@ public class PostVersionService {
         if (!postRepository.existsById(postId)) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
+        Post post = postRepository.findById(postId).orElseThrow();
         if (!postVersionRepository.existsByPostIdAndVersion(postId, versionId)) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         postVersionRepository.activateVersion(postId, versionId);
+        post.setVersion(versionId);
+        postRepository.save(post);
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 

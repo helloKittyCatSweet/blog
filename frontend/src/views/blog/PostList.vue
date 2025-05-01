@@ -23,7 +23,7 @@ const posts = ref([]);
 
 // 搜索过滤
 const filter = reactive({
-  sort: ["createdAt,desc"],
+  sort: "createdAt,desc",
   keyword: route.query.search || "",
 });
 
