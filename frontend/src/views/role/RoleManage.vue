@@ -98,6 +98,7 @@ const handleViewUsers = async (row) => {
   console.log('row.roleName:', row.roleName);
   currentRole.value = row;
   console.log('currentRole after assignment:', currentRole.value);
+  console.log('currentRole.roleName === "普通用户"', currentRole.value.roleName === "普通用户");
   userDrawerVisible.value = true;
   currentPage.value = 1;
   pageSize.value = 10;
