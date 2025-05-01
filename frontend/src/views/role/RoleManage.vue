@@ -98,6 +98,7 @@ const handleViewUsers = async (row) => {
   userDrawerVisible.value = true;
   currentPage.value = 1;
   pageSize.value = 10;
+  console.log("row:", row);
   await loadRoleUsers(row.roleId);
 };
 
@@ -115,7 +116,6 @@ const loadRoleUsers = async (roleId) => {
     });
     if (response.data.status === 200) {
       roleUsers.value = response.data.data.content;
-      console.log('角色用户数据:', roleUsers.value); // 添加调试日志
       total.value = response.data.data.totalElements;
     } else {
       ElMessage.warning(response.data.message || "获取用户列表失败");
@@ -472,6 +472,7 @@ const handleImportError = () => {
       :title="`${currentRole?.roleName || ''} - 用户列表`"
       size="80%"
     >
+    <div>{{ "currentRole.roleName: " + currentRole?.roleName || '' }}</div>
       <template #header>
         <div style="flex: 1; display: flex; align-items: center; justify-content: space-between;">
           <span>{{ currentRole?.roleName || "" }} - 用户列表</span>
