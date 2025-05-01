@@ -35,7 +35,7 @@ public class OAuth2Controller {
     public ResponseEntity<Response<String>> getGithubLoginUrl() {
         String clientId = environment.getProperty("spring.security.oauth2.client.registration.github.client-id");
         // 设置回调地址为前端的回调路由
-        String redirectUri = "http://localhost:5173/auth/github/callback";
+        String redirectUri = "http://47.94.57.175/auth/github/callback";
         String scope = "user:email read:user";
         String state = UUID.randomUUID().toString();
 
