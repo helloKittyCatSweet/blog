@@ -187,6 +187,8 @@ const confirmAddUsers = async () => {
     ElMessage.success("添加成功");
     addUserDialogVisible.value = false;
     await loadRoleUsers(currentRole.value.roleId);
+    // 重新获取角色列表以更新用户数量
+    await getRoleList();
   } catch (error) {
     ElMessage.error("添加失败");
   }
@@ -213,8 +215,11 @@ const handleRemoveUser = (row) => {
       if (res.data.status === 200) {
         ElMessage.success("移除成功");
         await loadRoleUsers(currentRole.value.roleId);
+        // 重新获取角色列表以更新用户数量
+        await getRoleList();
       }
     } catch (error) {
+      console.error('移除用户失败:', error);
       ElMessage.error("移除失败");
     }
   });

@@ -23,7 +23,7 @@ export const exist = (userId, roleId) =>
 export const count = () => request.get(`${userPrefix}${userRolePrefix}/admin/count`)
 
 // 删除角色
-export const deleteRole = (userId, roleId) =>
+export const deleteRole = ({userId, roleId}) =>
   request.delete(`${userPrefix}${userRolePrefix}/admin/delete/${userId}/${roleId}`)
 
 // 导入角色数据
