@@ -606,20 +606,24 @@ const resetDialogVisible = ref(false);
 // 添加加载状态控制
 const oauthLoading = ref(false);
 
-// 添加 GitHub 登录相关逻辑
+// 在 handleGithubLogin 函数中
 const handleGithubLogin = async () => {
   try {
     githubLoading.value = true;
     const res = await getGithubLoginUrl();
     if (res.data.status === 200) {
-      // 使用弹窗方式打开 GitHub 授权页面
       const width = 600;
       const height = 700;
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
 
-      // 添加 force_login 参数强制显示登录页面
+      // 获取 GitHub 的授权 URL 和 state
       const authUrl = new URL(res.data.data);
+      const githubState = authUrl.searchParams.get('state'); // 保存 GitHub 的 state
+
+      // 存储 GitHub state 用于后续验证
+      sessionStorage.setItem('github_oauth_state', githubState);
+
       authUrl.searchParams.set('force_login', 'true');
       authUrl.searchParams.set('prompt', 'consent');
 
@@ -634,24 +638,27 @@ const handleGithubLogin = async () => {
         if (event.origin !== window.location.origin) return;
 
         if (event.data.type === 'github-oauth-callback' && event.data.code) {
+          // 验证返回的 state 是否匹配
+          const savedState = sessionStorage.getItem('github_oauth_state');
+          if (event.data.state !== savedState) {
+            ElMessage.error('安全验证失败');
+            return;
+          }
+
           try {
             oauthLoading.value = true;
-            // 先尝试直接登录
             const res = await handleGithubCallback(event.data.code);
-            console.log("res", res);
             if (res.data.status === 200) {
               const userData = res.data.data;
               if (userData.newUser) {
-                // 如果是新用户，显示注册对话框
                 oauthData.value = {
                   code: event.data.code,
                   email: userData.email || "",
                   username: userData.username || "",
+                  redisState: userData.state  // 使用后端返回的 Redis state
                 };
                 oauthDialogVisible.value = true;
               } else {
-                // 如果是已有用户，直接登录
-                ElMessage.success('GitHub 登录成功');
                 await handleOAuthLogin(userData);
               }
             }
@@ -660,6 +667,7 @@ const handleGithubLogin = async () => {
             ElMessage.error(error.response?.data?.message || 'GitHub 登录失败');
           } finally {
             oauthLoading.value = false;
+            sessionStorage.removeItem('github_oauth_state'); // 清理 GitHub state
             window.removeEventListener('message', handleMessage);
           }
         }
@@ -675,16 +683,23 @@ const handleGithubLogin = async () => {
   }
 };
 
-// 处理新用户设置密码
-const handlePasswordSet = async (userData) => {
+// 修改 handlePasswordSet 函数
+const handlePasswordSet = async (formData) => {
   try {
-    if (userData) {
-      await handleOAuthLogin(userData);
+    const registrationData = {
+      password: formData.password,
+      email: formData.email,
+      state: oauthData.value.redisState  // 使用 Redis state
+    };
+
+    const res = await completeGithubRegistration(registrationData);
+    if (res.data.status === 200) {
+      await handleOAuthLogin(res.data.data);
       oauthDialogVisible.value = false;
     }
   } catch (error) {
-    console.error("登录失败:", error);
-    ElMessage.error(error.response?.data?.message || "登录失败");
+    console.error("注册失败:", error);
+    ElMessage.error(error.response?.data?.message || "注册失败");
   }
 };
 

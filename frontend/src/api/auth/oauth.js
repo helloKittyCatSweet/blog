@@ -7,12 +7,9 @@ export const getGithubLoginUrl = () => request.get(`${authPrefix}${oauth2}/githu
 export const handleGithubCallback = (code) => request.get(`${authPrefix}${oauth2}/github/callback`, { params: { code } })
 
 // 新用户完成GitHub注册
-export const completeGithubRegistration = (password, email) => 
+export const completeGithubRegistration = (data) =>
   request({
     url: `${authPrefix}${oauth2}/github/complete-registration`,
     method: 'post',
-    data: {
-      password,
-      email
-    }
+    data
   })

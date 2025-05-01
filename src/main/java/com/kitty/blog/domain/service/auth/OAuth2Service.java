@@ -10,6 +10,8 @@ import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.domain.repository.UserSettingRepository;
 import com.kitty.blog.domain.service.user.UserService;
 import com.kitty.blog.infrastructure.security.JwtTokenUtil;
+
+import cn.hutool.core.lang.UUID;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,9 +36,8 @@ import java.util.Optional;
 @Service
 public class OAuth2Service {
 
-    private final ThreadLocal<String> avatarUrlLocal = new ThreadLocal<>();
-
-    private final ThreadLocal<String> usernameLocal = new ThreadLocal<>();
+    @Autowired
+    private GithubUserInfoService githubUserInfoService;
 
     @Autowired
     private Environment environment;
@@ -67,79 +68,84 @@ public class OAuth2Service {
      */
     public LoginResponseDto checkGithubUser(String code) {
         try {
-        // 1. 使用 code 获取 access token
+            // 1. 使用 code 获取 access token
             String token = getGithubAccessToken(code);
 
-        // 2. 使用 access token 获取用户信息
+            // 2. 使用 access token 获取用户信息
             Map<String, Object> githubUser = getGithubUserInfo(token);
 
             // 3. 获取GitHub用户信息
-        String username = (String) githubUser.get("login");
-            usernameLocal.set(username);
+            String username = (String) githubUser.get("login");
+            String avatarUrl = (String) githubUser.get("avatar_url");
 
-            // 保存GitHub用户信息到ThreadLocal
-            avatarUrlLocal.set((String) githubUser.get("avatar_url"));
+            // 生成唯一标识
+            String state = UUID.randomUUID().toString();
+
+            // 保存到 Redis
+            Map<String, String> userInfo = new HashMap<>();
+            userInfo.put("username", username);
+            userInfo.put("avatarUrl", avatarUrl);
+            githubUserInfoService.saveUserInfo(state, userInfo);
 
             // 4. 检查用户是否存在
-        Optional<User> existingUser = userRepository.findByUsername(username);
+            Optional<User> existingUser = userRepository.findByUsername(username);
 
-        if (existingUser.isPresent()) {
+            if (existingUser.isPresent()) {
                 // 已存在用户，直接返回登录信息
-            User user = existingUser.get();
-            UserDetails userDetails = myUserDetailService.loadUserByUsername(user.getUsername());
+                User user = existingUser.get();
+                UserDetails userDetails = myUserDetailService.loadUserByUsername(user.getUsername());
                 String jwtToken = jwtTokenUtil.generateToken(userDetails);
 
-                // 清理ThreadLocal
-                cleanupThreadLocals();
-
-            return LoginResponseDto.builder()
-                    .id(user.getUserId())
-                    .username(user.getUsername())
+                return LoginResponseDto.builder()
+                        .id(user.getUserId())
+                        .username(user.getUsername())
                         .token(jwtToken)
-                    .roles(userDetails.getAuthorities())
-                    .isNewUser(false)
-                    .build();
-        } else {
+                        .roles(userDetails.getAuthorities())
+                        .isNewUser(false)
+                        .build();
+            } else {
                 // 新用户，返回需要注册的标志
                 return LoginResponseDto.builder()
                         .username(username)
                         .isNewUser(true)
+                        .state(state)
                         .build();
             }
         } catch (Exception e) {
-            // 发生异常时清理ThreadLocal
-            cleanupThreadLocals();
-            throw e;
+            e.printStackTrace();
+            return null;
         }
     }
 
     @Transactional
-    public LoginResponseDto processGithubLogin(String password, String email) {
+    public LoginResponseDto processGithubLogin(String password, String email, String state) {
         try {
-            // 检查必要的注册信息
-            if (password == null || email == null || usernameLocal.get() == null) {
-                return LoginResponseDto.builder()
-                        .username(usernameLocal.get())
-                        .isNewUser(true)
-                        .build();
+            // 从 Redis 获取用户信息
+            Map<String, String> userInfo = githubUserInfoService.getUserInfo(state);
+            if (userInfo == null || userInfo.isEmpty()) {
+                throw new RuntimeException("GitHub 用户信息已过期，请重新授权");
             }
 
-            // 获取头像URL（如果有的话）
-            String avatar = avatarUrlLocal.get();
+            String username = userInfo.get("username");
+            String avatarUrl = userInfo.get("avatarUrl");
+
+            // 检查必要的注册信息
+            if (password == null || email == null || username == null) {
+                throw new RuntimeException("注册信息不完整");
+            }
 
             // 创建新用户
             User newUser = User.builder()
-                    .username(usernameLocal.get())
+                    .username(username)
                     .password(password)
                     .email(email)
-                    .avatar(avatar) // 可能为null，这是可以接受的
+                    .avatar(avatarUrl) // 可能为null，这是可以接受的
                     .build();
             userService.register(newUser);
 
             // 保存 GitHub 账号关联信息
-            UserSetting userSetting = userSettingRepository.findByUserId
-                    (newUser.getUserId()).orElse(new UserSetting());
-            userSetting.setGithubAccount(usernameLocal.get());
+            UserSetting userSetting = userSettingRepository.findByUserId(newUser.getUserId()).orElse(new UserSetting());
+            userSetting.setGithubAccount(username);
             userSettingRepository.save(userSetting);
 
             // 生成 JWT token
@@ -153,15 +159,10 @@ public class OAuth2Service {
                     .roles(userDetails.getAuthorities())
                     .isNewUser(false)
                     .build();
-        } finally {
-            // 确保在方法结束时清理ThreadLocal
-            cleanupThreadLocals();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
-    }
-
-    private void cleanupThreadLocals() {
-        avatarUrlLocal.remove();
-        usernameLocal.remove();
     }
 
     private String getGithubAccessToken(String code) {
@@ -206,7 +207,7 @@ public class OAuth2Service {
         while (retryCount < maxRetries) {
             try {
                 log.debug("Attempting to get GitHub access token (attempt {}/{})", retryCount + 1, maxRetries);
-        ResponseEntity<String> response = restTemplate.postForEntity(tokenUrl, request, String.class);
+                ResponseEntity<String> response = restTemplate.postForEntity(tokenUrl, request, String.class);
 
                 // 检查响应状态
                 if (!response.getStatusCode().is2xxSuccessful()) {
@@ -219,9 +220,9 @@ public class OAuth2Service {
                     throw new RuntimeException("Empty response from GitHub API");
                 }
 
-        // 解析响应
-            ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(response.getBody());
+                // 解析响应
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(response.getBody());
                 JsonNode accessToken = root.get("access_token");
                 JsonNode error = root.get("error");
                 JsonNode errorDescription = root.get("error_description");
@@ -265,7 +266,7 @@ public class OAuth2Service {
                         throw new RuntimeException("Retry interrupted", ie);
                     }
                 }
-        } catch (Exception e) {
+            } catch (Exception e) {
                 log.error("Unexpected error while getting GitHub access token: {}", e.getMessage());
                 throw new RuntimeException("Failed to get GitHub access token", e);
             }

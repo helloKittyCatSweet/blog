@@ -37,3 +37,17 @@ const getRouteValue = (routeName) => {
     </el-menu-item>
   </template>
 </template>
+
+<style scoped>
+.el-menu-item,
+.el-sub-menu {
+  background-color: var(--menu-bg) !important;
+  position: relative;
+  z-index: 2;
+}
+
+.el-menu-item:hover,
+.el-sub-menu:hover {
+  background-color: var(--hover-bg) !important;
+}
+</style>

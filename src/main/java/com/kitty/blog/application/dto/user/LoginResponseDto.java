@@ -36,6 +36,8 @@ public class LoginResponseDto implements Serializable, UserDetails {
 
     private boolean isNewUser;
 
+    private String state;
+
     private Collection<? extends GrantedAuthority> roles;
 
     @Override

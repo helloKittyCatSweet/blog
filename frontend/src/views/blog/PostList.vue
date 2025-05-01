@@ -68,14 +68,14 @@ const handleSearch = () => {
 // 处理排序变化
 const handleSortChange = (value) => {
   switch (value) {
-    case "newest":
-      filter.sort = ["createdAt,desc"];
+    case "createdAt,desc":
+      filter.sort = "createdAt,desc";
       break;
-    case "views":
-      filter.sort = ["views,desc"];
+    case "views,desc":
+      filter.sort = "views,desc";
       break;
-    case "likes":
-      filter.sort = ["likes,desc"];
+    case "likes,desc":
+      filter.sort = "likes,desc";
       break;
   }
   fetchPosts();
@@ -104,8 +104,8 @@ const fetchPosts = async () => {
           cover: item.post.coverImage,
           excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
           category: item.category?.categoryId ? {
-                categoryId: item.category.categoryId,
-                name: item.category.name,
+            categoryId: item.category.categoryId,
+            name: item.category.name,
           } : null,
           tags: item.tags?.map(tag => tag.name) || [],
           views: item.post.views || 0,
@@ -129,8 +129,8 @@ const fetchPosts = async () => {
           cover: item.post.coverImage,
           excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
           category: item.category?.categoryId ? {
-                categoryId: item.category.categoryId,
-                name: item.category.name,
+            categoryId: item.category.categoryId,
+            name: item.category.name,
           } : null,
           tags: item.tags?.map(tag => tag.name) || [],
           views: item.post.views || 0,
@@ -180,32 +180,20 @@ onMounted(() => {
       <el-card shadow="never" class="search-card">
         <div class="search-content">
           <div class="search-wrapper">
-            <SearchBar
-              class="search-bar"
-              v-model="filter.keyword"
-              @search="handleSearch"
-              placeholder="搜索文章、作者或关键词..."
-            />
-            <el-button
-              type="primary"
-              size="large"
-              class="search-button"
-              @click="handleSearch"
-            >
-              <el-icon><Search /></el-icon>
+            <SearchBar class="search-bar" v-model="filter.keyword" @search="handleSearch"
+              placeholder="搜索文章、作者或关键词..." />
+            <el-button type="primary" size="large" class="search-button" @click="handleSearch">
+              <el-icon>
+                <Search />
+              </el-icon>
               搜索
             </el-button>
           </div>
-          <el-select
-            v-model="filter.sort"
-            placeholder="排序方式"
-            class="sort-select"
-            size="large"
-            @change="handleSortChange"
-          >
-            <el-option label="最新发布" value="newest" />
-            <el-option label="最多浏览" value="views" />
-            <el-option label="最多点赞" value="likes" />
+          <el-select v-model="filter.sort" placeholder="排序方式" class="sort-select" size="large"
+            @change="handleSortChange">
+            <el-option label="最新发布" value="createdAt,desc" />
+            <el-option label="最多浏览" value="views,desc" />
+            <el-option label="最多点赞" value="likes,desc" />
           </el-select>
         </div>
       </el-card>
@@ -217,15 +205,9 @@ onMounted(() => {
 
       <!-- 分页器 -->
       <div class="pagination-container">
-      <el-pagination
-        v-model:current-page="currentPage"
-        v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-        :total="total"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
+        <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
+          :total="total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+          @current-change="handleCurrentChange" />
       </div>
     </div>
   </div>

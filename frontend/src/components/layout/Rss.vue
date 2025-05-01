@@ -20,21 +20,21 @@ const copyRssUrl = () => {
   <div class="rss-container">
     <div class="rss-content">
       <h1>RSS 订阅</h1>
-      
+
       <div class="description">
         <p>通过 RSS 订阅 FreeShare，及时获取最新文章更新。</p>
       </div>
 
       <div class="subscription-box">
         <h2>订阅方式</h2>
-        
+
         <div class="rss-url-box">
           <div class="url-display">
             <span>RSS 订阅地址：</span>
             <code>{{ rssUrl }}</code>
           </div>
-          <el-button 
-            type="primary" 
+          <el-button
+            type="primary"
             :icon="CopyDocument"
             @click="copyRssUrl"
           >
@@ -82,6 +82,8 @@ const copyRssUrl = () => {
   width: 800px;
   margin: 0 auto;
   padding: 2rem;
+  position: relative;
+  z-index: 2;
 }
 
 .rss-content {
@@ -89,6 +91,8 @@ const copyRssUrl = () => {
   border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 2;
 }
 
 h1 {
@@ -168,4 +172,4 @@ h3 {
 .recommended-readers a:hover {
   color: var(--el-color-primary-light-3);
 }
-</style> 
+</style>

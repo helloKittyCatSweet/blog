@@ -84,6 +84,7 @@ public class OAuth2Controller {
 
             String password = request.get("password");
             String email = request.get("email");
+            String state = request.get("state");
 
             log.debug("Extracted parameters - password: {}, email: {}",
                     password != null ? "PROVIDED" : "NULL",
@@ -99,7 +100,7 @@ public class OAuth2Controller {
                 return Response.error(HttpStatus.BAD_REQUEST, "邮箱不能为空");
             }
 
-            LoginResponseDto loginResponse = oAuth2Service.processGithubLogin(password, email);
+            LoginResponseDto loginResponse = oAuth2Service.processGithubLogin(password, email, state);
             log.debug("Registration successful for email: {}", email);
             return Response.ok(loginResponse);
 
