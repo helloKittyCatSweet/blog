@@ -18,6 +18,9 @@
   background-color: var(--el-bg-color-page);
   padding: 1.5rem 0;
   margin-top: auto;
+  position: relative;  /* 添加相对定位 */
+  z-index: 1000;      /* 添加z-index确保在背景之上 */
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.1);  /* 添加阴影效果 */
 }
 
 .footer-content {

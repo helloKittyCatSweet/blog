@@ -31,10 +31,10 @@ const submitForm = async () => {
     // 1. 表单验证
     await formRef.value.validate();
     loading.value = true;
-    
+
     // 2. 发送请求
     const response = await sendContactMessage(form.value);
-    
+
     // 3. 处理响应
     if (response.data && response.data.status === 200) {
       ElMessage.success('消息已发送，我们会尽快回复您！');
@@ -65,7 +65,7 @@ const submitForm = async () => {
   <div class="contact-container">
     <div class="contact-content">
       <h1>联系我</h1>
-      
+
       <div class="description">
         <p>如果您有任何问题、建议或合作意向，请随时与我联系。</p>
       </div>
@@ -117,13 +117,13 @@ const submitForm = async () => {
 
         <div class="contact-info">
           <h2>其他联系方式</h2>
-          
+
           <div class="info-list">
             <div class="info-item">
               <el-icon><Message /></el-icon>
               <span>邮箱：contact@freeshare.com</span>
             </div>
-            
+
             <div class="social-links">
               <h3>社交媒体</h3>
               <div class="links-list">
@@ -147,6 +147,8 @@ const submitForm = async () => {
   max-width: 1000px;
   margin: 0 auto;
   padding: 2rem;
+  position: relative;  /* 添加相对定位 */
+  z-index: 1000;      /* 添加z-index确保在背景之上 */
 }
 
 .contact-content {
@@ -154,6 +156,8 @@ const submitForm = async () => {
   border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  position: relative;  /* 添加相对定位 */
+  z-index: 1;         /* 确保内容在背景之上 */
 }
 
 h1 {
@@ -185,6 +189,9 @@ h1 {
   background-color: var(--el-bg-color-page);
   border-radius: 6px;
   padding: 1.5rem;
+  position: relative;  /* 添加相对定位 */
+  z-index: 2;         /* 确保表单和信息在背景之上 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);  /* 添加轻微阴影 */
 }
 
 h2 {
@@ -257,4 +264,4 @@ h3 {
   background: #409eff !important;
   opacity: 0.9;
 }
-</style> 
+</style>

@@ -192,13 +192,19 @@ const router = useRouter();
 // 处理聊天按钮点击
 const messageStore = useMessageStore();
 const handleChat = (row) => {
+  // 设置当前接收者信息
   messageStore.setCurrentReceiver({
     receiverId: row.receiverId,
     receiverName: row.receiverName,
     receiverAvatar: row.receiverAvatar,
   });
+
+  // 跳转到聊天窗口，并传递 receiverId 作为查询参数
   router.push({
-    path: USER_MESSAGE_DETAIL_PATH.replace(":receiverId", row.receiverId),
+    path: USER_MESSAGE_DETAIL_PATH,
+    query: {
+      receiverId: row.receiverId
+    }
   });
 };
 

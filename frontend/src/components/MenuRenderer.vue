@@ -43,11 +43,25 @@ const getRouteValue = (routeName) => {
 .el-sub-menu {
   background-color: var(--menu-bg) !important;
   position: relative;
-  z-index: 2;
+  z-index: 1000 !important;  /* 提高 z-index 值 */
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);  /* 添加阴影 */
 }
 
 .el-menu-item:hover,
 .el-sub-menu:hover {
   background-color: var(--hover-bg) !important;
+}
+
+/* 添加子菜单样式 */
+:deep(.el-sub-menu__title) {
+  z-index: 1000 !important;
+  position: relative;
+}
+
+:deep(.el-menu--popup) {
+  z-index: 1001 !important;  /* 确保弹出菜单在最上层 */
+  background-color: var(--menu-bg) !important;
+  border: 1px solid var(--el-border-color-light);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
 }
 </style>

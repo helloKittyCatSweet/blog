@@ -77,53 +77,34 @@ export const userMenus = [
   },
   {
     icon: Files,
-    title: '内容管理',
-    index: USER,
+    title: '文章管理',
+    index: USER_POST_MANAGE_PATH,
+    roles: [ROLES.USER],
     children: [
       {
-        icon: Files,
-        title: '文章管理',
-        index: USER_POST_MANAGE_PATH,
-        roles: [ROLES.USER],
-        children: [
-          {
-            icon: List,
-            title: '文章列表',
-            index: USER_POST_LIST_PATH,
-            roles: [ROLES.USER]
-          },
-          {
-            icon: Edit,
-            title: '写文章',
-            index: USER_POST_CREATE_PATH,
-            roles: [ROLES.USER]
-          },
-          {
-            icon: Document,
-            title: '文章附件管理',
-            index: USER_POST_ATTACHMENT_LIST_PATH,
-            roles: [ROLES.USER]
-          },
-          {
-            icon: Comment,
-            title: '文章评论管理',
-            index: USER_POST_COMMENT_MANAGE_PATH,
-            roles: [ROLES.USER]
-          },
-        ]
+        icon: List,
+        title: '文章列表',
+        index: USER_POST_LIST_PATH,
+        roles: [ROLES.USER]
+      },
+      {
+        icon: Edit,
+        title: '写文章',
+        index: USER_POST_CREATE_PATH,
+        roles: [ROLES.USER]
+      },
+      {
+        icon: Document,
+        title: '文章附件管理',
+        index: USER_POST_ATTACHMENT_LIST_PATH,
+        roles: [ROLES.USER]
       },
       {
         icon: Comment,
-        title: '我的评论',
-        index: USER_COMMENT_MANAGE_PATH,
+        title: '文章评论管理',
+        index: USER_POST_COMMENT_MANAGE_PATH,
         roles: [ROLES.USER]
       },
-      {
-        icon: StarFilled,
-        title: '收藏夹',
-        index: USER_FAVORITE_MANAGE_PATH,
-        roles: [ROLES.USER]
-      }
     ]
   },
   {
@@ -147,8 +128,20 @@ export const userMenus = [
         icon: InfoFilled,
         title: '点赞/收藏',
         index: USER_LIKE_REPORT,
-      }
+      },
+      {
+        icon: Comment,
+        title: '我的评论',
+        index: USER_COMMENT_MANAGE_PATH,
+        roles: [ROLES.USER]
+      },
     ]
+  },
+  {
+    icon: StarFilled,
+    title: '收藏夹',
+    index: USER_FAVORITE_MANAGE_PATH,
+    roles: [ROLES.USER]
   },
   {
     icon: Bell,
@@ -222,15 +215,12 @@ export const adminMenus = [
           }
         ]
       },
-
       {
         icon: Bell,
         title: '举报管理',
         index: ADMIN_REPORT_MANAGE_PATH,
         roles: [ROLES.REPORT_MANAGER, ROLES.SYSTEM_ADMINISTRATOR]
-      }
-
-      ,
+      },
       {
         icon: UserFilled,
         title: '用户权限管理',
