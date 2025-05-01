@@ -136,7 +136,8 @@ const handleSearch = async () => {
     const { data } = await findByUserId({
       page: searchForm.value.currentPage - 1,
       size: searchForm.value.pageSize,
-      keyword: searchForm.value.keyword
+      keyword: searchForm.value.keyword,
+      sorts: "createdAt,desc"
     });
     if (data.status === 200) {
       favorites.value = data.data.content;

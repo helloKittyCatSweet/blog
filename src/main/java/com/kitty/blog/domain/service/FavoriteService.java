@@ -93,8 +93,8 @@ public class FavoriteService {
         if (!favoriteRepository.existsById(favorite.getFavoriteId())) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
-        final Favorite oldFavorite = (Favorite)
-                favoriteRepository.findById(favorite.getFavoriteId()).orElse(new Favorite());
+        final Favorite oldFavorite = (Favorite) favoriteRepository.findById(favorite.getFavoriteId())
+                .orElse(new Favorite());
         try {
             UpdateUtil.updateNotNullProperties(favorite, oldFavorite);
         } catch (IllegalAccessException e) {
@@ -105,16 +105,21 @@ public class FavoriteService {
     }
 
     @Transactional
-    @Cacheable(key = "#userId")
-    public Page<FavoriteDto> findByUserId(Integer userId, Integer page, Integer size, String[] sort) {
-        if (!userRepository.existsById(userId)){
+    @Cacheable(key = "#userId + '_' + #keyword")
+    public Page<FavoriteDto> findByUserId(Integer userId, Integer page, Integer size, String[] sort, String keyword) {
+        if (!userRepository.existsById(userId)) {
             return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0);
-        }else {
+        } else {
             PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
-            Page<Favorite> favorites = favoriteRepository.findByUserId(userId, pageRequest);
+            Page<Favorite> favorites;
+            if (keyword != null && !keyword.isEmpty()) {
+                favorites = favoriteRepository.findByUserIdAndKeyword(userId, keyword, pageRequest);
+            } else {
+                favorites = favoriteRepository.findByUserId(userId, pageRequest);
+            }
 
-            return favorites.map(favorite ->
-                    new FavoriteDto(postRepository.findById(favorite.getPostId()).orElse(new Post()),
+            return favorites
+                    .map(favorite -> new FavoriteDto(postRepository.findById(favorite.getPostId()).orElse(new Post()),
                             favorite.getFavoriteId(),
                             favorite.getFolderName()));
         }
@@ -123,27 +128,27 @@ public class FavoriteService {
     @Transactional
     @CacheEvict(allEntries = true)
     public ResponseEntity<Integer> countByUserId(Integer userId) {
-        if (!userRepository.existsById(userId)){
-            return new ResponseEntity<>(-1,HttpStatus.NOT_FOUND);
+        if (!userRepository.existsById(userId)) {
+            return new ResponseEntity<>(-1, HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(favoriteRepository.countByUserId(userId), HttpStatus.OK);
     }
 
-//    @Transactional
-//    public ResponseEntity<Favorite> findByPostId(Integer postId) {
-//        if (!postRepository.existsById(postId)) {
-//            return new ResponseEntity<>(new Favorite(), HttpStatus.NOT_FOUND);
-//        } else {
-//            return new ResponseEntity<>(
-//                    favoriteRepository.findByPostId(postId).orElse(new Favorite()),
-//                    HttpStatus.OK);
-//        }
-//    }
+    // @Transactional
+    // public ResponseEntity<Favorite> findByPostId(Integer postId) {
+    // if (!postRepository.existsById(postId)) {
+    // return new ResponseEntity<>(new Favorite(), HttpStatus.NOT_FOUND);
+    // } else {
+    // return new ResponseEntity<>(
+    // favoriteRepository.findByPostId(postId).orElse(new Favorite()),
+    // HttpStatus.OK);
+    // }
+    // }
 
     @Transactional
     @CacheEvict(allEntries = true)
     public ResponseEntity<Integer> countByPostId(Integer postId) {
-        if (!postRepository.existsById(postId)){
+        if (!postRepository.existsById(postId)) {
             return new ResponseEntity<>(-1, HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(favoriteRepository.countByPostId(postId), HttpStatus.OK);
@@ -153,8 +158,8 @@ public class FavoriteService {
     @Cacheable(key = "#userId + #postId")
     public ResponseEntity<Favorite> findByUserIdAndPostId(Integer userId, Integer postId) {
         if (!userRepository.existsById(userId) || !postRepository.existsById(postId)) {
-            return new ResponseEntity<>(new Favorite(),HttpStatus.NOT_FOUND);
-        }else {
+            return new ResponseEntity<>(new Favorite(), HttpStatus.NOT_FOUND);
+        } else {
             return new ResponseEntity<>(
                     favoriteRepository.findByUserIdAndPostId(userId, postId).orElse(new Favorite()),
                     HttpStatus.OK);
@@ -162,7 +167,7 @@ public class FavoriteService {
     }
 
     @Transactional
-    public boolean IsUser(Integer userId, Integer testId){
+    public boolean IsUser(Integer userId, Integer testId) {
         return userId.equals(testId);
     }
 
@@ -178,7 +183,7 @@ public class FavoriteService {
 
     @Transactional
     @Cacheable(key = "#id")
-    public ResponseEntity<Post> findById(Integer id){
+    public ResponseEntity<Post> findById(Integer id) {
         Favorite favorite = (Favorite) favoriteRepository.findById(id).orElse(new Favorite());
         return new ResponseEntity<>(
                 postRepository.findById(favorite.getPostId()).orElse(new Post()),
@@ -187,15 +192,13 @@ public class FavoriteService {
 
     @Transactional
     @CacheEvict(allEntries = true)
-    public Page<Post> findAll(Integer page,Integer size, String[] sort){
-        if (favoriteRepository.count() == 0){
+    public Page<Post> findAll(Integer page, Integer size, String[] sort) {
+        if (favoriteRepository.count() == 0) {
             return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0);
-        }else {
+        } else {
             PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
             Page<Favorite> favorites = favoriteRepository.findAll(pageRequest);
-            return favorites.map
-                    (favorite ->
-                            postRepository.findById(favorite.getPostId()).orElse(new Post()));
+            return favorites.map(favorite -> postRepository.findById(favorite.getPostId()).orElse(new Post()));
         }
 
     }
@@ -203,14 +206,14 @@ public class FavoriteService {
     @Transactional
     @CacheEvict(allEntries = true)
     public ResponseEntity<Boolean> deleteById(Integer id, Integer userId) {
-        if (Boolean.FALSE.equals(existsById(id).getBody())){
-            return new ResponseEntity<>(false,HttpStatus.NOT_FOUND);
+        if (Boolean.FALSE.equals(existsById(id).getBody())) {
+            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
         Favorite favorite = favoriteRepository.findById(id).orElse(new Favorite());
-        UserActivity userActivity = userActivityRepository.findPostActivityExplicit
-                        (userId, favorite.getPostId(), ActivityType.FAVORITE.type)
+        UserActivity userActivity = userActivityRepository
+                .findPostActivityExplicit(userId, favorite.getPostId(), ActivityType.FAVORITE.type)
                 .orElse(new UserActivity());
-        if (userActivity.getActivityId() != null){
+        if (userActivity.getActivityId() != null) {
             userActivityRepository.deleteById(userActivity.getActivityId());
         }
         favoriteRepository.deleteById(id);
@@ -244,15 +247,15 @@ public class FavoriteService {
      */
     @Transactional
     @Cacheable(key = "'folder_' + #userId + '_' + #folderName")
-    public Page<FavoriteDto> findByUserIdAndFolderName(Integer userId, String folderName, Integer page, Integer size, String[] sort) {
+    public Page<FavoriteDto> findByUserIdAndFolderName(Integer userId, String folderName, Integer page, Integer size,
+            String[] sort) {
         if (!userRepository.existsById(userId)) {
             return new PageImpl<>(new ArrayList<>(), PageRequest.of(0, size), 0);
         }
         PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
-        Page<Favorite> favorites = favoriteRepository.
-                findByUserIdAndFolderName(userId, folderName, pageRequest);
-        return favorites.map(favorite ->
-                new FavoriteDto(postRepository.findById(favorite.getPostId()).orElse(new Post()),
+        Page<Favorite> favorites = favoriteRepository.findByUserIdAndFolderName(userId, folderName, pageRequest);
+        return favorites
+                .map(favorite -> new FavoriteDto(postRepository.findById(favorite.getPostId()).orElse(new Post()),
                         favorite.getFavoriteId(),
                         favorite.getFolderName()));
     }
@@ -284,8 +287,7 @@ public class FavoriteService {
         }
         return new ResponseEntity<>(
                 favoriteRepository.countByUserIdAndFolderName(userId, folderName),
-                HttpStatus.OK
-        );
+                HttpStatus.OK);
     }
 
     @Transactional

@@ -8,8 +8,8 @@ export const create = (data) => request.post(`${postPrefix}${favoritePrefix}/pub
 export const update = (data) => request.put(`${postPrefix}${favoritePrefix}/public/update`, data)
 
 // 根据用户id查询所有收藏
-export const findByUserId = ({page = 0, size = 10, sorts = "createdAt,desc"} = {}) =>
-  request.get(`${postPrefix}${favoritePrefix}/public/find/list`, {params: {page, size, sorts}})
+export const findByUserId = ({page = 0, size = 10, keyword, sorts = "createdAt,desc"} = {}) =>
+  request.get(`${postPrefix}${favoritePrefix}/public/find/list`, {params: {page, size, keyword, sorts}})
 
 // 获取用户的所有收藏夹名称
 export const getFolderNames = () => request.get(`${postPrefix}${favoritePrefix}/public/find/folder`)
