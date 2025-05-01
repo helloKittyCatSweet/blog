@@ -115,6 +115,7 @@ const loadRoleUsers = async (roleId) => {
     });
     if (response.data.status === 200) {
       roleUsers.value = response.data.data.content;
+      console.log('角色用户数据:', roleUsers.value); // 添加调试日志
       total.value = response.data.data.totalElements;
     } else {
       ElMessage.warning(response.data.message || "获取用户列表失败");
