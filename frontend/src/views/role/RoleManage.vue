@@ -325,25 +325,12 @@ const handleImportError = () => {
     <el-card class="table-card">
       <!-- 添加操作按钮区 -->
       <div class="table-operations">
-        <el-button type="success" :icon="Download" @click="handleExportRoles"
-          >导出角色数据</el-button
-        >
-        <el-upload
-          class="upload-button"
-          :show-file-list="false"
-          :before-upload="handleFileUpload"
-          :on-success="handleImportSuccess"
-          :on-error="handleImportError"
-        >
+        <el-button type="success" :icon="Download" @click="handleExportRoles">导出角色数据</el-button>
+        <el-upload class="upload-button" :show-file-list="false" :before-upload="handleFileUpload"
+          :on-success="handleImportSuccess" :on-error="handleImportError">
           <el-button type="primary" :icon="Upload">导入角色数据</el-button>
         </el-upload>
-        <el-popover
-          placement="bottom"
-          :width="400"
-          trigger="hover"
-          title="Excel 导入格式说明"
-          :show-after="100"
-        >
+        <el-popover placement="bottom" :width="400" trigger="hover" title="Excel 导入格式说明" :show-after="100">
           <template #reference>
             <el-button :icon="InfoFilled" circle type="info" />
           </template>
@@ -408,26 +395,10 @@ const handleImportError = () => {
         <!-- 修改角色列表的操作列 -->
         <el-table-column label="操作" width="220" align="center">
           <template #default="{ row }">
-            <el-tooltip
-              :content="row.description || '暂无描述'"
-              placement="top"
-              effect="dark"
-            >
-              <el-button
-                type="primary"
-                :icon="Edit"
-                circle
-                @click="handleEdit(row)"
-                title="编辑"
-              />
+            <el-tooltip :content="row.description || '暂无描述'" placement="top" effect="dark">
+              <el-button type="primary" :icon="Edit" circle @click="handleEdit(row)" title="编辑" />
             </el-tooltip>
-            <el-button
-              type="info"
-              :icon="User"
-              circle
-              @click="handleViewUsers(row)"
-              title="查看用户"
-            />
+            <el-button type="info" :icon="User" circle @click="handleViewUsers(row)" title="查看用户" />
           </template>
         </el-table-column>
       </el-table>
@@ -442,20 +413,11 @@ const handleImportError = () => {
           <el-input v-model="form.roleName" placeholder="请输入角色名称" />
         </el-form-item>
         <el-form-item label="角色描述" prop="description">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入角色描述"
-          />
+          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入角色描述" />
         </el-form-item>
         <el-form-item label="管理员" prop="administratorName">
           <!-- 该字段的值不可修改 -->
-          <el-input
-            v-model="form.administratorName"
-            placeholder="请输入管理员名称"
-            :disabled="form.roleId !== null"
-          />
+          <el-input v-model="form.administratorName" placeholder="请输入管理员名称" :disabled="form.roleId !== null" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -467,29 +429,23 @@ const handleImportError = () => {
     </el-dialog>
 
     <!-- 添加用户列表抽屉 -->
-    <el-drawer
-      v-model="userDrawerVisible"
-      :title="`${currentRole?.roleName || ''} - 用户列表`"
-      size="80%"
-    >
-    <div>{{ "currentRole.roleName: " + currentRole?.roleName || '' }}</div>
+    <el-drawer v-model="userDrawerVisible" :title="`${currentRole?.roleName || ''} - 用户列表`" size="80%">
+      <div>{{ "currentRole.roleName: " + currentRole?.roleName || '' }}</div>
       <template #header>
         <div style="flex: 1; display: flex; align-items: center; justify-content: space-between;">
           <span>{{ currentRole?.roleName || "" }} - 用户列表</span>
-          <el-button
-            v-if="currentRole?.roleName !== '普通用户'"
-            type="primary"
-            @click="handleAddUsers"
-          >添加用户</el-button>
+          <div>
+            <!-- Debug info -->
+            <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
+              当前角色: {{ currentRole?.roleName }}
+              是否为普通用户: {{ currentRole?.roleName === '普通用户' }}
+            </div>
+            <el-button v-if="currentRole && currentRole.roleName !== '普通用户'" type="primary"
+              @click="handleAddUsers">添加用户</el-button>
+          </div>
         </div>
       </template>
-      <el-table
-        v-loading="roleUsersLoading"
-        :data="roleUsers"
-        border
-        stripe
-        style="width: 100%"
-      >
+      <el-table v-loading="roleUsersLoading" :data="roleUsers" border stripe style="width: 100%">
         <template #empty>
           <el-empty description="暂无用户" />
         </template>
@@ -507,43 +463,21 @@ const handleImportError = () => {
         <!-- 添加操作列 -->
         <el-table-column v-if="currentRole?.roleName !== '普通用户'" label="操作" width="100" align="center">
           <template #default="{ row }">
-            <el-button
-
-              type="danger"
-              :icon="Delete"
-              circle
-              @click="handleRemoveUser(row)"
-              title="移除用户"
-            />
+            <el-button type="danger" :icon="Delete" circle @click="handleRemoveUser(row)" title="移除用户" />
           </template>
         </el-table-column>
       </el-table>
 
-           <!-- 添加分页组件 -->
-     <div class="pagination" style="margin-top: 20px; text-align: right;">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+      <!-- 添加分页组件 -->
+      <div class="pagination" style="margin-top: 20px; text-align: right;">
+        <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
+          :total="total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+          @current-change="handleCurrentChange" />
       </div>
 
       <!-- 添加用户对话框 -->
-      <el-dialog
-        v-model="addUserDialogVisible"
-        title="添加用户"
-        width="50%"
-        append-to-body
-      >
-        <el-table
-          v-loading="loading"
-          :data="allUsers"
-          @selection-change="(val) => (selectedUsers = val)"
-        >
+      <el-dialog v-model="addUserDialogVisible" title="添加用户" width="50%" append-to-body>
+        <el-table v-loading="loading" :data="allUsers" @selection-change="(val) => (selectedUsers = val)">
           <el-table-column type="selection" width="55" />
           <el-table-column prop="username" label="用户名" />
           <el-table-column prop="nickname" label="昵称" />
@@ -654,13 +588,16 @@ const handleImportError = () => {
 
 .import-guide {
   padding: 8px;
-  max-height: 400px; /* 设置最大高度 */
-  overflow-y: auto; /* 添加垂直滚动 */
+  max-height: 400px;
+  /* 设置最大高度 */
+  overflow-y: auto;
+  /* 添加垂直滚动 */
 }
 
 .guide-section {
   margin-bottom: 16px;
-  padding-right: 8px; /* 为滚动条预留空间 */
+  padding-right: 8px;
+  /* 为滚动条预留空间 */
 }
 
 /* 自定义滚动条样式 */
