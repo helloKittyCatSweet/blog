@@ -1,5 +1,5 @@
 // 文章模块下面的api
-export const postPrefix = '/api/post'
+export const postPrefix = '/post'
 export const favoritePrefix = '/favorite'
 export const reportPrefix = '/report'
 export const recommendationPrefix = '/recommendations'
@@ -8,7 +8,7 @@ export const postVersionPrefix = '/postVersion'
 export const exportPrefix = '/export'
 
 // 用户模块下面的api
-export const userPrefix = '/api/user'
+export const userPrefix = '/user'
 export const messagePrefix = '/message'
 export const emailPrefix = '/auth/email'
 export const rolePrefix = '/role'
@@ -21,19 +21,19 @@ export const userFollowPrefix = '/follow'
 export const userRecommendPrefix = '/recommend'
 
 // 统计模块下面的api
-export const statPrefix = '/api/stat'
+export const statPrefix = '/stat'
 
 // 联系模块下面的api
-export const contactPrefix = '/api/contact'
+export const contactPrefix = '/contact'
 
 // comment模块下面的api
-export const commentPrefix = '/api/comment'
-export const categoryPrefix = '/api/category'
-export const tagPrefix = '/api/tag'
+export const commentPrefix = '/comment'
+export const categoryPrefix = '/category'
+export const tagPrefix = '/tag'
 
 // 权限模块下面的api
-export const authPrefix = '/api/auth'
+export const authPrefix = '/auth'
 export const oauth2 = '/oauth2'
 
 // 搜索模块下面的api
-export const searchPrefix = '/api/search'
+export const searchPrefix = '/search'
