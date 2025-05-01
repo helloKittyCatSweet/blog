@@ -94,14 +94,11 @@ const getRoleList = async () => {
 
 // 查看角色用户
 const handleViewUsers = async (row) => {
-  console.log('handleViewUsers called with row:', row);
-  console.log('row.roleName:', row.roleName);
   currentRole.value = row;
-  console.log('currentRole after assignment:', currentRole.value);
-  console.log('currentRole.roleName === "普通用户"', currentRole.value.roleName === "普通用户");
   userDrawerVisible.value = true;
   currentPage.value = 1;
   pageSize.value = 10;
+  console.log('Loading users for role:', row.roleId);
   await loadRoleUsers(row.roleId);
 };
 
@@ -114,9 +111,10 @@ const loadRoleUsers = async (roleId) => {
   roleUsersLoading.value = true;
   try {
     const response = await findRoleUsers(roleId, {
-      page: currentPage.value - 1, // 前端从1开始，后端从0开始
+      page: currentPage.value - 1,
       size: pageSize.value,
     });
+    console.log('Role users response:', response);
     if (response.data.status === 200) {
       roleUsers.value = response.data.data.content;
       total.value = response.data.data.totalElements;
@@ -124,6 +122,7 @@ const loadRoleUsers = async (roleId) => {
       ElMessage.warning(response.data.message || "获取用户列表失败");
     }
   } catch (error) {
+    console.error('Failed to load role users:', error);
     ElMessage.error("获取用户列表失败");
   } finally {
     roleUsersLoading.value = false;
@@ -436,16 +435,6 @@ const handleImportError = () => {
       size="80%"
       :destroy-on-close="false"
     >
-      <!-- Debug info section -->
-      <div class="debug-info" style="margin-bottom: 16px; padding: 8px; background-color: #f5f7fa; border-radius: 4px;">
-        <h4 style="margin: 0 0 8px 0;">Debug Info:</h4>
-        <div>currentRole.roleName: '{{ currentRole?.roleName }}'</div>
-        <div>Type of roleName: {{ typeof currentRole?.roleName }}</div>
-        <div>Is 普通用户: {{ currentRole?.roleName === '普通用户' }}</div>
-        <div>Should show button: {{ currentRole?.roleName !== '普通用户' }}</div>
-        <div>Raw currentRole: {{ JSON.stringify(currentRole) }}</div>
-      </div>
-
       <div class="drawer-header" style="padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dcdfe6;">
         <span class="title">{{ currentRole?.roleName || "" }} - 用户列表</span>
         <el-button 
