@@ -570,9 +570,6 @@ const handleExportChart = () => {
         @update:category="(val) => (selectedCategory = val)"
       >
         <template #extra-buttons>
-          <el-button type="primary" :icon="Plus" @click="handleCreate">
-            写文章
-          </el-button>
           <el-button type="success" :icon="Download" @click="exportToExcel">
             导出Excel
           </el-button>
@@ -582,6 +579,14 @@ const handleExportChart = () => {
 
     <!-- 表格 -->
     <el-card class="table-card">
+
+       <!-- 在表格上方添加操作按钮区域 -->
+       <div class="table-actions">
+        <el-button type="primary" :icon="Plus" @click="handleCreate">
+          写文章
+        </el-button>
+      </div>
+
       <el-table
         v-loading="loading"
         :data="sortedTableData"
@@ -824,5 +829,11 @@ const handleExportChart = () => {
   height: 400px;
   width: 100%;
   margin: 10px 0;
+}
+
+.table-actions {
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: flex-end;
 }
 </style>

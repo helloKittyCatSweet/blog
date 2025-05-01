@@ -18,7 +18,7 @@ import { useMessageStore } from "@/stores/modules/message";
 import { findUserById } from "@/api/user/user";
 import { ArrowDown, ArrowLeft } from "@element-plus/icons-vue";
 import { useSettingsStore } from "@/stores/modules/setting";
-import { USER_MESSAGE_DETAIL_PATH } from "@/constants/routes/user";
+import { USER_MESSAGE_DETAIL_PATH, USER_MESSAGE_MANAGE_PATH } from "@/constants/routes/user";
 import MessageItem from "@/views/message/user/MessageItem.vue";
 
 // WebSocket 状态
@@ -457,15 +457,21 @@ const handleEditMessage = async (updateMessage) => {
 /**
  * 返回按钮
  */
-const handleBack = () => {
-  router.push({
-    path: USER_MESSAGE_DETAIL_PATH,
-    query: {}, // 清除 receiverId 参数
-  });
-  // 清除当前接收者信息
-  messageStore.setCurrentReceiver({});
-  // 清空消息列表
-  messages.value = [];
+ const handleBack = () => {
+  // 如果当前没有选定的用户，跳转到消息列表页面
+  if (!receiverId.value) {
+    router.push(USER_MESSAGE_MANAGE_PATH); // 替换为您的消息列表路由路径
+  } else {
+    // 有选定用户时，清除当前聊天
+    router.push({
+      path: USER_MESSAGE_DETAIL_PATH,
+      query: {}, // 清除 receiverId 参数
+    });
+    // 清除当前接收者信息
+    messageStore.setCurrentReceiver({});
+    // 清空消息列表
+    messages.value = [];
+  }
 };
 </script>
 
@@ -512,7 +518,7 @@ const handleBack = () => {
         <div class="chat-header">
           <el-button link @click="handleBack" class="back-button">
             <el-icon><ArrowLeft /></el-icon>
-            返回
+            {{ !receiverId ? '返回列表' : '返回消息管理'}}
           </el-button>
           <div class="receiver-info">
             <span class="receiver-name">{{ receiverName }}</span>

@@ -2,7 +2,8 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
-import { Warning } from "@element-plus/icons-vue";
+import { Warning, Download } from "@element-plus/icons-vue";
+import { Document } from "@element-plus/icons-vue";
 
 import PageContainer from "@/components/PageContainer.vue";
 import PostHeader from "@/components/blog/post/PostHeader.vue";
@@ -14,7 +15,7 @@ import PostReport from "@/components/blog/post/PostReport.vue";
 import { MdPreview } from "md-editor-v3";
 import "md-editor-v3/lib/style.css";
 
-import { findById } from "@/api/post/post.js";
+import { findById, findAttachmentsByPostId } from "@/api/post/post.js";
 import { findPostExplicit } from "@/api/user/userActivity.js";
 import { useUserStore } from "@/stores/modules/user.js";
 import { LOGIN_PATH } from "@/constants/routes/base.js";
@@ -41,6 +42,7 @@ const post = ref({
   createdTime: "",
   updatedTime: "",
   viewCount: 0,
+  attachments: [], // 添加附件数组
 });
 
 // 获取文章详情
@@ -79,6 +81,7 @@ const getPostDetail = async (id) => {
         createdTime: postData.post.createdAt,
         updatedTime: postData.post.updatedAt,
         viewCount: postData.post.views || 0,
+        attachments: postData.attachments || [], // 初始化附件数组
       };
     }
   } catch (error) {
@@ -98,11 +101,66 @@ const interactionState = ref({
   favoriteActivityId: null, // 收藏获得id
 });
 
+// 添加附件列表状态
+const attachments = ref([]);
+const attachmentsLoading = ref(false);
+
+// 获取文章附件
+const getPostAttachments = async (postId) => {
+  attachmentsLoading.value = true;
+  try {
+    const response = await findAttachmentsByPostId(postId);
+    if (response.data?.status === 200) {
+      attachments.value = response.data.data.map(item => ({
+        id: item.attachmentId,
+        name: formatFileName(item.attachmentName),
+        type: item.attachmentType,
+        url: item.attachmentUrl,
+        size: item.size || 0,
+        uploadTime: item.createdTime
+      }));
+    }
+  } catch (error) {
+    ElMessage.error("获取文章附件失败");
+  } finally {
+    attachmentsLoading.value = false;
+  }
+};
+
+// 格式化文件名 - 去掉时间戳
+const formatFileName = (name) => {
+  const match = name.match(/tmp\d+-?(.*)/);
+  return match ? match[1] : name;
+};
+
+// 格式化文件大小
+const formatFileSize = (size) => {
+  if (size < 1024) {
+    return size + " B";
+  } else if (size < 1024 * 1024) {
+    return (size / 1024).toFixed(2) + " KB";
+  } else if (size < 1024 * 1024 * 1024) {
+    return (size / (1024 * 1024)).toFixed(2) + " MB";
+  } else {
+    return (size / (1024 * 1024 * 1024)).toFixed(2) + " GB";
+  }
+};
+
+// 下载附件
+const handleDownload = (attachment) => {
+  try {
+    window.open(attachment.url, "_blank");
+  } catch (error) {
+    ElMessage.error("下载失败");
+  }
+};
+
 onMounted(async () => {
   const postId = route.params.id;
   if (postId) {
     await getPostDetail(postId);
     await refreshPost();
+    await getPostAttachments(postId); // 获取文章附件
 
     // 设置默认的交互状态
     interactionState.value = {
@@ -249,6 +307,55 @@ const handleAuthorClick = (userId) => {
       <div v-if="post.summary" class="post-summary">
         <div class="summary-title">摘要</div>
         <div class="summary-content">{{ post.summary }}</div>
+      </div>
+
+      <!-- 在文章内容后，交互区域前添加附件展示区域 -->
+      <div v-if="attachments.length > 0" class="post-attachments">
+        <div class="attachments-header">
+          <h3>文章附件</h3>
+          <span class="attachment-count">共 {{ attachments.length }} 个附件</span>
+        </div>
+        <el-table
+          :data="attachments"
+          v-loading="attachmentsLoading"
+          style="width: 100%"
+          class="attachment-table"
+        >
+          <el-table-column prop="name" label="文件名" min-width="300" show-overflow-tooltip>
+            <template #default="{ row }">
+              <div class="file-name">
+                <el-icon class="file-icon"><Document /></el-icon>
+                <span>{{ row.name }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column prop="type" label="类型" width="150" show-overflow-tooltip>
+            <template #default="{ row }">
+              <el-tag size="small">{{ row.type }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="size" label="大小" width="120">
+            <template #default="{ row }">
+              {{ formatFileSize(row.size) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="uploadTime" label="上传时间" width="180">
+            <template #default="{ row }">
+              {{ formatDateTime(row.uploadTime) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="100" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                type="primary"
+                :icon="Download"
+                circle
+                @click="handleDownload(row)"
+                title="下载"
+              />
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
 
       <!-- 文章内容 -->
@@ -488,5 +595,46 @@ const handleAuthorClick = (userId) => {
 .interaction-buttons .el-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.post-attachments {
+  margin: 24px 0;
+  padding: 20px;
+  border-radius: 12px;
+  background-color: var(--el-fill-color-lighter);
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.attachments-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.attachments-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--el-text-color-primary);
+}
+
+.attachment-count {
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
+}
+
+.attachment-table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.file-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-icon {
+  color: var(--el-text-color-secondary);
 }
 </style>

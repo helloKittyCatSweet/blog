@@ -199,6 +199,13 @@ const handleChat = (row) => {
     receiverAvatar: row.receiverAvatar,
   });
 
+  // 标记消息为已读（如果有未读消息）
+  if(row.unreadCount > 0) {
+    readMessage(row.receiverId).then(() => {
+      loadMessages(); // 刷新消息列表
+    });
+  }
+
   // 跳转到聊天窗口，并传递 receiverId 作为查询参数
   router.push({
     path: USER_MESSAGE_DETAIL_PATH,
@@ -325,6 +332,14 @@ const handleSystemSizeChange = (size) => {
   systemPagination.value.currentPage = 1;
   loadSystemMessages();
 };
+
+// 处理行点击
+const handleRowClick = (row) => {
+  // 只有当点击的不是操作按钮时才执行跳转
+  if (!event.target.closest('.el-button')) {
+    handleChat(row);
+  }
+};
 </script>
 
 <template>
@@ -380,6 +395,7 @@ const handleSystemSizeChange = (size) => {
             v-loading="loading"
             style="width: 100%"
             class="chat-list-table"
+            @row-click="handleRowClick"
           >
             <!-- 联系人列 -->
             <el-table-column prop="receiver" label="联系人" min-width="200">
@@ -581,9 +597,14 @@ const handleSystemSizeChange = (size) => {
       }
     }
 
-    :deep(.el-table__cell) {
-      overflow: visible;
+    /* 防止操作按钮区域触发行点击 */
+  :deep(.el-table__cell:last-child) {
+    pointer-events: none;
+
+    .cell {
+      pointer-events: auto;
     }
+  }
   }
 
   .contact-info {
