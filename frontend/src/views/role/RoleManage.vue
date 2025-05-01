@@ -443,19 +443,27 @@ const handleImportError = () => {
         <div>Type of roleName: {{ typeof currentRole?.roleName }}</div>
         <div>Is 普通用户: {{ currentRole?.roleName === '普通用户' }}</div>
         <div>Should show button: {{ currentRole?.roleName !== '普通用户' }}</div>
+        <div>Raw currentRole: {{ JSON.stringify(currentRole) }}</div>
       </div>
 
-      <template #header>
-        <div style="flex: 1; display: flex; align-items: center; justify-content: space-between;">
-          <span>{{ currentRole?.roleName || "" }} - 用户列表</span>
-          <el-button 
-            v-if="currentRole?.roleName !== '普通用户'"
-            type="primary"
-            @click="handleAddUsers"
-          >添加用户</el-button>
-        </div>
-      </template>
-      <el-table v-loading="roleUsersLoading" :data="roleUsers" border stripe style="width: 100%">
+      <div class="drawer-header" style="padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dcdfe6;">
+        <span class="title">{{ currentRole?.roleName || "" }} - 用户列表</span>
+        <el-button 
+          v-if="currentRole && currentRole.roleName && currentRole.roleName !== '普通用户'"
+          type="primary"
+          @click="handleAddUsers"
+        >
+          添加用户
+        </el-button>
+      </div>
+
+      <el-table
+        v-loading="roleUsersLoading"
+        :data="roleUsers"
+        border
+        stripe
+        style="width: 100%; margin-top: 16px;"
+      >
         <template #empty>
           <el-empty description="暂无用户" />
         </template>
