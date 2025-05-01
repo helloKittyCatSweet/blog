@@ -447,20 +447,20 @@ export function checkWebSocketConnection() {
  * @returns {Promise} 返回系统消息列表
  */
 export const getAdminSystemMessages = ({ page = 0, size = 10, sort = "createdAt,desc", keyword = '', targetRole = '' } = {}) =>
-  request.get(`/api/ws/admin/system-messages`, { params: { page, size, sort, keyword, targetRole } });
+  request.get(`/ws/admin/system-messages`, { params: { page, size, sort, keyword, targetRole } });
 
 /**
  * 获取用户收到的系统消息
  * @returns {Promise} 返回系统消息列表
  */
 export const getUserSystemMessages = ({ page = 0, size = 10, sort = "createdAt,desc", keyword = '', targetRole = '' } = {}) =>
-  request.get(`/api/ws/system-messages`, { params: { page, size, sort, keyword, targetRole } });
+  request.get(`/ws/system-messages`, { params: { page, size, sort, keyword, targetRole } });
 
 export const deleteSystemMessage = (messageId) =>
-  request.delete(`/api/ws/system-message/${messageId}`);
+  request.delete(`/ws/system-message/${messageId}`);
 
 export const markSystemMessageAsRead = (messageId) =>
-  request.put(`/api/ws/system-message/${messageId}/read`);
+  request.put(`/ws/system-message/${messageId}/read`);
 
 export const markSystemMessageAsUnread = (messageId) =>
-  request.put(`/api/ws/system-message/${messageId}/unread`);
+  request.put(`/ws/system-message/${messageId}/unread`);
