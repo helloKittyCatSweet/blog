@@ -94,11 +94,13 @@ const getRoleList = async () => {
 
 // 查看角色用户
 const handleViewUsers = async (row) => {
+  console.log('handleViewUsers called with row:', row);
+  console.log('row.roleName:', row.roleName);
   currentRole.value = row;
+  console.log('currentRole after assignment:', currentRole.value);
   userDrawerVisible.value = true;
   currentPage.value = 1;
   pageSize.value = 10;
-  console.log("row:", row);
   await loadRoleUsers(row.roleId);
 };
 
@@ -437,11 +439,15 @@ const handleImportError = () => {
           <div>
             <!-- Debug info -->
             <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-              当前角色: {{ currentRole?.roleName }}
+              当前角色: {{ currentRole?.roleName }} ({{ typeof currentRole?.roleName }})
               是否为普通用户: {{ currentRole?.roleName === '普通用户' }}
+              roleName 完整值: '{{ currentRole?.roleName }}'
             </div>
-            <el-button v-if="currentRole && currentRole.roleName !== '普通用户'" type="primary"
-              @click="handleAddUsers">添加用户</el-button>
+            <el-button
+              v-if="currentRole?.roleName && currentRole.roleName !== '普通用户'"
+              type="primary"
+              @click="handleAddUsers"
+            >添加用户</el-button>
           </div>
         </div>
       </template>
