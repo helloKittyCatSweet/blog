@@ -50,25 +50,6 @@ public class WebSocketController {
     @Autowired
     private MyUserDetailService userService;
 
-    @Operation(summary = "获取WebSocket信息")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "成功获取WebSocket信息")
-    })
-    @GetMapping("/info")
-    public ResponseEntity<Response<Map<String, Object>>> getWebSocketInfo(StompHeaderAccessor headerAccessor) {
-        LoginResponseDto user = getCurrentUser(headerAccessor);
-        if (user == null) {
-            return Response.error(HttpStatus.UNAUTHORIZED, "请先登录");
-        }
-
-        Map<String, Object> info = new HashMap<>();
-        info.put("websocket", true);
-        info.put("cookie_needed", false);
-        info.put("origins", Collections.singletonList("*"));
-        info.put("entropy", new Random().nextInt()); // 随机数
-        return Response.ok(info);
-    }
-
     @Operation(summary = "发送WebSocket消息")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "成功发送WebSocket消息")
@@ -167,30 +148,6 @@ public class WebSocketController {
         webSocketService.sendSystemMessage(request, getCurrentUser(headerAccessor));
     }
 
-    // 获取系统消息历史（管理员）
-    @GetMapping("/admin/system-messages")
-    public ResponseEntity<Response<Page<SystemMessageDto>>> getSystemMessages(
-            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "targetRole", required = false) String targetRole,
-            @RequestParam(value = "sort", required = false, defaultValue = "createdAt,desc") String[] sort) {
-        return Response.ok(webSocketService.getSystemMessages(page, size, keyword, targetRole, sort));
-    }
-
-    // 获取用户系统消息
-    @GetMapping("/system-messages")
-    public ResponseEntity<Response<Page<SystemMessageDto>>> getUserSystemMessages(
-            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "keyword", required = false) String keyword,
-            @RequestParam(value = "targetRole", required = false) String targetRole,
-            @RequestParam(value = "sort", required = false, defaultValue = "createdAt,desc") String[] sort) {
-        LoginResponseDto currentUser = getCurrentUser(null);
-        assert currentUser != null;
-        return Response.ok(webSocketService.getUserSystemMessages(currentUser, page, size, keyword, targetRole, sort));
-    }
-
     private LoginResponseDto getCurrentUser(StompHeaderAccessor headerAccessor) {
         if (headerAccessor != null && headerAccessor.getSessionAttributes() != null) {
             // For WebSocket connections
@@ -205,40 +162,5 @@ public class WebSocketController {
             }
         }
         return null;
-    }
-
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_SYSTEM_ADMINISTRATOR)")
-    @DeleteMapping("/system-message/{id}")
-    @Operation(summary = "删除系统消息")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "成功删除系统消息")
-    })
-    public ResponseEntity<Response<Boolean>> deleteById(@PathVariable Integer id) {
-        webSocketService.deleteById(id);
-        return Response.ok(true);
-    }
-
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
-    @PutMapping("/system-message/{id}/read")
-    @Operation(summary = "标记系统消息为已读")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "成功标记系统消息为已读")
-    })
-    public ResponseEntity<Response<Boolean>> markSystemMessageAsRead(@PathVariable Integer id) {
-        LoginResponseDto currentUser = getCurrentUser(null);
-        webSocketService.markSystemMessageAsRead(id, currentUser.getId());
-        return Response.ok(true);
-    }
-
-    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
-    @PutMapping("/system-message/{id}/unread")
-    @Operation(summary = "标记系统消息为未读")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "成功标记系统消息为未读")
-    })
-    public ResponseEntity<Response<Boolean>> markSystemMessageAsUnread(@PathVariable Integer id) {
-        LoginResponseDto currentUser = getCurrentUser(null);
-        webSocketService.markSystemMessageAsUnread(id, currentUser.getId());
-        return Response.ok(true);
     }
 }
