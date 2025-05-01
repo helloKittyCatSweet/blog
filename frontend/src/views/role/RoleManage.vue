@@ -407,8 +407,6 @@ const handleImportError = () => {
       </el-table>
     </el-card>
 
-
-
     <!-- 编辑对话框 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
@@ -432,24 +430,29 @@ const handleImportError = () => {
     </el-dialog>
 
     <!-- 添加用户列表抽屉 -->
-    <el-drawer v-model="userDrawerVisible" :title="`${currentRole?.roleName || ''} - 用户列表`" size="80%">
-      <div>{{ "currentRole.roleName: " + currentRole?.roleName || '' }}</div>
+    <el-drawer 
+      v-model="userDrawerVisible"
+      :title="`${currentRole?.roleName || ''} - 用户列表`"
+      size="80%"
+      :destroy-on-close="false"
+    >
+      <!-- Debug info section -->
+      <div class="debug-info" style="margin-bottom: 16px; padding: 8px; background-color: #f5f7fa; border-radius: 4px;">
+        <h4 style="margin: 0 0 8px 0;">Debug Info:</h4>
+        <div>currentRole.roleName: '{{ currentRole?.roleName }}'</div>
+        <div>Type of roleName: {{ typeof currentRole?.roleName }}</div>
+        <div>Is 普通用户: {{ currentRole?.roleName === '普通用户' }}</div>
+        <div>Should show button: {{ currentRole?.roleName !== '普通用户' }}</div>
+      </div>
+
       <template #header>
         <div style="flex: 1; display: flex; align-items: center; justify-content: space-between;">
           <span>{{ currentRole?.roleName || "" }} - 用户列表</span>
-          <div>
-            <!-- Debug info -->
-            <div style="font-size: 12px; color: #666; margin-bottom: 5px;">
-              当前角色: {{ currentRole?.roleName }} ({{ typeof currentRole?.roleName }})
-              是否为普通用户: {{ currentRole?.roleName === '普通用户' }}
-              roleName 完整值: '{{ currentRole?.roleName }}'
-            </div>
-            <el-button
-              v-if="currentRole?.roleName && currentRole.roleName !== '普通用户'"
-              type="primary"
-              @click="handleAddUsers"
-            >添加用户</el-button>
-          </div>
+          <el-button 
+            v-if="currentRole?.roleName !== '普通用户'"
+            type="primary"
+            @click="handleAddUsers"
+          >添加用户</el-button>
         </div>
       </template>
       <el-table v-loading="roleUsersLoading" :data="roleUsers" border stripe style="width: 100%">
