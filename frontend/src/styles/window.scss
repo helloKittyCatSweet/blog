@@ -1,10 +1,12 @@
 // 窗口相关样式
 .window {
-  background: #fff;
+  background: var(--card-bg);
   border-radius: 4px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   padding: 20px;
   margin-bottom: 20px;
+  position: relative;
+  z-index: 1;  // 确保窗口在花纹上层
 }
 
 .window-header {

@@ -1,4 +1,16 @@
 /* Element Plus 全局样式覆盖 */
+/* 确保所有 Element Plus 组件有纯净的背景 */
+.el-card,
+.el-dropdown-menu,
+.el-menu,
+.el-table,
+.el-dialog,
+.el-message-box,
+.el-popover {
+  background: var(--card-bg) !important;
+  position: relative;
+  z-index: 1;
+}
 
 /* 按钮基础样式 */
 .el-button {

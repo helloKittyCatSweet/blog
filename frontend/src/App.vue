@@ -53,7 +53,7 @@ router.afterEach(() => {
 
 <template>
   <el-config-provider :locale="zhCn">
-    <div id="app" :class="currentTheme">
+    <div id="app" :class="[currentTheme, 'main-container']">
       <router-view v-if="!isLoading" />
       <div
         v-else
@@ -69,6 +69,7 @@ router.afterEach(() => {
 #app {
   min-height: 100vh;
   transition: background-color 0.3s, color 0.3s;
+  position: relative;  /* 添加相对定位 */
 }
 
 .loading-container {
@@ -76,6 +77,9 @@ router.afterEach(() => {
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;  /* 添加相对定位 */
+  z-index: 1;  /* 确保加载器在花纹上层 */
+  background: var(--card-bg);  /* 使用主题背景色 */
 }
 
 .global-loading-mask {
