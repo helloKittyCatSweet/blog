@@ -153,11 +153,14 @@ const handleAddUsers = async () => {
   try {
     const res = await findAllUser();
     if (res.data.status === 200) {
-      console.log('当前角色:', currentRole.value); // 添加调试日志
+      // 处理嵌套的用户数据结构
+      const allUsersData = res.data.data.content.map(item => item.user);
       // 过滤掉已经有这个角色的用户
-      allUsers.value = res.data.data.content.filter(user =>
-        !user.roles || !user.roles.some(role => role.roleId === currentRole.value?.roleId)
+      allUsers.value = allUsersData.filter(user =>
+        !roleUsers.value.some(roleUser => roleUser.userId === user.userId)
       );
+    } else {
+      ElMessage.warning(res.data.message || "获取用户列表失败");
     }
   } catch (error) {
     console.error('获取用户列表失败:', error);
@@ -483,17 +486,42 @@ const handleImportError = () => {
       </div>
 
       <!-- 添加用户对话框 -->
-      <el-dialog v-model="addUserDialogVisible" title="添加用户" width="50%" append-to-body>
-        <el-table v-loading="loading" :data="allUsers" @selection-change="(val) => (selectedUsers = val)">
+      <el-dialog
+        v-model="addUserDialogVisible"
+        title="添加用户"
+        width="50%"
+        append-to-body
+        destroy-on-close
+      >
+        <el-table
+          :data="allUsers"
+          @selection-change="(val) => (selectedUsers = val)"
+          style="width: 100%"
+        >
           <el-table-column type="selection" width="55" />
           <el-table-column prop="username" label="用户名" />
-          <el-table-column prop="nickname" label="昵称" />
-          <el-table-column prop="email" label="邮箱" />
+          <el-table-column prop="email" label="邮箱" show-overflow-tooltip />
+          <el-table-column prop="lastLoginTime" label="最后登录时间" show-overflow-tooltip>
+            <template #default="{ row }">
+              {{ row.lastLoginTime || '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="isActive" label="状态" width="100">
+            <template #default="{ row }">
+              <el-tag :type="row.isActive ? 'success' : 'danger'">
+                {{ row.isActive ? '已激活' : '已禁用' }}
+              </el-tag>
+            </template>
+          </el-table-column>
         </el-table>
         <template #footer>
           <span class="dialog-footer">
             <el-button @click="addUserDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="confirmAddUsers">确定</el-button>
+            <el-button 
+              type="primary" 
+              @click="confirmAddUsers"
+              :disabled="selectedUsers.length === 0"
+            >确定</el-button>
           </span>
         </template>
       </el-dialog>
