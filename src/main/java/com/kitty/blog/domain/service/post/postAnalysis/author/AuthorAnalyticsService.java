@@ -74,8 +74,15 @@ public class AuthorAnalyticsService {
                     analyticsExecutor);
 
             CompletableFuture<List<UserActivity>> activitiesFuture = CompletableFuture.supplyAsync(
-                    () -> userActivityRepository.findByUserId(authorId)
-                            .orElse(Collections.emptyList()),
+                    () -> {
+                        List<Post> posts = postRepository.findByUserId(authorId)
+                                .orElse(Collections.emptyList());
+                        List<Integer> postIds = posts.stream()
+                                .map(Post::getPostId)
+                                .collect(Collectors.toList());
+                        return userActivityRepository.findByPostIdIn(postIds)
+                                .orElse(Collections.emptyList());
+                    },
                     analyticsExecutor);
 
             // 等待数据获取完成

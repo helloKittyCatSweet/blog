@@ -105,5 +105,5 @@ public interface UserActivityRepository extends BaseRepository<UserActivity, Int
        """, nativeQuery = true)
     List<UserActivity> findPostInteractions(@Param("authorId") Integer authorId);
 
-    List<UserActivity> findByPostIdIn(List<Integer> postIds);
+    Optional<List<UserActivity>> findByPostIdIn(List<Integer> postIds);
 }
