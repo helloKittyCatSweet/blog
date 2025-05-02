@@ -15,7 +15,7 @@ filebeat.inputs:
 - type: log
   enabled: true
   paths:
-    - /var/log/blog/blog-error-log-*.json
+    - /var/log/blog/blog-error-*.json
   json.keys_under_root: true
   json.add_error_key: true
   json.ignore_decoding_error: true

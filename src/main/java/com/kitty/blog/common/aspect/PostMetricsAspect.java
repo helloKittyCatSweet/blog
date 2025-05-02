@@ -91,21 +91,24 @@ public class PostMetricsAspect {
                     } else {
                         metrics.put("post_title", "未找到文章");
                         metrics.put("user_id", "unknown");
+                        log.error("文章不存在: {}", postId);
                     }
                 } catch (Exception e) {
-                    log.warn("Failed to fetch post details for id {}: {}", postId, e.getMessage());
+                    log.error("获取文章详情失败: {}", e.getMessage(), e);
                     metrics.put("post_title", "获取文章信息失败");
                     metrics.put("user_id", "unknown");
                 }
             } else {
                 metrics.put("post_title", "无文章ID");
                 metrics.put("user_id", "unknown");
+                log.error("文章ID为空");
             }
             metrics.put("success", success);
             metrics.put("duration", duration);
 
             if (errorMessage != null) {
                 metrics.put("error_message", errorMessage);
+                log.error("操作失败: {}", errorMessage);
             }
 
             // 添加标签
@@ -114,7 +117,7 @@ public class PostMetricsAspect {
             log.info("Post Metrics: {}",
                     net.logstash.logback.argument.StructuredArguments.entries(metrics));
         } catch (Exception e) {
-            log.error("Failed to record post metrics", e);
+            log.error("记录文章指标失败", e);
         }
     }
 }
