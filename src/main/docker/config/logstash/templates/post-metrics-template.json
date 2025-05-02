@@ -64,6 +64,9 @@
         },
         "service": {
           "type": "keyword"
+        },
+        "view_count": {
+          "type": "long"
         }
       }
     }
