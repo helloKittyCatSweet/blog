@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URLEncoder;
@@ -32,6 +33,7 @@ public class PostExportController {
     @Autowired
     private PostService postService;
 
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "导出文章为PDF", description = "导出文章为PDF")
     @GetMapping("/public/pdf/{postId}")
     @ApiResponses(value = {
@@ -64,6 +66,7 @@ public class PostExportController {
         }
     }
 
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "导出文章为Markdown", description = "导出文章为Markdown")
     @GetMapping("/public/markdown/{postId}")
     @ApiResponses(value = {

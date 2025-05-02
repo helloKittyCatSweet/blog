@@ -6,6 +6,8 @@ import com.kitty.blog.infrastructure.converter.StringConverter;
 import com.kitty.blog.infrastructure.utils.es.EsSyncPostRelevantUtil;
 import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +31,10 @@ public class SearchController {
 
     @Operation(summary = "搜索文章")
     @GetMapping("/public/posts")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "搜索成功"),
+            @ApiResponse(responseCode = "500", description = "搜索失败")
+    })
     public ResponseEntity<Response<Page<PostDto>>> searchPosts(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
@@ -44,6 +50,10 @@ public class SearchController {
 
     @Operation(summary = "搜索文章建议")
     @GetMapping("/public/suggest/post")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取搜索建议成功"),
+            @ApiResponse(responseCode = "500", description = "获取搜索建议失败")
+    })
     public ResponseEntity<Response<List<String>>> suggestPost(@RequestParam String keyword) {
         try {
             keyword = StringConverter.convertUpperCaseToLowerCase(keyword);
@@ -56,6 +66,10 @@ public class SearchController {
 
     @Operation(summary = "搜索分类建议")
     @GetMapping("/public/suggest/category")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取搜索建议成功"),
+            @ApiResponse(responseCode = "500", description = "获取搜索建议失败")
+    })
     public ResponseEntity<Response<List<String>>> suggestCategory(@RequestParam String keyword) {
         try {
             keyword = StringConverter.convertUpperCaseToLowerCase(keyword);
@@ -68,6 +82,10 @@ public class SearchController {
 
     @Operation(summary = "搜索标签建议")
     @GetMapping("/public/suggest/tag")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取搜索建议成功"),
+            @ApiResponse(responseCode = "500", description = "获取搜索建议失败")
+    })
     public ResponseEntity<Response<List<String>>> suggestTag(@RequestParam String keyword) {
         try {
             keyword = StringConverter.convertUpperCaseToLowerCase(keyword);
@@ -80,6 +98,10 @@ public class SearchController {
 
     @Operation(summary = "检查索引")
     @GetMapping("/admin/check-index")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "检查索引成功"),
+            @ApiResponse(responseCode = "500", description = "检查索引失败")
+    })
     public ResponseEntity<Response<String>> checkIndex() {
         try {
             long count = esSyncPostRelevantUtil.checkIndexContent();

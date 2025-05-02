@@ -36,7 +36,7 @@ public class SwaggerConfig {
     public GroupedOpenApi userModuleApi() {
         return GroupedOpenApi.builder()
                 .group("用户模块") // Swagger UI 下拉框中显示的名字
-                .pathsToMatch("/api/user/**")
+                .pathsToMatch("/api/user/**", "/api/auth/**")
                 .build();
     }
 
@@ -62,7 +62,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi webSocketApi() {
         return GroupedOpenApi.builder()
-                .group("WebSocket") // Swagger UI 下拉框中显示的名字
+                .group("WebSocket和系统消息") // Swagger UI 下拉框中显示的名字
                 .pathsToMatch("/api/ws/**")
                 .build();
     }
@@ -91,6 +91,15 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("统计数据") // Swagger UI 下拉框中显示的名字
                 .pathsToMatch("/api/stat/**")
+                .build();
+    }
+
+    // 联系我们模块
+    @Bean
+    public GroupedOpenApi contactApi() {
+        return GroupedOpenApi.builder()
+                .group("联系我们") // Swagger UI 下拉框中显示的名字
+                .pathsToMatch("/api/contact/**")
                 .build();
     }
 }

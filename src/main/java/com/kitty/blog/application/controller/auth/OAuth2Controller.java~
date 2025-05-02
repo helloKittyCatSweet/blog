@@ -4,8 +4,6 @@ import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.service.auth.OAuth2Service;
 import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,10 +32,6 @@ public class OAuth2Controller {
 
     @Operation(summary = "获取GitHub登录URL", description = "获取GitHub OAuth2登录地址")
     @GetMapping("/github/url")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "成功获取GitHub登录URL"),
-            @ApiResponse(responseCode = "500", description = "获取GitHub登录URL失败")
-    })
     public ResponseEntity<Response<String>> getGithubLoginUrl() {
         String clientId = environment.getProperty("spring.security.oauth2.client.registration.github.client-id");
         // 设置回调地址为前端的回调路由
@@ -64,11 +58,6 @@ public class OAuth2Controller {
 
     @Operation(summary = "GitHub回调", description = "处理GitHub OAuth2回调，检查用户是否存在")
     @GetMapping("/github/callback")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "成功处理GitHub回调，用户已注册"),
-            @ApiResponse(responseCode = "400", description = "处理GitHub回调失败，请求参数错误"),
-            @ApiResponse(responseCode = "500", description = "处理GitHub回调失败，服务器内部错误")
-    })
     public ResponseEntity<Response<LoginResponseDto>> githubCallback(@RequestParam("code") String code) {
         try {
             if (code == null) {
@@ -87,11 +76,6 @@ public class OAuth2Controller {
 
     @Operation(summary = "完成GitHub注册", description = "完成GitHub用户注册，设置密码和邮箱")
     @PostMapping("/github/complete-registration")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "成功完成GitHub注册"),
-            @ApiResponse(responseCode = "400", description = "完成GitHub注册失败，请求参数错误"),
-            @ApiResponse(responseCode = "500", description = "完成GitHub注册失败，服务器内部错误")
-    })
     public ResponseEntity<Response<LoginResponseDto>> completeGithubRegistration(
             @RequestBody Map<String, String> request) {
         try {

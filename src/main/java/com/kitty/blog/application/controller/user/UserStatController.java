@@ -50,8 +50,13 @@ public class UserStatController {
                 HttpStatus.INTERNAL_SERVER_ERROR, "获取统计数据失败");
     }
 
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "获取月度统计数据")
     @GetMapping("/public/dashboard/monthly-stats")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
     public ResponseEntity<Response<Map<String, Object>>> getMonthlyStats
             (@AuthenticationPrincipal LoginResponseDto user) {
         Map<String, Object> stats = userStatisticsService.getMonthlyStats(user.getId());
@@ -62,8 +67,13 @@ public class UserStatController {
         );
     }
 
+    @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @Operation(summary = "获取最近发布的文章")
     @GetMapping("/public/dashboard/recent-posts")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "获取成功"),
+            @ApiResponse(responseCode = "500", description = "服务器内部错误")
+    })
     public ResponseEntity<Response<List<PostDto>>> getRecentPosts
             (@AuthenticationPrincipal LoginResponseDto user) {
         List<PostDto> posts = userStatisticsService.getRecentPosts(user.getId()).getBody();
