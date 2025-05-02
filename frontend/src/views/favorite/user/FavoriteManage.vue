@@ -271,23 +271,15 @@ const getFolderStats = async () => {
         </div>
       </div>
       <div class="search-bar">
-        <el-input
-          v-model="searchForm.keyword"
-          placeholder="搜索文章标题"
-          clearable
-          class="search-input"
-          @keyup.enter="handleSearch"
-        >
+        <el-input v-model="searchForm.keyword" placeholder="搜索文章标题" clearable class="search-input"
+          @keyup.enter="handleSearch">
           <template #prefix>
-            <el-icon><Search /></el-icon>
+            <el-icon>
+              <Search />
+            </el-icon>
           </template>
         </el-input>
-        <el-button
-          v-if="searchForm.isGlobalSearch"
-          @click="resetSearch"
-          type="primary"
-          plain
-        >
+        <el-button v-if="searchForm.isGlobalSearch" @click="resetSearch" type="primary" plain>
           退出搜索
         </el-button>
       </div>
@@ -295,11 +287,7 @@ const getFolderStats = async () => {
 
     <!-- 在搜索栏和列表之间添加收藏夹选择器 -->
     <div class="folder-bar">
-      <el-radio-group
-        v-model="currentFolder"
-        @change="handleFolderChange"
-        :disabled="searchForm.isGlobalSearch"
-      >
+      <el-radio-group v-model="currentFolder" @change="handleFolderChange" :disabled="searchForm.isGlobalSearch">
         <el-radio-button v-for="folder in folders" :key="folder" :value="folder">
           {{ folder }}({{ folderStats.byFolder[folder] || 0 }})
         </el-radio-button>
@@ -310,11 +298,7 @@ const getFolderStats = async () => {
     <div v-loading="loading" class="favorite-grid">
       <el-empty v-if="favorites.length === 0" description="暂无收藏" />
 
-      <el-card
-        v-for="item in filteredFavorites"
-        :key="item?.post?.postId || item?.defineModel"
-        class="favorite-card"
-      >
+      <el-card v-for="item in filteredFavorites" :key="item?.post?.postId || item?.defineModel" class="favorite-card">
         <div class="card-content">
           <div class="card-header">
             <h3 class="card-title" @click="handleView(item?.post || item)">
@@ -325,55 +309,61 @@ const getFolderStats = async () => {
             </el-tag>
           </div>
 
+          <!-- 修改卡片操作区域 -->
           <div class="card-actions">
-            <el-tag v-if="searchForm.isGlobalSearch" size="small" type="info">
-              {{ item.folderName || currentFolder }}
-            </el-tag>
-            <el-dropdown v-if="!searchForm.isGlobalSearch" trigger="click">
-              <el-button type="primary" link>
-                <el-icon><More /></el-icon>
+            <div class="action-left">
+              <el-tag v-if="searchForm.isGlobalSearch" size="small" type="info">
+                {{ item.folderName || currentFolder }}
+              </el-tag>
+            </div>
+            <div class="action-right">
+              <!-- 添加条件：只有当有多个文件夹且不是全局搜索时才显示下拉菜单 -->
+              <el-dropdown v-if="!searchForm.isGlobalSearch && folders.length > 1" trigger="click">
+                <el-button type="primary" link>
+                  操作<el-icon class="el-icon--right">
+                    <More />
+                  </el-icon>
+                </el-button>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <!-- 只显示不是当前文件夹的选项 -->
+                    <el-dropdown-item v-for="folder in folders.filter(f => f !== currentFolder)" :key="folder"
+                      @click="handleMove(item, folder)">
+                      移动到 {{ folder }}
+                    </el-dropdown-item>
+                    <el-dropdown-item divided @click="handleDelete(item)">
+                      <span style="color: var(--el-color-danger)">取消收藏</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+              <!-- 当只有一个文件夹时，只显示删除按钮 -->
+              <el-button v-else-if="!searchForm.isGlobalSearch" type="danger" link @click="handleDelete(item)">
+                取消收藏
               </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item
-                    v-if="folders.length > 1"
-                    v-for="folder in folders"
-                    :key="folder"
-                    :disabled="folder === currentFolder"
-                    @click="handleMove(item, folder)"
-                  >
-                    移动到 {{ folder }}
-                  </el-dropdown-item>
-                  <el-dropdown-item
-                    :divided="folders.length > 1"
-                    @click="handleDelete(item)"
-                  >
-                    <span style="color: var(--el-color-danger)">取消收藏</span>
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
+            </div>
           </div>
-
           <p class="card-excerpt">{{ item?.post?.content || item?.content }}</p>
 
           <div class="card-meta">
             <div class="meta-stats">
-              <span
-                ><el-icon><View /></el-icon>
-                {{ item?.post?.views || item?.views || 0 }}</span
-              >
-              <span
-                ><el-icon><Star /></el-icon>
-                {{ item?.post?.likes || item?.likes || 0 }}</span
-              >
-              <span
-                ><el-icon><ChatRound /></el-icon>
-                {{ item?.post?.favorites || item.favorites || 0 }}</span
-              >
+              <span><el-icon>
+                  <View />
+                </el-icon>
+                {{ item?.post?.views || item?.views || 0 }}</span>
+              <span><el-icon>
+                  <Star />
+                </el-icon>
+                {{ item?.post?.likes || item?.likes || 0 }}</span>
+              <span><el-icon>
+                  <ChatRound />
+                </el-icon>
+                {{ item?.post?.favorites || item.favorites || 0 }}</span>
             </div>
             <div class="meta-time">
-              <el-icon><Calendar /></el-icon>
+              <el-icon>
+                <Calendar />
+              </el-icon>
               {{ formatDateTime(item?.post?.createdAt || item?.createdAt).split(" ")[0] }}
             </div>
           </div>
@@ -383,15 +373,9 @@ const getFolderStats = async () => {
 
     <!-- 分页 -->
     <div class="pagination-container">
-      <el-pagination
-        v-model:current-page="searchForm.currentPage"
-        v-model:page-size="searchForm.pageSize"
-        :total="total"
-        :page-sizes="[12, 24, 36, 48]"
-        layout="total, sizes, prev, pager, next, jumper"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
+      <el-pagination v-model:current-page="searchForm.currentPage" v-model:page-size="searchForm.pageSize"
+        :total="total" :page-sizes="[12, 24, 36, 48]" layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange" @current-change="handleCurrentChange" />
     </div>
   </page-container>
 </template>
@@ -516,8 +500,22 @@ const getFolderStats = async () => {
 .card-actions {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   border-top: 1px solid var(--el-border-color-lighter);
   padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+.action-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .pagination-container {

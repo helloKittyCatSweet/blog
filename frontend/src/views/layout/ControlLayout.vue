@@ -117,7 +117,7 @@ const handleUserCommand = async (command) => {
           router
           :collapse="isCollapse"
         >
-          <menu-renderer :menu-config="menus" />
+          <menu-renderer :menu-config="menus" :is-collapsed="isCollapse" />
         </el-menu>
       </el-aside>
 

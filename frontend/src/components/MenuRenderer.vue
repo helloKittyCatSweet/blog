@@ -9,6 +9,10 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  isCollapsed: {
+    type: Boolean,
+    default: false
+  }
 });
 
 // 解析路由常量
@@ -25,15 +29,41 @@ const getRouteValue = (routeName) => {
     <!-- 子菜单 -->
     <el-sub-menu v-if="menu.children" :index="getRouteValue(menu.index)">
       <template #title>
-        <el-icon><component :is="menu.icon" /></el-icon>
-        <span>{{ menu.title }}</span>
+        <el-tooltip
+          v-if="isCollapsed"
+          :content="menu.title"
+          placement="right"
+          :show-after="200"
+        >
+          <div class="menu-item-content">
+            <el-icon><component :is="menu.icon" /></el-icon>
+            <span>{{ menu.title }}</span>
+          </div>
+        </el-tooltip>
+        <div v-else class="menu-item-content">
+          <el-icon><component :is="menu.icon" /></el-icon>
+          <span>{{ menu.title }}</span>
+        </div>
       </template>
-      <menu-renderer :menu-config="menu.children" />
+      <menu-renderer :menu-config="menu.children" :is-collapsed="isCollapsed" />
     </el-sub-menu>
     <!-- 菜单项 -->
     <el-menu-item v-else :index="getRouteValue(menu.index)">
-      <el-icon><component :is="menu.icon" /></el-icon>
-      <span>{{ menu.title }}</span>
+      <el-tooltip
+        v-if="isCollapsed"
+        :content="menu.title"
+        placement="right"
+        :show-after="200"
+      >
+        <div class="menu-item-content">
+          <el-icon><component :is="menu.icon" /></el-icon>
+          <span>{{ menu.title }}</span>
+        </div>
+      </el-tooltip>
+      <template v-else>
+        <el-icon><component :is="menu.icon" /></el-icon>
+        <span>{{ menu.title }}</span>
+      </template>
     </el-menu-item>
   </template>
 </template>
@@ -158,5 +188,11 @@ span {
   height: 100%;
   background-color: var(--active-text);
   border-radius: 3px;
+}
+
+.menu-item-content {
+  display: flex;
+  align-items: center;
+  width: 100%;
 }
 </style>

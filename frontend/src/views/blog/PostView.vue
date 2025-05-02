@@ -102,7 +102,6 @@ const interactionState = ref({
 });
 
 // 添加附件列表状态
-const attachments = ref([]);
 const attachmentsLoading = ref(false);
 
 // 格式化文件名 - 去掉时间戳
@@ -290,25 +289,25 @@ const handleAuthorClick = (userId) => {
       <div v-if="post.attachments.length > 0" class="post-attachments">
         <div class="attachments-header">
           <h3>文章附件</h3>
-          <span class="attachment-count">共 {{ attachments.length }} 个附件</span>
+          <span class="attachment-count">共 {{ post.attachments.length }} 个附件</span>
         </div>
         <el-table
-          :data="attachments"
+          :data="post.attachments"
           v-loading="attachmentsLoading"
           style="width: 100%"
           class="attachment-table"
         >
-          <el-table-column prop="name" label="文件名" min-width="300" show-overflow-tooltip>
+          <el-table-column prop="attachmentName" label="文件名" min-width="300" show-overflow-tooltip>
             <template #default="{ row }">
               <div class="file-name">
                 <el-icon class="file-icon"><Document /></el-icon>
-                <span>{{ row.name }}</span>
+                <span>{{ formatFileName(row.attachmentName) }}</span>
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="type" label="类型" width="150" show-overflow-tooltip>
+          <el-table-column prop="attachmentType" label="类型" width="150" show-overflow-tooltip>
             <template #default="{ row }">
-              <el-tag size="small">{{ row.type }}</el-tag>
+              <el-tag size="small">{{ row.attachmentType.split('/').pop().toUpperCase() }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="size" label="大小" width="120">
