@@ -47,6 +47,14 @@ public class UserActivityAspect {
         try {
             Map<String, Object> activity = new HashMap<>();
 
+            String userId = "anonymous";
+            if (authentication != null && authentication
+                    .getPrincipal() instanceof org.springframework.security.core.userdetails.UserDetails) {
+                org.springframework.security.core.userdetails.UserDetails userDetails = (org.springframework.security.core.userdetails.UserDetails) authentication
+                        .getPrincipal();
+                userId = userDetails.getUsername();
+            }
+
             // 基础字段
             activity.put("@timestamp", LocalDateTime.now().toInstant(ZoneOffset.UTC).toString());
             activity.put("log_type", "user-activity");
@@ -54,7 +62,7 @@ public class UserActivityAspect {
             activity.put("level", "INFO");
 
             // 用户信息
-            activity.put("user_id", authentication != null ? authentication.getName() : "anonymous");
+            activity.put("user_id", userId);
             activity.put("activity_type", activityType);
             activity.put("success", success);
             activity.put("duration", duration);

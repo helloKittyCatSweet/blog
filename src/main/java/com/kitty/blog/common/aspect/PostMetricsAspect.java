@@ -72,9 +72,26 @@ public class PostMetricsAspect {
             // 操作信息
             metrics.put("operation", operation);
             metrics.put("post_id", postId);
-            Post post = postRepository.findById(postId.intValue()).get();
-            metrics.put("post_title", post.getTitle());
-            metrics.put("user_id", post.getUserId());
+            if (postId != null) {
+                try {
+                    Post post = postRepository.findById(postId.intValue())
+                            .orElse(null);
+                    if (post != null) {
+                        metrics.put("post_title", post.getTitle());
+                        metrics.put("user_id", post.getUserId());
+                    } else {
+                        metrics.put("post_title", "未找到文章");
+                        metrics.put("user_id", "unknown");
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to fetch post details for id {}: {}", postId, e.getMessage());
+                    metrics.put("post_title", "获取文章信息失败");
+                    metrics.put("user_id", "unknown");
+                }
+            } else {
+                metrics.put("post_title", "无文章ID");
+                metrics.put("user_id", "unknown");
+            }
             metrics.put("success", success);
             metrics.put("duration", duration);
 

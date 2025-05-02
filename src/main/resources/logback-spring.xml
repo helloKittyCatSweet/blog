@@ -55,23 +55,29 @@
 
     <!-- 错误日志 -->
     <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/blog-error-logs-${CURRENT_DATE}.json</file>
+        <file>${LOG_PATH}/blog-error-${CURRENT_DATE}.json</file>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>ERROR</level>
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/blog-error-logs-%d{yyyy.MM.dd}.json</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/blog-error-%d{yyyy.MM.dd}.json</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
             <customFields>{"application":"blog-system","log_type":"error"}</customFields>
-             <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</timestampPattern>
-            <includeMdcData>true</includeMdcData>
-            <includeContext>true</includeContext>
-            <fieldNames>
-                <tags>[ignore]</tags>
-                <hostname>host</hostname>
-            </fieldNames>
+            <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSS'Z'</timestampPattern>
+        <includeMdcData>true</includeMdcData>
+        <includeContext>true</includeContext>
+        <!-- 修改字段名映射 -->
+        <fieldNames>
+            <timestamp>@timestamp</timestamp>
+            <message>error_message</message>
+            <logger>logger_name</logger>
+            <thread>thread_name</thread>
+            <level>log_level</level>
+            <tags>[ignore]</tags>
+            <hostname>host</hostname>
+        </fieldNames>
             <provider class="net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider"/>
             <provider class="net.logstash.logback.composite.loggingevent.MdcJsonProvider"/>
         </encoder>
