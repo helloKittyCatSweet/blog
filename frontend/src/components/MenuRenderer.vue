@@ -42,13 +42,8 @@ const getRouteValue = (routeName) => {
           <span>{{ menu.title }}</span>
         </template>
       </template>
-      <!-- 子菜单项始终显示完整内容 -->
-      <template v-for="child in menu.children" :key="child.index">
-        <el-menu-item :index="getRouteValue(child.index)">
-          <el-icon><component :is="child.icon" /></el-icon>
-          <span>{{ child.title }}</span>
-        </el-menu-item>
-      </template>
+      <!-- 递归渲染子菜单 -->
+      <menu-renderer :menu-config="menu.children" :is-collapsed="isCollapsed" />
     </el-sub-menu>
 
     <!-- 普通菜单项 -->
