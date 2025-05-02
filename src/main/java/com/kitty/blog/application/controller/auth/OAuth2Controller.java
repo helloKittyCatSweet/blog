@@ -4,6 +4,9 @@ import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.service.auth.OAuth2Service;
 import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,10 +35,22 @@ public class OAuth2Controller {
     @Autowired
     private Environment environment;
 
-    @Operation(summary = "获取GitHub登录URL", description = "获取GitHub OAuth2登录地址")
+    @Operation(
+            summary = "获取GitHub登录URL",
+            description = "获取GitHub OAuth2登录地址",
+            tags = {"OAuth2"})
     @GetMapping("/github/url")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "成功获取GitHub登录URL"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "成功获取GitHub登录URL",
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            mediaType = "application/json",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema(
+                                    implementation = String.class
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "500", description = "获取GitHub登录URL失败")
     })
     public ResponseEntity<Response<String>> getGithubLoginUrl() {
@@ -62,10 +77,43 @@ public class OAuth2Controller {
         return Response.ok(githubAuthUrl);
     }
 
-    @Operation(summary = "GitHub回调", description = "处理GitHub OAuth2回调，检查用户是否存在")
+    @Operation(
+            summary = "GitHub回调",
+            description = "处理GitHub OAuth2回调，检查用户是否存在",
+            tags = {"OAuth2"}
+    )
     @GetMapping("/github/callback")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "成功处理GitHub回调，用户已注册"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "成功处理GitHub回调，用户已注册",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = LoginResponseDto.class),
+                            examples = @ExampleObject(
+                                    name = "成功登录",
+                                    value = """
+                {
+                    "status": 200,
+                    "message": "success",
+                    "data": {
+                        "id": 1,
+                        "username": "kitty",
+                        "password": "xxx",
+                        "token": "xxx",
+                        "isNewUser": false,
+                        "state": "1234567890",
+                        "roles": [
+                            {
+                                "authority": "ROLE_USER"
+                            }
+                        ]
+                    }
+                }
+                """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "400", description = "处理GitHub回调失败，请求参数错误"),
             @ApiResponse(responseCode = "500", description = "处理GitHub回调失败，服务器内部错误")
     })

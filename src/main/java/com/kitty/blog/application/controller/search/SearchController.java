@@ -6,6 +6,7 @@ import com.kitty.blog.infrastructure.converter.StringConverter;
 import com.kitty.blog.infrastructure.utils.es.EsSyncPostRelevantUtil;
 import com.kitty.blog.infrastructure.utils.Response;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,10 +30,78 @@ public class SearchController {
     @Autowired
     private EsSyncPostRelevantUtil esSyncPostRelevantUtil;
 
-    @Operation(summary = "搜索文章")
+    @Operation(
+            summary = "搜索文章",
+            description = "全文搜索搜索文章",
+            tags = {"搜索模块"}
+    )
     @GetMapping("/public/posts")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "搜索成功"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "搜索成功",
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            mediaType = "application/json",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema
+                                    (implementation = Response.class),
+                            examples = @ExampleObject(
+                                    name = "搜索成功",
+                                    value = """
+                                        {
+                                            "status": 200,
+                                            "message": "搜索成功",
+                                            "data": {
+                                                "content": [
+                                                    {
+                                                        "id": 1,
+                                                        "title": "标题1",
+                                                        "summary": "摘要1",
+                                                        "content": "内容1",
+                                                        "author": "作者1",
+                                                        "category": {
+                                                            "id": 1,
+                                                            "name": "分类1"
+                                                        },
+                                                        "tags": [
+                                                            {
+                                                                "id": 1,
+                                                                "name": "标签1"
+                                                            }
+                                                        ],
+                                                        "attachments": [
+                                                            {
+                                                                "id": 1,
+                                                                "name": "附件1",
+                                                                "url": "http://localhost:8080/api/attachments/1"
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "pageable": {
+                                                    "pageNumber": 0,
+                                                    "pageSize": 10,
+                                                    "offset": 0,
+                                                    "paged": true,
+                                                    "unpaged": false
+                                                },
+                                                "totalElements": 1,
+                                                "totalPages": 1,
+                                                "last": true,
+                                                "first": true,
+                                                "sort": {
+                                                    "sorted": false,
+                                                    "unsorted": true,
+                                                    "empty": true
+                                                },
+                                                "numberOfElements": 1,
+                                                "size": 10,
+                                                "number": 0
+                                            }
+                                        }
+                                    """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "500", description = "搜索失败")
     })
     public ResponseEntity<Response<Page<PostDto>>> searchPosts(
@@ -48,10 +117,36 @@ public class SearchController {
         }
     }
 
-    @Operation(summary = "搜索文章建议")
+    @Operation(
+            summary = "搜索文章建议",
+            description = "搜索文章建议",
+            tags = {"搜索模块"}
+    )
     @GetMapping("/public/suggest/post")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "获取搜索建议成功"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "获取搜索建议成功",
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            mediaType = "application/json",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema
+                                    (implementation = Response.class),
+                            examples = @ExampleObject(
+                                    name = "获取搜索建议成功",
+                                    value = """
+                                        {
+                                            "status": 200,
+                                            "message": "获取搜索建议成功",
+                                            "data": [
+                                                "标题1",
+                                                "标题2",
+                                                "标题3"
+                                            ]
+                                        }
+                                    """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "500", description = "获取搜索建议失败")
     })
     public ResponseEntity<Response<List<String>>> suggestPost(@RequestParam String keyword) {
@@ -64,10 +159,36 @@ public class SearchController {
         }
     }
 
-    @Operation(summary = "搜索分类建议")
+    @Operation(
+            summary = "搜索分类建议",
+            description = "搜索分类建议",
+            tags = {"搜索模块"}
+    )
     @GetMapping("/public/suggest/category")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "获取搜索建议成功"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "获取搜索建议成功",
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            mediaType = "application/json",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema
+                                    (implementation = Response.class),
+                            examples = @ExampleObject(
+                                    name = "获取搜索建议成功",
+                                    value = """
+                                        {
+                                            "status": 200,
+                                            "message": "获取搜索建议成功",
+                                            "data": [
+                                                "分类1",
+                                                "分类2",
+                                                "分类3"
+                                            ]
+                                        }
+                                    """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "500", description = "获取搜索建议失败")
     })
     public ResponseEntity<Response<List<String>>> suggestCategory(@RequestParam String keyword) {
@@ -80,10 +201,36 @@ public class SearchController {
         }
     }
 
-    @Operation(summary = "搜索标签建议")
+    @Operation(
+            summary = "搜索标签建议",
+            description = "搜索标签建议",
+            tags = {"搜索模块"}
+    )
     @GetMapping("/public/suggest/tag")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "获取搜索建议成功"),
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "获取搜索建议成功",
+                    content = @io.swagger.v3.oas.annotations.media.Content(
+                            mediaType = "application/json",
+                            schema = @io.swagger.v3.oas.annotations.media.Schema
+                                    (implementation = Response.class),
+                            examples = @ExampleObject(
+                                    name = "获取搜索建议成功",
+                                    value = """
+                                        {
+                                            "status": 200,
+                                            "message": "获取搜索建议成功",
+                                            "data": [
+                                                "标签1",
+                                                "标签2",
+                                                "标签3"
+                                            ]
+                                        }
+                                    """
+                            )
+                    )
+            ),
             @ApiResponse(responseCode = "500", description = "获取搜索建议失败")
     })
     public ResponseEntity<Response<List<String>>> suggestTag(@RequestParam String keyword) {

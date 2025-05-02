@@ -28,7 +28,11 @@ public class RecommendationController {
     /**
      * 获取个性化推荐
      */
-    @Operation(summary = "获取个性化推荐")
+    @Operation(summary =
+            "获取个性化推荐",
+            description = "根据用户的兴趣和行为，推荐相关文章",
+            tags = {"文章推荐"}
+    )
     @PreAuthorize("hasRole(T(com.kitty.blog.common.constant.Role).ROLE_USER)")
     @GetMapping("/public/personal")
     @ApiResponses(value = {
