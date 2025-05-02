@@ -333,6 +333,25 @@ const handleImportError = () => {
   <page-container title="角色管理">
     <!-- 表格 -->
     <el-card class="table-card">
+       <!-- 添加角色说明区域 -->
+       <div class="role-description">
+        <el-alert
+          title="角色说明"
+          type="info"
+          :closable="false"
+          show-icon
+        >
+          <div class="role-info">
+            <p><strong>角色体系：</strong></p>
+            <ul>
+              <li>所有新注册用户默认属于<el-tag size="small">普通用户</el-tag>角色</li>
+              <li><el-tag type="danger" size="small">系统管理员</el-tag>具有最高权限，可以管理所有角色和用户</li>
+              <li>其他自定义角色的权限由系统管理员分配和管理，权限之间相互独立</li>
+            </ul>
+          </div>
+        </el-alert>
+      </div>
+
       <!-- 添加操作按钮区 -->
       <div class="table-operations">
         <el-button type="success" :icon="Download" @click="handleExportRoles">导出角色数据</el-button>
@@ -437,7 +456,7 @@ const handleImportError = () => {
     </el-dialog>
 
     <!-- 添加用户列表抽屉 -->
-    <el-drawer 
+    <el-drawer
       v-model="userDrawerVisible"
       :title="`${currentRole?.roleName || ''} - 用户列表`"
       size="80%"
@@ -445,7 +464,7 @@ const handleImportError = () => {
     >
       <div class="drawer-header" style="padding: 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #dcdfe6;">
         <span class="title">{{ currentRole?.roleName || "" }} - 用户列表</span>
-        <el-button 
+        <el-button
           v-if="currentRole && currentRole.roleName && currentRole.roleName !== '普通用户'"
           type="primary"
           @click="handleAddUsers"
@@ -522,8 +541,8 @@ const handleImportError = () => {
         <template #footer>
           <span class="dialog-footer">
             <el-button @click="addUserDialogVisible = false">取消</el-button>
-            <el-button 
-              type="primary" 
+            <el-button
+              type="primary"
               @click="confirmAddUsers"
               :disabled="selectedUsers.length === 0"
             >确定</el-button>
@@ -653,5 +672,33 @@ const handleImportError = () => {
 .import-guide::-webkit-scrollbar-track {
   background-color: #f4f4f5;
   border-radius: 3px;
+}
+
+/* 添加角色说明样式 */
+.role-description {
+  margin-bottom: 20px;
+}
+
+.role-info {
+  padding: 8px 0;
+}
+
+.role-info p {
+  margin: 0 0 8px 0;
+}
+
+.role-info ul {
+  margin: 0;
+  padding-left: 20px;
+  list-style-type: circle;
+}
+
+.role-info li {
+  margin: 4px 0;
+  line-height: 1.6;
+}
+
+.role-info .el-tag {
+  margin: 0 4px;
 }
 </style>

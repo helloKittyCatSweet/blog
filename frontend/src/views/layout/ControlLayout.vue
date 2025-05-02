@@ -2,11 +2,6 @@
 import {
   Expand,
   Fold,
-  CaretBottom,
-  User,
-  Crop,
-  EditPen,
-  SwitchButton,
 } from "@element-plus/icons-vue";
 
 import avatar from "@/assets/default.png";
@@ -35,11 +30,6 @@ onMounted(() => {
 const isCollapse = ref(true);
 const ExpandIcon = markRaw(Expand);
 const FoldIcon = markRaw(Fold);
-const UserIcon = markRaw(User);
-const CropIcon = markRaw(Crop);
-const EditPenIcon = markRaw(EditPen);
-const SwitchButtonIcon = markRaw(SwitchButton);
-const CaretBottomIcon = markRaw(CaretBottom);
 
 // 计算菜单配置项
 const menus = computed(() => {
@@ -89,34 +79,19 @@ const handleUserCommand = async (command) => {
       <el-aside width="200px" class="sidebar-container">
         <!-- 侧边栏头部区域 -->
         <div class="sidebar-header">
-          <div
-            :class="!isCollapse ? 'logo-container' : 'logo-container collapsed'"
-            @click="router.push('/')"
-            style="cursor: pointer"
-          >
-            <img
-              :src="!isCollapse ? logo : logoCherry"
-              :alt="!isCollapse ? 'Logo' : 'Collapsed Logo'"
-              class="logo-image"
-            />
+          <div :class="!isCollapse ? 'logo-container' : 'logo-container collapsed'" @click="router.push('/')"
+            style="cursor: pointer">
+            <img :src="!isCollapse ? logo : logoCherry" :alt="!isCollapse ? 'Logo' : 'Collapsed Logo'"
+              class="logo-image" />
             <el-tooltip :content="isCollapse ? '展开菜单' : '折叠菜单'" placement="right">
-              <el-button
-                :icon="isCollapse ? ExpandIcon : FoldIcon"
-                circle
-                @click.stop="isCollapse = !isCollapse"
-                class="toggle-btn"
-              />
+              <el-button :icon="isCollapse ? ExpandIcon : FoldIcon" circle @click.stop="isCollapse = !isCollapse"
+                class="toggle-btn" />
             </el-tooltip>
           </div>
         </div>
         <!-- 菜单部分 - 添加no-scroll类防止滚动 -->
-        <el-menu
-          class="no-scroll"
-          :default-active="$route.path"
-          active-text-color="#1e40af"
-          router
-          :collapse="isCollapse"
-        >
+        <el-menu class="no-scroll" :default-active="$route.path" active-text-color="#1e40af" router
+          :collapse="isCollapse">
           <menu-renderer :menu-config="menus" :is-collapsed="isCollapse" />
         </el-menu>
       </el-aside>
@@ -168,6 +143,8 @@ const handleUserCommand = async (command) => {
     width: auto;
     height: auto; // 高度由内容撑开
     min-height: 100vh; // 至少填满屏幕高度
+    position: relative;  /* 添加相对定位 */
+    z-index: 1000;      /* 提高层级 */
     background-color: hwb(220 5% 5% / 0.475);
     transition: width 0.3s ease;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
@@ -230,6 +207,13 @@ const handleUserCommand = async (command) => {
       transition: all 0.3s ease;
       overflow: visible; // 菜单不单独滚动
       scrollbar-width: none; // 隐藏侧边栏滚动条
+      position: relative;  /* 添加相对定位 */
+      z-index: 1001;      /* 确保菜单在背景之上 */
+      background-color: transparent;
+
+      :deep(.el-menu--popup) {
+        z-index: 1002;    /* 确保弹出菜单在最上层 */
+      }
 
       .el-menu-item,
       .el-sub-menu__title {

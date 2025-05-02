@@ -340,6 +340,19 @@ const handleRowClick = (row) => {
     handleChat(row);
   }
 };
+
+/**
+ * 查看系统消息全文
+ */
+// 添加对话框控制变量和当前选中的消息
+const dialogVisible = ref(false);
+const currentMessage = ref(null);
+
+// 添加查看全文方法
+const handleViewFullMessage = (row) => {
+  currentMessage.value = row;
+  dialogVisible.value = true;
+};
 </script>
 
 <template>
@@ -527,7 +540,21 @@ const handleRowClick = (row) => {
               label="消息内容"
               min-width="300"
               show-overflow-tooltip
-            />
+            >
+            <template #default="{ row }">
+      <div class="message-content-wrapper">
+        {{ row.message.length > 50 ? row.message.slice(0, 50) + '...' : row.message }}
+        <el-button
+          v-if="row.message.length > 50"
+          type="primary"
+          link
+          @click.stop="handleViewFullMessage(row)"
+        >
+          查看全文
+        </el-button>
+      </div>
+    </template>
+            </el-table-column>
             <el-table-column prop="createdAt" label="发送时间" width="180" />
             <el-table-column prop="senderName" label="发送者" width="150" />
             <el-table-column label="状态" width="100">
@@ -572,6 +599,30 @@ const handleRowClick = (row) => {
               @current-change="handleSystemPageChange"
             />
           </div>
+
+          <!-- 添加查看全文对话框 -->
+  <el-dialog
+    v-model="dialogVisible"
+    title="消息详情"
+    width="50%"
+    :close-on-click-modal="false"
+    class="message-dialog"
+  >
+    <div class="message-detail">
+      <div class="message-info">
+        <span class="label">发送时间：</span>
+        <span>{{ currentMessage?.createdAt }}</span>
+      </div>
+      <div class="message-info">
+        <span class="label">发送者：</span>
+        <span>{{ currentMessage?.senderName }}</span>
+      </div>
+      <div class="message-content">
+        <div class="label">消息内容：</div>
+        <div class="content">{{ currentMessage?.message }}</div>
+      </div>
+    </div>
+  </el-dialog>
         </el-tab-pane>
       </el-tabs>
     </el-card>
@@ -685,6 +736,48 @@ const handleRowClick = (row) => {
     .message-time {
       color: var(--el-text-color-secondary);
       font-size: 12px;
+    }
+  }
+}
+
+.message-content-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.message-dialog {
+  .message-detail {
+    padding: 20px;
+
+    .message-info {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+
+      .label {
+        font-weight: 500;
+        margin-right: 8px;
+        color: var(--el-text-color-regular);
+        width: 80px;
+      }
+    }
+
+    .message-content {
+      .label {
+        font-weight: 500;
+        color: var(--el-text-color-regular);
+        margin-bottom: 8px;
+      }
+
+      .content {
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-all;
+        background-color: var(--el-fill-color-lighter);
+        padding: 16px;
+        border-radius: 4px;
+      }
     }
   }
 }
