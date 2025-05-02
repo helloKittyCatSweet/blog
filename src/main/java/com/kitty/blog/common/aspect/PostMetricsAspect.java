@@ -54,6 +54,14 @@ public class PostMetricsAspect {
         for (Object arg : args) {
             if (arg instanceof Long) {
                 return (Long) arg;
+            } else if (arg instanceof Integer) {
+                return ((Integer) arg).longValue();
+            } else if (arg instanceof String) {
+                try {
+                    return Long.parseLong((String) arg);
+                } catch (NumberFormatException e) {
+                    log.warn("Failed to parse post id from string: {}", arg);
+                }
             }
         }
         return null;
@@ -79,6 +87,7 @@ public class PostMetricsAspect {
                     if (post != null) {
                         metrics.put("post_title", post.getTitle());
                         metrics.put("user_id", post.getUserId());
+                        metrics.put("view_count", post.getViews());
                     } else {
                         metrics.put("post_title", "未找到文章");
                         metrics.put("user_id", "unknown");
