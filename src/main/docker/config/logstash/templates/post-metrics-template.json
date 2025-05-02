@@ -1,6 +1,6 @@
 {
   "index_patterns": ["blog-post-metrics-*"],
-  "version": 2,
+  "version": 3,
   "priority": 400,
   "template": {
     "settings": {
@@ -42,12 +42,27 @@
           "type": "long"
         },
         "error_message": {
-          "type": "text"
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword",
+              "ignore_above": 256
+            }
+          }
         },
-        "host": {
+        "hostname": {
+          "type": "keyword"
+        },
+        "os_name": {
+          "type": "keyword"
+        },
+        "os_version": {
           "type": "keyword"
         },
         "environment": {
+          "type": "keyword"
+        },
+        "service": {
           "type": "keyword"
         }
       }
