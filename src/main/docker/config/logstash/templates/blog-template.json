@@ -1,6 +1,6 @@
 {
   "index_patterns": ["blog-api-metrics-*", "blog-error-*", "blog-system-metrics-*"],
-  "version": 2,
+  "version": 3,
   "priority": 200,
   "template": {
     "settings": {
@@ -53,16 +53,19 @@
         "stack_trace": {
           "type": "text"
         },
-        "host": {
+        "hostname": {
+          "type": "keyword"
+        },
+        "os_name": {
+          "type": "keyword"
+        },
+        "os_version": {
           "type": "keyword"
         },
         "environment": {
           "type": "keyword"
         },
         "service": {
-          "type": "keyword"
-        },
-        "tags": {
           "type": "keyword"
         }
       }
