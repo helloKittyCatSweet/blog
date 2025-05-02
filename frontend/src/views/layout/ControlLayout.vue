@@ -76,7 +76,7 @@ const handleUserCommand = async (command) => {
   <div class="layout-container">
     <!-- 主包装器 -->
     <div class="main-wrapper">
-      <el-aside width="200px" class="sidebar-container">
+      <el-aside :width="isCollapse ? '64px' : '200px'"  class="sidebar-container">
         <!-- 侧边栏头部区域 -->
         <div class="sidebar-header">
           <div :class="!isCollapse ? 'logo-container' : 'logo-container collapsed'" @click="router.push('/')"

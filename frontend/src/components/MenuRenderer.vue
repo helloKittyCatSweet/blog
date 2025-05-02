@@ -29,24 +29,6 @@ const getRouteValue = (routeName) => {
     <!-- 子菜单 -->
     <el-sub-menu v-if="menu.children" :index="getRouteValue(menu.index)">
       <template #title>
-        <div class="menu-item-content">
-          <el-tooltip
-            v-if="isCollapsed"
-            :content="menu.title"
-            placement="right"
-            :show-after="200"
-          >
-            <el-icon><component :is="menu.icon" /></el-icon>
-          </el-tooltip>
-          <el-icon v-else><component :is="menu.icon" /></el-icon>
-          <span>{{ menu.title }}</span>
-        </div>
-      </template>
-      <menu-renderer :menu-config="menu.children" :is-collapsed="isCollapsed" />
-    </el-sub-menu>
-    <!-- 菜单项 -->
-    <el-menu-item v-else :index="getRouteValue(menu.index)">
-      <div class="menu-item-content">
         <el-tooltip
           v-if="isCollapsed"
           :content="menu.title"
@@ -55,9 +37,28 @@ const getRouteValue = (routeName) => {
         >
           <el-icon><component :is="menu.icon" /></el-icon>
         </el-tooltip>
-        <el-icon v-else><component :is="menu.icon" /></el-icon>
+        <template v-else>
+          <el-icon><component :is="menu.icon" /></el-icon>
+          <span>{{ menu.title }}</span>
+        </template>
+      </template>
+      <menu-renderer :menu-config="menu.children" :is-collapsed="isCollapsed" />
+    </el-sub-menu>
+
+    <!-- 菜单项 -->
+    <el-menu-item v-else :index="getRouteValue(menu.index)">
+      <el-tooltip
+        v-if="isCollapsed"
+        :content="menu.title"
+        placement="right"
+        :show-after="200"
+      >
+        <el-icon><component :is="menu.icon" /></el-icon>
+      </el-tooltip>
+      <template v-else>
+        <el-icon><component :is="menu.icon" /></el-icon>
         <span>{{ menu.title }}</span>
-      </div>
+      </template>
     </el-menu-item>
   </template>
 </template>

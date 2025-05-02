@@ -255,6 +255,18 @@ const handleAuthorClick = (userId) => {
     });
   }
 };
+
+// 添加时间格式化函数
+const formatDateTime = (dateTimeString) => {
+  if (!dateTimeString) return '-';
+  const date = new Date(dateTimeString);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hour}:${minute}`;
+};
 </script>
 
 <template>
@@ -317,7 +329,7 @@ const handleAuthorClick = (userId) => {
           </el-table-column>
           <el-table-column prop="createdTime" label="上传时间" width="180">
             <template #default="{ row }">
-              {{ row.createdTime }}
+              {{ formatDateTime(row.createdTime) }}
             </template>
           </el-table-column>
           <el-table-column label="操作" width="100" fixed="right">
