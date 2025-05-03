@@ -1,5 +1,4 @@
 <script setup>
-import { computed } from "vue";
 import * as baseRoutes from "@/constants/routes/base";
 import * as userRoutes from "@/constants/routes/user";
 import * as adminRoutes from "@/constants/routes/admin";
@@ -29,18 +28,8 @@ const getRouteValue = (routeName) => {
     <!-- 子菜单 -->
     <el-sub-menu v-if="menu.children" :index="getRouteValue(menu.index)">
       <template #title>
-        <el-tooltip
-          v-if="isCollapsed"
-          :content="menu.title"
-          placement="right"
-          :show-after="200"
-        >
-          <el-icon><component :is="menu.icon" /></el-icon>
-        </el-tooltip>
-        <template v-else>
-          <el-icon><component :is="menu.icon" /></el-icon>
-          <span>{{ menu.title }}</span>
-        </template>
+        <el-icon><component :is="menu.icon" /></el-icon>
+        <span>{{ menu.title }}</span>
       </template>
       <!-- 递归渲染子菜单 -->
       <menu-renderer :menu-config="menu.children" :is-collapsed="isCollapsed" />
@@ -48,16 +37,8 @@ const getRouteValue = (routeName) => {
 
     <!-- 普通菜单项 -->
     <el-menu-item v-else :index="getRouteValue(menu.index)">
-      <el-tooltip
-        v-if="isCollapsed"
-        :content="menu.title"
-        placement="right"
-        :show-after="200"
-      >
-        <el-icon><component :is="menu.icon" /></el-icon>
-      </el-tooltip>
-      <template v-else>
-        <el-icon><component :is="menu.icon" /></el-icon>
+      <el-icon><component :is="menu.icon" /></el-icon>
+      <template #title>
         <span>{{ menu.title }}</span>
       </template>
     </el-menu-item>
@@ -67,11 +48,12 @@ const getRouteValue = (routeName) => {
 <style scoped>
 /* 基础变量定义 */
 :root {
-  --menu-bg: #ffffff;
-  --hover-bg: #f5f7fa;
-  --active-bg: #ecf5ff;
-  --text-color: #303133;
-  --active-text: #409eff;
+  --menu-bg: transparent;
+  --hover-bg: rgba(255, 255, 255, 0.2);
+  --active-bg: rgba(255, 255, 255, 0.3);
+  --text-color: #1e40af;
+  --hover-text: #1e40af;
+  --active-text: #1e40af;
   --border-color: #e6e6e6;
 }
 
@@ -80,16 +62,38 @@ const getRouteValue = (routeName) => {
   background-color: transparent !important;
 }
 
+.el-menu-item,
+:deep(.el-sub-menu__title) {
+  color: var(--text-color) !important;
+  display: flex;
+  align-items: center;
+  padding: 0 16px !important;
+  height: 50px;
+  line-height: 50px;
+  margin: 4px 8px;
+
+  .el-icon {
+    color: var(--text-color);
+    margin-right: 8px;
+  }
+
+  span {
+    color: var(--text-color) !important;
+    margin-left: 4px;
+    display: inline-block !important;
+  }
+}
+
 /* 菜单项悬停效果 */
 .el-menu-item:hover,
 .el-sub-menu:hover :deep(.el-sub-menu__title) {
-  background-color: rgba(255, 255, 255, 0.2) !important;
+  background-color: var(--hover-bg) !important;
 }
 
 /* 激活菜单项样式 */
 .el-menu-item.is-active {
-  background-color: rgba(255, 255, 255, 0.3) !important;
-  color: #1e40af;
+  background-color: var(--active-bg) !important;
+  color: var(--active-text);
 }
 
 /* 子菜单标题样式 */
@@ -97,34 +101,38 @@ const getRouteValue = (routeName) => {
   background-color: transparent !important;
 }
 
-/* 弹出菜单样式 */
-:deep(.el-menu--popup) {
-  z-index: 1001;
-  background-color: var(--menu-bg) !important;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-  padding: 6px 0;
-}
-
 /* 图标样式 */
 .el-icon {
-  margin-right: 12px;
   font-size: 18px;
   width: 24px;
   height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-color);
 }
 
 /* 菜单文字样式 */
-span {
+.el-menu-item span,
+:deep(.el-sub-menu__title span) {
   font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: inherit;
+  color: var(--text-color) !important;
+  display: inline-block !important;
+}
+
+/* 确保折叠时tooltip正常显示 */
+.el-tooltip {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+/* 子菜单箭头样式 */
+:deep(.el-sub-menu__icon-arrow) {
+  color: var(--text-color);
 }
 
 /* 子菜单箭头动画 */
@@ -181,19 +189,89 @@ span {
   border-radius: 3px;
 }
 
-.el-tooltip {
-  display: flex;
-  align-items: center;
-  width: 100%;
+/* 激活状态的颜色 */
+.el-menu-item.is-active {
+  .el-icon,
+  span {
+    color: var(--active-text) !important;
+  }
 }
 
-.el-menu-item,
-:deep(.el-sub-menu__title) {
-  display: flex;
-  align-items: center;
-  padding: 0 16px !important;
-  height: 50px;
-  line-height: 50px;
-  margin: 4px 8px;
+/* 弹出菜单样式 */
+:deep(.el-menu--popup) {
+  background-color: rgba(119, 95, 255, 0.5) !important;
+  min-width: 200px;
+  padding: 4px 0;
+
+  .el-menu-item {
+    padding: 0 16px !important;
+    margin: 4px !important;
+    color: var(--text-color) !important;
+
+    span {
+      color: var(--text-color) !important;
+    }
+
+    &:hover {
+      background-color: var(--hover-bg) !important;
+    }
+
+    &.is-active {
+      background-color: var(--active-bg) !important;
+      color: var(--active-text) !important;
+
+      span {
+        color: var(--active-text) !important;
+      }
+    }
+  }
+}
+
+:deep(.el-menu--popup-right-start) {
+  margin-left: 1px !important;
+}
+
+:deep(.el-popper.is-light) {
+  border: none !important;
+  
+  .el-popper__arrow::before {
+    background: rgba(119, 95, 255, 0.5) !important;
+    border: none !important;
+  }
+}
+
+/* 折叠状态下的子菜单样式 */
+:deep(.el-menu--collapse) {
+  .el-sub-menu.is-opened > .el-menu--popup {
+    display: block !important;
+  }
+
+  .el-menu-item, 
+  .el-sub-menu__title {
+    span {
+      display: none;
+    }
+  }
+}
+
+/* 折叠状态下的子菜单容器样式 */
+:deep(.el-menu--collapse) {
+  .el-sub-menu {
+    &.is-opened {
+      > .el-menu--popup {
+        display: block !important;
+      }
+    }
+  }
+}
+
+:deep(.el-popper.is-light) {
+  border: none !important;
+  background: rgba(119, 95, 255, 0.5) !important;
+  
+  .el-popper__arrow::before {
+    background: rgba(119, 95, 255, 0.5) !important;
+    border: none !important;
+  }
 }
 </style>

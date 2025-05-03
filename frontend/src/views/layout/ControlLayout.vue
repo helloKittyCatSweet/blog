@@ -4,7 +4,6 @@ import {
   Fold,
 } from "@element-plus/icons-vue";
 
-import avatar from "@/assets/default.png";
 import { useUserStore } from "@/stores";
 import { markRaw, onMounted } from "vue";
 import router from "@/router";
@@ -90,8 +89,16 @@ const handleUserCommand = async (command) => {
           </div>
         </div>
         <!-- 菜单部分 - 添加no-scroll类防止滚动 -->
-        <el-menu class="no-scroll" :default-active="$route.path" active-text-color="#1e40af" text-color="#ffffff" router
-          :collapse="isCollapse" :collapse-transition="true" background-color="transparent">
+        <el-menu 
+          class="no-scroll" 
+          :default-active="$route.path" 
+          :collapse="isCollapse" 
+          :collapse-transition="true" 
+          text-color="#1e40af"
+          active-text-color="#1e40af"
+          background-color="transparent"
+          :unique-opened="true"
+          router>
           <menu-renderer :menu-config="menus" :is-collapsed="isCollapse" />
         </el-menu>
       </el-aside>
@@ -205,52 +212,75 @@ const handleUserCommand = async (command) => {
     .el-menu {
       flex: 1;
       border-right: none;
-      background-color: transparent;
-      transition: all 0.3s ease;
-      overflow: visible; // 菜单不单独滚动
-      scrollbar-width: none; // 隐藏侧边栏滚动条
-      position: relative;
-      /* 添加相对定位 */
-      z-index: 1001;
-      /* 确保菜单在背景之上 */
       background-color: transparent !important;
+      transition: all 0.3s ease;
+      overflow: visible;
+      scrollbar-width: none;
+      position: relative;
+      z-index: 1001;
+
+      &.el-menu--collapse {
+        width: 64px;
+      }
 
       :deep(.el-menu--popup) {
-        z-index: 1002;
-        /* 确保弹出菜单在最上层 */
+        background-color: rgba(119, 95, 255, 0.5) !important;
+        min-width: 200px;
+        padding: 4px 0;
+        border: none;
+        border-radius: 4px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+
+        .el-menu-item {
+          height: 40px;
+          line-height: 40px;
+          padding: 0 16px;
+          margin: 4px;
+          color: #1e40af;
+
+          .el-icon {
+            margin-right: 8px;
+            color: #1e40af;
+          }
+
+          span {
+            color: #1e40af;
+          }
+
+          &:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+          }
+
+          &.is-active {
+            background-color: rgba(255, 255, 255, 0.3);
+            font-weight: bold;
+          }
+        }
       }
 
       .el-menu-item,
       .el-sub-menu__title {
         height: 48px;
         line-height: 48px;
-        color: #000000;
-        text-align: center;
+        color: #1e40af;
+        text-align: left;
         border-radius: 6px;
         font-weight: 500;
+        display: flex;
+        align-items: center;
+
+        .el-icon {
+          color: #1e40af;
+        }
 
         &:hover {
-          background-color: rgba(255, 255, 255, 0.9);
-          color: #000;
-          transform: translateX(4px);
+          background-color: rgba(255, 255, 255, 0.2);
         }
 
         &.is-active {
-          background-color: rgba(255, 255, 255, 0.9); // 改为白色背景
-          color: #1e40af; // 深蓝色文字
-          font-weight: 800; // 加大字重差异
-          border-right: 3px solid #1e40af; // 添加右侧边框标识
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // 添加阴影效果
-        }
-
-        .el-icon {
-          width: 24px;
-          height: 24px;
-          font-size: 24px;
-        }
-
-        &::-webkit-scrollbar {
-          display: none;
+          background-color: rgba(255, 255, 255, 0.3);
+          font-weight: bold;
+          border-right: 3px solid #1e40af;
         }
       }
     }
@@ -320,6 +350,25 @@ const handleUserCommand = async (command) => {
       color: #666;
       flex-shrink: 0;
     }
+  }
+}
+
+:deep(.el-tooltip__popper) {
+  background-color: rgba(119, 95, 255, 0.9) !important;
+  color: #1e40af !important;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+}
+
+:deep(.el-popper.is-light) {
+  border: none !important;
+  background: rgba(119, 95, 255, 0.5) !important;
+  
+  .el-popper__arrow::before {
+    background: rgba(119, 95, 255, 0.5) !important;
+    border: none !important;
   }
 }
 </style>
