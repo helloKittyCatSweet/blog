@@ -124,12 +124,17 @@ const getRouteValue = (routeName) => {
   margin-right: 12px;
   font-size: 18px;
   transition: all 0.3s ease;
+  flex-shrink: 0;
 }
 
 /* 菜单文字样式 */
 span {
   font-size: 14px;
-  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  color: inherit;
 }
 
 /* 子菜单箭头动画 */
@@ -186,9 +191,15 @@ span {
   border-radius: 3px;
 }
 
-.menu-item-content {
+.el-tooltip {
   display: flex;
   align-items: center;
-  width: 100%;
+}
+
+.el-menu-item,
+:deep(.el-sub-menu__title) {
+  display: flex;
+  align-items: center;
+  padding: 0 16px !important;
 }
 </style>

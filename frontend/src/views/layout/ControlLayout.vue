@@ -76,7 +76,7 @@ const handleUserCommand = async (command) => {
   <div class="layout-container">
     <!-- 主包装器 -->
     <div class="main-wrapper">
-      <el-aside :width="isCollapse ? '64px' : '200px'"  class="sidebar-container">
+      <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar-container">
         <!-- 侧边栏头部区域 -->
         <div class="sidebar-header">
           <div :class="!isCollapse ? 'logo-container' : 'logo-container collapsed'" @click="router.push('/')"
@@ -90,16 +90,16 @@ const handleUserCommand = async (command) => {
           </div>
         </div>
         <!-- 菜单部分 - 添加no-scroll类防止滚动 -->
-        <el-menu class="no-scroll" :default-active="$route.path" active-text-color="#1e40af" router
-          :collapse="isCollapse">
-          <menu-renderer :menu-config="menus" :is-collapsed="isCollapse" />
+        <el-menu class="no-scroll" :default-active="$route.path" active-text-color="#1e40af" text-color="#000000"
+          router :collapse=" isCollapse " :collapse-transition=" true ">
+          <menu-renderer :menu-config=" menus " :is-collapsed=" isCollapse " />
         </el-menu>
       </el-aside>
 
       <el-container>
         <el-header>
           <div class="header-right">
-            <UserDropdown @command="handleUserCommand" />
+            <UserDropdown @command=" handleUserCommand " />
           </div>
         </el-header>
         <el-main>
@@ -143,8 +143,10 @@ const handleUserCommand = async (command) => {
     width: auto;
     height: auto; // 高度由内容撑开
     min-height: 100vh; // 至少填满屏幕高度
-    position: relative;  /* 添加相对定位 */
-    z-index: 1000;      /* 提高层级 */
+    position: relative;
+    /* 添加相对定位 */
+    z-index: 1000;
+    /* 提高层级 */
     background-color: hwb(220 5% 5% / 0.475);
     transition: width 0.3s ease;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
@@ -207,12 +209,15 @@ const handleUserCommand = async (command) => {
       transition: all 0.3s ease;
       overflow: visible; // 菜单不单独滚动
       scrollbar-width: none; // 隐藏侧边栏滚动条
-      position: relative;  /* 添加相对定位 */
-      z-index: 1001;      /* 确保菜单在背景之上 */
+      position: relative;
+      /* 添加相对定位 */
+      z-index: 1001;
+      /* 确保菜单在背景之上 */
       background-color: transparent;
 
       :deep(.el-menu--popup) {
-        z-index: 1002;    /* 确保弹出菜单在最上层 */
+        z-index: 1002;
+        /* 确保弹出菜单在最上层 */
       }
 
       .el-menu-item,
