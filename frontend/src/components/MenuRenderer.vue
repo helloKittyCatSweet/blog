@@ -77,19 +77,21 @@ const getRouteValue = (routeName) => {
 
 .el-menu-item,
 .el-sub-menu {
-  background-color: transparent !important;
+  background-color: var(--menu-bg) !important;
+  color: var(--text-color) !important;
 }
 
 /* 菜单项悬停效果 */
 .el-menu-item:hover,
 .el-sub-menu:hover :deep(.el-sub-menu__title) {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: var(--hover-bg) !important;
+  color: var(--active-text) !important;
 }
 
 /* 激活菜单项样式 */
 .el-menu-item.is-active {
-  background-color: rgba(255, 255, 255, 0.2) !important;
-  color: #1e40af;
+  background-color: var(--active-bg) !important;
+  color: #1e40af !important;
 }
 
 /* 子菜单标题样式 */

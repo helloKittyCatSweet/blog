@@ -141,16 +141,14 @@ const handleUserCommand = async (command) => {
     display: flex;
     flex-direction: column;
     width: auto;
-    height: auto; // 高度由内容撑开
-    min-height: 100vh; // 至少填满屏幕高度
+    height: auto;
+    min-height: 100vh;
     position: relative;
-    /* 添加相对定位 */
     z-index: 1000;
-    /* 提高层级 */
-    background-color: hwb(220 5% 5% / 0.475);
+    background-color: #ffffff;
     transition: width 0.3s ease;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-    min-height: 100%; // 至少填满屏幕高度
+    min-height: 100%;
 
     .sidebar-header {
       padding: 16px;
@@ -205,42 +203,39 @@ const handleUserCommand = async (command) => {
     .el-menu {
       flex: 1;
       border-right: none;
-      background-color: transparent;
+      background-color: #ffffff;
       transition: all 0.3s ease;
-      overflow: visible; // 菜单不单独滚动
-      scrollbar-width: none; // 隐藏侧边栏滚动条
+      overflow: visible;
+      scrollbar-width: none;
       position: relative;
-      /* 添加相对定位 */
       z-index: 1001;
-      /* 确保菜单在背景之上 */
-      background-color: transparent;
 
       :deep(.el-menu--popup) {
         z-index: 1002;
-        /* 确保弹出菜单在最上层 */
+        background-color: #ffffff;
       }
 
       .el-menu-item,
       .el-sub-menu__title {
         height: 48px;
         line-height: 48px;
-        color: #000000;
+        color: #303133;
         text-align: center;
         border-radius: 6px;
         font-weight: 500;
 
         &:hover {
-          background-color: rgba(255, 255, 255, 0.9);
-          color: #000;
+          background-color: #f5f7fa;
+          color: #1e40af;
           transform: translateX(4px);
         }
 
         &.is-active {
-          background-color: rgba(255, 255, 255, 0.9); // 改为白色背景
-          color: #1e40af; // 深蓝色文字
-          font-weight: 800; // 加大字重差异
-          border-right: 3px solid #1e40af; // 添加右侧边框标识
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // 添加阴影效果
+          background-color: #ecf5ff;
+          color: #1e40af;
+          font-weight: 800;
+          border-right: 3px solid #1e40af;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .el-icon {
