@@ -90,7 +90,7 @@ const handleUserCommand = async (command) => {
           </div>
         </div>
         <!-- 菜单部分 - 添加no-scroll类防止滚动 -->
-        <el-menu class="no-scroll" :default-active="$route.path" active-text-color="#1e40af" text-color="#000000" router
+        <el-menu class="no-scroll" :default-active="$route.path" active-text-color="#1e40af" text-color="#ffffff" router
           :collapse="isCollapse" :collapse-transition="true" background-color="transparent">
           <menu-renderer :menu-config="menus" :is-collapsed="isCollapse" />
         </el-menu>
@@ -141,14 +141,16 @@ const handleUserCommand = async (command) => {
     display: flex;
     flex-direction: column;
     width: auto;
-    height: auto;
-    min-height: 100vh;
+    height: auto; // 高度由内容撑开
+    min-height: 100vh; // 至少填满屏幕高度
     position: relative;
+    /* 添加相对定位 */
     z-index: 1000;
-    background-color: #ffffff;
+    /* 提高层级 */
+    background-color: rgba(119, 95, 255, 0.5);
     transition: width 0.3s ease;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-    min-height: 100%;
+    min-height: 100%; // 至少填满屏幕高度
 
     .sidebar-header {
       padding: 16px;
@@ -203,39 +205,42 @@ const handleUserCommand = async (command) => {
     .el-menu {
       flex: 1;
       border-right: none;
-      background-color: #ffffff;
+      background-color: transparent;
       transition: all 0.3s ease;
-      overflow: visible;
-      scrollbar-width: none;
+      overflow: visible; // 菜单不单独滚动
+      scrollbar-width: none; // 隐藏侧边栏滚动条
       position: relative;
+      /* 添加相对定位 */
       z-index: 1001;
+      /* 确保菜单在背景之上 */
+      background-color: transparent !important;
 
       :deep(.el-menu--popup) {
         z-index: 1002;
-        background-color: #ffffff;
+        /* 确保弹出菜单在最上层 */
       }
 
       .el-menu-item,
       .el-sub-menu__title {
         height: 48px;
         line-height: 48px;
-        color: #303133;
+        color: #000000;
         text-align: center;
         border-radius: 6px;
         font-weight: 500;
 
         &:hover {
-          background-color: #f5f7fa;
-          color: #1e40af;
+          background-color: rgba(255, 255, 255, 0.9);
+          color: #000;
           transform: translateX(4px);
         }
 
         &.is-active {
-          background-color: #ecf5ff;
-          color: #1e40af;
-          font-weight: 800;
-          border-right: 3px solid #1e40af;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          background-color: rgba(255, 255, 255, 0.9); // 改为白色背景
+          color: #1e40af; // 深蓝色文字
+          font-weight: 800; // 加大字重差异
+          border-right: 3px solid #1e40af; // 添加右侧边框标识
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); // 添加阴影效果
         }
 
         .el-icon {
