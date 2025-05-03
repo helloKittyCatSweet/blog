@@ -16,7 +16,10 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "fs_comments")
+@Table(name = "fs_comments", indexes = {
+        @Index(name = "idx_post_time", columnList = "post_id,created_at"),
+        @Index(name = "idx_user", columnList = "user_id")
+})
 // @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class,
 // property = "commentId")
 @DynamicUpdate

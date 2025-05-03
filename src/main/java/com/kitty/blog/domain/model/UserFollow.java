@@ -6,7 +6,10 @@ import java.time.LocalDateTime;
 
 @Data
 @Entity
-@Table(name = "fs_user_follow")
+@Table(name = "fs_user_follows", indexes = {
+        @Index(name = "idx_follow_unique", columnList = "follower_id,following_id", unique = true),
+        @Index(name = "idx_follow_time", columnList = "create_time")
+})
 public class UserFollow {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

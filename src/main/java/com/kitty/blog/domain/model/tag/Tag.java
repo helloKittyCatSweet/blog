@@ -18,7 +18,10 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "fs_tags")
+@Table(name = "fs_tags", indexes = {
+        @Index(name = "idx_tag_name", columnList = "name"),
+        @Index(name = "idx_usage_count", columnList = "use_count")
+})
 @JsonDeserialize(using = TagDeserializer.class)
 @DynamicInsert
 @DynamicUpdate
@@ -68,7 +71,7 @@ public class Tag implements Serializable {
         if (this == obj) {
             return true;
         }
-        if (obj == null || getClass()!= obj.getClass()) {
+        if (obj == null || getClass() != obj.getClass()) {
             return false;
         }
         Tag other = (Tag) obj;

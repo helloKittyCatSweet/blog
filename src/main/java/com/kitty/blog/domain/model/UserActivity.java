@@ -16,7 +16,10 @@ import java.time.LocalDate;
 
 @Data
 @Entity
-@Table(name = "fs_user_activities")
+@Table(name = "fs_user_activities", indexes = {
+        @Index(name = "idx_user_time", columnList = "user_id,created_at"),
+        @Index(name = "idx_activity_type", columnList = "activity_type")
+})
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "activityId")
 @DynamicUpdate
 @DynamicInsert
@@ -44,10 +47,7 @@ public class UserActivity {
     private String activityDetail;
 
     // 禁止手动插入，禁止更新
-    @Column(name = "created_at",
-            insertable = false,
-            updatable = false,
-    columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @Column(name = "created_at", insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDate createdAt;
 
     @Column(name = "is_deleted")
@@ -92,8 +92,10 @@ public class UserActivity {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         UserActivity that = (UserActivity) o;
         return activityId.equals(that.activityId) &&
                 userId.equals(that.userId) &&

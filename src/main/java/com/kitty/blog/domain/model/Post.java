@@ -19,7 +19,11 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "fs_posts")
+@Table(name = "fs_posts", indexes = {
+        @Index(name = "idx_created_at", columnList = "created_at"),
+        @Index(name = "idx_title", columnList = "title"),
+        @Index(name = "idx_is_public", columnList = "is_public"),
+})
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "postId")
 @DynamicUpdate
 @DynamicInsert
@@ -47,14 +51,10 @@ public class Post implements Serializable {
     private String content;
 
     // 禁止手动加入，禁止更新
-    @Column(name = "created_at",
-            insertable = false,
-            updatable = false,
-            columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP")
+    @Column(name = "created_at", insertable = false, updatable = false, columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP")
     private LocalDate createdAt;
 
-    @Column(name = "updated_at",
-    columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP")
+    @Column(name = "updated_at", columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP")
     private LocalDate updatedAt;
 
     @Column(name = "is_published")
@@ -112,8 +112,10 @@ public class Post implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         Post post = (Post) o;
         return postId.equals(post.postId);
     }

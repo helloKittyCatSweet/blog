@@ -22,7 +22,11 @@ import java.util.List;
 
 @Data
 @Entity
-@Table(name = "fs_users")
+@Table(name = "fs_users", indexes = {
+        @Index(name = "idx_username", columnList = "username"),
+        @Index(name = "idx_email", columnList = "email"),
+        @Index(name = "idx_last_login", columnList = "last_login_time")
+})
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "userId")
 @DynamicInsert
 @DynamicUpdate
@@ -91,7 +95,7 @@ public class User implements Serializable {
     @Column(name = "is_deleted")
     private boolean isDeleted;
 
-    @Column(name = "last_login_ip",length = 45)
+    @Column(name = "last_login_ip", length = 45)
     private String lastLoginIp;
 
     @Column(name = "last_login_location")
@@ -115,7 +119,6 @@ public class User implements Serializable {
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonManagedReference(value = "user-comment")
     private List<Comment> comments;
-
 
     @JsonIgnore
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -150,7 +153,7 @@ public class User implements Serializable {
 
     @Override
     public String toString() {
-        return  "User{" +
+        return "User{" +
                 "userId=" + userId +
                 ", username='" + username + '\'' +
                 ", nickname='" + nickname + '\'' +

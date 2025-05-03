@@ -19,7 +19,11 @@ import java.util.Date;
 
 @Data
 @Entity
-@Table(name = "fs_favorites")
+@Table(name = "fs_favorites", indexes = {
+        @Index(name = "idx_user_post", columnList = "user_id,post_id", unique = true),
+        @Index(name = "idx_user_folder", columnList = "user_id,folder_name"),
+        @Index(name = "idx_favorite_time", columnList = "created_at")
+})
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "favoriteId")
 @DynamicUpdate
 @DynamicInsert

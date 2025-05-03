@@ -553,8 +553,8 @@ public class PostService {
     @Transactional
     @Cacheable(key = "#postId")
     public List<PostDto> findByUserIdIsPublished(Integer userId) {
-       return postRepository.findByUserIdAndIsPublishedTrueAndIsDeletedFalse(userId)
-               .stream().map(this::convertToPostDto).collect(Collectors.toList());
+        return postRepository.findByUserIdAndIsPublishedTrueAndIsDeletedFalse(userId)
+                .stream().map(this::convertToPostDto).collect(Collectors.toList());
     }
 
     @Transactional
@@ -891,9 +891,19 @@ public class PostService {
 
     @Transactional
     public void addViews(Integer postId) {
+        // 一次性获取文章和相关标签
         Post post = postRepository.findById(postId).orElse(new Post());
+        List<Tag> tags = tagRepository.findByPostId(postId).orElse(new ArrayList<>());
+
+        // 在内存中更新数据
         post.setViews(post.getViews() + 1);
+        tags.forEach(tag -> tag.setClickCount(tag.getClickCount() + 1));
+
+        // 批量保存更新
         postRepository.save(post);
+        if (!tags.isEmpty()) {
+            tagRepository.saveAll(tags);
+        }
     }
 
     /**
