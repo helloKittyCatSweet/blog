@@ -35,9 +35,6 @@ public class UserSetting implements Serializable {
     @Column
     private String theme = "light";
 
-    @Column
-    private Boolean notifications = true;
-
     @Column(name = "github_account")
     private String githubAccount = null;
 
@@ -64,13 +61,12 @@ public class UserSetting implements Serializable {
         if (o == null || getClass() != o.getClass()) return false;
         UserSetting that = (UserSetting) o;
         return settingId.equals(that.settingId) &&
-                userId.equals(that.userId) && theme.equals(that.theme)
-                && notifications.equals(that.notifications);
+                userId.equals(that.userId) && theme.equals(that.theme);
     }
 
     @Override
     public int hashCode() {
-        return settingId.hashCode() + userId.hashCode() + theme.hashCode() + notifications.hashCode();
+        return settingId.hashCode() + userId.hashCode() + theme.hashCode();
     }
 
     @Override
@@ -79,7 +75,6 @@ public class UserSetting implements Serializable {
                 "settingId=" + settingId +
                 ", userId=" + userId +
                 ", theme='" + theme + '\'' +
-                ", notifications=" + notifications +
                 '}';
     }
 

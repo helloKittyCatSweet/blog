@@ -5,10 +5,9 @@ import { useThemeStore } from "./theme";
 export const useSettingsStore = defineStore("free-share-settings", () => {
   const settings = ref({
     theme: localStorage.getItem('app-theme') || 'light',
-    notifications: true,
     githubAccount: "",
-    csdnAccount: "",
-    bilibiliAccount: "",
+    CSDNAccount: "",
+    BiliBiliAccount: "",
   });
 
   // Getter 方法
@@ -35,10 +34,9 @@ export const useSettingsStore = defineStore("free-share-settings", () => {
   const resetSettings = () => {
     const defaultSettings = {
       theme: 'light',
-      notifications: true,
       githubAccount: "",
-      csdnAccount: "",
-      bilibiliAccount: "",
+      CSDNAccount: "",
+      BiliBiliAccount: "",
     };
     settings.value = defaultSettings;
     setTheme(defaultSettings.theme);

@@ -1,13 +1,10 @@
 <script setup>
-import { ref, onMounted, watch, computed, nextTick } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { ElMessage } from "element-plus";
 import PageContainer from "@/components/PageContainer.vue";
 import { useUserStore, useThemeStore, useSettingsStore } from "@/stores";
 import { save, findByUserId } from "@/api/user/userSetting";
 import { Check } from "@element-plus/icons-vue";
-import { useRouter } from "vue-router";
-
-const router = useRouter();
 
 const userStore = useUserStore();
 const themeStore = useThemeStore();
@@ -16,7 +13,6 @@ const settingsStore = useSettingsStore();
 // 设置表单数据
 const settingForm = ref({
   theme: settingsStore.settings.theme,
-  notifications: settingsStore.settings.notifications,
   githubAccount: settingsStore.settings.githubAccount,
   CSDNAccount: settingsStore.settings.CSDNAccount,
   BiliBiliAccount: settingsStore.settings.BiliBiliAccount,
@@ -71,7 +67,6 @@ const loading = ref(false);
 // 原始数据记录（与表单结构一致）
 const originalForm = ref({
   theme: settingsStore.settings.theme,
-  notifications: settingsStore.settings.notifications,
   githubAccount: settingsStore.settings.githubAccount,
   CSDNAccount: settingsStore.settings.CSDNAccount,
   BiliBiliAccount: settingsStore.settings.BiliBiliAccount,
@@ -84,7 +79,6 @@ const loadUserSettings = async () => {
     settingId.value = data.settingId;
     settingForm.value = {
       theme: data.theme || settingsStore.settings.theme,
-      notifications: data.notifications ?? settingsStore.settings.notifications,
       githubAccount: data.githubAccount || settingsStore.settings.githubAccount,
       CSDNAccount: data.CSDNAccount || settingsStore.settings.CSDNAccount,
       BiliBiliAccount: data.BiliBiliAccount || settingsStore.settings.BiliBiliAccount,
@@ -112,7 +106,6 @@ const handleSave = async () => {
       settingId: settingId.value,
       userId: userStore.user.id,
       theme: settingForm.value.theme,
-      notifications: settingForm.value.notifications,
       githubAccount: settingForm.value.githubAccount,
       CSDNAccount: settingForm.value.CSDNAccount,
       BiliBiliAccount: settingForm.value.BiliBiliAccount,
@@ -122,7 +115,6 @@ const handleSave = async () => {
       // 更新 settings store
       settingsStore.setSettings({
         theme: settingForm.value.theme,
-        notifications: settingForm.value.notifications,
         githubAccount: settingForm.value.githubAccount,
         CSDNAccount: settingForm.value.CSDNAccount,
         BiliBiliAccount: settingForm.value.BiliBiliAccount,
@@ -160,17 +152,17 @@ const changeTheme = (theme) => {
   // 保存到 store
   settingsStore.setTheme(theme);
   themeStore.setTheme(theme);
-  
+
   // 保存到 localStorage
   localStorage.setItem('app-theme', theme);
-  
+
   // 更新根元素的主题类名
   const html = document.documentElement;
   // 移除所有主题相关的类
   THEMES.forEach(t => html.classList.remove(`theme-${t.value}`));
   // 添加新主题的类
   html.classList.add(`theme-${theme}`);
-  
+
   // 更新 element-plus 的主题
   if (theme === 'dark') {
     html.classList.add('dark');
@@ -265,15 +257,6 @@ const handlePageRefresh = () => {
               </div>
             </el-radio-button>
           </el-radio-group>
-        </el-form-item>
-
-        <!-- 通知设置 -->
-        <el-form-item label="消息通知" for="notifications">
-          <el-switch
-            v-model="settingForm.notifications"
-            active-text="开启"
-            inactive-text="关闭"
-          />
         </el-form-item>
 
         <!-- 社交账号设置 -->
@@ -434,7 +417,7 @@ const handlePageRefresh = () => {
     gap: 8px !important;
     padding: 8px 16px !important;
     transition: all 0.3s !important;
-    
+
     &:hover {
       color: var(--el-color-primary) !important;
       background-color: var(--el-color-primary-light-9) !important;
