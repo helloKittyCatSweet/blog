@@ -32,27 +32,6 @@
         </encoder>
     </appender>
 
-    <!-- 系统API日志 -->
-    <appender name="SYSTEM_API_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/blog-system-api-${CURRENT_DATE}.json</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/blog-system-api-%d{yyyy.MM.dd}.json</fileNamePattern>
-            <maxHistory>7</maxHistory>
-        </rollingPolicy>
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <customFields>{"application":"blog-system","log_type":"system-api"}</customFields>
-             <timestampPattern>yyyy-MM-dd'T'HH:mm:ss.SSSZZ</timestampPattern>
-            <includeMdcData>true</includeMdcData>
-            <includeContext>true</includeContext>
-            <fieldNames>
-                <tags>[ignore]</tags>
-                <hostname>host</hostname>
-            </fieldNames>
-            <provider class="net.logstash.logback.composite.loggingevent.LogstashMarkersJsonProvider"/>
-            <provider class="net.logstash.logback.composite.loggingevent.MdcJsonProvider"/>
-        </encoder>
-    </appender>
-
     <!-- 错误日志 -->
     <appender name="ERROR_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/blog-error-${CURRENT_DATE}.json</file>
