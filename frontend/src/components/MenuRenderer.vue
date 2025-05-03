@@ -75,31 +75,21 @@ const getRouteValue = (routeName) => {
   --border-color: #e6e6e6;
 }
 
-/* 菜单项基础样式 */
 .el-menu-item,
 .el-sub-menu {
-  background-color: var(--menu-bg) !important;
-  color: var(--text-color);
-  position: relative;
-  z-index: 1000;
-  transition: all 0.3s ease;
-  margin: 4px 8px;
-  border-radius: 6px;
+  background-color: transparent !important;
 }
 
 /* 菜单项悬停效果 */
 .el-menu-item:hover,
 .el-sub-menu:hover :deep(.el-sub-menu__title) {
-  background-color: var(--hover-bg) !important;
-  color: var(--active-text);
-  transform: translateX(4px);
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* 激活菜单项样式 */
 .el-menu-item.is-active {
-  background-color: var(--active-bg) !important;
-  color: var(--active-text);
-  font-weight: 500;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: #1e40af;
 }
 
 /* 子菜单标题样式 */
@@ -123,8 +113,11 @@ const getRouteValue = (routeName) => {
 .el-icon {
   margin-right: 12px;
   font-size: 18px;
-  transition: all 0.3s ease;
-  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* 菜单文字样式 */
@@ -133,7 +126,6 @@ span {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
   color: inherit;
 }
 
@@ -194,6 +186,7 @@ span {
 .el-tooltip {
   display: flex;
   align-items: center;
+  width: 100%;
 }
 
 .el-menu-item,
@@ -201,5 +194,8 @@ span {
   display: flex;
   align-items: center;
   padding: 0 16px !important;
+  height: 50px;
+  line-height: 50px;
+  margin: 4px 8px;
 }
 </style>

@@ -22,7 +22,7 @@ import java.util.List;
 @Table(name = "fs_posts", indexes = {
         @Index(name = "idx_created_at", columnList = "created_at"),
         @Index(name = "idx_title", columnList = "title"),
-        @Index(name = "idx_is_public", columnList = "is_public"),
+        @Index(name = "idx_is_public", columnList = "is_published"),
 })
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "postId")
 @DynamicUpdate

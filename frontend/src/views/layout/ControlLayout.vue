@@ -90,16 +90,16 @@ const handleUserCommand = async (command) => {
           </div>
         </div>
         <!-- 菜单部分 - 添加no-scroll类防止滚动 -->
-        <el-menu class="no-scroll" :default-active="$route.path" active-text-color="#1e40af" text-color="#000000"
-          router :collapse=" isCollapse " :collapse-transition=" true ">
-          <menu-renderer :menu-config=" menus " :is-collapsed=" isCollapse " />
+        <el-menu class="no-scroll" :default-active="$route.path" active-text-color="#1e40af" text-color="#000000" router
+          :collapse="isCollapse" :collapse-transition="true" background-color="transparent">
+          <menu-renderer :menu-config="menus" :is-collapsed="isCollapse" />
         </el-menu>
       </el-aside>
 
       <el-container>
         <el-header>
           <div class="header-right">
-            <UserDropdown @command=" handleUserCommand " />
+            <UserDropdown @command="handleUserCommand" />
           </div>
         </el-header>
         <el-main>
