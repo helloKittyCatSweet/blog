@@ -399,7 +399,7 @@ const formatDateTime = (dateTimeString) => {
           :post-id="post.postId"
           :title="post.title"
           :user-id="post.userId"
-          :display-limit="drawerVisible ? null : 5"
+          :display-limit="5"
           :show-view-more="true"
           @refresh="refreshPost"
           @update:comment-count="updateCommentCount"
