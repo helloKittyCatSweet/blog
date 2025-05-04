@@ -1,5 +1,8 @@
 package com.kitty.blog.domain.model.search;
 
+import com.kitty.blog.application.dto.post.PostDto;
+import com.kitty.blog.domain.model.Post;
+import com.kitty.blog.domain.model.tag.Tag;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,6 +11,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.*;
 
 import java.time.LocalDate;
+import java.util.stream.Collectors;
 
 @Data
 @Document(indexName = "posts")
@@ -16,6 +20,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class PostIndex {
     @Id
+    @Field(type = FieldType.Integer)
     private Integer id;
 
     @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
@@ -59,4 +64,42 @@ public class PostIndex {
 
     @Field(type = FieldType.Keyword)
     private String category;
+
+    public static PostIndex convertToPostIndex(PostDto postDto) {
+        return PostIndex.builder()
+                .id(postDto.getPost().getPostId())
+                .title(postDto.getPost().getTitle())
+                .content(postDto.getPost().getContent())
+                .summary(postDto.getPost().getAbstractContent())
+                .authorId(postDto.getPost().getUserId())
+                .authorName(postDto.getAuthor())
+                .createTime(postDto.getPost().getCreatedAt())
+                .viewCount(postDto.getPost().getViews())
+                .likeCount(postDto.getPost().getLikes())
+                .favoriteCount(postDto.getPost().getFavorites())
+                .isDeleted(postDto.getPost().isDeleted())
+                .tags(postDto.getTags() != null
+                        ? postDto.getTags().stream().map(Tag::getName)
+                        .collect(Collectors.joining(","))
+                        : "")
+                .category(postDto.getCategory() != null ? postDto.getCategory().getName() : "")
+                .build();
+    }
+
+    public static Post convertToPost(PostIndex postIndex) {
+        return Post.builder()
+                .postId(postIndex.getId())
+                .userId(postIndex.getAuthorId())
+                .title(postIndex.getTitle())
+                .abstractContent(postIndex.getSummary())
+                .content(postIndex.getContent())
+                .createdAt(postIndex.getCreateTime())
+                .isPublished(true)
+                .isDraft(false)
+                .visibility("PUBLIC")
+                .views(postIndex.getViewCount())
+                .likes(postIndex.getLikeCount())
+                .favorites(postIndex.getFavoriteCount())
+                .build();
+    }
 }

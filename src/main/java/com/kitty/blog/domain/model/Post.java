@@ -3,9 +3,7 @@ package com.kitty.blog.domain.model;
 import com.fasterxml.jackson.annotation.*;
 import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.model.tag.PostTag;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -28,6 +26,8 @@ import java.util.List;
 @DynamicUpdate
 @DynamicInsert
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class Post implements Serializable {
 
     @Serial

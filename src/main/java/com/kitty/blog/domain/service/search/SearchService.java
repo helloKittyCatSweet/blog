@@ -1,8 +1,10 @@
 package com.kitty.blog.domain.service.search;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.Refresh;
+import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.query_dsl.BoolQuery;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
@@ -29,6 +31,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.*;
@@ -79,7 +82,7 @@ public class SearchService {
     public void syncPostToEs(PostDto postDto) {
         CompletableFuture.runAsync(() -> {
             try {
-                PostIndex postIndex = convertToPostIndex(postDto);
+                PostIndex postIndex = PostIndex.convertToPostIndex(postDto);
                 client.index(i -> i
                         .index("posts")
                         .id(postDto.getPost().getPostId().toString())
@@ -143,7 +146,7 @@ public class SearchService {
         return applicationContext.getBean(PostService.class);
     }
 
-    public Page<PostDto> searchPosts(String keyword, int page, int size) {
+    public Page<PostDto> searchPosts(String keyword, int page, int size, String[] sorts) {
         try {
             // 解析特殊语法
             String tags;
@@ -246,7 +249,7 @@ public class SearchService {
                                                 .boost(1.5f))))));
 
                 // Tag query(when tags are not specified)
-                if (tags == null || tags.isEmpty()) {
+                if (tags.isEmpty()) {
                     shouldQueries.add(Query.of(q -> q
                             .match(m -> m
                                     .field("tags")
@@ -254,7 +257,7 @@ public class SearchService {
                 }
 
                 // Category query(when category is not specified)
-                if (category == null || category.isEmpty()) {
+                if (category.isEmpty()) {
                     shouldQueries.add(Query.of(q -> q
                             .match(m -> m
                                     .field("category")
@@ -312,7 +315,48 @@ public class SearchService {
                                     .postTags("</em>")))
                             .fields("category", HighlightField.of(f -> f
                                     .preTags("<em class=\"highlight\">")
-                                    .postTags("</em>"))))
+                                    .postTags("</em>")))
+                    )
+                            .sort(sortBuilder -> {
+                                if (sorts == null || sorts.length == 0){
+                                    // 默认按创建时间排序
+                                    return sortBuilder.field(f -> f
+                                            .field("createTime")
+                                            .order(SortOrder.Desc)
+                                    );
+                                }
+
+                                // 处理单个排序参数 ["field,direction"]
+                                if (sorts.length == 1 && sorts[0].contains(",")){
+                                    String[] parts = sorts[0].split(",");
+                                    if (parts.length == 2){
+                                        String field = parts[0];
+                                        String direction = parts[1];
+                                        return sortBuilder.field(f -> f
+                                                .field(field)
+                                                .order(direction.equalsIgnoreCase("asc") ? SortOrder.Asc : SortOrder.Desc)
+                                        );
+                                    }
+                                }
+
+                                // 处理两个元素的情况 ["field", "direction"]
+                                if (sorts.length == 2){
+                                    String field = sorts[0];
+                                    String direction = sorts[1];
+                                    if (StringUtils.hasText(field) && StringUtils.hasText(direction)){
+                                        return sortBuilder.field(f -> f
+                                                .field(field)
+                                                .order(direction.equalsIgnoreCase("asc") ? SortOrder.Asc : SortOrder.Desc)
+                                        );
+                                    }
+                                }
+
+                                // 如果格式不正确，使用默认排序
+                                return sortBuilder.field(f -> f
+                                        .field("createTime")
+                                        .order(SortOrder.Desc)
+                                );
+                            })
                     .from(page * size)
                     .size(size),
                     PostIndex.class);
@@ -465,26 +509,7 @@ public class SearchService {
         }
     }
 
-    private PostIndex convertToPostIndex(PostDto postDto) {
-        return PostIndex.builder()
-                .id(postDto.getPost().getPostId())
-                .title(postDto.getPost().getTitle())
-                .content(postDto.getPost().getContent())
-                .summary(postDto.getPost().getAbstractContent())
-                .authorId(postDto.getPost().getUserId())
-                .authorName(postDto.getAuthor())
-                .createTime(postDto.getPost().getCreatedAt())
-                .viewCount(postDto.getPost().getViews())
-                .likeCount(postDto.getPost().getLikes())
-                .favoriteCount(postDto.getPost().getFavorites())
-                .isDeleted(postDto.getPost().isDeleted())
-                .tags(postDto.getTags() != null
-                        ? postDto.getTags().stream().map(Tag::getName)
-                                .collect(Collectors.joining(","))
-                        : "")
-                .category(postDto.getCategory() != null ? postDto.getCategory().getName() : "")
-                .build();
-    }
+
 
     // 添加一个检查索引内容的方法
     public void checkIndexContent() {

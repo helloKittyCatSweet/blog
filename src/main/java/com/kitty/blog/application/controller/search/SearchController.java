@@ -107,10 +107,11 @@ public class SearchController {
     public ResponseEntity<Response<Page<PostDto>>> searchPosts(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt,desc") String[] sorts) {
         try {
 //            keyword = StringConverter.convertUpperCaseToLowerCase(keyword);
-            Page<PostDto> results = searchService.searchPosts(keyword, page, size);
+            Page<PostDto> results = searchService.searchPosts(keyword, page, size, sorts);
             return Response.ok(results);
         } catch (Exception e) {
             return Response.error("搜索失败：" + e.getMessage());

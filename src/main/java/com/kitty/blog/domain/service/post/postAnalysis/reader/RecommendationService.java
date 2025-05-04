@@ -15,6 +15,7 @@ import com.kitty.blog.common.constant.ActivityType;
 import com.kitty.blog.domain.model.UserActivity;
 import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.model.category.PostCategory;
+import com.kitty.blog.domain.model.search.PostIndex;
 import com.kitty.blog.domain.repository.CategoryRepository;
 import com.kitty.blog.domain.repository.CommentRepository;
 import com.kitty.blog.domain.repository.post.PostRepository;
@@ -468,7 +469,7 @@ public class RecommendationService {
     // 使用ES获取热门文章
     private List<Post> getHotPostsFromES(int limit) {
         try {
-            SearchResponse<Post> response = elasticsearchClient.search(
+            SearchResponse<PostIndex> response = elasticsearchClient.search(
                     s -> s.index("posts")
                             .query(q -> q
                                     .bool(b -> b
@@ -481,21 +482,24 @@ public class RecommendationService {
                                             .script(s1 -> s1
                                                     .inline(i -> i
                                                             .source(
-                                                                    "doc['likeCount'].value * params.likeWeight + " +
-                                                                            "doc['viewCount'].value * params.viewWeight + " +
-                                                                            "doc['favoriteCount'].value * params.favoriteWeight"
-                                                            )
-                                                            .params("likeWeight", JsonData.of(likeWeight))
-                                                            .params("viewWeight", JsonData.of(viewWeight))
-                                                            .params("favoriteWeight", JsonData.of(favoriteWeight))
-                                                    ))
-                                            .order(SortOrder.Desc)
-                                    ))
+                                                                    "doc['likeCount'].value * params.likeWeight + "
+                                                                            +
+                                                                            "doc['viewCount'].value * params.viewWeight + "
+                                                                            +
+                                                                            "doc['favoriteCount'].value * params.favoriteWeight")
+                                                            .params("likeWeight",
+                                                                    JsonData.of(likeWeight))
+                                                            .params("viewWeight",
+                                                                    JsonData.of(viewWeight))
+                                                            .params("favoriteWeight",
+                                                                    JsonData.of(favoriteWeight))))
+                                            .order(SortOrder.Desc)))
                             .size(limit),
-                    Post.class);
+                    PostIndex.class);
             return response.hits().hits().stream()
                     .map(Hit::source)
                     .filter(Objects::nonNull)
+                    .map(PostIndex::convertToPost)
                     .toList();
         } catch (Exception e) {
             log.error("从ES获取热门文章失败", e);
@@ -516,21 +520,14 @@ public class RecommendationService {
                                                             .terms(builder -> builder
                                                                     .value(postIds.stream()
                                                                             .map(FieldValue::of)
-                                                                            .collect(Collectors.toList()))
-                                                            )
-                                                    )
-                                            )
+                                                                            .collect(Collectors
+                                                                                    .toList())))))
                                             .mustNot(mn -> mn
                                                     .term(t -> t
                                                             .field("isDeleted")
-                                                            .value(true)
-                                                    )
-                                            )
-                                    )
-                            )
+                                                            .value(true)))))
                             .size(postIds.size()),
-                    Post.class
-            );
+                    Post.class);
 
             // 添加返回值处理
             return response.hits().hits().stream()
@@ -539,8 +536,7 @@ public class RecommendationService {
                     .collect(Collectors.toMap(
                             Post::getPostId,
                             Function.identity(),
-                            (existing, replacement) -> existing
-                    ));
+                            (existing, replacement) -> existing));
         } catch (Exception e) {
             log.error("从ES搜索文章失败", e);
             // 降级到原有方法
