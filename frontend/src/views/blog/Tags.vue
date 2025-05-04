@@ -160,8 +160,8 @@ const loadTagPosts = async () => {
   }
 
   loading.value = true;
-  const sorts = sortBy.value === "newest" ? "createdAt,desc" :
-              sortBy.value === "views" ? "views,desc" : "likes,desc"
+  const sorts = sortBy.value === "newest" ? ["createdAt,desc"] :
+              sortBy.value === "views" ? ["views,desc"] : ["likes,desc"];
   try {
     // Changed: Use findByTags API with tag names array
     const tagNames = selectedTagObjects.value.map((tag) => tag.name);

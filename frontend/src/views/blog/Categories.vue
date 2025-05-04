@@ -60,7 +60,8 @@ const loadPosts = async () => {
   try {
     let response;
     const sorts = sortBy.value === "newest" ? "createdAt,desc" :
-                 sortBy.value === "views" ? "views,desc" : "likes,desc";
+             sortBy.value === "views" ? "views,desc" :
+             "likes,desc";
     // 组合搜索：当前分类 + 搜索关键词
     if (searchQuery.value) {
       response = await searchPosts(
@@ -78,7 +79,7 @@ const loadPosts = async () => {
         {
           page: currentPage.value - 1,
           size: pageSize.value,
-          sort: sorts
+          sorts: sorts
         }
       );
     }

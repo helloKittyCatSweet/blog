@@ -593,8 +593,7 @@ public class PostService {
         if (!categoryRepository.existsById(targetCategory.getCategoryId())) {
             return new PageImpl<>(new ArrayList<>(), PageRequest.of(page, size), 0);
         } else {
-            Sort sorting = createSort(sort);
-            PageRequest pageRequest = PageRequest.of(page, size, sorting);
+            PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
             Page<Post> posts = postRepository.findByCategoryId(targetCategory.getCategoryId(), pageRequest);
             return posts.map(this::convertToPostDto);
         }
