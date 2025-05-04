@@ -112,6 +112,7 @@ public class SecurityConfig {
                                 "/api/comment/public/find/*/list",
 
                                 "/api/category/public/find/all",
+                                "/api/category/public/find/list",
 
                                 "/api/tag/public/find/all",
 
