@@ -16,6 +16,7 @@ const selectedCategory = ref(null)
 const categoryPosts = ref([])
 const sortBy = ref('newest')
 const loading = ref(false)
+const defaultExpandedKeys = ref([])
 
 // 提取的数据转换方法
 const transformPostData = (rawData) => {
@@ -94,10 +95,6 @@ const loadPosts = async () => {
         categoryPosts.value = transformPostData(data)
         total.value = data.length
       }
-
-      if (categoryPosts.value.length === 0) {
-        ElMessage.info('该分类下暂无文章')
-      }
     }
   } catch (error) {
     console.error('加载文章失败:', error)
@@ -157,29 +154,31 @@ const loadCategories = async () => {
     const response = await findAllNoPage()
     if (response.data?.status === 200) {
       // 检查并处理数据结构
-      const content = response.data.data.content || response.data.data
-      categoriesTree.value = content.map((item) => {
-        // 检查 item 是否直接就是 category 对象
-        const category = item.category || item
-        const children = item.children || []
-
-        return {
+      const content = response.data.data
+      categoriesTree.value = content.map((item) => ({
+        category: {
+          categoryId: item.category.categoryId,
+          name: item.category.name,
+          useCount: item.category.useCount || 0,
+          description: item.category.description || '',
+        },
+        label: item.category.name,
+        children: (item.children || []).map((child) => ({
           category: {
-            categoryId: category.categoryId,
-            name: category.name,
-            useCount: category.useCount || 0,
+            categoryId: child.category.categoryId,
+            name: child.category.name,
+            useCount: child.category.useCount || 0,
+            description: child.category.description || '',
           },
-          label: category.name,
-          children: children.map((child) => ({
-            category: {
-              categoryId: child.categoryId,
-              name: child.name,
-              useCount: child.useCount || 0,
-            },
-            label: child.name,
-          })),
-        }
-      })
+          label: child.category.name,
+          children: child.children || [],
+        })),
+      }))
+
+      // 设置默认展开的节点
+      if (categoriesTree.value.length > 0) {
+        defaultExpandedKeys.value = [categoriesTree.value[0].category.categoryId]
+      }
 
       // 处理选择逻辑
       const categoryParam = router.currentRoute.value.query.category
@@ -189,18 +188,18 @@ const loadCategories = async () => {
         const matchedCategory = flattenedCategories.find(
           (category) => category.name === decodedCategoryName
         )
-
         selectedCategory.value = matchedCategory || categoriesTree.value[0].category
       } else if (categoriesTree.value.length > 0) {
         selectedCategory.value = categoriesTree.value[0].category
       }
 
       // 在 nextTick 中设置当前选中节点
-      nextTick(() => {
-        if (treeRef.value && selectedCategory.value) {
-          treeRef.value.setCurrentKey(selectedCategory.value.categoryId)
-        }
-      })
+      await nextTick()
+      if (treeRef.value && selectedCategory.value) {
+        treeRef.value.setCurrentKey(selectedCategory.value.categoryId)
+        // 确保选中状态被应用
+        treeRef.value.store.currentNode = treeRef.value.store.nodesMap[selectedCategory.value.categoryId]
+      }
 
       // 加载文章
       if (selectedCategory.value) {
@@ -219,23 +218,29 @@ const loadCategories = async () => {
 
 // 修改 handleCategoryClick 函数
 const handleCategoryClick = async (data) => {
-  selectedCategory.value = data.category
+  if (data.category.categoryId === selectedCategory.value?.categoryId) {
+    return; // 如果点击的是当前选中的分类，不做任何操作
+  }
+  selectedCategory.value = data.category;
   // 更新 URL 参数
   router.push({
     query: { category: data.category.name },
-  })
-  await loadPosts()
-}
+  });
+  await loadPosts();
+};
 
 // 修改 viewPosts 函数
-const viewPosts = (data) => {
-  selectedCategory.value = data.category
+const viewPosts = async (data) => {
+  if (data.category.categoryId === selectedCategory.value?.categoryId) {
+    return; // 如果点击的是当前选中的分类，不做任何操作
+  }
+  selectedCategory.value = data.category;
   // 更新 URL 参数
   router.push({
     query: { category: data.category.name },
-  })
-  loadPosts()
-}
+  });
+  await loadPosts();
+};
 
 // 搜索处理
 const handleSearch = async (selectedItem) => {
@@ -368,7 +373,14 @@ const handleCurrentChange = (val) => {
 }
 
 onMounted(() => {
-  loadCategories()
+  loadCategories().then(() => {
+    // 确保在加载完成后设置选中状态
+    nextTick(() => {
+      if (treeRef.value && selectedCategory.value) {
+        treeRef.value.setCurrentKey(selectedCategory.value.categoryId)
+      }
+    })
+  })
 })
 
 // 添加 watch 监听排序变化
@@ -419,7 +431,9 @@ const treeRef = ref(null)
           </template>
 
           <div class="categories-tree-container">
+            <el-empty v-if="categoriesTree.length === 0" description="暂无分类" />
             <el-tree
+              v-else
               ref="treeRef"
               :data="categoriesTree"
               :props="{
@@ -429,20 +443,35 @@ const treeRef = ref(null)
               node-key="category.categoryId"
               :highlight-current="true"
               :current-node-key="selectedCategory?.categoryId"
+              :default-expanded-keys="defaultExpandedKeys"
               :expand-on-click-node="false"
               @node-click="handleCategoryClick"
               v-loading="loading"
             >
               <template #default="{ node, data }">
-                <div class="custom-tree-node">
+                <div 
+                  class="custom-tree-node"
+                  :class="{ 'is-selected': data.category.categoryId === selectedCategory?.categoryId }"
+                >
                   <div class="node-content">
-                    <el-tag size="small" effect="plain" class="category-tag">
+                    <el-tag 
+                      size="large" 
+                      :type="data.category.categoryId === selectedCategory?.categoryId ? 'primary' : 'info'"
+                      :effect="data.category.categoryId === selectedCategory?.categoryId ? 'dark' : 'light'"
+                      class="category-tag"
+                    >
                       {{ data.category.name }}
+                      <span class="tag-count">{{ data.category.useCount || 0 }}</span>
                     </el-tag>
-                    <span class="post-count">{{ data.category.useCount || 0 }}</span>
                   </div>
                   <div class="node-actions">
-                    <el-button type="primary" link @click.stop="viewPosts(data)"> 查看 </el-button>
+                    <el-button 
+                      type="primary"
+                      link 
+                      @click.stop="viewPosts(data)"
+                    >
+                      查看
+                    </el-button>
                   </div>
                 </div>
               </template>
@@ -545,25 +574,29 @@ const treeRef = ref(null)
     border-radius: 12px;
     border: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
 
     :deep(.el-card__header) {
       background: linear-gradient(135deg, #f6f8fa, #e9ecef);
       border-bottom: 1px solid #e0e3e8;
       padding: 20px;
       border-radius: 12px 12px 0 0;
+      flex-shrink: 0;
     }
 
     :deep(.el-card__body) {
+      flex: 1;
       padding: 0;
-      height: calc(100% - 68px);
       overflow: auto;
+      display: flex;
+      flex-direction: column;
     }
 
     .card-header {
       display: flex;
       flex-direction: column;
       gap: 16px;
-      padding: auto;
 
       h3 {
         margin: 0;
@@ -572,6 +605,7 @@ const treeRef = ref(null)
         display: flex;
         align-items: center;
         gap: 10px;
+        font-weight: 600;
 
         .el-icon {
           color: #409eff;
@@ -586,29 +620,51 @@ const treeRef = ref(null)
           border-radius: 20px;
           padding: 0 15px;
           height: 40px;
+          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
         }
       }
     }
 
     .categories-tree-container {
-      padding: 15px;
+      padding: 16px;
+      flex: 1;
+      overflow: auto;
+
+      .el-empty {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      :deep(.el-tree) {
+        background: none;
+      }
 
       :deep(.el-tree-node) {
-        margin: 12px 0; // 增加节点间距
+        margin: 12px 0;
       }
 
       :deep(.el-tree-node__content) {
-        min-height: 30px; // 设置最小高度
-        padding: 8px 0; // 增加内部padding
+        min-height: 30px;
+        padding: 4px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        background: none;
+
+        &:hover {
+          background: none;
+        }
       }
 
-      :deep(.custom-tree-node) {
+      .custom-tree-node {
         flex: 1;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 8px; // 增加内部padding
+        padding: 4px;
         width: 100%;
+        transition: all 0.2s ease;
 
         .node-content {
           display: flex;
@@ -616,24 +672,37 @@ const treeRef = ref(null)
           gap: 12px;
 
           .category-tag {
+            transition: all 0.3s ease;
+            padding: 8px 16px;
             font-size: 14px;
-            border-radius: 6px;
-            background-color: #f0f7ff;
-            border-color: #d0e3ff;
-            color: #409eff;
-            padding: 8px 16px; // 增加标签内部间距
-            height: auto;
-            line-height: 1.4;
-          }
+            border-radius: 16px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            cursor: pointer;
 
-          .post-count {
-            background-color: #f0f2f5;
-            color: #7a8ba9;
-            font-size: 13px;
-            padding: 6px 14px; // 增加计数器内部间距
-            border-radius: 10px;
-            font-weight: 500;
+            &:hover {
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+              transform: translateY(-2px);
+            }
+
+            .tag-count {
+              margin-left: 4px;
+              font-size: 12px;
+              opacity: 0.8;
+              background-color: rgba(255, 255, 255, 0.3);
+              padding: 2px 6px;
+              border-radius: 8px;
+            }
           }
+        }
+
+        .node-actions {
+          opacity: 0;
+          transition: opacity 0.3s ease;
+        }
+
+        &:hover .node-actions {
+          opacity: 1;
         }
       }
     }
@@ -643,6 +712,8 @@ const treeRef = ref(null)
 .right-content {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 
   .posts-card,
   .welcome-card {
@@ -650,16 +721,19 @@ const treeRef = ref(null)
     border-radius: 12px;
     border: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
 
     :deep(.el-card__header) {
       background: linear-gradient(135deg, #f6f8fa, #e9ecef);
       border-bottom: 1px solid #e0e3e8;
       padding: 20px;
       border-radius: 12px 12px 0 0;
+      flex-shrink: 0;
     }
 
     :deep(.el-card__body) {
-      height: calc(100% - 68px);
+      flex: 1;
       overflow: auto;
       padding: 24px;
     }
@@ -668,11 +742,14 @@ const treeRef = ref(null)
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
 
       .category-header {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         gap: 12px;
+        flex-wrap: wrap;
 
         .category-title {
           margin: 0;
@@ -698,99 +775,7 @@ const treeRef = ref(null)
           :deep(.el-input__wrapper) {
             border-radius: 20px;
             height: 40px;
-          }
-        }
-      }
-    }
-
-    .posts-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 20px;
-
-      .post-card {
-        background: white;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-        cursor: pointer;
-        border: 1px solid #eaeef2;
-
-        &:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-          border-color: #d0e3ff;
-
-          .post-title {
-            color: #409eff;
-          }
-        }
-
-        .post-cover {
-          height: 180px;
-          overflow: hidden;
-
-          .cover-image {
-            width: 100%;
-            height: 100%;
-            transition: transform 0.3s;
-          }
-        }
-
-        &:hover .cover-image {
-          transform: scale(1.05);
-        }
-
-        .post-info {
-          padding: 18px;
-
-          .post-title {
-            margin: 0 0 12px;
-            font-size: 18px;
-            font-weight: 600;
-            line-height: 1.4;
-            color: #2c3e50;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            transition: color 0.2s;
-          }
-
-          .post-summary {
-            margin: 0 0 14px;
-            font-size: 15px;
-            color: #5e6d82;
-            line-height: 1.6;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-          }
-
-          .post-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-            color: #7a8ba9;
-
-            .post-stats {
-              display: flex;
-              gap: 16px;
-
-              .stat-item {
-                display: flex;
-                align-items: center;
-                gap: 6px;
-
-                .el-icon {
-                  font-size: 16px;
-                  color: #99a9bf;
-                }
-              }
-            }
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
           }
         }
       }
@@ -798,9 +783,6 @@ const treeRef = ref(null)
   }
 
   .welcome-card {
-    display: flex;
-    flex-direction: column;
-
     :deep(.el-card__header) {
       h2 {
         display: flex;
@@ -823,6 +805,13 @@ const treeRef = ref(null)
       align-items: center;
       justify-content: center;
       padding: 30px 0;
+
+      .el-empty {
+        :deep(.el-empty__description) {
+          font-size: 16px;
+          color: #5e6d82;
+        }
+      }
 
       .welcome-tip {
         margin-top: 20px;
@@ -861,10 +850,6 @@ const treeRef = ref(null)
   .right-content {
     width: 100%;
   }
-
-  .posts-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
-  }
 }
 
 .posts-list {
@@ -873,5 +858,11 @@ const treeRef = ref(null)
     display: flex;
     justify-content: center;
   }
+}
+
+.pagination-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
 }
 </style>
