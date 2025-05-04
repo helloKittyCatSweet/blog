@@ -311,4 +311,8 @@ public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecif
         @Query("SELECT CASE WHEN COUNT(p) = 0 THEN true ELSE false END FROM Post p " +
                         "WHERE p.userId = :userId AND p.isDeleted = false AND p.isPublished = true")
         boolean hasNoPublishedPosts(@Param("userId") Integer userId);
+
+        Page<Post> findByIsPublishedTrueAndVisibilityAndIsDeletedFalse(
+                        String visibility,
+                        Pageable pageable);
 }

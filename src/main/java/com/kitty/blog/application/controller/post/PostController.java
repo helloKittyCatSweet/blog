@@ -745,7 +745,7 @@ public class PostController {
     public ResponseEntity<Response<Page<PostDto>>> findAll(
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @RequestParam(value = "sorts", required = false) String[] sorts) {
+            @RequestParam(value = "sorts", required = false, defaultValue = "createdAt,desc") String[] sorts) {
         Page<PostDto> response = postService.findAll(page, size, sorts);
         return Response.createResponse(ResponseEntity.ok(response),
                 HttpStatus.OK, "查询成功",

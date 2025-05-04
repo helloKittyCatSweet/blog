@@ -59,9 +59,6 @@ const loadPosts = async () => {
   loading.value = true;
   try {
     let response;
-    const sorts = sortBy.value === "newest" ? "createdAt,desc" :
-             sortBy.value === "views" ? "views,desc" :
-             "likes,desc";
     // 组合搜索：当前分类 + 搜索关键词
     if (searchQuery.value) {
       response = await searchPosts(
@@ -69,7 +66,9 @@ const loadPosts = async () => {
         {
           page: currentPage.value - 1,
           size: pageSize.value,
-          sorts: sorts
+          sorts: sortBy.value === "newest" ? "createTime,desc" :
+           sortBy.value === "views" ? "viewCount,desc" :
+           "likeCount,desc"
         }
       );
     } else {
@@ -79,7 +78,9 @@ const loadPosts = async () => {
         {
           page: currentPage.value - 1,
           size: pageSize.value,
-          sorts: sorts
+          sorts: sortBy.value === "newest" ? "createdAt,desc" :
+             sortBy.value === "views" ? "views,desc" :
+             "likes,desc"
         }
       );
     }

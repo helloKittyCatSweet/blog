@@ -135,9 +135,9 @@ const transformPostData = (rawData) => {
     excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
     category: item.category?.categoryId
       ? {
-          categoryId: item.category.categoryId,
-          name: item.category.name,
-        }
+        categoryId: item.category.categoryId,
+        name: item.category.name,
+      }
       : null,
     tags: item.tags?.map((tag) => tag.name) || [],
     views: item.post.views || 0,
@@ -161,7 +161,7 @@ const loadTagPosts = async () => {
 
   loading.value = true;
   const sorts = sortBy.value === "newest" ? ["createdAt,desc"] :
-              sortBy.value === "views" ? ["views,desc"] : ["likes,desc"];
+    sortBy.value === "views" ? ["views,desc"] : ["likes,desc"];
   try {
     // Changed: Use findByTags API with tag names array
     const tagNames = selectedTagObjects.value.map((tag) => tag.name);
@@ -251,7 +251,13 @@ const handleSearch = async (selectedItem) => {
 
       console.log("Final search query:", finalQuery);
 
-      const response = await searchPosts(finalQuery, currentPage.value - 1, pageSize.value);
+      const response = await searchPosts(finalQuery, {
+        page: currentPage.value - 1,
+        size: pageSize.value,
+        sorts: sortBy.value === "newest" ? "createTime,desc" :
+          sortBy.value === "views" ? "viewCount,desc" :
+            "likeCount,desc"
+      });
       if (response.data?.status === 200) {
         const data = response.data.data;
         if (data.content) {
@@ -403,22 +409,18 @@ watch(sortBy, async () => {
           <template #header>
             <div class="card-header">
               <h3>
-                <el-icon><Collection /></el-icon> 标签云
+                <el-icon>
+                  <Collection />
+                </el-icon> 标签云
               </h3>
               <div style="display: flex; gap: 10px">
-                <el-autocomplete
-                  v-model="searchQuery"
-                  :fetch-suggestions="querySearchAsync"
-                  placeholder="搜索标签..."
-                  class="search-input"
-                  clearable
-                  @select="handleSearch"
-                  @keyup.enter="handleSearch"
-                  @clear="handleSearch"
-                  size="large"
-                >
+                <el-autocomplete v-model="searchQuery" :fetch-suggestions="querySearchAsync" placeholder="搜索标签..."
+                  class="search-input" clearable @select="handleSearch" @keyup.enter="handleSearch"
+                  @clear="handleSearch" size="large">
                   <template #prefix>
-                    <el-icon><Search /></el-icon>
+                    <el-icon>
+                      <Search />
+                    </el-icon>
                   </template>
                 </el-autocomplete>
                 <el-button type="primary" @click="handleSearch" size="large">
@@ -431,17 +433,9 @@ watch(sortBy, async () => {
           <div class="tags-container">
             <el-empty v-if="tags.length === 0" description="暂无标签" />
             <div class="tags-group">
-              <div
-                v-for="tag in filteredTags"
-                :key="tag.tagId"
-                class="tag-item"
-                @click="handleTagClick(tag)"
-              >
-                <el-tag
-                  :type="getTagType(tag.weight)"
-                  :effect="selectedTags.includes(tag.tagId) ? 'dark' : 'light'"
-                  size="large"
-                >
+              <div v-for="tag in filteredTags" :key="tag.tagId" class="tag-item" @click="handleTagClick(tag)">
+                <el-tag :type="getTagType(tag.weight)" :effect="selectedTags.includes(tag.tagId) ? 'dark' : 'light'"
+                  size="large">
                   {{ tag.name }}
                   <span class="tag-count">{{ tag.useCount || 0 }}</span>
                 </el-tag>
@@ -453,23 +447,13 @@ watch(sortBy, async () => {
 
       <!-- 右侧文章列表 -->
       <div class="right-content">
-        <el-card
-          shadow="hover"
-          class="posts-card"
-          v-if="selectedTags.length > 0 || tagPosts.length > 0"
-        >
+        <el-card shadow="hover" class="posts-card" v-if="selectedTags.length > 0 || tagPosts.length > 0">
           <template #header>
             <div class="posts-header">
               <div class="tags-header">
                 <h2 class="tags-title">
-                  <el-tag
-                    v-for="tag in selectedTagObjects"
-                    :key="tag.tagId"
-                    :type="getTagType(tag.weight)"
-                    size="large"
-                    closable
-                    @close="removeTag(tag)"
-                  >
+                  <el-tag v-for="tag in selectedTagObjects" :key="tag.tagId" :type="getTagType(tag.weight)" size="large"
+                    closable @close="removeTag(tag)">
                     {{ tag.name }}
                   </el-tag>
                 </h2>
@@ -477,24 +461,13 @@ watch(sortBy, async () => {
               </div>
               <div class="header-controls">
                 <div class="sort-options">
-                  <el-select
-                    v-model="sortBy"
-                    placeholder="排序方式"
-                    size="large"
-                    style="width: 140px"
-                  >
+                  <el-select v-model="sortBy" placeholder="排序方式" size="large" style="width: 140px">
                     <el-option label="最新发布" value="newest" />
                     <el-option label="最多浏览" value="views" />
                     <el-option label="最多点赞" value="likes" />
                   </el-select>
                 </div>
-                <el-button
-                  type="danger"
-                  @click="clearSelectedTags"
-                  :icon="CircleClose"
-                  plain
-                  size="large"
-                >
+                <el-button type="danger" @click="clearSelectedTags" :icon="CircleClose" plain size="large">
                   清空标签
                 </el-button>
               </div>
@@ -505,15 +478,9 @@ watch(sortBy, async () => {
             <PostListItem :posts="tagPosts" :show-keyword="false" />
 
             <div class="pagination-container">
-              <el-pagination
-                v-model:current-page="currentPage"
-                v-model:page-size="pageSize"
-                :page-sizes="[10, 20, 50]"
-                :total="total"
-                layout="total, sizes, prev, pager, next, jumper"
-                @size-change="handleSizeChange"
-                @current-change="handleCurrentChange"
-              />
+              <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50]"
+                :total="total" layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+                @current-change="handleCurrentChange" />
             </div>
           </div>
         </el-card>
@@ -521,7 +488,9 @@ watch(sortBy, async () => {
         <el-card shadow="hover" class="welcome-card" v-else>
           <template #header>
             <h2>
-              <el-icon><Collection /></el-icon> 欢迎使用标签浏览
+              <el-icon>
+                <Collection />
+              </el-icon> 欢迎使用标签浏览
             </h2>
           </template>
           <div class="welcome-content">

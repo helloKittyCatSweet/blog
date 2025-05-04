@@ -106,9 +106,9 @@ public class SearchController {
     })
     public ResponseEntity<Response<Page<PostDto>>> searchPosts(
             @RequestParam String keyword,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt,desc") String[] sorts) {
+            @RequestParam(defaultValue = "0", required = false) int page,
+            @RequestParam(defaultValue = "10", required = false) int size,
+            @RequestParam(defaultValue = "createTime,desc", required = false) String[] sorts) {
         try {
 //            keyword = StringConverter.convertUpperCaseToLowerCase(keyword);
             Page<PostDto> results = searchService.searchPosts(keyword, page, size, sorts);

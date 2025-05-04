@@ -711,7 +711,7 @@ public class PostService {
 
     @Transactional
     public Page<PostDto> findByVisibility(String visibility, Integer userId, Integer page, Integer size,
-                                          String[] sort) {
+            String[] sort) {
         try {
             Visibility.valueOf(visibility);
             Sort sorting = createSort(sort);
@@ -751,25 +751,16 @@ public class PostService {
     @Transactional
     @CacheEvict(allEntries = true)
     public Page<PostDto> findAll(Integer page, Integer size, String[] sort) {
-        // 创建搜索条件
-        PostSearchCriteria criteria = PostSearchCriteria.builder()
-                .isPublished(true)
-                .visibility("PUBLIC")
-                .build();
-
-        // 使用已有的搜索方法获取公开文章
-        List<PostDto> postDtos = searchPostsByMultipleCriteria(criteria);
-
-        // 创建分页对象
+        // 创建分页和排序请求
         PageRequest pageRequest = PageUtil.createPageRequest(page, size, sort);
-        int start = (int) pageRequest.getOffset();
-        int end = Math.min((start + pageRequest.getPageSize()), postDtos.size());
 
-        // 返回分页结果
-        return new PageImpl<>(
-                postDtos.subList(start, end),
-                pageRequest,
-                postDtos.size());
+        // 直接使用 Repository 进行分页查询
+        Page<Post> posts = postRepository.findByIsPublishedTrueAndVisibilityAndIsDeletedFalse(
+                "PUBLIC",
+                pageRequest);
+
+        // 转换为 PostDto
+        return posts.map(this::convertToPostDto);
     }
 
     @Transactional

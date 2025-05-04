@@ -89,7 +89,9 @@ const fetchPosts = async () => {
     const pageParams = {
       page: currentPage.value - 1,
       size: pageSize.value,
-      sort: filter.sort
+      sorts: filter.sort === "createdAt,desc" ? "createTime,desc" :
+        filter.sort === "views,desc"? "viewCount,desc" :
+        "likeCount,desc",
     };
 
     if (filter.keyword?.trim()) {
@@ -119,7 +121,11 @@ const fetchPosts = async () => {
       }
     } else {
       // 无搜索条件时使用获取所有文章接口
-      response = await getAllPosts(pageParams);
+      response = await getAllPosts({
+        page: currentPage.value - 1,
+        size: pageSize.value,
+        sorts: filter.sort
+      });
       if (response.data?.status === 200) {
         const { content, totalElements } = response.data.data;
         posts.value = content.map(item => ({

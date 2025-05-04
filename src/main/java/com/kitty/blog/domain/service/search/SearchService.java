@@ -315,48 +315,43 @@ public class SearchService {
                                     .postTags("</em>")))
                             .fields("category", HighlightField.of(f -> f
                                     .preTags("<em class=\"highlight\">")
-                                    .postTags("</em>")))
-                    )
-                            .sort(sortBuilder -> {
-                                if (sorts == null || sorts.length == 0){
-                                    // 默认按创建时间排序
-                                    return sortBuilder.field(f -> f
-                                            .field("createTime")
-                                            .order(SortOrder.Desc)
-                                    );
-                                }
+                                    .postTags("</em>"))))
+                    .sort(sortBuilder -> {
+                        if (sorts == null || sorts.length == 0) {
+                            // 默认按创建时间排序
+                            return sortBuilder.field(f -> f
+                                    .field("createTime")
+                                    .order(SortOrder.Desc));
+                        }
 
-                                // 处理单个排序参数 ["field,direction"]
-                                if (sorts.length == 1 && sorts[0].contains(",")){
-                                    String[] parts = sorts[0].split(",");
-                                    if (parts.length == 2){
-                                        String field = parts[0];
-                                        String direction = parts[1];
-                                        return sortBuilder.field(f -> f
-                                                .field(field)
-                                                .order(direction.equalsIgnoreCase("asc") ? SortOrder.Asc : SortOrder.Desc)
-                                        );
-                                    }
-                                }
-
-                                // 处理两个元素的情况 ["field", "direction"]
-                                if (sorts.length == 2){
-                                    String field = sorts[0];
-                                    String direction = sorts[1];
-                                    if (StringUtils.hasText(field) && StringUtils.hasText(direction)){
-                                        return sortBuilder.field(f -> f
-                                                .field(field)
-                                                .order(direction.equalsIgnoreCase("asc") ? SortOrder.Asc : SortOrder.Desc)
-                                        );
-                                    }
-                                }
-
-                                // 如果格式不正确，使用默认排序
+                        // 处理单个排序参数 ["field,direction"]
+                        if (sorts.length == 1 && sorts[0].contains(",")) {
+                            String[] parts = sorts[0].split(",");
+                            if (parts.length == 2) {
+                                String field = parts[0];
+                                String direction = parts[1];
                                 return sortBuilder.field(f -> f
-                                        .field("createTime")
-                                        .order(SortOrder.Desc)
-                                );
-                            })
+                                        .field(field)
+                                        .order(direction.equalsIgnoreCase("asc") ? SortOrder.Asc : SortOrder.Desc));
+                            }
+                        }
+
+                        // 处理两个元素的情况 ["field", "direction"]
+                        if (sorts.length == 2) {
+                            String field = sorts[0];
+                            String direction = sorts[1];
+                            if (StringUtils.hasText(field) && StringUtils.hasText(direction)) {
+                                return sortBuilder.field(f -> f
+                                        .field(field)
+                                        .order(direction.equalsIgnoreCase("asc") ? SortOrder.Asc : SortOrder.Desc));
+                            }
+                        }
+
+                        // 如果格式不正确，使用默认排序
+                        return sortBuilder.field(f -> f
+                                .field("createTime")
+                                .order(SortOrder.Desc));
+                    })
                     .from(page * size)
                     .size(size),
                     PostIndex.class);
@@ -508,8 +503,6 @@ public class SearchService {
             return Collections.emptyList();
         }
     }
-
-
 
     // 添加一个检查索引内容的方法
     public void checkIndexContent() {

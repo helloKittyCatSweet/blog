@@ -92,7 +92,7 @@ export const findByTags = (tags, { page = 0, size = 10, sorts = ["createdAt,desc
   request.post(`${postPrefix}/public/find/tags`, {tags ,page, size, sorts });
 
 // 根据分类查询文章列表
-export const findByCategory = (category, { page = 0, size = 10, sorts = ["createdAt", "desc"] } = {}) =>
+export const findByCategory = (category, { page = 0, size = 10, sorts = "createdAt,desc" } = {}) =>
   request.get(`${postPrefix}/public/find/category/${category}`, {
     params: {
       page,
