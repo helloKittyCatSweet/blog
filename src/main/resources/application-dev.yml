@@ -65,6 +65,7 @@ spring:
       port: 6379
       database: 0
       timeout: 10000
+      password: 123456
       lettuce:
         pool:
           max-active: 8   # 连接池最大连接数
