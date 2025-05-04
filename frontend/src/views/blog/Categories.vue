@@ -1,34 +1,34 @@
 <script setup>
-import { ref, onMounted, watch, computed } from "vue";
-import { ElMessage, ElLoading, ElAutocomplete } from "element-plus";
-import { Search, View, Star, Reading } from "@element-plus/icons-vue";
-import { findAll } from "@/api/common/category";
-import { findByCategory, findAll as findAllPosts } from "@/api/post/post";
-import { searchCategorySuggestions, searchPosts } from "@/api/search/es";
-import PostListItem from "@/components/blog/post/PostListItem.vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, watch, computed, nextTick } from 'vue'
+import { ElMessage, ElLoading, ElAutocomplete } from 'element-plus'
+import { Search, View, Star, Reading } from '@element-plus/icons-vue'
+import { findAllNoPage } from '@/api/common/category'
+import { findByCategory, findAll as findAllPosts } from '@/api/post/post'
+import { searchCategorySuggestions, searchPosts } from '@/api/search/es'
+import PostListItem from '@/components/blog/post/PostListItem.vue'
+import { useRouter } from 'vue-router'
 
-const router = useRouter();
+const router = useRouter()
 
-const searchQuery = ref("");
-const categoriesTree = ref([]);
-const selectedCategory = ref(null);
-const categoryPosts = ref([]);
-const sortBy = ref("newest");
-const loading = ref(false);
+const searchQuery = ref('')
+const categoriesTree = ref([])
+const selectedCategory = ref(null)
+const categoryPosts = ref([])
+const sortBy = ref('newest')
+const loading = ref(false)
 
 // 提取的数据转换方法
 const transformPostData = (rawData) => {
   if (!Array.isArray(rawData)) {
-    console.warn("rawData is not an array, returning empty array");
-    return [];
+    console.warn('rawData is not an array, returning empty array')
+    return []
   }
   return rawData.map((item) => ({
     id: item.post.postId,
     title: item.post.title,
     content: item.post.content,
     cover: item.post.coverImage,
-    excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
+    excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + '...',
     category: item.category?.categoryId
       ? {
           categoryId: item.category.categoryId,
@@ -45,84 +45,84 @@ const transformPostData = (rawData) => {
 
     highlightTitle: item.post.title,
     highlightContent: item.post.content,
-  }));
-};
+  }))
+}
 
 // 加载文章，根据是否有选中分类决定加载分类文章还是全部文章
 const loadPosts = async () => {
   if (!selectedCategory.value?.categoryId) {
-    categoryPosts.value = [];
-    total.value = 0;
-    return;
+    categoryPosts.value = []
+    total.value = 0
+    return
   }
 
-  loading.value = true;
+  loading.value = true
   try {
-    let response;
+    let response
     // 组合搜索：当前分类 + 搜索关键词
     if (searchQuery.value) {
-      response = await searchPosts(
-        `@${selectedCategory.value.name}@ ${searchQuery.value}`,
-        {
-          page: currentPage.value - 1,
-          size: pageSize.value,
-          sorts: sortBy.value === "newest" ? "createTime,desc" :
-           sortBy.value === "views" ? "viewCount,desc" :
-           "likeCount,desc"
-        }
-      );
+      response = await searchPosts(`@${selectedCategory.value.name}@ ${searchQuery.value}`, {
+        page: currentPage.value - 1,
+        size: pageSize.value,
+        sorts:
+          sortBy.value === 'newest'
+            ? 'createTime,desc'
+            : sortBy.value === 'views'
+            ? 'viewCount,desc'
+            : 'likeCount,desc',
+      })
     } else {
       // 仅按分类搜索
-      response = await findByCategory(
-        selectedCategory.value.name,
-        {
-          page: currentPage.value - 1,
-          size: pageSize.value,
-          sorts: sortBy.value === "newest" ? "createdAt,desc" :
-             sortBy.value === "views" ? "views,desc" :
-             "likes,desc"
-        }
-      );
+      response = await findByCategory(selectedCategory.value.name, {
+        page: currentPage.value - 1,
+        size: pageSize.value,
+        sorts:
+          sortBy.value === 'newest'
+            ? 'createdAt,desc'
+            : sortBy.value === 'views'
+            ? 'views,desc'
+            : 'likes,desc',
+      })
     }
 
     if (response.data?.status === 200) {
-      const data = response.data.data;
+      const data = response.data.data
       if (data.content) {
-        categoryPosts.value = transformPostData(data.content);
-        total.value = data.totalElements;
+        categoryPosts.value = transformPostData(data.content)
+        total.value = data.totalElements
       } else {
-        categoryPosts.value = transformPostData(data);
-        total.value = data.length;
+        categoryPosts.value = transformPostData(data)
+        total.value = data.length
       }
 
       if (categoryPosts.value.length === 0) {
-        ElMessage.info("该分类下暂无文章");
+        ElMessage.info('该分类下暂无文章')
       }
     }
   } catch (error) {
-    console.error("加载文章失败:", error);
-    ElMessage.error("加载文章失败");
-    categoryPosts.value = [];
-    total.value = 0;
+    console.error('加载文章失败:', error)
+    ElMessage.error('加载文章失败')
+    categoryPosts.value = []
+    total.value = 0
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 // 添加一个递归函数来扁平化分类树
 const flattenCategoryTree = (items) => {
-  const flattenedCategories = [];
+  const flattenedCategories = []
   const flatten = (items) => {
     for (const item of items) {
-      flattenedCategories.push(item.category);
+      flattenedCategories.push(item.category)
       if (item.children?.length > 0) {
-        flatten(item.children);
+        flatten(item.children)
       }
     }
-  };
-  flatten(items);
-  return flattenedCategories;
-};
+  }
+  flatten(items)
+  return flattenedCategories
+}
 
 // 修改路由监听器，只处理路由变化时的情况
 watch(
@@ -131,130 +131,135 @@ watch(
     if (categoriesTree.value.length > 0) {
       if (!newCategory) {
         // 如果没有分类参数，选择第一个分类并加载文章
-        selectedCategory.value = categoriesTree.value[0].category;
-        await loadPosts();
+        selectedCategory.value = categoriesTree.value[0].category
+        await loadPosts()
       } else {
         // 有分类参数时的处理
-        const decodedCategoryName = decodeURIComponent(newCategory);
-        const flattenedCategories = flattenCategoryTree(categoriesTree.value);
+        const decodedCategoryName = decodeURIComponent(newCategory)
+        const flattenedCategories = flattenCategoryTree(categoriesTree.value)
         const matchedCategory = flattenedCategories.find(
-          category => category.name === decodedCategoryName
-        );
+          (category) => category.name === decodedCategoryName
+        )
 
         if (matchedCategory) {
-          selectedCategory.value = matchedCategory;
-          await loadPosts();
+          selectedCategory.value = matchedCategory
+          await loadPosts()
         }
       }
     }
   }
-);
+)
 
 // 修改 loadCategories 函数
 const loadCategories = async () => {
-  loading.value = true;
+  loading.value = true
   try {
-    const response = await findAll();
+    const response = await findAllNoPage()
     if (response.data?.status === 200) {
       // 检查并处理数据结构
-      const content = response.data.data.content || response.data.data;
+      const content = response.data.data.content || response.data.data
       categoriesTree.value = content.map((item) => {
         // 检查 item 是否直接就是 category 对象
-        const category = item.category || item;
-        const children = item.children || [];
+        const category = item.category || item
+        const children = item.children || []
 
         return {
           category: {
             categoryId: category.categoryId,
             name: category.name,
-            useCount: category.useCount || 0
+            useCount: category.useCount || 0,
           },
           label: category.name,
           children: children.map((child) => ({
             category: {
               categoryId: child.categoryId,
               name: child.name,
-              useCount: child.useCount || 0
+              useCount: child.useCount || 0,
             },
-            label: child.name
-          }))
-        };
-      });
+            label: child.name,
+          })),
+        }
+      })
 
       // 处理选择逻辑
-      const categoryParam = router.currentRoute.value.query.category;
+      const categoryParam = router.currentRoute.value.query.category
       if (categoryParam && categoriesTree.value.length > 0) {
-        const decodedCategoryName = decodeURIComponent(categoryParam);
-        const flattenedCategories = flattenCategoryTree(categoriesTree.value);
+        const decodedCategoryName = decodeURIComponent(categoryParam)
+        const flattenedCategories = flattenCategoryTree(categoriesTree.value)
         const matchedCategory = flattenedCategories.find(
-          category => category.name === decodedCategoryName
-        );
+          (category) => category.name === decodedCategoryName
+        )
 
-        selectedCategory.value = matchedCategory || categoriesTree.value[0].category;
+        selectedCategory.value = matchedCategory || categoriesTree.value[0].category
       } else if (categoriesTree.value.length > 0) {
-        selectedCategory.value = categoriesTree.value[0].category;
+        selectedCategory.value = categoriesTree.value[0].category
       }
+
+      // 在 nextTick 中设置当前选中节点
+      nextTick(() => {
+        if (treeRef.value && selectedCategory.value) {
+          treeRef.value.setCurrentKey(selectedCategory.value.categoryId)
+        }
+      })
 
       // 加载文章
       if (selectedCategory.value) {
-        await loadPosts();
+        await loadPosts()
       } else if (categoriesTree.value.length === 0) {
-        ElMessage.warning("暂无分类数据");
+        ElMessage.warning('暂无分类数据')
       }
     }
   } catch (error) {
-    console.error("加载分类失败:", error);
-    ElMessage.error("加载分类失败");
+    console.error('加载分类失败:', error)
+    ElMessage.error('加载分类失败')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 // 修改 handleCategoryClick 函数
 const handleCategoryClick = async (data) => {
-  selectedCategory.value = data.category;
+  selectedCategory.value = data.category
   // 更新 URL 参数
   router.push({
-    query: { category: data.category.name }
-  });
-  await loadPosts();
-};
+    query: { category: data.category.name },
+  })
+  await loadPosts()
+}
 
 // 修改 viewPosts 函数
 const viewPosts = (data) => {
-  selectedCategory.value = data.category;
+  selectedCategory.value = data.category
   // 更新 URL 参数
   router.push({
-    query: { category: data.category.name }
-  });
-  loadPosts();
-};
+    query: { category: data.category.name },
+  })
+  loadPosts()
+}
 
 // 搜索处理
 const handleSearch = async (selectedItem) => {
   // 统一获取查询内容
   let query =
-    typeof selectedItem === "string"
-      ? selectedItem
-      : selectedItem?.value || searchQuery.value;
+    typeof selectedItem === 'string' ? selectedItem : selectedItem?.value || searchQuery.value
 
   if (!query) {
     if (selectedCategory.value) {
-      await loadPosts();
+      await loadPosts()
     } else {
-      await loadCategories();
+      await loadCategories()
     }
-    return;
+    return
   }
 
-  loading.value = true;
+  loading.value = true
   try {
     // 检查是否是分类（自动补全选择时）
     const isCategorySuggestion = categoriesTree.value.some(
       (item) =>
         item.category.name === query ||
         item.children?.some((child) => child.category.name === query)
-    );
+    )
 
     if (isCategorySuggestion) {
       // 处理分类选择
@@ -262,116 +267,118 @@ const handleSearch = async (selectedItem) => {
         (item) =>
           item.category.name === query ||
           item.children?.some((child) => child.category.name === query)
-      );
+      )
       if (matchedCategory) {
-        selectedCategory.value = matchedCategory.category;
-        await loadPosts();
+        selectedCategory.value = matchedCategory.category
+        await loadPosts()
       }
     } else {
       // 处理手动输入的搜索（构建完整查询）
-      let finalQuery = query;
+      let finalQuery = query
 
       // 如果已选分类但查询中未指定@分类，自动附加分类条件
-      if (selectedCategory.value && !query.includes("@")) {
-        finalQuery = `@${selectedCategory.value.name}@ ${query}`;
+      if (selectedCategory.value && !query.includes('@')) {
+        finalQuery = `@${selectedCategory.value.name}@ ${query}`
       }
       // 如果输入的是纯标签（以#开头），保持原样
-      else if (query.startsWith("#")) {
-        finalQuery = query;
+      else if (query.startsWith('#')) {
+        finalQuery = query
       }
       // 其他情况直接使用原查询
 
-      console.log("Final search query:", finalQuery); // 调试用
+      console.log('Final search query:', finalQuery) // 调试用
 
-      const response = await searchPosts(finalQuery, 0, 10);
+      const response = await searchPosts(finalQuery, 0, 10)
       if (response.data?.status === 200) {
-        categoryPosts.value = transformPostData(response.data.data.content);
+        categoryPosts.value = transformPostData(response.data.data.content)
         // 保持当前分类选中状态
       }
     }
   } catch (error) {
-    console.error("搜索失败:", error);
-    ElMessage.error("搜索失败");
+    console.error('搜索失败:', error)
+    ElMessage.error('搜索失败')
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 // 补全搜索建议
 const querySearchAsync = async (queryString, cb) => {
   if (queryString) {
     try {
-      const response = await searchCategorySuggestions(queryString);
-      console.log("搜索建议：", response.data?.data, "查询内容：", queryString);
+      const response = await searchCategorySuggestions(queryString)
+      console.log('搜索建议：', response.data?.data, '查询内容：', queryString)
 
       if (response.data?.status === 200) {
         // 处理字符串数组的情况
-        const suggestions = response.data.data.map(item => ({
+        const suggestions = response.data.data.map((item) => ({
           value: typeof item === 'string' ? item : item.category?.name || item.name || '',
-          ...(typeof item === 'object' ? item : {}) // 保留原始对象属性（如果有）
-        }));
-        cb(suggestions);
+          ...(typeof item === 'object' ? item : {}), // 保留原始对象属性（如果有）
+        }))
+        cb(suggestions)
       } else {
-        cb([]); // 状态码不是200时返回空数组
+        cb([]) // 状态码不是200时返回空数组
       }
     } catch (error) {
-      console.error("获取搜索建议失败:", error);
-      ElMessage.error("获取搜索建议失败");
-      cb([]);
+      console.error('获取搜索建议失败:', error)
+      ElMessage.error('获取搜索建议失败')
+      cb([])
     }
   } else {
-    cb([]);
+    cb([])
   }
-};
+}
 
 /**
  * 搜索框监视器
  */
 watch(searchQuery, (newVal) => {
-  if (!newVal || newVal.trim() === "") {
+  if (!newVal || newVal.trim() === '') {
     if (selectedCategory?.categoryId) {
       // 有选中的分类，获取对应文章
-      loadPosts();
+      loadPosts()
     } else {
       // 没有选中的分类，重新加载所有分类
-      loadCategories();
+      loadCategories()
     }
   }
-});
+})
 
 /**
  * 分页
  */
-const currentPage = ref(1);
-const pageSize = ref(10);
-const total = ref(0);
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
 
 const handleSizeChange = (val) => {
-  pageSize.value = val;
-  currentPage.value = 1; // 切换每页显示数量时重置为第一页
-  loadPosts();
-};
+  pageSize.value = val
+  currentPage.value = 1 // 切换每页显示数量时重置为第一页
+  loadPosts()
+}
 
 const handleCurrentChange = (val) => {
-  currentPage.value = val;
+  currentPage.value = val
   // 滚动到页面顶部
   window.scrollTo({
     top: 0,
-    behavior: 'smooth'
-  });
-  loadPosts();
-};
+    behavior: 'smooth',
+  })
+  loadPosts()
+}
 
 onMounted(() => {
-  loadCategories();
-});
+  loadCategories()
+})
 
 // 添加 watch 监听排序变化
 watch(sortBy, async () => {
   if (selectedCategory.value) {
-    await loadPosts();
+    await loadPosts()
   }
-});
+})
+
+const treeRef = ref(null)
 </script>
 
 <template>
@@ -383,7 +390,10 @@ watch(sortBy, async () => {
           <template #header>
             <div class="card-header">
               <h3>
-                <el-icon><Reading /></el-icon> 分类浏览
+                <el-icon>
+                  <Reading />
+                </el-icon>
+                分类浏览
               </h3>
               <div style="display: flex; gap: 10px">
                 <el-autocomplete
@@ -398,24 +408,27 @@ watch(sortBy, async () => {
                   size="large"
                 >
                   <template #prefix>
-                    <el-icon><Search /></el-icon>
+                    <el-icon>
+                      <Search />
+                    </el-icon>
                   </template>
                 </el-autocomplete>
-                <el-button type="primary" @click="handleSearch" size="large"
-                  >搜索</el-button
-                >
+                <el-button type="primary" @click="handleSearch" size="large">搜索</el-button>
               </div>
             </div>
           </template>
 
           <div class="categories-tree-container">
             <el-tree
+              ref="treeRef"
               :data="categoriesTree"
               :props="{
                 children: 'children',
                 label: (data) => data.category.name,
               }"
               node-key="category.categoryId"
+              :highlight-current="true"
+              :current-node-key="selectedCategory?.categoryId"
               :expand-on-click-node="false"
               @node-click="handleCategoryClick"
               v-loading="loading"
@@ -429,9 +442,7 @@ watch(sortBy, async () => {
                     <span class="post-count">{{ data.category.useCount || 0 }}</span>
                   </div>
                   <div class="node-actions">
-                    <el-button type="primary" link @click.stop="viewPosts(data)">
-                      查看
-                    </el-button>
+                    <el-button type="primary" link @click.stop="viewPosts(data)"> 查看 </el-button>
                   </div>
                 </div>
               </template>
@@ -470,11 +481,7 @@ watch(sortBy, async () => {
             </div>
           </template>
 
-          <el-empty
-            v-if="categoryPosts.length === 0"
-            description="暂无文章"
-            :image-size="120"
-          />
+          <el-empty v-if="categoryPosts.length === 0" description="暂无文章" :image-size="120" />
 
           <div v-else class="posts-list">
             <PostListItem :posts="categoryPosts" :show-keyword="false" />
@@ -496,7 +503,10 @@ watch(sortBy, async () => {
         <el-card shadow="hover" class="welcome-card" v-else>
           <template #header>
             <h2>
-              <el-icon><Reading /></el-icon> 欢迎使用分类浏览
+              <el-icon>
+                <Reading />
+              </el-icon>
+              欢迎使用分类浏览
             </h2>
           </template>
           <div class="welcome-content">
@@ -856,6 +866,7 @@ watch(sortBy, async () => {
     grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
   }
 }
+
 .posts-list {
   .pagination {
     margin-top: 20px;

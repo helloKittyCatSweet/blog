@@ -259,6 +259,16 @@ public class CategoryService {
                 HttpStatus.OK);
     }
 
+    @Cacheable(key = "'all'", unless = "#result.body.isEmpty()")
+    @Transactional
+    public ResponseEntity<List<TreeDto>> findAll() {
+        List<Category> allCategories = categoryRepository.findAll();
+        // 构建树结构
+        List<TreeDto> trees = CategoryTreeBuilder.buildTree(allCategories, 0);
+
+        return new ResponseEntity<>(trees, HttpStatus.OK);
+    }
+
     @CacheEvict(key = "#categoryId")
     @Transactional
     public ResponseEntity<Boolean> deleteById(Integer categoryId) {

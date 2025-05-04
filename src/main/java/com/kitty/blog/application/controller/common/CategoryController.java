@@ -247,6 +247,19 @@ public class CategoryController {
                 HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
     }
 
+    // 前台展示界面
+    @Operation(summary = "查询所有分类")
+    @GetMapping("/public/find/list")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "查询成功"),
+            @ApiResponse(responseCode = "500", description = "服务器繁忙")})
+    public ResponseEntity<Response<List<TreeDto>>> findAll() {
+        ResponseEntity<List<TreeDto>> response = categoryService.findAll();
+        return Response.createResponse(response,
+                HttpStatus.OK, "查询成功",
+                HttpStatus.INTERNAL_SERVER_ERROR, "服务器繁忙");
+    }
+
     /**
      * 根据ID删除分类
      * @param id

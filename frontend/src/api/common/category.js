@@ -27,8 +27,10 @@ export const findDescendantsByParentName = (name, {page = 0, size = 10, sort = "
   request.get(`${categoryPrefix}/public/find/descendants/${name}`, {params: {page, size, sort}})
 
 // 查询所有分类
-export const findAll = ({page = 0, size = 10, sort = "useCount,desc"} = {}) => 
+export const findAll = ({page = 0, size = 10, sort = "useCount,desc"} = {}) =>
   request.get(`${categoryPrefix}/public/find/all`, {params: {page, size, sort}})
+
+export const findAllNoPage = () => request.get(`${categoryPrefix}/public/find/list`)
 
 // 检查分类是否存在
 export const existById = (id) => request.get(`${categoryPrefix}/public/exists/${id}`)
