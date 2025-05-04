@@ -59,19 +59,27 @@ const loadPosts = async () => {
   loading.value = true;
   try {
     let response;
+    const sorts = sortBy.value === "newest" ? "createdAt,desc" :
+                 sortBy.value === "views" ? "views,desc" : "likes,desc";
     // 组合搜索：当前分类 + 搜索关键词
     if (searchQuery.value) {
       response = await searchPosts(
         `@${selectedCategory.value.name}@ ${searchQuery.value}`,
-        currentPage.value - 1,
-        pageSize.value
+        {
+          page: currentPage.value - 1,
+          size: pageSize.value,
+          sorts: sorts
+        }
       );
     } else {
       // 仅按分类搜索
       response = await findByCategory(
         selectedCategory.value.name,
-        currentPage.value - 1,
-        pageSize.value
+        {
+          page: currentPage.value - 1,
+          size: pageSize.value,
+          sort: sorts
+        }
       );
     }
 
@@ -330,26 +338,6 @@ watch(searchQuery, (newVal) => {
 });
 
 /**
- * 排序计算属性
- */
-const sortedPosts = computed(() => {
-  if (!categoryPosts.value.length) return [];
-
-  return [...categoryPosts.value].sort((a, b) => {
-    switch (sortBy.value) {
-      case "newest":
-        return new Date(b.createTime) - new Date(a.createTime);
-      case "views":
-        return b.views - a.views;
-      case "likes":
-        return b.likes - a.likes;
-      default:
-        return 0;
-    }
-  });
-});
-
-/**
  * 分页
  */
 const currentPage = ref(1);
@@ -374,6 +362,13 @@ const handleCurrentChange = (val) => {
 
 onMounted(() => {
   loadCategories();
+});
+
+// 添加 watch 监听排序变化
+watch(sortBy, async () => {
+  if (selectedCategory.value) {
+    await loadPosts();
+  }
 });
 </script>
 
@@ -480,7 +475,7 @@ onMounted(() => {
           />
 
           <div v-else class="posts-list">
-            <PostListItem :posts="sortedPosts" :show-keyword="false" />
+            <PostListItem :posts="categoryPosts" :show-keyword="false" />
 
             <div class="pagination-container">
               <el-pagination

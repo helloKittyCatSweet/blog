@@ -248,16 +248,45 @@ public class PostService {
         postAttachment.setAttachmentName(fileDto.getFile().getName());
         postAttachment.setSize(fileDto.getFile().length());
 
-        Tika tika = new Tika();
-        try {
-            postAttachment.setAttachmentType(tika.detect(fileDto.getFile()));
-            postAttachmentRepository.save(postAttachment);
+        // 获取文件类型
+        String fileName = fileDto.getFile().getName().toLowerCase();
+        String mimeType;
 
-            return new ResponseEntity<>(attachment, HttpStatus.OK);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return new ResponseEntity<>("false", HttpStatus.INTERNAL_SERVER_ERROR);
+        // 处理特殊文件类型
+        if (fileName.endsWith(".svg")) {
+            mimeType = "image/svg+xml";
+        } else if (fileName.endsWith(".md")) {
+            mimeType = "text/markdown";
+        } else if (fileName.endsWith(".vue")) {
+            mimeType = "text/x-vue";
+        } else if (fileName.endsWith(".jsx") || fileName.endsWith(".tsx")) {
+            mimeType = "text/jsx";
+        } else if (fileName.endsWith(".less")) {
+            mimeType = "text/x-less";
+        } else if (fileName.endsWith(".sass") || fileName.endsWith(".scss")) {
+            mimeType = "text/x-sass";
+        } else if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
+            mimeType = "application/x-yaml";
+        } else if (fileName.endsWith(".toml")) {
+            mimeType = "application/toml";
+        } else {
+            Tika tika = new Tika();
+            try {
+                mimeType = tika.detect(fileDto.getFile());
+                // 处理一些 Tika 可能识别错误的类型
+                if (fileName.endsWith(".ts") && "text/plain".equals(mimeType)) {
+                    mimeType = "application/typescript";
+                }
+            } catch (IOException e) {
+                log.error("文件类型检测失败: {}", fileName, e);
+                mimeType = "application/octet-stream";
+            }
         }
+
+        postAttachment.setAttachmentType(mimeType);
+        postAttachmentRepository.save(postAttachment);
+
+        return new ResponseEntity<>(attachment, HttpStatus.OK);
     }
 
     @Transactional
@@ -683,7 +712,7 @@ public class PostService {
 
     @Transactional
     public Page<PostDto> findByVisibility(String visibility, Integer userId, Integer page, Integer size,
-            String[] sort) {
+                                          String[] sort) {
         try {
             Visibility.valueOf(visibility);
             Sort sorting = createSort(sort);

@@ -476,6 +476,8 @@ public class SearchService {
                 .createTime(postDto.getPost().getCreatedAt())
                 .viewCount(postDto.getPost().getViews())
                 .likeCount(postDto.getPost().getLikes())
+                .favoriteCount(postDto.getPost().getFavorites())
+                .isDeleted(postDto.getPost().isDeleted())
                 .tags(postDto.getTags() != null
                         ? postDto.getTags().stream().map(Tag::getName)
                                 .collect(Collectors.joining(","))

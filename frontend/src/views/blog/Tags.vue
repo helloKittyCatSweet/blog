@@ -160,13 +160,15 @@ const loadTagPosts = async () => {
   }
 
   loading.value = true;
+  const sorts = sortBy.value === "newest" ? "createdAt,desc" :
+              sortBy.value === "views" ? "views,desc" : "likes,desc"
   try {
     // Changed: Use findByTags API with tag names array
     const tagNames = selectedTagObjects.value.map((tag) => tag.name);
     const response = await findByTags(tagNames, {
       page: currentPage.value - 1,
       size: pageSize.value,
-      sorts: ["createdAt,desc"]
+      sorts: sorts
     });
 
     if (response.data?.status === 200) {
@@ -317,25 +319,7 @@ watch(searchQuery, (newVal) => {
   }
 });
 
-/**
- * 排序计算属性
- */
-const sortedPosts = computed(() => {
-  if (!tagPosts.value.length) return [];
 
-  return [...tagPosts.value].sort((a, b) => {
-    switch (sortBy.value) {
-      case "newest":
-        return new Date(b.createTime) - new Date(a.createTime);
-      case "views":
-        return b.views - a.views;
-      case "likes":
-        return b.likes - a.likes;
-      default:
-        return 0;
-    }
-  });
-});
 
 /**
  * 分页
@@ -400,6 +384,13 @@ const removeTag = async (tagToRemove) => {
     await loadTagPosts();
   }
 };
+
+// 添加 watch 监听排序变化
+watch(sortBy, async () => {
+  if (selectedTags.value.length > 0) {
+    await loadTagPosts();
+  }
+});
 </script>
 
 <template>
@@ -511,7 +502,7 @@ const removeTag = async (tagToRemove) => {
           </template>
 
           <div class="posts-list">
-            <PostListItem :posts="sortedPosts" :show-keyword="false" />
+            <PostListItem :posts="tagPosts" :show-keyword="false" />
 
             <div class="pagination-container">
               <el-pagination

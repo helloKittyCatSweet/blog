@@ -48,6 +48,12 @@ public class PostIndex {
     @Field(type = FieldType.Integer)
     private Integer likeCount;
 
+    @Field(type = FieldType.Integer)
+    private Integer favoriteCount;
+
+    @Field(type = FieldType.Binary)
+    private boolean isDeleted;
+
     @Field(type = FieldType.Keyword)
     private String tags;
 

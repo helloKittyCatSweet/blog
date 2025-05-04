@@ -25,10 +25,12 @@ const formRef = ref(null);
 const form = ref({
   reportId: null,
   reason: "",
-});
+  description: "",
+})
 
 const rules = {
-  reason: [{ required: true, message: "请输入举报原因", trigger: "blur" }],
+  reason: [{ required: true, message: "请选择举报原因", trigger: "change" }],
+  description: [{ required: true, message: "请输入举报详情", trigger: "blur" }],
 };
 
 // 获取数据
@@ -76,6 +78,7 @@ const handleEdit = (row) => {
   form.value = {
     reportId: row.reportId,
     reason: row.reason,
+    description: row.description,
     status: row.status,
   };
   dialogVisible.value = true;
@@ -230,12 +233,7 @@ const handleDelete = (row) => {
     <el-card class="search-card">
       <el-row :gutter="20">
         <el-col :span="5">
-          <el-input
-            v-model="searchKey"
-            placeholder="搜索举报内容"
-            clearable
-            @keyup.enter="handleSearch"
-          >
+          <el-input v-model="searchKey" placeholder="搜索举报内容" clearable @keyup.enter="handleSearch">
             <template #suffix>
               <el-icon class="el-input__icon">
                 <Search />
@@ -281,11 +279,7 @@ const handleDelete = (row) => {
         </el-table-column>
         <el-table-column prop="postTitle" label="被举报文章" show-overflow-tooltip>
           <template #default="{ row }">
-            <router-link
-              :to="`/post/${row.postId}`"
-              target="_blank"
-              class="el-link el-link--primary"
-            >
+            <router-link :to="`/post/${row.postId}`" target="_blank" class="el-link el-link--primary">
               {{ row.postTitle || "文章已删除" }}
             </router-link>
           </template>
@@ -305,79 +299,42 @@ const handleDelete = (row) => {
         <el-table-column prop="comment" label="处理意见" show-overflow-tooltip />
         <el-table-column label="操作" width="150" align="center">
           <template #default="{ row }">
-            <el-button
-              type="info"
-              :icon="InfoFilled"
-              circle
-              @click="showDetail(row)"
-              title="查看详情"
-            />
-            <el-button
-              v-if="row.status === 'PENDING'"
-              type="primary"
-              :icon="Edit"
-              circle
-              @click="handleEdit(row)"
-              title="编辑举报"
-            />
-            <el-button
-              type="danger"
-              :icon="Delete"
-              circle
-              @click="handleDelete(row)"
-              title="删除举报"
-            />
+            <el-button type="info" :icon="InfoFilled" circle @click="showDetail(row)" title="查看详情" />
+            <el-button v-if="row.status === 'PENDING'" type="primary" :icon="Edit" circle @click="handleEdit(row)"
+              title="编辑举报" />
+            <el-button type="danger" :icon="Delete" circle @click="handleDelete(row)" title="删除举报" />
           </template>
         </el-table-column>
       </el-table>
 
       <!-- 分页 -->
       <div class="pagination">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :total="total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+        <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total="total"
+          :page-sizes="[10, 20, 50, 100]" layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange" @current-change="handleCurrentChange" />
       </div>
     </el-card>
 
     <!-- 添加详情对话框 -->
-    <el-dialog v-model="detailDialogVisible" title="举报详情" width="500px">
-      <div v-if="currentDetail" class="report-detail">
-        <div class="detail-item">
-          <span class="label">被举报文章：</span>
-          <el-link type="primary" @click="viewPost(currentDetail.postId)">
-            {{ currentDetail.post?.title || "文章已删除" }}
-          </el-link>
-        </div>
-        <div class="detail-item">
-          <span class="label">举报原因：</span>
-          <span>{{ getReasonLabel(currentDetail.reason) }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="label">详细说明：</span>
-          <div class="description">{{ currentDetail.description || "无" }}</div>
-        </div>
-        <template v-if="currentDetail.status !== 'PENDING'">
-          <div class="detail-item">
-            <span class="label">处理结果：</span>
-            <el-tag :type="currentDetail.status === 'APPROVED' ? 'success' : 'danger'">
-              {{ getStatusLabel(currentDetail.status) }}
-            </el-tag>
-          </div>
-          <div class="detail-item">
-            <span class="label">处理意见：</span>
-            <div class="description">{{ currentDetail.comment || "无" }}</div>
-          </div>
-        </template>
-      </div>
+    <el-dialog v-model="dialogVisible" title="修改举报" width="500px">
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="举报原因" prop="reason">
+          <el-select v-model="form.reason" placeholder="请选择举报原因" style="width: 100%">
+            <el-option label="垃圾广告" value="SPAM" />
+            <el-option label="不当内容" value="INAPPROPRIATE" />
+            <el-option label="抄袭内容" value="PLAGIARISM" />
+            <el-option label="违法内容" value="ILLEGAL" />
+            <el-option label="其他原因" value="OTHER" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="详细说明" prop="description">
+          <el-input v-model="form.description" type="textarea" :rows="3" placeholder="请输入举报详情说明" />
+        </el-form-item>
+      </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="submitForm">确定</el-button>
         </span>
       </template>
     </el-dialog>
@@ -386,12 +343,7 @@ const handleDelete = (row) => {
     <el-dialog v-model="dialogVisible" title="修改举报" width="500px">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
         <el-form-item label="举报原因" prop="reason">
-          <el-input
-            v-model="form.reason"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入举报原因"
-          />
+          <el-input v-model="form.reason" type="textarea" :rows="3" placeholder="请输入举报原因" />
         </el-form-item>
       </el-form>
       <template #footer>

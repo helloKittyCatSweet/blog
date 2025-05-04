@@ -88,7 +88,7 @@ export const findByTag = (tag, { page = 0, size = 10, sort = ["createdAt,desc"] 
   });
 
 // 根据标签列表查询文章列表
-export const findByTags = (tags, { page = 0, size = 10, sorts = ["createdAt", "desc"] } = {}) =>
+export const findByTags = (tags, { page = 0, size = 10, sorts = "createdAt,desc" } = {}) =>
   request.post(`${postPrefix}/public/find/tags`, {tags ,page, size, sorts });
 
 // 根据分类查询文章列表

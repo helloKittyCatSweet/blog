@@ -1,5 +1,12 @@
 package com.kitty.blog.domain.service.post.postAnalysis.reader;
 
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.query_dsl.FunctionScore;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.json.JsonData;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.domain.model.Comment;
 import com.kitty.blog.domain.model.Post;
@@ -13,6 +20,7 @@ import com.kitty.blog.domain.repository.CommentRepository;
 import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.UserActivityRepository;
 import com.kitty.blog.domain.repository.post.PostSpecification;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
@@ -32,6 +40,7 @@ import java.util.stream.Collectors;
 import static java.time.LocalTime.now;
 import static java.time.temporal.ChronoUnit.DAYS;
 
+@Slf4j
 @Service
 public class RecommendationService {
 
@@ -49,6 +58,9 @@ public class RecommendationService {
 
     @Autowired
     private CommentRepository commentRepository;
+
+    @Autowired
+    private ElasticsearchClient elasticsearchClient;
 
     @Value("${recommend.weights.like:0.1}")
     private double likeWeight;
@@ -75,26 +87,29 @@ public class RecommendationService {
     @Cacheable(value = "userRecommendPosts", key = "#userId")
     public List<Post> recommendPosts(Integer userId, int limit) {
         // 1. 获取用户的历史行为
-        List<UserActivity> userActivities = userActivityRepository.findByUserId(userId).orElse(new ArrayList<>());
+        List<UserActivity> userActivities = userActivityRepository.findByUserId(userId)
+                .orElse(new ArrayList<>());
+
         // 降级策略
         if (userActivities.isEmpty()) {
-            return getHotPosts(limit);
+            return getHotPostsFromES(limit);
         }
 
         // 2. 批量查询相关数据（减少DB查询）
         Set<Integer> postIds = userActivities.stream()
                 .map(UserActivity::getPostId)
                 .collect(Collectors.toSet());
-        Map<Integer, Post> postsMap = postRepository.findByPostIdIn(postIds).stream()
-                .collect(Collectors.toMap(Post::getPostId, Function.identity()));
+        Map<Integer, Post> postsMap = searchPostsByIds(postIds);
         Map<Integer, Category> categoriesMap = getPostCategoriesMap(postIds);
 
         // 3. 计算用户兴趣模型
         Map<Integer, Double> categoryScores = analyzeUserInterests(userActivities, postsMap, categoriesMap);
 
         // 4. 获取候选文章（排除已读）
-        Set<Integer> readPostIds = new HashSet<>(postIds);
-        List<Post> candidatePosts = postRepository.findByPostIdNotIn(readPostIds);
+        Set<Integer> readPostIds = userActivities.stream() // 修复：添加readPostIds的定义
+                .map(UserActivity::getPostId)
+                .collect(Collectors.toSet());
+        List<Post> candidatePosts = searchCandidatePosts(readPostIds, categoryScores);
 
         // 5. 混合推荐（内容 + 协同过滤）
         return hybridRecommend(candidatePosts, categoryScores, limit);
@@ -110,15 +125,13 @@ public class RecommendationService {
         Map<Integer, Category> categoriesMap = categoryRepository.findByCategoryIdIn(categoryIds).stream()
                 .collect(Collectors.toMap(
                         Category::getCategoryId,
-                        Function.identity()
-                ));
+                        Function.identity()));
 
         return relations.stream()
                 .collect(Collectors.toMap(
                         pc -> pc.getId().getPostId(),
                         pc -> categoriesMap.get(pc.getId().getCategoryId()),
-                        (existing, replacement) -> existing
-                ));
+                        (existing, replacement) -> existing));
     }
 
     /**
@@ -145,7 +158,8 @@ public class RecommendationService {
 
     // 归一化分数
     private Map<Integer, Double> normalizeScores(Map<Integer, Double> scores) {
-        if (scores.isEmpty()) return scores;
+        if (scores.isEmpty())
+            return scores;
 
         double maxScore = Collections.max(scores.values());
         double minScore = Collections.min(scores.values());
@@ -160,7 +174,7 @@ public class RecommendationService {
         return scores.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        e -> (e.getValue() - minScore) / range  // Min-Max归一化
+                        e -> (e.getValue() - minScore) / range // Min-Max归一化
                 ));
     }
 
@@ -183,22 +197,20 @@ public class RecommendationService {
         Map<Post, Double> contentScores = candidates.stream()
                 .collect(Collectors.toMap(
                         Function.identity(),
-                        post -> calculateContentScore(post, categoryScores)
-                ));
-        Map<Post, Double> cfScores = calculateHybridCFScores(candidates,getCurrentUserId());
+                        post -> calculateContentScore(post, categoryScores)));
+        Map<Post, Double> cfScores = calculateHybridCFScores(candidates, getCurrentUserId());
         Map<Post, Double> hotScores = candidates.stream()
                 .collect(Collectors.toMap(
-                         Function.identity(),
-                         this::calculateHotnessScore
-                ));
+                        Function.identity(),
+                        this::calculateHotnessScore));
 
         // 混合排序
         return candidates.stream()
-                .sorted(Comparator.comparingDouble(post ->
-                        contentWeight * contentScores.getOrDefault(post, 0.0) +
-                                cfWeight * cfScores.getOrDefault(post, 0.0) +
-                                hotWeight * hotScores.getOrDefault(post, 0.0)
-                ).reversed())
+                .sorted(Comparator.comparingDouble(
+                                post -> contentWeight * contentScores.getOrDefault(post, 0.0) +
+                                        cfWeight * cfScores.getOrDefault(post, 0.0) +
+                                        hotWeight * hotScores.getOrDefault(post, 0.0))
+                        .reversed())
                 .limit(limit)
                 .collect(Collectors.toList());
     }
@@ -215,10 +227,9 @@ public class RecommendationService {
      * 计算文章内容推荐分数
      */
     private double calculateContentScore(Post post, Map<Integer, Double> categoryScores) {
-        Category category = categoryRepository.
-                findByPostId(post.getPostId()).orElse(null);
-        double categoryScore = (category != null) ?
-                categoryScores.getOrDefault(category.getCategoryId(), 0.0) : 0.0;
+        Category category = categoryRepository.findByPostId(post.getPostId()).orElse(null);
+        double categoryScore = (category != null) ? categoryScores.getOrDefault(category.getCategoryId(), 0.0)
+                : 0.0;
 
         categoryScore += calculateHotnessScore(post);
 
@@ -249,51 +260,42 @@ public class RecommendationService {
     /**
      * 基于文章的协调过滤
      */
-    private Map<Post, Double> calculateItemCFScores
-    (List<Post> candidates, Integer userId) {
+    private Map<Post, Double> calculateItemCFScores(List<Post> candidates, Integer userId) {
         // 1. 获取所有用户的交互数据（用户ID -> 该用户交互过的文章ID集合）
         Map<Integer, Set<Integer>> userInteractions = userActivityRepository.findAll().stream()
                 .collect(Collectors.groupingBy(
                         UserActivity::getUserId,
-                        Collectors.mapping(UserActivity::getPostId, Collectors.toSet())
-                ));
+                        Collectors.mapping(UserActivity::getPostId, Collectors.toSet())));
 
         // 2. 构建文章共现矩阵（文章A -> {文章B -> 共现次数}）
-        Map<Integer, Map<Integer, Integer>> coOccurrenceMatrix =
-                buildCoOccurrenceMatrix(userInteractions);
+        Map<Integer, Map<Integer, Integer>> coOccurrenceMatrix = buildCoOccurrenceMatrix(userInteractions);
 
         // 3. 获取目标用户的历史交互文章
-        Set<Integer> userInteractedPosts =
-                userInteractions.getOrDefault(userId, Collections.emptySet());
+        Set<Integer> userInteractedPosts = userInteractions.getOrDefault(userId, Collections.emptySet());
 
         // 4. 计算候选文章的CF分数
         return candidates.stream()
                 .collect(Collectors.toMap(
                         Function.identity(),
                         post -> calculateItemCFScore(post.getPostId(),
-                                userInteractedPosts, coOccurrenceMatrix)
-                ));
+                                userInteractedPosts, coOccurrenceMatrix)));
     }
 
     // 构建共现矩阵
-    private Map<Integer, Map<Integer, Integer>> buildCoOccurrenceMatrix
-    (Map<Integer, Set<Integer>> userInteractions) {
+    private Map<Integer, Map<Integer, Integer>> buildCoOccurrenceMatrix(
+            Map<Integer, Set<Integer>> userInteractions) {
         Map<Integer, Map<Integer, Integer>> matrix = new HashMap<>();
         userInteractions.values().forEach(interactedPosts -> {
             List<Integer> posts = new ArrayList<>(interactedPosts);
             for (int i = 0; i < posts.size(); i++) {
                 for (int j = i + 1; j < posts.size(); j++) {
                     int postA = posts.get(i), postB = posts.get(j);
-                    matrix.computeIfAbsent
-                            (
-                                    postA,
-                                    k -> new HashMap<>()).merge(postB, 1, Integer::sum
-                    );
-                    matrix.computeIfAbsent
-                            (
-                                    postB,
-                                    k -> new HashMap<>()).merge(postA, 1, Integer::sum
-                    );
+                    matrix.computeIfAbsent(
+                            postA,
+                            k -> new HashMap<>()).merge(postB, 1, Integer::sum);
+                    matrix.computeIfAbsent(
+                            postB,
+                            k -> new HashMap<>()).merge(postA, 1, Integer::sum);
                 }
             }
         });
@@ -303,11 +305,10 @@ public class RecommendationService {
     // 计算单个文章的ItemCF分数
     private double calculateItemCFScore(Integer postId, Set<Integer> userInteractedPosts,
                                         Map<Integer, Map<Integer, Integer>> coOccurrenceMatrix) {
-        double rawScore =  userInteractedPosts.stream()
-                .mapToDouble(interactedPost ->
-                        coOccurrenceMatrix.getOrDefault(interactedPost, Collections.emptyMap())
-                                .getOrDefault(postId, 0)
-                )
+        double rawScore = userInteractedPosts.stream()
+                .mapToDouble(interactedPost -> coOccurrenceMatrix
+                        .getOrDefault(interactedPost, Collections.emptyMap())
+                        .getOrDefault(postId, 0))
                 .sum();
         return rawScore / (userInteractedPosts.size() + 1); // 控制到[0,1]附近
     }
@@ -325,8 +326,7 @@ public class RecommendationService {
         Map<Integer, Set<Integer>> userInteractions = userActivityRepository.findAll().stream()
                 .collect(Collectors.groupingBy(
                         UserActivity::getUserId,
-                        Collectors.mapping(UserActivity::getPostId, Collectors.toSet())
-                ));
+                        Collectors.mapping(UserActivity::getPostId, Collectors.toSet())));
 
         // 2. 转换为用户向量（用于余弦相似度计算）
         // 所有文章ID列表
@@ -351,7 +351,8 @@ public class RecommendationService {
             Map<Integer, Double> similarities = new HashMap<>();
 
             for (int j = 0; j < userIds.size(); j++) {
-                if (i == j) continue; // 跳过自己
+                if (i == j)
+                    continue; // 跳过自己
 
                 Integer userB = userIds.get(j);
                 double[] vectorB = userVectors.get(userB);
@@ -416,9 +417,9 @@ public class RecommendationService {
                     .collect(Collectors.toMap(
                             Function.identity(),
                             post -> postScores.containsKey(post.getPostId())
-                                    ? (postScores.get(post.getPostId()) - finalMinScore) / finalRange
-                                    : 0.0
-                    ));
+                                    ? (postScores.get(post.getPostId())
+                                    - finalMinScore) / finalRange
+                                    : 0.0));
         }
 
         return candidates.stream()
@@ -433,14 +434,12 @@ public class RecommendationService {
                 .collect(Collectors.toMap(
                         Function.identity(),
                         post -> 0.6 * itemCFScores.getOrDefault(post, 0.0) +
-                                0.4 * userCFScores.getOrDefault(post, 0.0)
-                ));
+                                0.4 * userCFScores.getOrDefault(post, 0.0)));
     }
-
-
 
     /**
      * 计算热门文章（与用户无关）
+     *
      * @param limit 返回的热门文章数量
      * @return 热门文章列表
      */
@@ -450,26 +449,156 @@ public class RecommendationService {
         Pageable pageable = PageRequest.of(0, limit);
         List<Post> allPosts = postRepository.findAll(
                 PostSpecification.hotPostsSpec(),
-                pageable
-        ).getContent();
+                pageable).getContent();
 
         // 2. 计算每篇文章的热度分数
         Map<Post, Double> hotnessScores = allPosts.stream()
                 .collect(Collectors.toMap(
                         Function.identity(),
-                        this::calculateHotnessScore
-                ));
+                        this::calculateHotnessScore));
 
         // 3. 对文章按热度分数降序排序并返回前 limit 篇
         return allPosts.stream()
-                .sorted(Comparator.comparingDouble(post ->
-                        hotnessScores.getOrDefault(post, 0.0)).reversed())
+                .sorted(Comparator.comparingDouble(post -> hotnessScores.getOrDefault(post, 0.0))
+                        .reversed())
                 .limit(limit)
                 .collect(Collectors.toList());
     }
 
+    // 使用ES获取热门文章
+    private List<Post> getHotPostsFromES(int limit) {
+        try {
+            SearchResponse<Post> response = elasticsearchClient.search(
+                    s -> s.index("posts")
+                            .query(q -> q
+                                    .bool(b -> b
+                                            .mustNot(mn -> mn
+                                                    .term(t -> t
+                                                            .field("isDeleted")
+                                                            .value(true)))))
+                            .sort(sort -> sort
+                                    .script(script -> script
+                                            .script(s1 -> s1
+                                                    .inline(i -> i
+                                                            .source(
+                                                                    "doc['likeCount'].value * params.likeWeight + " +
+                                                                            "doc['viewCount'].value * params.viewWeight + " +
+                                                                            "doc['favoriteCount'].value * params.favoriteWeight"
+                                                            )
+                                                            .params("likeWeight", JsonData.of(likeWeight))
+                                                            .params("viewWeight", JsonData.of(viewWeight))
+                                                            .params("favoriteWeight", JsonData.of(favoriteWeight))
+                                                    ))
+                                            .order(SortOrder.Desc)
+                                    ))
+                            .size(limit),
+                    Post.class);
+            return response.hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(Objects::nonNull)
+                    .toList();
+        } catch (Exception e) {
+            log.error("从ES获取热门文章失败", e);
+            return getHotPosts(limit);
+        }
+    }
+
+    // 使用ES搜索文章
+    private Map<Integer, Post> searchPostsByIds(Set<Integer> postIds) {
+        try {
+            SearchResponse<Post> response = elasticsearchClient.search(
+                    s -> s.index("posts")
+                            .query(q -> q
+                                    .bool(b -> b
+                                            .must(m -> m
+                                                    .terms(t -> t
+                                                            .field("id")
+                                                            .terms(builder -> builder
+                                                                    .value(postIds.stream()
+                                                                            .map(FieldValue::of)
+                                                                            .collect(Collectors.toList()))
+                                                            )
+                                                    )
+                                            )
+                                            .mustNot(mn -> mn
+                                                    .term(t -> t
+                                                            .field("isDeleted")
+                                                            .value(true)
+                                                    )
+                                            )
+                                    )
+                            )
+                            .size(postIds.size()),
+                    Post.class
+            );
+
+            // 添加返回值处理
+            return response.hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toMap(
+                            Post::getPostId,
+                            Function.identity(),
+                            (existing, replacement) -> existing
+                    ));
+        } catch (Exception e) {
+            log.error("从ES搜索文章失败", e);
+            // 降级到原有方法
+            return postRepository.findByPostIdIn(postIds).stream()
+                    .collect(Collectors.toMap(Post::getPostId, Function.identity()));
+        }
+    }
+
+    // 使用ES搜索候选文章
+    private List<Post> searchCandidatePosts(Set<Integer> excludePostIds, Map<Integer, Double> categoryScores) {
+        try {
+            // 构建分类权重 boost 查询
+            List<FunctionScore> functionScores = categoryScores.entrySet().stream()
+                    .map(entry -> FunctionScore.of(fs -> fs
+                            .filter(f -> f
+                                    .term(t -> t
+                                            .field("category")
+                                            .value(entry.getKey())))
+                            .weight(entry.getValue())))
+                    .collect(Collectors.toList());
+
+            SearchResponse<Post> response = elasticsearchClient.search(s -> s
+                            .index("posts")
+                            .query(q -> q
+                                    .functionScore(fs -> fs
+                                            .functions(functionScores)
+                                            .query(innerQ -> innerQ
+                                                    .bool(b -> b
+                                                            .mustNot(mn -> mn
+                                                                    .terms(t -> t
+                                                                            .field("id")
+                                                                            .terms(builder -> builder
+                                                                                    .value(excludePostIds
+                                                                                            .stream()
+                                                                                            .map(FieldValue::of)
+                                                                                            .collect(Collectors
+                                                                                                    .toList())))))
+                                                            .mustNot(mn -> mn
+                                                                    .term(t -> t
+                                                                            .field("isDeleted")
+                                                                            .value(true)))))))
+                            .size(100), // 获取足够多的候选文章
+                    Post.class);
+
+            return response.hits().hits().stream()
+                    .map(Hit::source)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            log.error("从ES搜索候选文章失败", e);
+            // 降级到原有方法
+            return postRepository.findByPostIdNotIn(excludePostIds);
+        }
+    }
+
     /**
      * 计算单篇文章的热度分数
+     *
      * @param post 文章对象
      * @return 热度分数
      */
@@ -487,13 +616,12 @@ public class RecommendationService {
         }
 
         // 评论数权重
-        List<Comment> comments = commentRepository.findByPostId(post.getPostId()).
-                orElse(Collections.emptyList());
+        List<Comment> comments = commentRepository.findByPostId(post.getPostId())
+                .orElse(Collections.emptyList());
         score += comments.size() * commentWeight;
 
-
         // 收藏权重
-        if (post.getFavorites() != null){
+        if (post.getFavorites() != null) {
             score += post.getFavorites() * favoriteWeight;
         }
 
