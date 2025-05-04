@@ -20,8 +20,8 @@ services:
       - "9300:9300"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-      - ./config/elasticsearch/plugins/analysis-ik:/usr/share/elasticsearch/plugins/analysis-ik:ro
-      - ./config/elasticsearch/setup:/usr/share/elasticsearch/setup:ro
+      - ./config/elasticsearch/plugins/analysis-ik:/usr/share/elasticsearch/plugins/analysis-ik
+      - ./config/elasticsearch/setup:/usr/share/elasticsearch/setup
     networks:
       - elk-network
     healthcheck:
@@ -75,9 +75,6 @@ services:
       - ELASTICSEARCH_PASSWORD=kibana123
       - SERVER_NAME=kibana
       - SERVER_HOST=0.0.0.0
-      - XPACK_SECURITY_ENCRYPTIONKEY=something_at_least_32_characters
-      - XPACK_REPORTING_ENCRYPTIONKEY=something_at_least_32_characters
-      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=something_at_least_32_characters
       - XPACK_REPORTING_ENABLED=false
     healthcheck:
       test: ["CMD-SHELL", "curl -s -I http://localhost:5601 | grep -q 'HTTP/1.1 302 Found'"]
