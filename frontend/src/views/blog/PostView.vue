@@ -298,7 +298,7 @@ const formatDateTime = (dateTimeString) => {
       </div>
 
       <!-- 在文章内容后，交互区域前添加附件展示区域 -->
-      <div v-if="post.attachments.length > 0" class="post-attachments">
+      <div v-if="post.attachments.length > 0 && userStore.isLoggedIn" class="post-attachments">
         <div class="attachments-header">
           <h3>文章附件</h3>
           <span class="attachment-count">共 {{ post.attachments.length }} 个附件</span>

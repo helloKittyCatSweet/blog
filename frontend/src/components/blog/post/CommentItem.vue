@@ -111,7 +111,7 @@ const getAllReplies = (comment) => {
       </div>
     </div>
 
-    <div :class="[isReply ? 'reply-operations' : 'comment-operations']">
+    <div v-if="isLoggedIn" :class="[isReply ? 'reply-operations' : 'comment-operations']">
       <el-button
         :type="comment.isLiked ? 'primary' : 'default'"
         link
@@ -121,7 +121,7 @@ const getAllReplies = (comment) => {
         {{ comment.likes || 0 }}
       </el-button>
 
-      <el-button v-if="isLoggedIn" type="primary" link @click="emit('reply', comment)"
+      <el-button type="primary" link @click="emit('reply', comment)"
         >回复</el-button
       >
     </div>
