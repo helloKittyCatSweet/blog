@@ -1,17 +1,20 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
 import { Star, Folder } from "@element-plus/icons-vue";
 import { getFolderNames, getPostsByFolder } from "@/api/post/favorite";
 import { BLOG_POST_DETAIL_PATH } from "@/constants/routes/blog";
 import { USER_FAVORITE_MANAGE_PATH } from "@/constants/routes/user";
+import { useFavoriteStore } from "@/stores/modules/favorite.js";
 
 const router = useRouter();
 const route = useRoute();
 const loading = ref(false);
 const folders = ref([]);
 const favorites = ref({}); // 用对象存储每个文件夹的收藏文章
+
+const favoriteStore = useFavoriteStore();
 
 const getFavorites = async () => {
   loading.value = true;
@@ -75,6 +78,16 @@ const goToFolder = (folder) => {
 onMounted(() => {
   getFavorites();
 });
+
+watch(
+  () => favoriteStore.needRefresh,
+  (newValue) => {
+    if (newValue) {
+      getFavorites();
+      favoriteStore.setNeedRefresh(false);
+    }
+  }
+);
 </script>
 
 <template>

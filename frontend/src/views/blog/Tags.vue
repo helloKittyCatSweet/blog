@@ -142,6 +142,7 @@ const transformPostData = (rawData) => {
     tags: item.tags?.map((tag) => tag.name) || [],
     views: item.post.views || 0,
     likes: item.post.likes || 0,
+    favorites: item.post.favorites || 0,
     comments: item.comments?.length || 0,
     createTime: item.post.createdAt,
     author: item.author,

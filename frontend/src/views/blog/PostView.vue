@@ -18,12 +18,15 @@ import "md-editor-v3/lib/style.css";
 import { findById } from "@/api/post/post.js";
 import { findPostExplicit } from "@/api/user/userActivity.js";
 import { useUserStore } from "@/stores/modules/user.js";
+import { usePostStore } from "@/stores/modules/post.js";
 import { LOGIN_PATH } from "@/constants/routes/base.js";
 import { BLOG_USER_DETAIL_PATH } from "@/constants/routes/blog";
 
 const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
+
+const postStore = usePostStore();
 
 // 文章数据
 const post = ref({
@@ -83,6 +86,8 @@ const getPostDetail = async (id) => {
         viewCount: postData.post.views || 0,
         attachments: postData.attachments || [], // 初始化附件数组
       };
+      // 更新 store 中的浏览量
+      postStore.updatePostViews(id, post.value.viewCount)
     }
   } catch (error) {
     ElMessage.error("获取文章详情失败");
@@ -195,8 +200,6 @@ const goToLogin = () => {
 // 刷新文章和评论
 const refreshPost = async () => {
   if (post.value.postId) {
-    await getPostDetail(post.value.postId);
-
     // 刷新交互状态
     if (userStore.isLoggedIn) {
       try {

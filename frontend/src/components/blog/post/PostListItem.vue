@@ -1,10 +1,11 @@
 <script setup>
-import { View, ChatRound, Star } from "@element-plus/icons-vue";
+import { View, ChatRound, Star, Pointer } from "@element-plus/icons-vue";
 import { onMounted, defineProps, ref } from "vue";
 import { useRouter } from "vue-router";
 import { BLOG_USER_DETAIL_PATH } from "@/constants/routes/blog";
-import { useUserStore } from "@/stores";
+import { useUserStore, usePostStore } from "@/stores";
 import { ElMessage } from "element-plus";
+import { addViews } from "@/api/post/post.js";
 
 const props = defineProps({
   posts: {
@@ -72,12 +73,31 @@ const getRandomCover = () => {
   return defaultCoverImages[randomIndex];
 };
 
+const postStore = usePostStore();
+
 /**
  * 点击文章跳转
  */
-const handlePostClick = (post) => {
+ const handlePostClick = async (post) => {
+  try {
+    // 先更新浏览量
+    const response = await addViews(post.id);
+    if (response?.data?.status === 200) {
+      const currentViews = postStore.getPostViews(post.id);
+      postStore.updatePostViews(post.id, currentViews + 1);
+    }
+  } catch (error) {
+    console.error("更新阅读量失败:", error);
+  }
+  // 无论更新浏览量是否成功，都进行跳转
   router.push(`/post/${post.id}`);
 };
+
+
+// 计算属性获取最新的浏览量
+const getLatestViews = (postId) => {
+  return postStore.getPostViews(postId)
+}
 </script>
 
 <template>
@@ -149,14 +169,18 @@ const handlePostClick = (post) => {
         <div class="post-stats">
           <span title="浏览量">
             <el-icon><View /></el-icon>
-            {{ post.views }}
+            {{ getLatestViews(post.id) }}
           </span>
           <span title="评论数">
             <el-icon><ChatRound /></el-icon>
             {{ post.comments }}
           </span>
-          <span title="点赞数">
+          <span title="收藏数">
             <el-icon><Star /></el-icon>
+            {{ post.favorites }}
+          </span>
+          <span title="点赞数">
+            <el-icon><Pointer /></el-icon>
             {{ post.likes }}
           </span>
         </div>

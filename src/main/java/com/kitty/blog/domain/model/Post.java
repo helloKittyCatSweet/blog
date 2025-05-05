@@ -63,13 +63,13 @@ public class Post implements Serializable {
     @Column(name = "is_draft")
     private Boolean isDraft;
 
-    @Column
+    @Column(nullable = false)
     private Integer views = 0;
 
-    @Column
+    @Column(nullable = false)
     private Integer likes = 0;
 
-    @Column
+    @Column(nullable = false)
     private Integer favorites = 0;
 
     @Column(name = "cover_image")

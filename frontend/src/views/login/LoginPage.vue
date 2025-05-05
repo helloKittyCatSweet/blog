@@ -334,22 +334,54 @@ const autoLogin = async () => {
     if (!savedLoginInfo) return;
 
     const { username, password, remember } = JSON.parse(savedLoginInfo);
-    if (!remember) return;
+    if (!remember) {
+      localStorage.removeItem("loginInfo");
+      return;
+    }
 
-    // 使用 Promise.all 并行处理
-    await Promise.all([
-      (async () => {
-        formModel.value.username = username;
-        formModel.value.password = decryptPassword(password);
-        rememberMe.value = true;
-      })(),
-      form.value?.validate(),
-    ]);
+    // 填充表单
+    formModel.value.username = username;
+    formModel.value.password = decryptPassword(password);
+    rememberMe.value = true;
 
-    await loginUser(true);
+    // 自动登录不需要验证码
+    const res = await login({
+      username: formModel.value.username,
+      password: formModel.value.password,
+    });
+
+    if (res.data.status === 200) {
+      const userData = res.data.data;
+      userStore.setToken(userData.token);
+      userStore.setUser({
+        id: userData.id,
+        username: userData.username,
+        avatar: userData.avatar,
+        roles: userData.roles,
+        authorities: userData.authorities,
+      });
+
+      // 加载用户主题设置
+      await loadUserTheme(userData.id);
+
+      // 如果有重定向地址，跳转到重定向地址
+      const redirect = route.query.redirect;
+      if (redirect && typeof redirect === "string" && !redirect.includes("/login")) {
+        await router.replace(redirect);
+      } else {
+        await router.replace(CONTROL_PANEL_PATH);
+      }
+
+      ElMessage.success("自动登录成功");
+    } else {
+      // 如果自动登录失败，清除保存的信息
+      localStorage.removeItem("loginInfo");
+      rememberMe.value = false;
+    }
   } catch (error) {
     console.error("自动登录失败:", error);
-    clearLoginInfo();
+    localStorage.removeItem("loginInfo");
+    rememberMe.value = false;
   }
 };
 
@@ -869,14 +901,10 @@ const handleOAuthPasswordSet = async (userData) => {
         </el-form-item>
         <!-- 添加用户须知 -->
         <el-form-item class="user-notice-link">
-      <el-link
-        type="info"
-        :underline="true"
-        @click="userNoticeVisible = true"
-      >
-        用户须知
-      </el-link>
-    </el-form-item>
+          <el-link type="info" :underline="true" @click="userNoticeVisible = true">
+            用户须知
+          </el-link>
+        </el-form-item>
 
         <!-- 返回注册 -->
         <el-form-item class="flex">
@@ -885,40 +913,35 @@ const handleOAuthPasswordSet = async (userData) => {
           </el-link>
         </el-form-item>
 
-         <!-- 添加用户须知对话框 -->
-    <el-dialog
-      v-model="userNoticeVisible"
-      title="用户须知"
-      width="500px"
-      align-center
-    >
-      <div class="notice-content">
-        <h4>1. 账号安全</h4>
-        <ul>
-          <li>请使用安全性高的密码，建议包含字母、数字和特殊字符</li>
-          <li>请勿将账号密码分享给他人</li>
-          <li>建议定期更换密码</li>
-        </ul>
-        <h4>2. 数据使用说明</h4>
-        <ul>
-          <li>我们会收集必要的用户信息用于账号管理</li>
-          <li>您的密码将经过加密存储</li>
-          <li>邮箱仅用于账号验证和重要通知</li>
-        </ul>
-        <h4>3. 第三方登录</h4>
-        <ul>
-          <li>支持 GitHub 账号登录</li>
-          <li>首次使用第三方登录需要设置密码</li>
-        </ul>
-      </div>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button type="primary" @click="userNoticeVisible = false">
-            我已了解
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
+        <!-- 添加用户须知对话框 -->
+        <el-dialog v-model="userNoticeVisible" title="用户须知" width="500px" align-center>
+          <div class="notice-content">
+            <h4>1. 账号安全</h4>
+            <ul>
+              <li>请使用安全性高的密码，建议包含字母、数字和特殊字符</li>
+              <li>请勿将账号密码分享给他人</li>
+              <li>建议定期更换密码</li>
+            </ul>
+            <h4>2. 数据使用说明</h4>
+            <ul>
+              <li>我们会收集必要的用户信息用于账号管理</li>
+              <li>您的密码将经过加密存储</li>
+              <li>邮箱仅用于账号验证和重要通知</li>
+            </ul>
+            <h4>3. 第三方登录</h4>
+            <ul>
+              <li>支持 GitHub 账号登录</li>
+              <li>首次使用第三方登录需要设置密码</li>
+            </ul>
+          </div>
+          <template #footer>
+            <div class="dialog-footer">
+              <el-button type="primary" @click="userNoticeVisible = false">
+                我已了解
+              </el-button>
+            </div>
+          </template>
+        </el-dialog>
       </el-form>
     </el-col>
   </el-row>
@@ -1061,37 +1084,37 @@ const handleOAuthPasswordSet = async (userData) => {
   }
 
   .user-notice-link {
-  text-align: center;
-  margin-top: 10px;
-}
+    text-align: center;
+    margin-top: 10px;
+  }
 
-.notice-content {
-  h4 {
-    color: var(--el-color-primary);
-    margin: 16px 0 8px;
-    font-size: 15px;
+  .notice-content {
+    h4 {
+      color: var(--el-color-primary);
+      margin: 16px 0 8px;
+      font-size: 15px;
 
-    &:first-child {
-      margin-top: 0;
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+
+    ul {
+      margin: 8px 0;
+      padding-left: 20px;
+
+      li {
+        margin: 6px 0;
+        color: var(--el-text-color-regular);
+        font-size: 14px;
+        line-height: 1.5;
+      }
     }
   }
 
-  ul {
-    margin: 8px 0;
-    padding-left: 20px;
-
-    li {
-      margin: 6px 0;
-      color: var(--el-text-color-regular);
-      font-size: 14px;
-      line-height: 1.5;
-    }
+  .dialog-footer {
+    text-align: center;
   }
-}
-
-.dialog-footer {
-  text-align: center;
-}
 }
 
 .loading-overlay {

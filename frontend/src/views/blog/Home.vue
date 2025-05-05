@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { View, Star, ArrowRight, Folder } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/modules/user";
+import { usePostStore } from "@/stores/modules/post.js";
 
 import { formatDate } from "@/utils/date";
 import { findAllNoPage as getAllPosts, addViews } from "@/api/post/post.js";
@@ -33,6 +34,7 @@ const latestPosts = ref([]);
 const categories = ref([]);
 const tags = ref([]);
 
+const postStore = usePostStore();
 
 // 获取文章列表
 const getPostList = async () => {
@@ -41,43 +43,41 @@ const getPostList = async () => {
     const response = await getAllPosts();
     if (response?.data?.status === 200) {
       console.log("response.data:", response.data);
-      const  content  = response.data.data;
+      const content = response.data.data;
       if (!content || !Array.isArray(content)) {
         console.error("Invalid content in response:", response.data);
         latestPosts.value = [];
         return;
       }
 
-      const posts = content.map((item) => ({
-        postId: item.post.postId,
-        title: item.post.title,
-        content: item.post.content,
-        coverImage: item.post.coverImage || getRandomCover(),
-        views: item.post.views || 0,
-        likes: item.post.likes || 0,
-        favorites: item.post.favorites || 0,
-        createdAt: item.post.createdAt,
-        updatedAt: item.post.updatedAt,
-        category: item.category?.categoryId
-          ? {
+      const posts = content.map((item) => {
+        // 更新 store 中的浏览量
+        postStore.updatePostViews(item.post.postId, item.post.views || 0)
+        return {
+          postId: item.post.postId,
+          title: item.post.title,
+          content: item.post.content,
+          coverImage: item.post.coverImage || getRandomCover(),
+          views: item.post.views || 0,
+          likes: item.post.likes || 0,
+          favorites: item.post.favorites || 0,
+          createdAt: item.post.createdAt,
+          updatedAt: item.post.updatedAt,
+          category: item.category?.categoryId
+            ? {
               categoryId: item.category.categoryId,
               name: item.category.name,
             }
-          : null,
-        tags: item.tags || [],
-        author: item.author || "匿名",
-        excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
-        comments: item.comments || [],
-        attachments: item.attachments || []
-      }));
+            : null,
+          tags: item.tags || [],
+          author: item.author || "匿名",
+          excerpt: item.post.abstractContent || item.post.content?.substring(0, 200) + "...",
+          comments: item.comments || [],
+          attachments: item.attachments || []
+        }
+      })
+      latestPosts.value = posts
 
-      // 直接使用返回的文章列表
-      latestPosts.value = posts;
-
-      // 获取推荐文章（按照浏览量排序）
-      featuredPosts.value = [...posts]
-        .sort((a, b) => b.views - a.views)
-        .slice(0, 3);
     } else {
       console.error("Failed to fetch posts:", response.data);
       latestPosts.value = [];
@@ -204,12 +204,25 @@ const handleImageError = (event, post) => {
 // 文章点击处理函数
 const handlePostClick = async (postId) => {
   try {
-    await addViews(postId);
+    // 先更新浏览量
+    const response = await addViews(postId);
+    if (response?.data?.status === 200) {
+      const currentViews = postStore.getPostViews(postId);
+      postStore.updatePostViews(postId, currentViews + 1);
+      // 更新成功后再跳转
+      router.push(BLOG_POST_DETAIL_PATH.replace(":id", postId));
+    } else {
+      console.error("更新浏览量失败:", response.data);
+    }
   } catch (error) {
     console.error("更新阅读量失败:", error);
   }
-  router.push(BLOG_POST_DETAIL_PATH.replace(":id", postId));
 };
+
+// 计算属性获取最新的浏览量
+const getLatestViews = (postId) => {
+  return postStore.getPostViews(postId)
+}
 </script>
 
 <template>
@@ -223,12 +236,8 @@ const handlePostClick = async (postId) => {
           </div>
         </template>
         <div class="featured-list">
-          <div
-            v-for="post in featuredPosts"
-            :key="post.postId"
-            class="featured-item"
-            @click="handlePostClick(post.postId)"
-          >
+          <div v-for="post in featuredPosts" :key="post.postId" class="featured-item"
+            @click="handlePostClick(post.postId)">
             <div class="featured-title">{{ post.title }}</div>
             <div class="featured-meta">
               <span>{{ formatDate(post.createdAt) }}</span>
@@ -242,64 +251,37 @@ const handlePostClick = async (postId) => {
     <!-- 中间主要文章列表 -->
     <main class="main-content">
       <div class="posts-list">
-        <el-card
-          v-for="post in latestPosts"
-          :key="post.postId"
-          class="post-item"
-          @click="handlePostClick(post.postId)"
-        >
+        <el-card v-for="post in latestPosts" :key="post.postId" class="post-item" @click="handlePostClick(post.postId)">
           <div class="post-content">
             <div class="post-main">
               <h3 class="post-title">{{ post.title }}</h3>
               <p class="post-abstract">{{ post.excerpt }}</p>
               <div class="post-info">
                 <div class="post-meta">
-                  <el-avatar
-                    :size="24"
-                    :src="post.author?.avatar"
-                    class="author-avatar"
-                    >{{ post.author?.nickname?.charAt(0) }}</el-avatar
-                  >
+                  <el-avatar :size="24" :src="post.author?.avatar" class="author-avatar">{{
+            post.author?.nickname?.charAt(0)
+          }}</el-avatar>
                   <span class="author-name">{{ post.author || "匿名" }}</span>
                   <span class="post-date">{{ formatDate(post.createdAt) }}</span>
                 </div>
                 <div class="post-tags">
-                  <el-tag
-                    v-if="post.category?.categoryId"
-                    size="small"
-                    type="success"
-                    effect="light"
-                    class="category-tag"
-                  >
+                  <el-tag v-if="post.category?.categoryId" size="small" type="success" effect="light"
+                    class="category-tag">
                     {{ post.category.name }}
                   </el-tag>
-                  <el-tag
-                    v-for="tag in post.tags"
-                    :key="tag.tagId"
-                    size="small"
-                    effect="plain"
-                    class="tag"
-                  >
+                  <el-tag v-for="tag in post.tags" :key="tag.tagId" size="small" effect="plain" class="tag">
                     {{ tag.name }}
                   </el-tag>
                 </div>
               </div>
             </div>
             <div class="post-thumbnail" v-if="post.coverImage">
-              <img
-                :src="post.coverImage"
-                alt="缩略图"
-                @error="handleImageError($event, post)"
-              />
+              <img :src="post.coverImage" alt="缩略图" @error="handleImageError($event, post)" />
             </div>
           </div>
           <div class="post-footer">
-            <post-stats
-              :views="post.views || 0"
-              :likes="post.likes || 0"
-              :favorites="post.favorites || 0"
-              size="small"
-            />
+            <post-stats :views="getLatestViews(post.postId)" :likes="post.likes || 0" :favorites="post.favorites || 0"
+              size="small" />
           </div>
         </el-card>
       </div>
@@ -316,17 +298,14 @@ const handlePostClick = async (postId) => {
           </div>
         </template>
         <div class="category-list">
-          <router-link
-            v-for="category in categories"
-            :key="category.categoryId"
-            :to="{
-              path: BLOG_CATEGORIES_PATH,
-              query: { category: category.name }
-            }"
-            class="category-item"
-          >
+          <router-link v-for="category in categories" :key="category.categoryId" :to="{
+            path: BLOG_CATEGORIES_PATH,
+            query: { category: category.name }
+          }" class="category-item">
             <div class="category-info">
-              <el-icon><Folder /></el-icon>
+              <el-icon>
+                <Folder />
+              </el-icon>
               <span class="category-name">{{ category.name }}</span>
             </div>
             <span class="category-count">{{ category.useCount }}</span>
@@ -342,16 +321,10 @@ const handlePostClick = async (postId) => {
           </div>
         </template>
         <div class="tag-cloud">
-          <router-link
-            v-for="tag in tags"
-            :key="tag.tagId"
-            :to="{
-              path: BLOG_TAGS_PATH,
-              query: { tag: tag.name }
-            }"
-            class="tag-item"
-            :style="{ fontSize: `${tag.size}px` }"
-          >
+          <router-link v-for="tag in tags" :key="tag.tagId" :to="{
+            path: BLOG_TAGS_PATH,
+            query: { tag: tag.name }
+          }" class="tag-item" :style="{ fontSize: `${tag.size}px` }">
             {{ tag.name }}
           </router-link>
         </div>
@@ -435,6 +408,7 @@ const handlePostClick = async (postId) => {
   .home {
     grid-template-columns: 1fr 240px;
   }
+
   .left-sidebar {
     display: none;
   }
@@ -444,6 +418,7 @@ const handlePostClick = async (postId) => {
   .home {
     grid-template-columns: 1fr;
   }
+
   .right-sidebar {
     display: none;
   }
@@ -452,10 +427,12 @@ const handlePostClick = async (postId) => {
 /* 调整文章封面图片尺寸 */
 .post-thumbnail {
   width: 200px;
-  height: 150px; /* 固定高度 */
+  height: 150px;
+  /* 固定高度 */
   overflow: hidden;
   border-radius: 8px;
-  flex-shrink: 0; /* 防止图片被压缩 */
+  flex-shrink: 0;
+  /* 防止图片被压缩 */
 }
 
 .post-thumbnail img {
@@ -620,6 +597,7 @@ const handlePostClick = async (postId) => {
 
 .post-date {
   color: var(--el-text-color-secondary);
+
   &::before {
     content: "•";
     margin: 0 8px;

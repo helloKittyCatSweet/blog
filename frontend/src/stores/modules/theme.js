@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 
-export const useThemeStore = defineStore('theme', {
+export const useThemeStore = defineStore('free-share-theme', {
   state: () => ({
     currentTheme: localStorage.getItem('app-theme') || 'light'
   }),
@@ -12,10 +12,10 @@ export const useThemeStore = defineStore('theme', {
 
       // 设置根元素的主题类名
       const html = document.documentElement;
-      
+
       // 移除所有可能的主题类
       html.classList.remove('theme-light', 'theme-dark', 'theme-blue', 'theme-pink', 'theme-green');
-      
+
       // 添加新主题类
       html.classList.add(`theme-${theme}`);
 
@@ -33,7 +33,7 @@ export const useThemeStore = defineStore('theme', {
     // 更新主题相关的CSS变量
     updateThemeVariables(theme) {
       const root = document.documentElement;
-      
+
       const themeVariables = {
         light: {
           '--el-bg-color': '#ffffff',

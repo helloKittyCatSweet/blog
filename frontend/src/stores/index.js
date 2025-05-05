@@ -13,3 +13,7 @@ export * from './modules/setting'
 export * from './modules/message'
 
 export * from './modules/theme'
+
+export * from './modules/favorite'
+
+export * from './modules/post'

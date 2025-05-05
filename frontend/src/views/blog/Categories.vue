@@ -40,6 +40,7 @@ const transformPostData = (rawData) => {
     views: item.post.views || 0,
     likes: item.post.likes || 0,
     comments: item.comments?.length || 0,
+    favorites: item.post.favorites || 0,
     createTime: item.post.createdAt,
     author: item.author,
     userId: item.post.userId,
@@ -449,13 +450,13 @@ const treeRef = ref(null)
               v-loading="loading"
             >
               <template #default="{ node, data }">
-                <div 
+                <div
                   class="custom-tree-node"
                   :class="{ 'is-selected': data.category.categoryId === selectedCategory?.categoryId }"
                 >
                   <div class="node-content">
-                    <el-tag 
-                      size="large" 
+                    <el-tag
+                      size="large"
                       :type="data.category.categoryId === selectedCategory?.categoryId ? 'primary' : 'info'"
                       :effect="data.category.categoryId === selectedCategory?.categoryId ? 'dark' : 'light'"
                       class="category-tag"
@@ -465,9 +466,9 @@ const treeRef = ref(null)
                     </el-tag>
                   </div>
                   <div class="node-actions">
-                    <el-button 
+                    <el-button
                       type="primary"
-                      link 
+                      link
                       @click.stop="viewPosts(data)"
                     >
                       查看

@@ -7,12 +7,15 @@ import {
   deleteById as deleteUserActivity,
 } from "@/api/user/userActivity.js";
 import { useUserStore } from "@/stores/modules/user.js";
+import { useFavoriteStore } from "@/stores/modules/favorite.js";
 import {
   create as createFavorite,
   deleteById as deleteFavorite,
   getFolderNames,
   findByUserIdAndPostId,
 } from "@/api/post/favorite.js";
+
+const favoriteStore = useFavoriteStore();
 
 const props = defineProps({
   postId: Number,
@@ -121,6 +124,9 @@ const handleFavorite = async () => {
         emit("update:favoriteActivityId", null);
         ElMessage.success("取消收藏成功");
         emit("refresh");
+
+        // 更新收藏夹下拉框的状态
+        favoriteStore.setNeedRefresh(true);
       } else {
         ElMessage.error("收藏记录不存在");
       }
@@ -176,6 +182,9 @@ const confirmFavorite = async () => {
         showFolderDialog.value = false;
         newFolderName.value = "";
         selectedFolder.value = "默认收藏夹";
+
+        // 更新收藏夹下拉框的状态
+        favoriteStore.setNeedRefresh(true);
       }
     }
   } catch (error) {
