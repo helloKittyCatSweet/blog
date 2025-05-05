@@ -52,6 +52,16 @@ const submitForm = async () => {
   if (!formRef.value) return;
   await formRef.value.validate(async (valid) => {
     if (valid) {
+      // 检查角色名是否重复
+      const isDuplicate = tableData.value.some(
+        role => role.roleName === form.value.roleName && role.roleId !== form.value.roleId
+      );
+
+      if (isDuplicate) {
+        ElMessage.error("角色名已存在，请更换");
+        return;
+      }
+
       try {
         const res = await update(form.value);
         if (res.data.status === 200) {
