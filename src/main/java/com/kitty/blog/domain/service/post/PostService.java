@@ -653,6 +653,7 @@ public class PostService {
         Post post = (Post) postRepository.findById(postId).orElse(new Post());
         post.setLikes(post.getLikes() + count);
         postRepository.save(post);
+        searchService.syncPostToEs(convertToPostDto(post));
         // 用户点赞
         if (count > 0) {
             userActivityService.create(new UserActivity(post.getUserId(), ActivityType.LIKE.name(),
@@ -679,6 +680,7 @@ public class PostService {
         Post post = (Post) postRepository.findById(postId).orElse(new Post());
         post.setFavorites(post.getFavorites() + count);
         postRepository.save(post);
+        searchService.syncPostToEs(convertToPostDto(post));
         // 用户收藏
         if (count > 0) {
             favoriteService.save(new Favorite(userId, postId));
@@ -917,6 +919,7 @@ public class PostService {
 
         // 批量保存更新
         postRepository.save(post);
+        searchService.syncPostToEs(convertToPostDto(post));
         if (!tags.isEmpty()) {
             tagRepository.saveAll(tags);
         }
