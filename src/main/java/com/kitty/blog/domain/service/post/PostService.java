@@ -113,9 +113,6 @@ public class PostService {
         }
 
         // 初始化默认值
-        post.setLikes(0);
-        post.setFavorites(0);
-        post.setViews(0);
         post.setVersion(1);
         log.info("create post: " + post.toString());
 
