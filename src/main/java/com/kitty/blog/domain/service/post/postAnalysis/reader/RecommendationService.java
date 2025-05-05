@@ -510,7 +510,7 @@ public class RecommendationService {
     // 使用ES搜索文章
     private Map<Integer, Post> searchPostsByIds(Set<Integer> postIds) {
         try {
-            SearchResponse<Post> response = elasticsearchClient.search(
+            SearchResponse<PostIndex> response = elasticsearchClient.search(
                     s -> s.index("posts")
                             .query(q -> q
                                     .bool(b -> b
@@ -527,12 +527,13 @@ public class RecommendationService {
                                                             .field("isDeleted")
                                                             .value(true)))))
                             .size(postIds.size()),
-                    Post.class);
+                    PostIndex.class);
 
             // 添加返回值处理
             return response.hits().hits().stream()
                     .map(Hit::source)
                     .filter(Objects::nonNull)
+                    .map(PostIndex::convertToPost)
                     .collect(Collectors.toMap(
                             Post::getPostId,
                             Function.identity(),
@@ -558,7 +559,7 @@ public class RecommendationService {
                             .weight(entry.getValue())))
                     .collect(Collectors.toList());
 
-            SearchResponse<Post> response = elasticsearchClient.search(s -> s
+            SearchResponse<PostIndex> response = elasticsearchClient.search(s -> s
                             .index("posts")
                             .query(q -> q
                                     .functionScore(fs -> fs
@@ -579,11 +580,12 @@ public class RecommendationService {
                                                                             .field("isDeleted")
                                                                             .value(true)))))))
                             .size(100), // 获取足够多的候选文章
-                    Post.class);
+                    PostIndex.class);
 
             return response.hits().hits().stream()
                     .map(Hit::source)
                     .filter(Objects::nonNull)
+                    .map(PostIndex::convertToPost)
                     .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("从ES搜索候选文章失败", e);
