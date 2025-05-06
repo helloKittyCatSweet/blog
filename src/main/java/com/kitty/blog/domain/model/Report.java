@@ -19,6 +19,7 @@ import java.time.LocalDate;
 @Data
 @Entity
 @Table(name = "fs_reports")
+@org.hibernate.annotations.Comment("举报表")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "reportId")
 @DynamicUpdate
 @DynamicInsert
@@ -31,18 +32,24 @@ public class Report implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @org.hibernate.annotations.Comment("举报ID")
     private Integer reportId;
 
     @Column(name = "post_id")
+    @org.hibernate.annotations.Comment("文章ID")
     private Integer postId;
 
     @Column(name = "user_id")
+    @org.hibernate.annotations.Comment("用户ID")
     private Integer userId;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "reason", nullable = false)
+    @org.hibernate.annotations.Comment("举报原因")
     private ReportReason reason;
 
     @Column
+    @org.hibernate.annotations.Comment("举报描述")
     private String description;
 
     // 禁止手动加入，禁止更新
@@ -50,16 +57,20 @@ public class Report implements Serializable {
             insertable = false,
             updatable = false,
     columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @org.hibernate.annotations.Comment("创建时间")
     private LocalDate createdAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @org.hibernate.annotations.Comment("举报状态")
     private ReportStatus status = ReportStatus.PENDING;
 
     @Column(name = "process_instance_id")
+    @org.hibernate.annotations.Comment("流程实例ID")
     private String processInstanceId;
 
     @Column(name = "comment")
+    @org.hibernate.annotations.Comment("处理意见")
     private String comment;
 
     /**

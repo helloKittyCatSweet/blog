@@ -24,6 +24,7 @@ import java.util.Date;
         @Index(name = "idx_user_folder", columnList = "user_id,folder_name"),
         @Index(name = "idx_favorite_time", columnList = "created_at")
 })
+@org.hibernate.annotations.Comment("收藏表")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "favoriteId")
 @DynamicUpdate
 @DynamicInsert
@@ -36,19 +37,24 @@ public class Favorite implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @org.hibernate.annotations.Comment("收藏ID")
     private Integer favoriteId;
 
     @Column(name = "user_id")
+    @org.hibernate.annotations.Comment("用户ID")
     private Integer userId;
 
     @Column(name = "post_id")
+    @org.hibernate.annotations.Comment("文章ID")
     private Integer postId;
 
     @Column(name = "folder_name")
+    @org.hibernate.annotations.Comment("收藏夹名称")
     private String folderName = "默认收藏夹";
 
     // 禁止手动插入，禁止更新
     @Column(name = "created_at", insertable = false, updatable = false, columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP")
+    @org.hibernate.annotations.Comment("创建时间")
     private LocalDate createdAt;
 
     /**

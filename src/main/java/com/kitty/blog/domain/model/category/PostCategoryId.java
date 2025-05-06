@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.Data;
 import lombok.ToString;
+import org.hibernate.annotations.Comment;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -17,9 +18,11 @@ public class PostCategoryId implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "post_id")
+    @Comment("文章ID")
     private Integer postId;
 
     @Column(name = "category_id")
+    @Comment("分类ID")
     private Integer categoryId;
 
     // 确保实现equals和hashCode方法

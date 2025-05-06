@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.Comment;
 import org.hibernate.envers.Audited;
 
 import java.io.Serial;
@@ -22,9 +23,11 @@ public class UserRoleId implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "user_id")
+    @Comment("用户ID")
     private Integer userId;
 
     @Column(name = "role_id")
+    @Comment("角色ID")
     private Integer roleId;
 
     @Override

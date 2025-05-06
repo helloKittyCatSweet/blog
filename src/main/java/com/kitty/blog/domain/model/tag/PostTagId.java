@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.Data;
 import lombok.ToString;
+import org.hibernate.annotations.Comment;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -17,9 +18,11 @@ public class PostTagId implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "post_id")
+    @Comment("文章ID")
     private Integer postId;
 
     @Column(name = "tag_id")
+    @Comment("标签ID")
     private Integer tagId;
 
     // 无参构造函数

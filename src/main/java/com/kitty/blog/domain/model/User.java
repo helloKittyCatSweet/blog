@@ -27,6 +27,7 @@ import java.util.List;
         @Index(name = "idx_email", columnList = "email"),
         @Index(name = "idx_last_login", columnList = "last_login_time")
 })
+@org.hibernate.annotations.Comment("用户表")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "userId")
 @DynamicInsert
 @DynamicUpdate
@@ -41,68 +42,93 @@ public class User implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @org.hibernate.annotations.Comment("用户ID")
     private Integer userId;
 
     @Column(nullable = false, unique = true)
+    @org.hibernate.annotations.Comment("用户名")
     private String username;
 
+    @org.hibernate.annotations.Comment("昵称")
     private String nickname;
 
     @Column(nullable = false)
     @NotAudited
+    @org.hibernate.annotations.Comment("密码")
     private String password;
 
     @Column(nullable = false, unique = true)
+    @org.hibernate.annotations.Comment("邮箱")
     private String email;
 
     @Column
+    @org.hibernate.annotations.Comment("头像url")
     private String avatar;
 
     @Column
+    @org.hibernate.annotations.Comment("token")
     private String token;
 
     // 禁止手动加入，禁止更新
     @Column(name = "created_at", insertable = false, updatable = false, columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP")
+    @org.hibernate.annotations.Comment("创建时间")
     private LocalDate createdAt;
 
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    @org.hibernate.annotations.Comment("更新时间")
     private LocalDate updatedAt;
 
     @Column(name = "is_active")
+    @org.hibernate.annotations.Comment("是否激活")
     private Boolean isActive;
 
+    @Column(name = "gender")
+    @org.hibernate.annotations.Comment("性别")
     private Integer gender;
 
+    @Column(name = "birthday")
+    @org.hibernate.annotations.Comment("生日")
     private LocalDate birthday;
 
+    @Column(name = "phone")
+    @org.hibernate.annotations.Comment("手机号")
     @Convert(converter = EncryptedAttributeConverter.class)
     private String phone;
 
+    @Column(columnDefinition = "TEXT", name = "address")
+    @org.hibernate.annotations.Comment("地址")
     @Convert(converter = EncryptedAttributeConverter.class)
     private String address;
 
     @Column(columnDefinition = "TEXT")
+    @org.hibernate.annotations.Comment("简介")
     private String introduction;
 
     @Column(name = "last_login_time")
+    @org.hibernate.annotations.Comment("最后登录时间")
     private LocalDate lastLoginTime;
 
     @Column
     @Size(max = 5, message = "标签数量不能超过5个")
     @Valid
+    @org.hibernate.annotations.Comment("标签")
     private List<String> tags;
 
     @Column(name = "is_deleted")
+    @org.hibernate.annotations.Comment("是否删除")
     private boolean isDeleted;
 
     @Column(name = "last_login_ip", length = 45)
+    @org.hibernate.annotations.Comment("最后登录IP")
     private String lastLoginIp;
 
     @Column(name = "last_login_location")
+    @org.hibernate.annotations.Comment("最后登录位置")
     private String lastLoginLocation;
 
     @Column(columnDefinition = "LONGTEXT")
     @Lob
+    @org.hibernate.annotations.Comment("个性签名")
     private String signature;
 
     /**

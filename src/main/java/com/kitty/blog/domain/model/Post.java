@@ -22,6 +22,7 @@ import java.util.List;
         @Index(name = "idx_title", columnList = "title"),
         @Index(name = "idx_is_public", columnList = "is_published"),
 })
+@org.hibernate.annotations.Comment("文章表")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "postId")
 @DynamicUpdate
 @DynamicInsert
@@ -35,53 +36,69 @@ public class Post implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @org.hibernate.annotations.Comment("文章ID")
     private Integer postId;
 
     @Column(name = "user_id")
+    @org.hibernate.annotations.Comment("用户ID")
     private Integer userId;
 
     @Column(nullable = false)
+    @org.hibernate.annotations.Comment("文章标题")
     private String title;
 
     @Column(columnDefinition = "TEXT", name = "abstract_content")
+    @org.hibernate.annotations.Comment("文章摘要")
     private String abstractContent;
 
     @Column(nullable = false, columnDefinition = "LONGTEXT")
     @Lob
+    @org.hibernate.annotations.Comment("文章内容")
     private String content;
 
     // 禁止手动加入，禁止更新
     @Column(name = "created_at", insertable = false, updatable = false, columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP")
+    @org.hibernate.annotations.Comment("创建时间")
     private LocalDate createdAt;
 
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP")
+    @org.hibernate.annotations.Comment("更新时间")
     private LocalDate updatedAt;
 
     @Column(name = "is_published")
+    @org.hibernate.annotations.Comment("是否发布")
     private Boolean isPublished;
 
     @Column(name = "is_draft")
+    @org.hibernate.annotations.Comment("是否草稿")
     private Boolean isDraft;
 
     @Column(nullable = false)
+    @org.hibernate.annotations.Comment("阅读量")
     private Integer views = 0;
 
     @Column(nullable = false)
+    @org.hibernate.annotations.Comment("点赞数")
     private Integer likes = 0;
 
     @Column(nullable = false)
+    @org.hibernate.annotations.Comment("收藏数")
     private Integer favorites = 0;
 
     @Column(name = "cover_image")
+    @org.hibernate.annotations.Comment("封面图片")
     private String coverImage;
 
     @Column(name = "version")
+    @org.hibernate.annotations.Comment("版本号")
     private Integer version;
 
     @Column(name = "visibility")
+    @org.hibernate.annotations.Comment("可见性")
     private String visibility;
 
     @Column(name = "is_deleted")
+    @org.hibernate.annotations.Comment("是否删除")
     private boolean isDeleted = false;
 
     /**

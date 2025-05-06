@@ -8,6 +8,7 @@ import com.kitty.blog.domain.model.Post;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.ToString;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.redis.core.RedisHash;
@@ -22,6 +23,7 @@ import java.io.Serializable;
         @Index(name = "idx_category_id", columnList = "category_id"),
         @Index(name = "idx_post_category", columnList = "post_id, category_id", unique = true)
 })
+@Comment("文章分类关系表")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @DynamicUpdate
 @DynamicInsert
@@ -31,6 +33,7 @@ public class PostCategory implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @EmbeddedId
+    @Comment("联合主键")
     private PostCategoryId id;
 
     @JsonIgnore

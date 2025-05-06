@@ -19,6 +19,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "fs_roles")
+@org.hibernate.annotations.Comment("角色表")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "roleId")
 @DynamicUpdate
 @DynamicInsert
@@ -31,19 +32,24 @@ public class Role implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @org.hibernate.annotations.Comment("角色ID")
     private Integer roleId;
 
     @Column(nullable = false, unique = true)
+    @org.hibernate.annotations.Comment("角色名称")
     private String roleName;
 
     @Column
+    @org.hibernate.annotations.Comment("角色描述")
     private String description;
 
     @Column(nullable = false)
+    @org.hibernate.annotations.Comment("创建时间")
     private String administratorName;
 
     @Column(nullable = false)
-    private Integer count;
+    @org.hibernate.annotations.Comment("创建时间")
+    private Integer count = 0;
 
     /**
      * Transient字段，仅用于业务

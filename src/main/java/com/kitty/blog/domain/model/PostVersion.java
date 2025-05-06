@@ -18,6 +18,7 @@ import java.util.Date;
 @Data
 @Entity
 @Table(name = "fs_post_versions")
+@org.hibernate.annotations.Comment("文章历史版本表")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "versionId")
 @NoArgsConstructor
 @DynamicInsert
@@ -29,13 +30,16 @@ public class PostVersion implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @org.hibernate.annotations.Comment("版本ID")
     private Integer versionId;
 
     @Column(name = "post_id")
+    @org.hibernate.annotations.Comment("文章ID")
     private Integer postId;
 
     @Column(nullable = false, columnDefinition = "LONGTEXT")
     @Lob
+    @org.hibernate.annotations.Comment("文章内容")
     private String content;
 
     // 禁止手动加入，禁止更新
@@ -43,12 +47,15 @@ public class PostVersion implements Serializable {
             insertable = false,
             updatable = false,
     columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @org.hibernate.annotations.Comment("版本创建时间")
     private LocalDate versionAt;
 
     @Column(name = "user_id")
+    @org.hibernate.annotations.Comment("用户ID")
     private Integer userId;
 
     @Column(name = "version")
+    @org.hibernate.annotations.Comment("版本号")
     private Integer version;
 
 

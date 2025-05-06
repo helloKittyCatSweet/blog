@@ -14,6 +14,7 @@ import java.io.Serializable;
 @Data
 @Entity
 @Table(name = "fs_user_settings")
+@org.hibernate.annotations.Comment("用户设置表")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "settingId")
 @DynamicInsert
 @DynamicUpdate
@@ -27,21 +28,27 @@ public class UserSetting implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @org.hibernate.annotations.Comment("设置ID")
     private Integer settingId;
 
     @Column(name = "user_id")
+    @org.hibernate.annotations.Comment("用户ID")
     private Integer userId;
 
-    @Column
+    @Column(name = "theme")
+    @org.hibernate.annotations.Comment("主题")
     private String theme = "light";
 
     @Column(name = "github_account")
+    @org.hibernate.annotations.Comment("github账号")
     private String githubAccount = null;
 
     @Column(name = "csdn_account")
+    @org.hibernate.annotations.Comment("CSDN账号")
     private String CSDNAccount = null;
 
     @Column(name = "bilibili_account")
+    @org.hibernate.annotations.Comment("Bilibili账号")
     private String BiliBiliAccount = null;
 
     /**

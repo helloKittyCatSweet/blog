@@ -6,6 +6,7 @@ import com.kitty.blog.domain.model.Post;
 import lombok.Data;
 import jakarta.persistence.*;
 import lombok.ToString;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.redis.core.RedisHash;
@@ -20,6 +21,7 @@ import java.io.Serializable;
         @Index(name = "idx_tag_id", columnList = "tag_id"),
         @Index(name = "idx_post_tag", columnList = "post_id,tag_id")
 })
+@Comment("文章标签关系表")
 @DynamicUpdate
 @DynamicInsert
 public class PostTag implements Serializable {
@@ -28,6 +30,7 @@ public class PostTag implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @EmbeddedId
+    @Comment("文章标签关系ID")
     private PostTagId id;
 
     @JsonIgnore

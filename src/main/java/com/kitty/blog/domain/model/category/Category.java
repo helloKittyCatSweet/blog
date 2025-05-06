@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.*;
 import jakarta.persistence.Entity;
 import lombok.Data;
 import lombok.ToString;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -17,6 +18,7 @@ import java.util.List;
 @Data
 @Entity
 @Table(name = "fs_categories")// 避免循环调用问题
+@Comment("分类表")
 //@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "categoryId")
 @DynamicUpdate // 动态更新注解
 @DynamicInsert // 动态插入注解
@@ -27,18 +29,23 @@ public class Category implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Comment("分类ID")
     private Integer categoryId;
 
     @Column(nullable = false, unique = true)
+    @Comment("分类名称")
     private String name;
 
     @Column
+    @Comment("分类描述")
     private String description;
 
     @Column(name = "parent_category_id")
+    @Comment("父分类ID")
     private Integer parentCategoryId;
 
     @Column(name = "use_count")
+    @Comment("使用次数")
     private Integer useCount = 0; // 添加使用次数字段
 
     /**

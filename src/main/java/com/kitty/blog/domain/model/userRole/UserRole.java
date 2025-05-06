@@ -5,6 +5,7 @@ import com.kitty.blog.domain.model.Role;
 import com.kitty.blog.domain.model.User;
 import lombok.Data;
 import lombok.ToString;
+import org.hibernate.annotations.Comment;
 import org.hibernate.annotations.DynamicInsert;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -18,6 +19,7 @@ import java.io.Serializable;
 @Data
 @Entity
 @Table(name = "fs_user_roles")
+@Comment("用户角色关系表")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 @DynamicUpdate
 @DynamicInsert
@@ -28,6 +30,7 @@ public class UserRole implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @EmbeddedId
+    @Comment("用户角色关系ID")
     private UserRoleId id;
 
     public UserRole() {

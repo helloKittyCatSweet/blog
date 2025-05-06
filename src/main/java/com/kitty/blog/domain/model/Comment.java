@@ -20,6 +20,7 @@ import java.util.List;
         @Index(name = "idx_post_time", columnList = "post_id,created_at"),
         @Index(name = "idx_user", columnList = "user_id")
 })
+@org.hibernate.annotations.Comment("评论表")
 // @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class,
 // property = "commentId")
 @DynamicUpdate
@@ -31,25 +32,32 @@ public class Comment implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @org.hibernate.annotations.Comment("评论ID")
     private Integer commentId;
 
     @Column(name = "post_id")
+    @org.hibernate.annotations.Comment("文章ID")
     private Integer postId;
 
     @Column(name = "user_id")
+    @org.hibernate.annotations.Comment("用户ID")
     private Integer userId;
 
     @Column(nullable = false)
+    @org.hibernate.annotations.Comment("评论内容")
     private String content;
 
     // 禁止手动插入，禁止更新
     @Column(name = "created_at", insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @org.hibernate.annotations.Comment("创建时间")
     private LocalDate createdAt;
 
     @Column
+    @org.hibernate.annotations.Comment("点赞数")
     private Integer likes;
 
     @Column(name = "parent_comment_id")
+    @org.hibernate.annotations.Comment("父评论ID")
     private Integer parentCommentId;
 
     /**
