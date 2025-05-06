@@ -160,8 +160,8 @@ spring:
             token-uri: https://github.com/login/oauth/access_token
             user-info-uri: https://api.github.com/user
             user-name-attribute: login
-            connection-timeout: 30000
-            read-timeout: 30000
+            connection-timeout: 60000
+            read-timeout: 60000
   rest:
     template:
       connection-timeout: 30000

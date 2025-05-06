@@ -1,10 +1,12 @@
 <script setup>
-import { CaretBottom, User, Crop, EditPen, SwitchButton } from "@element-plus/icons-vue";
+import { CaretBottom, User, Crop, EditPen, SwitchButton, Switch } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores";
 import { markRaw } from "vue";
-import avatar from "@/assets/default.png";
+import { useRouter } from "vue-router";
+import { LOGIN_PATH } from "@/constants/routes/base";
 
 const userStore = useUserStore();
+const router = useRouter();
 
 // 图标注册
 const UserIcon = markRaw(User);
@@ -16,7 +18,14 @@ const CaretBottomIcon = markRaw(CaretBottom);
 const emit = defineEmits(["command"]);
 
 const handleCommand = (command) => {
-  emit("command", command);
+  if (command === 'switch') {
+    // 清除自动登录信息
+    localStorage.removeItem("loginInfo");
+    // 跳转到登录页
+    router.push(LOGIN_PATH);
+  } else {
+    emit("command", command);
+  }
 };
 </script>
 
@@ -42,6 +51,7 @@ const handleCommand = (command) => {
           <el-dropdown-item command="password" :icon="EditPenIcon"
             >重置密码</el-dropdown-item
           >
+          <el-dropdown-item command="switch" :icon="Switch">切换用户</el-dropdown-item>
           <el-dropdown-item command="logout" :icon="SwitchButtonIcon"
             >退出登录</el-dropdown-item
           >
