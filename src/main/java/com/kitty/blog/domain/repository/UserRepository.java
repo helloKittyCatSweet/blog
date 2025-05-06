@@ -163,4 +163,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<List<User>> findUserByUsernameAndEmail(String keyword);
 
     List<User> findByUserIdIn(List<Integer> userIds);
+
+    List<User> findTop5ByIsDeletedFalseOrderByLastLoginTimeDesc();
 }

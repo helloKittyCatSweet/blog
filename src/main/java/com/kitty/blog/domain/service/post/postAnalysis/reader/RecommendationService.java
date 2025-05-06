@@ -234,6 +234,12 @@ public class RecommendationService {
 
         categoryScore += calculateHotnessScore(post);
 
+        if (post.getCreatedAt() == null){
+            return categoryScore +
+                    (post.getLikes() != null ? post.getLikes() * likeWeight : 0) +
+                    (post.getViews() != null ? post.getViews() * 0.05 : 0);
+        }
+
         // 时间衰减（30天半衰期）
         double timeDecay = Math.exp(-DAYS.between(
                 post.getCreatedAt(), LocalDate.now()) / 30.0);
@@ -496,11 +502,17 @@ public class RecommendationService {
                                             .order(SortOrder.Desc)))
                             .size(limit),
                     PostIndex.class);
-            return response.hits().hits().stream()
+            List<Post> posts = response.hits().hits().stream()
                     .map(Hit::source)
                     .filter(Objects::nonNull)
                     .map(PostIndex::convertToPost)
                     .toList();
+
+            // 如果ES查询结果为空，使用数据库降级策略
+            if (posts.isEmpty()) {
+                return getHotPosts(limit);
+            }
+            return posts;
         } catch (Exception e) {
             log.error("从ES获取热门文章失败", e);
             return getHotPosts(limit);
@@ -621,6 +633,10 @@ public class RecommendationService {
         // 收藏权重
         if (post.getFavorites() != null) {
             score += post.getFavorites() * favoriteWeight;
+        }
+
+        if (post.getCreatedAt() == null){
+            return score;
         }
 
         // 时间衰减（30天半衰期）

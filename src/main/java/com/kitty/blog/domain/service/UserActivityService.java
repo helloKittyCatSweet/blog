@@ -49,11 +49,9 @@ public class UserActivityService {
         userActivity.setDeleted(false);
         userActivityRepository.save(userActivity);
 
-        // 点赞、收藏
-        if (ActivityType.LIKE.equals(userActivity.getActivityType())) {
+        // 点赞
+        if ("LIKE".equals(userActivity.getActivityType())) {
             postRepository.addLikes(userActivity.getPostId(), 1);
-        } else if (ActivityType.FAVORITE.equals(userActivity.getActivityType())) {
-            postRepository.addFavorites(userActivity.getPostId(),1);
         }
         return new ResponseEntity<>(true, HttpStatus.CREATED);
     }
@@ -65,8 +63,8 @@ public class UserActivityService {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
 
-        UserActivity existingActivity = (UserActivity)
-                userActivityRepository.findById(updatedActivity.getActivityId()).orElseThrow();
+        UserActivity existingActivity = (UserActivity) userActivityRepository.findById(updatedActivity.getActivityId())
+                .orElseThrow();
         try {
             UpdateUtil.updateNotNullProperties(updatedActivity, existingActivity);
         } catch (IllegalAccessException e) {
@@ -76,13 +74,12 @@ public class UserActivityService {
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
-
     @Transactional
     @Cacheable(key = "#postId")
     public ResponseEntity<List<UserActivity>> findByPostId(Integer postId) {
-        if (!postRepository.existsById(postId)){
+        if (!postRepository.existsById(postId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        }else {
+        } else {
             return new ResponseEntity<>(
                     userActivityRepository.findByPostId(postId).orElse(new ArrayList<>()),
                     HttpStatus.OK);
@@ -92,9 +89,9 @@ public class UserActivityService {
     @Transactional
     @Cacheable(key = "#userId")
     public ResponseEntity<List<UserActivity>> findByUserId(Integer userId) {
-        if (!userRepository.existsById(userId)){
+        if (!userRepository.existsById(userId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
-        }else {
+        } else {
             return new ResponseEntity<>(
                     userActivityRepository.findByUserId(userId).orElse(new ArrayList<>()),
                     HttpStatus.OK);
@@ -104,23 +101,21 @@ public class UserActivityService {
     @Transactional
     @Cacheable(key = "#activityType")
     public ResponseEntity<List<UserActivityDto>> findByActivityType(Integer userId, String activityType) {
-        if (!userRepository.existsById(userId)){
+        if (!userRepository.existsById(userId)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NOT_FOUND);
         }
 
         // 验证活动类型
-        if (activityType != null && !ActivityType.isValidInteractType(activityType)){
+        if (activityType != null && !ActivityType.isValidInteractType(activityType)) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.BAD_REQUEST);
         }
-        try{
+        try {
             List<UserActivity> interactions = userActivityRepository.findByActivityType(userId,
                     activityType != null ? activityType.toLowerCase() : null).orElse(new ArrayList<>());
             List<UserActivityDto> dtoList = new ArrayList<>();
             for (UserActivity interaction : interactions) {
-                String userName = userRepository.findById(interaction.getUserId()).
-                        orElse(new User()).getUsername();
-                String postTitle = postRepository.findById(interaction.getPostId()).
-                        orElse(new Post()).getTitle();
+                String userName = userRepository.findById(interaction.getUserId()).orElse(new User()).getUsername();
+                String postTitle = postRepository.findById(interaction.getPostId()).orElse(new Post()).getTitle();
                 dtoList.add(new UserActivityDto().builder()
                         .activityId(interaction.getActivityId())
                         .username(userName)
@@ -131,7 +126,7 @@ public class UserActivityService {
                         .createdAt(interaction.getCreatedAt()).build());
             }
             return new ResponseEntity<>(dtoList, HttpStatus.OK);
-        }catch (Exception e) {
+        } catch (Exception e) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -139,20 +134,20 @@ public class UserActivityService {
     @Transactional
     @Cacheable(key = "#userId + #postId + #activityType")
     public ResponseEntity<UserActivity> findPostActivityExplicit(Integer userId, Integer postId,
-                                                     String activityType){
+            String activityType) {
         return new ResponseEntity<>(
-                userActivityRepository.findPostActivityExplicit
-                        (userId, postId, activityType).orElse(new UserActivity()),
+                userActivityRepository.findPostActivityExplicit(userId, postId, activityType)
+                        .orElse(new UserActivity()),
                 HttpStatus.OK);
     }
 
     @Transactional
     @Cacheable(key = "#userId + #commentId + #activityType")
     public ResponseEntity<UserActivity> findCommentActivityExplicit(Integer userId, Integer commentId,
-                                                     String activityType){
+            String activityType) {
         return new ResponseEntity<>(
-                userActivityRepository.findCommentActivityExplicit
-                        (userId, commentId, activityType).orElse(new UserActivity()),
+                userActivityRepository.findCommentActivityExplicit(userId, commentId, activityType)
+                        .orElse(new UserActivity()),
                 HttpStatus.OK);
     }
 
@@ -180,7 +175,7 @@ public class UserActivityService {
     @Transactional
     @Cacheable(key = "#activityId")
     public ResponseEntity<List<UserActivity>> findAll() {
-        if (userActivityRepository.count() == 0){
+        if (userActivityRepository.count() == 0) {
             return new ResponseEntity<>(new ArrayList<>(), HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(
@@ -203,14 +198,14 @@ public class UserActivityService {
             if (ActivityType.LIKE.equals(userActivity.getActivityType())) {
                 postRepository.addLikes(userActivity.getPostId(), -1);
             } else if (ActivityType.FAVORITE.equals(userActivity.getActivityType())) {
-                postRepository.addFavorites(userActivity.getPostId(),-1);
+                postRepository.addFavorites(userActivity.getPostId(), -1);
             }
 
-            if(!Objects.equals(userActivity.getUserId(), userId)){
+            if (!Objects.equals(userActivity.getUserId(), userId)) {
                 // 文章作者修改的，假删就行了
                 userActivity.setDeleted(true);
                 userActivityRepository.save(userActivity);
-            }else {
+            } else {
                 // 操作执行的本人执行的，直接删除
                 userActivityRepository.deleteById(activityId);
             }
@@ -244,10 +239,8 @@ public class UserActivityService {
             List<UserActivity> interactions = userActivityRepository.findPostInteractions(authorId);
             List<UserActivityDto> dtoList = new ArrayList<>();
             for (UserActivity interaction : interactions) {
-                String userName = userRepository.findById(interaction.getUserId()).
-                        orElse(new User()).getUsername();
-                String postTitle = postRepository.findById(interaction.getPostId()).
-                        orElse(new Post()).getTitle();
+                String userName = userRepository.findById(interaction.getUserId()).orElse(new User()).getUsername();
+                String postTitle = postRepository.findById(interaction.getPostId()).orElse(new Post()).getTitle();
                 dtoList.add(new UserActivityDto().builder()
                         .activityId(interaction.getActivityId())
                         .username(userName)

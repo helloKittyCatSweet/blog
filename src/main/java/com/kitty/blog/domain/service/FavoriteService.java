@@ -217,6 +217,9 @@ public class FavoriteService {
             userActivityRepository.deleteById(userActivity.getActivityId());
         }
         favoriteRepository.deleteById(id);
+        Post post = postRepository.findById(favorite.getPostId()).orElse(new Post());
+        post.setFavorites(post.getFavorites() - 1);
+        postRepository.save(post);
         return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
