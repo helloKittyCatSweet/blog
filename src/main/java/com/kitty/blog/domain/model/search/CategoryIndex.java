@@ -18,9 +18,11 @@ public class CategoryIndex {
 
     // 使用 Text 类型，并添加多字段映射
     @MultiField(
-            mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word"),
+            mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart"),
             otherFields = {
-                    @InnerField(suffix = "english", type = FieldType.Text, analyzer = "english")
+                    @InnerField(suffix = "pinyin", type = FieldType.Text, analyzer = "pinyin_analyzer"),
+                    @InnerField(suffix = "english", type = FieldType.Text, analyzer = "english"),
+                    @InnerField(suffix = "keyword", type = FieldType.Keyword)
             }
     )
     private String name;

@@ -232,6 +232,7 @@ public class SearchService {
                 // 标题搜索：使用模糊匹配和通配符
                 shouldQueries.add(Query.of(q -> q
                         .bool(b -> b
+                                // ik_max_word 分词
                                 .should(s -> s
                                         .match(m -> m
                                                 .field("title")
@@ -246,7 +247,19 @@ public class SearchService {
                                         .fuzzy(f -> f
                                                 .field("title")
                                                 .value(finalKeyword)
-                                                .boost(1.5f))))));
+                                                .boost(1.5f)))
+                                // 拼音分词
+                                .should(s->s
+                                        .match(m -> m
+                                                .field("title.pinyin")
+                                                .query(finalKeyword)
+                                                .boost(1.0f)))
+                                // 英文分词
+                                .should(s->s
+                                        .match(m -> m
+                                                .field("title.english")
+                                                        .query(finalKeyword)
+                                                .boost(1.0f))))));
 
                 // Tag query(when tags are not specified)
                 if (tags.isEmpty()) {
@@ -275,7 +288,17 @@ public class SearchService {
                                 .should(s -> s
                                         .fuzzy(f -> f
                                                 .field("summary")
-                                                .value(finalKeyword))))));
+                                                .value(finalKeyword)))
+                                .should(s->s
+                                        .match(m -> m
+                                                .field("summary.pinyin")
+                                                .query(finalKeyword)
+                                                .boost(1.0f)))
+                                .should(s->s
+                                        .match(m->m
+                                                .field("summary.english")
+                                                .query(finalKeyword)
+                                                .boost(1.0f))))));
 
                 // 内容搜索：使用模糊匹配
                 shouldQueries.add(Query.of(q -> q
@@ -287,7 +310,17 @@ public class SearchService {
                                 .should(s -> s
                                         .fuzzy(f -> f
                                                 .field("content")
-                                                .value(finalKeyword))))));
+                                                .value(finalKeyword)))
+                                .should(s->s
+                                        .match(m -> m
+                                                .field("content.pinyin")
+                                                .query(finalKeyword)
+                                                .boost(1.0f)))
+                                .should(s->s
+                                        .match(m->m
+                                                .field("content.english")
+                                                .query(finalKeyword)
+                                                .boost(1.0f))))));
 
                 boolQueryBuilder.must(Query.of(q -> q
                         .bool(b -> b
@@ -437,34 +470,49 @@ public class SearchService {
 
     public List<String> suggestCategorySearch(String keyword) {
         try {
-            Query categoryPrefixQuery = Query.of(q -> q
-                    .prefix(p -> p
-                            .field("name")
-                            .value(keyword)
-                            .boost(2.0f)));
+            BoolQuery.Builder boolQueryBuilder = new BoolQuery.Builder();
 
-            Query categoryWildcardQuery = Query.of(q -> q
-                    .wildcard(w -> w
-                            .field("name")
-                            .value("*" + keyword + "*")));
+            // 添加多字段搜索
+            List<Query> shouldQueries = new ArrayList<>();
 
-            BoolQuery boolQuery = BoolQuery.of(b -> b
-                    .should(categoryPrefixQuery)
-                    .should(categoryWildcardQuery));
+            // 原文匹配
+            shouldQueries.add(Query.of(q -> q
+                    .match(m -> m
+                            .field("name")
+                            .query(keyword)
+                            .boost(3.0f))));
+
+            // 拼音匹配
+            shouldQueries.add(Query.of(q -> q
+                    .match(m -> m
+                            .field("name.pinyin")
+                            .query(keyword)
+                            .boost(2.0f))));
+
+            // 英文匹配
+            shouldQueries.add(Query.of(q -> q
+                    .match(m -> m
+                            .field("name.english")
+                            .query(keyword)
+                            .boost(1.0f))));
+
+            boolQueryBuilder.should(shouldQueries);
 
             SearchResponse<CategoryIndex> response = client.search(s -> s
-                    .index("categories")
-                    .query(q -> q.bool(boolQuery))
-                    .size(10),
+                            .index("categories")
+                            .query(q -> q.bool(boolQueryBuilder.build()))
+                            .size(10),
                     CategoryIndex.class);
+
             return response.hits().hits().stream()
                     .map(Hit::source)
                     .filter(Objects::nonNull)
                     .map(CategoryIndex::getName)
                     .distinct()
                     .toList();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            log.error("Category search error: {}", e.getMessage());
+            return Collections.emptyList();
         }
     }
 

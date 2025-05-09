@@ -17,9 +17,14 @@ public class TagIndex {
         private Integer id;
 
         // 使用 Text 类型，并添加多字段映射
-        @MultiField(mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word"), otherFields = {
-                        @InnerField(suffix = "english", type = FieldType.Text, analyzer = "english")
-        })
+        @MultiField(
+                mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart"),
+                otherFields = {
+                        @InnerField(suffix = "pinyin", type = FieldType.Text, analyzer = "pinyin_analyzer"),
+                        @InnerField(suffix = "english", type = FieldType.Text, analyzer = "english"),
+                        @InnerField(suffix = "keyword", type = FieldType.Keyword)
+                }
+        )
         private String name;
 
         @Field(type = FieldType.Integer)

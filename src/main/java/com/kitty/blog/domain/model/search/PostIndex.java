@@ -23,15 +23,22 @@ public class PostIndex {
         @Field(type = FieldType.Integer)
         private Integer id;
 
-        @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
+        @MultiField(mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart"), otherFields = {
+                        @InnerField(suffix = "pinyin", type = FieldType.Text, analyzer = "pinyin_analyzer"),
+                        @InnerField(suffix = "english", type = FieldType.Text, analyzer = "english")
+        })
         private String title;
 
         @MultiField(mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart"), otherFields = {
+                        @InnerField(suffix = "pinyin", type = FieldType.Text, analyzer = "pinyin_analyzer"),
                         @InnerField(suffix = "english", type = FieldType.Text, analyzer = "english")
         })
         private String content;
 
-        @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart")
+        @MultiField(mainField = @Field(type = FieldType.Text, analyzer = "ik_max_word", searchAnalyzer = "ik_smart"), otherFields = {
+                        @InnerField(suffix = "pinyin", type = FieldType.Text, analyzer = "pinyin_analyzer"),
+                        @InnerField(suffix = "english", type = FieldType.Text, analyzer = "english")
+        })
         private String summary;
 
         @Field(type = FieldType.Integer)
