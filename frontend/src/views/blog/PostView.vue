@@ -249,6 +249,9 @@ const updateCommentCount = (count) => {
  * 用户名点击处理函数
  */
 const handleAuthorClick = (userId) => {
+  if (!userStore.isLoggedIn) {
+    return; // 未登录时不执行跳转
+  }
   if (userId) {
     router.push({
       path: BLOG_USER_DETAIL_PATH.replace(":id", userId),

@@ -2,6 +2,8 @@ package com.kitty.blog.domain.repository.post;
 
 import com.kitty.blog.domain.model.Post;
 import com.kitty.blog.domain.model.category.PostCategory;
+import com.kitty.blog.domain.model.tag.PostTag;
+import com.kitty.blog.domain.model.tag.Tag;
 import com.kitty.blog.domain.repository.BaseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -270,6 +272,9 @@ public interface PostRepository extends BaseRepository<Post, Integer>, JpaSpecif
 
         @Query("SELECT pc FROM PostCategory pc WHERE pc.id.postId IN ?1")
         List<PostCategory> findPostCategoryMappingByPostIdsIn(Set<Integer> postIds);
+
+        @Query("SELECT pt FROM PostTag pt WHERE pt.id.postId IN ?1")
+        List<PostTag> findPostTagMappingByPostIdsIn(Set<Integer> postIds);
 
         @Query("SELECT COUNT(p) FROM Post p WHERE p.userId = :userId AND p.isDeleted = false")
         Long countByUserId(@Param("userId") Integer userId);

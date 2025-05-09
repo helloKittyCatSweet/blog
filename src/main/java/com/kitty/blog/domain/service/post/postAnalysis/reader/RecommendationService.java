@@ -16,11 +16,14 @@ import com.kitty.blog.domain.model.UserActivity;
 import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.model.category.PostCategory;
 import com.kitty.blog.domain.model.search.PostIndex;
+import com.kitty.blog.domain.model.tag.PostTag;
+import com.kitty.blog.domain.model.tag.Tag;
 import com.kitty.blog.domain.repository.CategoryRepository;
 import com.kitty.blog.domain.repository.CommentRepository;
 import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.UserActivityRepository;
 import com.kitty.blog.domain.repository.post.PostSpecification;
+import com.kitty.blog.domain.repository.tag.TagRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,6 +56,9 @@ public class RecommendationService {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private TagRepository tagRepository;
 
     @Autowired
     private CacheManager cacheManager;
@@ -102,18 +108,47 @@ public class RecommendationService {
                 .collect(Collectors.toSet());
         Map<Integer, Post> postsMap = searchPostsByIds(postIds);
         Map<Integer, Category> categoriesMap = getPostCategoriesMap(postIds);
+        Map<Integer, List<Tag>> tagsMap = getPostTagsMap(postIds);
 
         // 3. 计算用户兴趣模型
-        Map<Integer, Double> categoryScores = analyzeUserInterests(userActivities, postsMap, categoriesMap);
+        UserInterestScores interestScores = analyzeUserInterests(userActivities, postsMap, categoriesMap, tagsMap);
 
         // 4. 获取候选文章（排除已读）
         Set<Integer> readPostIds = userActivities.stream() // 修复：添加readPostIds的定义
                 .map(UserActivity::getPostId)
                 .collect(Collectors.toSet());
-        List<Post> candidatePosts = searchCandidatePosts(readPostIds, categoryScores);
+        List<Post> candidatePosts = searchCandidatePosts(readPostIds, interestScores);
 
         // 5. 混合推荐（内容 + 协同过滤）
-        return hybridRecommend(candidatePosts, categoryScores, limit);
+        return hybridRecommend(candidatePosts, interestScores, limit);
+    }
+
+    private Map<Integer, List<Tag>> getPostTagsMap(Set<Integer> postIds) {
+        List<PostTag> relations = postRepository.findPostTagMappingByPostIdsIn(postIds);
+
+        Set<Integer> tagIds = relations.stream()
+                .map(pt -> pt.getId().getTagId())
+                .collect(Collectors.toSet());
+
+        List<Tag> tags = tagRepository.findByTagIdIn(tagIds);
+        Map<Integer, Tag> tagMap = tags.stream()
+                .sorted(Comparator.comparingInt(Tag::getWeight).reversed())
+                .collect(Collectors.toMap(
+                        Tag::getTagId,
+                        Function.identity(),
+                        // 如果有重复，保留第一个权重更高的
+                        (existing, replacement) -> existing,
+                        LinkedHashMap::new
+                ));
+
+        return relations.stream()
+                .collect(Collectors.groupingBy(
+                        pt -> pt.getId().getPostId(),
+                        Collectors.mapping(
+                                pt -> tagMap.get(pt.getId().getTagId()),
+                                Collectors.toList()
+                        )
+                ));
     }
 
     private Map<Integer, Category> getPostCategoriesMap(Set<Integer> postIds) {
@@ -135,26 +170,48 @@ public class RecommendationService {
                         (existing, replacement) -> existing));
     }
 
+    // 创建一个内部类来存储两种得分
+        private record UserInterestScores(Map<Integer, Double> categoryScores, Map<Integer, Double> tagScores) {
+    }
+
     /**
      * 分析用户兴趣（优化版）
      */
-    private Map<Integer, Double> analyzeUserInterests(
+    private UserInterestScores analyzeUserInterests(
             List<UserActivity> activities,
             Map<Integer, Post> postsMap,
-            Map<Integer, Category> categoriesMap) {
+            Map<Integer, Category> categoriesMap,
+            Map<Integer, List<Tag>> tagsMap) {
 
+        // 分类得分
         Map<Integer, Double> categoryScores = new HashMap<>();
+        // 标签得分
+        Map<Integer, Double> tagScores = new HashMap<>();
+
         for (UserActivity activity : activities) {
             Post post = postsMap.get(activity.getPostId());
             if (post != null) {
+                double score = calculateActivityScore(activity);
+
                 Category category = categoriesMap.get(post.getPostId());
                 if (category != null) {
-                    double score = calculateActivityScore(activity);
                     categoryScores.merge(category.getCategoryId(), score, Double::sum);
+                }
+
+                List<Tag> tags = tagsMap.get(post.getPostId());
+                if (tags != null) {
+                    for (Tag tag : tags) {
+                        tagScores.merge(tag.getTagId(), score, Double::sum);
+                    }
                 }
             }
         }
-        return normalizeScores(categoryScores); // 归一化
+
+        // 归一化
+        return new UserInterestScores(
+                normalizeScores(categoryScores),
+                normalizeScores(tagScores)
+        );
     }
 
     // 归一化分数
@@ -184,7 +241,7 @@ public class RecommendationService {
      */
     private List<Post> hybridRecommend(
             List<Post> candidates,
-            Map<Integer, Double> categoryScores,
+            UserInterestScores interestScores,
             int limit) {
         // 获取当前用户行为数据量
         int userActivityCount = userActivityRepository.countByUserId(getCurrentUserId());
@@ -198,7 +255,7 @@ public class RecommendationService {
         Map<Post, Double> contentScores = candidates.stream()
                 .collect(Collectors.toMap(
                         Function.identity(),
-                        post -> calculateContentScore(post, categoryScores)));
+                        post -> calculateContentScore(post, interestScores)));
         Map<Post, Double> cfScores = calculateHybridCFScores(candidates, getCurrentUserId());
         Map<Post, Double> hotScores = candidates.stream()
                 .collect(Collectors.toMap(
@@ -227,15 +284,34 @@ public class RecommendationService {
     /**
      * 计算文章内容推荐分数
      */
-    private double calculateContentScore(Post post, Map<Integer, Double> categoryScores) {
+    private double calculateContentScore(Post post, UserInterestScores userInterestScores) {
         Category category = categoryRepository.findByPostId(post.getPostId()).orElse(null);
-        double categoryScore = (category != null) ? categoryScores.getOrDefault(category.getCategoryId(), 0.0)
+        double categoryScore = (category != null) ?
+                userInterestScores.categoryScores.getOrDefault(category.getCategoryId(), 0.0)
                 : 0.0;
 
-        categoryScore += calculateHotnessScore(post);
+        List<Tag> tags = tagRepository.findByPostId(post.getPostId()).orElse(new ArrayList<>());
+        double tagScore = 0.0;
+        if (!tags.isEmpty()) {
+            double totalWeight = 0.0;
+            double weightedSum = 0.0;
+
+            for (Tag tag : tags) {
+                double weight = tag.getWeight();
+                double score = userInterestScores.tagScores.getOrDefault(tag.getTagId(), 0.0);
+                weightedSum += weight * score;
+                totalWeight += weight;
+            }
+
+            tagScore = totalWeight > 0 ? weightedSum / totalWeight : 0.0;
+        }
+
+        // 合并分类和标签得分
+        double contentScore = categoryScore * 0.6 + tagScore * 0.4;
+        contentScore += calculateHotnessScore(post);
 
         if (post.getCreatedAt() == null){
-            return categoryScore +
+            return contentScore +
                     (post.getLikes() != null ? post.getLikes() * likeWeight : 0) +
                     (post.getViews() != null ? post.getViews() * 0.05 : 0);
         }
@@ -244,7 +320,7 @@ public class RecommendationService {
         double timeDecay = Math.exp(-DAYS.between(
                 post.getCreatedAt(), LocalDate.now()) / 30.0);
 
-        return categoryScore * timeDecay +
+        return contentScore * timeDecay +
                 (post.getLikes() != null ? post.getLikes() * likeWeight : 0) +
                 (post.getViews() != null ? post.getViews() * 0.05 : 0);
     }
@@ -559,17 +635,33 @@ public class RecommendationService {
     }
 
     // 使用ES搜索候选文章
-    private List<Post> searchCandidatePosts(Set<Integer> excludePostIds, Map<Integer, Double> categoryScores) {
+    private List<Post> searchCandidatePosts(Set<Integer> excludePostIds,
+                                            UserInterestScores userInterestScores) {
         try {
             // 构建分类权重 boost 查询
-            List<FunctionScore> functionScores = categoryScores.entrySet().stream()
+            List<FunctionScore> functionScores = new ArrayList<>();
+
+            // 添加分类权重
+            functionScores.addAll(userInterestScores.categoryScores
+                    .entrySet().stream()
                     .map(entry -> FunctionScore.of(fs -> fs
                             .filter(f -> f
                                     .term(t -> t
                                             .field("category")
                                             .value(entry.getKey())))
-                            .weight(entry.getValue())))
-                    .collect(Collectors.toList());
+                            .weight(entry.getValue() * 0.6)))
+                    .toList());
+
+            // 添加标签权重
+            functionScores.addAll(userInterestScores.tagScores
+                    .entrySet().stream()
+                    .map(entry -> FunctionScore.of(fs -> fs
+                            .filter(f -> f
+                                    .term(t -> t
+                                            .field("tags")
+                                            .value(entry.getKey())))
+                            .weight(entry.getValue() * 0.4)))
+                    .toList());
 
             SearchResponse<PostIndex> response = elasticsearchClient.search(s -> s
                             .index("posts")
