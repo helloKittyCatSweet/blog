@@ -6,7 +6,7 @@
       </div>
       <div class="footer-links">
         <a href="https://github.com/helloKittyCatSweet" target="_blank">GitHub</a>
-        <a href="/rss" target="_blank">RSS</a>
+        <a href="/rss">RSS</a>
         <a href="/contact">联系我</a>
       </div>
     </div>

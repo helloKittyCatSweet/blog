@@ -147,8 +147,7 @@ const submitForm = async () => {
   max-width: 1000px;
   margin: 0 auto;
   padding: 2rem;
-  position: relative;  /* 添加相对定位 */
-  z-index: 1000;      /* 添加z-index确保在背景之上 */
+  position: relative;
 }
 
 .contact-content {
@@ -156,8 +155,8 @@ const submitForm = async () => {
   border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  position: relative;  /* 添加相对定位 */
-  z-index: 1;         /* 确保内容在背景之上 */
+  position: relative;
+  z-index: 1;
 }
 
 h1 {
@@ -189,9 +188,9 @@ h1 {
   background-color: var(--el-bg-color-page);
   border-radius: 6px;
   padding: 1.5rem;
-  position: relative;  /* 添加相对定位 */
-  z-index: 2;         /* 确保表单和信息在背景之上 */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);  /* 添加轻微阴影 */
+  position: relative;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 h2 {
