@@ -365,10 +365,10 @@ const handleImportError = () => {
       <!-- 添加操作按钮区 -->
       <div class="table-operations">
         <el-button type="success" :icon="Download" @click="handleExportRoles">导出角色数据</el-button>
-        <el-upload class="upload-button" :show-file-list="false" :before-upload="handleFileUpload"
+        <!-- <el-upload class="upload-button" :show-file-list="false" :before-upload="handleFileUpload"
           :on-success="handleImportSuccess" :on-error="handleImportError">
           <el-button type="primary" :icon="Upload">导入角色数据</el-button>
-        </el-upload>
+        </el-upload> -->
         <el-popover placement="bottom" :width="400" trigger="hover" title="Excel 导入格式说明" :show-after="100">
           <template #reference>
             <el-button :icon="InfoFilled" circle type="info" />
