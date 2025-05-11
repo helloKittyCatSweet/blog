@@ -65,7 +65,7 @@ public class UserActivity implements Serializable {
     private LocalDate createdAt;
 
     @Column(name = "is_deleted")
-    @org.hibernate.annotations.Comment("是否删除")
+    @org.hibernate.annotations.Comment("作者是否删除")
     private boolean isDeleted;
 
     /**

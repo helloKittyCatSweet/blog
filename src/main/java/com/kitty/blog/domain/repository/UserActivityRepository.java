@@ -3,14 +3,13 @@ package com.kitty.blog.domain.repository;
 import com.kitty.blog.domain.model.UserActivity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.history.RevisionRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 @Repository
 public interface UserActivityRepository extends BaseRepository<UserActivity, Integer>{
@@ -65,7 +64,6 @@ public interface UserActivityRepository extends BaseRepository<UserActivity, Int
        INNER JOIN fs_posts p ON ua.post_id = p.post_id
        WHERE p.user_id = :authorId
        AND (:activityType IS NULL OR ua.activity_type = :activityType)
-       AND ua.is_deleted = false
        ORDER BY ua.created_at DESC
        """, nativeQuery = true)
     Optional<List<UserActivity>> findByActivityType(
@@ -80,7 +78,7 @@ public interface UserActivityRepository extends BaseRepository<UserActivity, Int
      * @return
      */
     @Query("SELECT ua FROM UserActivity ua WHERE ua.userId = ?1 AND ua.postId = ?2 " +
-            "AND ua.activityType = ?3 AND ua.isDeleted = false")
+            "AND ua.activityType = ?3")
     Optional<UserActivity> findPostActivityExplicit(Integer userId, Integer postId, String activityType);
 
     /**

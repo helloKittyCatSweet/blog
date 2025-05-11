@@ -195,9 +195,9 @@ public class UserActivityService {
             }
 
             // 点赞、收藏
-            if (ActivityType.LIKE.equals(userActivity.getActivityType())) {
+            if ("LIKE".equals(userActivity.getActivityType())) {
                 postRepository.addLikes(userActivity.getPostId(), -1);
-            } else if (ActivityType.FAVORITE.equals(userActivity.getActivityType())) {
+            } else if ("FAVORITE".equals(userActivity.getActivityType())) {
                 postRepository.addFavorites(userActivity.getPostId(), -1);
             }
 
