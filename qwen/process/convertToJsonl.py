@@ -47,5 +47,5 @@ if __name__ == "__main__":
     convert_json_to_jsonl(
         "originDataset/dataset.json", 
         "../dataset/92505saf/simple_format.jsonl",
-        500
+        100
     )
