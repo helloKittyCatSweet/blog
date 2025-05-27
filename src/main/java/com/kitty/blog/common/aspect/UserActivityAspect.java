@@ -57,8 +57,8 @@ public class UserActivityAspect {
 
             // 基础字段
             activity.put("@timestamp", LocalDateTime.now().toInstant(ZoneOffset.UTC).toString());
-            activity.put("log_type", "user-activity");
-            activity.put("service_name", LogConstants.APPLICATION_NAME);
+            activity.put("log_type", LogConstants.LogType.USER_ACTIVITY);
+            activity.put("service", LogConstants.APPLICATION_NAME);
             activity.put("level", "INFO");
 
             // 用户信息

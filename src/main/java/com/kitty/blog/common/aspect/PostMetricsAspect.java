@@ -73,8 +73,8 @@ public class PostMetricsAspect {
 
             // 基础字段
             metrics.put("@timestamp", LocalDateTime.now().toInstant(ZoneOffset.UTC).toString());
-            metrics.put("log_type", "post-metrics");
-            metrics.put("service_name", LogConstants.APPLICATION_NAME);
+            metrics.put("log_type", LogConstants.LogType.POST_METRICS);
+            metrics.put("service", LogConstants.APPLICATION_NAME);
             metrics.put("level", "INFO");
 
             // 操作信息

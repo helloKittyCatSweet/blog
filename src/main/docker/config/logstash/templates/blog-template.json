@@ -17,9 +17,6 @@
         "log_type": {
           "type": "keyword"
         },
-        "service_name": {
-          "type": "keyword"
-        },
         "level": {
           "type": "keyword"
         },

@@ -2,6 +2,7 @@ package com.kitty.blog.common.aspect;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.kitty.blog.common.constant.ElasticsearchConstants;
+import com.kitty.blog.common.constant.LogConstants;
 import com.kitty.blog.infrastructure.config.monitor.KibanaMonitoringConfig;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +40,7 @@ public class SystemMetricsCollector {
             // 准备数据
             Map<String, Object> source = new HashMap<>();
             source.put(ElasticsearchConstants.Fields.TIMESTAMP, LocalDateTime.now().toInstant(ZoneOffset.UTC));
-            source.put(ElasticsearchConstants.Fields.METRICS_NAME, "system_metrics");
+            source.put(ElasticsearchConstants.Fields.METRICS_NAME, LogConstants.LogType.SYSTEM_METRICS);
             source.put(ElasticsearchConstants.Fields.CPU_USAGE, cpuUsage);
             source.put(ElasticsearchConstants.Fields.MEMORY_USED, memoryUsed);
             source.put(ElasticsearchConstants.Fields.TOTAL_MEMORY, totalMemory / (1024 * 1024));
