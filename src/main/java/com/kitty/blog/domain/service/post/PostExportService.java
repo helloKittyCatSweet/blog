@@ -5,13 +5,11 @@ import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.*;
-import com.itextpdf.layout.properties.BorderRadius;
 import com.itextpdf.layout.properties.HorizontalAlignment;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.io.image.ImageDataFactory;
@@ -25,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URL;
@@ -41,8 +38,8 @@ public class PostExportService {
     @Autowired
     private UserService userService;
 
-    private static final String FONT_PATH = "static/fonts/simsun.ttf";
-    private static final String CODE_FONT_PATH = "static/fonts/JetBrainsMono-Regular.ttf";
+    private static final String FONT_PATH = "config/static/fonts/simsun.ttf";
+    private static final String CODE_FONT_PATH = "config/static/fonts/JetBrainsMono-Regular.ttf";
     private static final float MARGIN = 36.0f;
     private static final float HEADER_HEIGHT = 20.0f;
     private static final float FOOTER_HEIGHT = 20.0f;

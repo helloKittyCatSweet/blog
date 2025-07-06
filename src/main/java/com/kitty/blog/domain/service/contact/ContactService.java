@@ -1,6 +1,7 @@
 package com.kitty.blog.domain.service.contact;
 
 import com.kitty.blog.application.dto.user.ContactMessageDTO;
+import com.kitty.blog.infrastructure.config.constant.MailTemplateConfig;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,22 +19,12 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor
 public class ContactService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    private final JavaMailSender mailSender;
+
+    private final MailTemplateConfig mailTemplateConfig;
 
     @Value("${spring.mail.username}")
     private String adminEmail;
-
-    private static final String EMAIL_TEMPLATE = """
-            收到新的联系消息：
-
-            发送者：%s
-            邮箱：%s
-            主题：%s
-
-            消息内容：
-            %s
-            """;
 
     @Async("emailTaskExecutor")
     public CompletableFuture<String> sendContactMessage(ContactMessageDTO message) {
@@ -53,7 +44,7 @@ public class ContactService {
                 helper.setSubject("新的联系消息: " + message.getSubject());
 
                 // 设置邮件内容
-                String content = String.format(EMAIL_TEMPLATE,
+                String content = String.format(mailTemplateConfig.getAdminNotification(),
                         message.getName(),
                         message.getEmail(),
                         message.getSubject(),
@@ -82,14 +73,7 @@ public class ContactService {
             helper.setTo(toEmail);
             helper.setSubject("感谢您的联系");
 
-            String autoReplyContent = String.format("""
-                    亲爱的 %s：
-
-                    感谢您的留言。我们已收到您的消息，会尽快回复您。
-
-                    祝好，
-                    FreeShare 团队
-                    """, name);
+            String autoReplyContent = String.format(mailTemplateConfig.getAutoReply(), name);
 
             helper.setText(autoReplyContent, false);
             mailSender.send(mimeMessage);

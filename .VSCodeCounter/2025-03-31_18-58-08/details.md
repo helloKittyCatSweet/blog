@@ -145,10 +145,10 @@ Total : 596 files,  100781 codes, 10018 comments, 16692 blanks, all 127491 lines
 | [src/main/resources/application.yml](/src/main/resources/application.yml) | YAML | 3 | 1 | 1 | 5 |
 | [src/main/resources/logback-spring.xml](/src/main/resources/logback-spring.xml) | XML | 29 | 4 | 4 | 37 |
 | [src/main/resources/logback.xml](/src/main/resources/logback.xml) | XML | 19 | 4 | 3 | 26 |
-| [src/main/resources/sql/init/admin_init.sql](/src/main/resources/sql/init/admin_init.sql) | MS SQL | 0 | 0 | 1 | 1 |
-| [src/main/resources/sql/init/permission_init.sql](/src/main/resources/sql/init/permission_init.sql) | MS SQL | 64 | 23 | 22 | 109 |
-| [src/main/resources/sql/init/role_init.sql](/src/main/resources/sql/init/role_init.sql) | MS SQL | 11 | 11 | 0 | 22 |
-| [src/main/resources/sql/init/role_permission_init.sql](/src/main/resources/sql/init/role_permission_init.sql) | MS SQL | 64 | 12 | 14 | 90 |
+| [src/main/resources/sql/init/admin_init.sql](/config/init/admin_init.sql) | MS SQL | 0 | 0 | 1 | 1 |
+| [src/main/resources/sql/init/permission_init.sql](/config/init/permission_init.sql) | MS SQL | 64 | 23 | 22 | 109 |
+| [src/main/resources/sql/init/role_init.sql](/config/init/role_init.sql) | MS SQL | 11 | 11 | 0 | 22 |
+| [src/main/resources/sql/init/role_permission_init.sql](/config/init/role_permission_init.sql) | MS SQL | 64 | 12 | 14 | 90 |
 | [src/main/resources/static/admin/css/contact.css](/src/main/resources/static/admin/css/contact.css) | CSS | 18 | 2 | 2 | 22 |
 | [src/main/resources/static/admin/css/flexslider.css](/src/main/resources/static/admin/css/flexslider.css) | CSS | 36 | 21 | 15 | 72 |
 | [src/main/resources/static/admin/css/reset.css](/src/main/resources/static/admin/css/reset.css) | CSS | 90 | 1 | 7 | 98 |

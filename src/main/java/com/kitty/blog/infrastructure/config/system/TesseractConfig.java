@@ -1,4 +1,4 @@
-package com.kitty.blog.infrastructure.config;
+package com.kitty.blog.infrastructure.config.system;
 
 import net.sourceforge.tess4j.Tesseract;
 import org.springframework.beans.factory.annotation.Value;

@@ -1,4 +1,4 @@
-package com.kitty.blog.infrastructure.config;
+package com.kitty.blog.infrastructure.config.system;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CachingConfigurerSupport;

@@ -18,7 +18,7 @@ import com.kitty.blog.domain.repository.post.PostSpecification;
 import com.kitty.blog.domain.repository.tag.TagRepository;
 import com.kitty.blog.domain.service.FavoriteService;
 import com.kitty.blog.domain.service.UserActivityService;
-import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+//import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.domain.service.post.abstractContent.XunfeiService;
 import com.kitty.blog.domain.service.search.SearchService;
 import com.kitty.blog.domain.service.tag.TagWeightService;
@@ -79,8 +79,8 @@ public class PostService {
     @Autowired
     private PostAttachmentRepository postAttachmentRepository;
 
-    @Autowired
-    private BaiduContentService baiduContentService;
+//    @Autowired
+//    private BaiduContentService baiduContentService;
 
     @Autowired
     private TagWeightService tagWeightService;
@@ -107,10 +107,10 @@ public class PostService {
         }
 
         // 内容审核
-        String s = baiduContentService.checkText(post.getContent());
-        if (!s.equals("合规")) {
-            return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
-        }
+//        String s = baiduContentService.checkText(post.getContent());
+//        if (!s.equals("合规")) {
+//            return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
+//        }
 
         // 初始化默认值
         post.setVersion(1);
@@ -183,13 +183,13 @@ public class PostService {
         }
 
         // 如果内容有变化才进行审核
-        if (post.getContent() != null && !post.getContent().equals(existingPost.getContent())) {
-            // 内容审核
-            String s = baiduContentService.checkText(post.getContent());
-            if (!s.equals("合规")) {
-                return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
-            }
-        }
+//        if (post.getContent() != null && !post.getContent().equals(existingPost.getContent())) {
+//            // 内容审核
+//            String s = baiduContentService.checkText(post.getContent());
+//            if (!s.equals("合规")) {
+//                return new ResponseEntity<>(new PostDto(), HttpStatus.BAD_REQUEST);
+//            }
+//        }
 
         // 更新文章字段
         try {
@@ -374,12 +374,12 @@ public class PostService {
             return new ResponseEntity<>(new PostVersion(), HttpStatus.NOT_FOUND);
         }
 
-        if (content != null && !content.trim().isEmpty()) {
-            String s = baiduContentService.checkText(content);
-            if (!s.equals("合规")) {
-                return new ResponseEntity<>(new PostVersion(), HttpStatus.BAD_REQUEST);
-            }
-        }
+//        if (content != null && !content.trim().isEmpty()) {
+//            String s = baiduContentService.checkText(content);
+//            if (!s.equals("合规")) {
+//                return new ResponseEntity<>(new PostVersion(), HttpStatus.BAD_REQUEST);
+//            }
+//        }
 
         PostVersion postVersion = (PostVersion) postVersionRepository
                 .save(new PostVersion(postId, content, userId, getLatestVersion(postId).getBody() + 1));

@@ -1,4 +1,4 @@
-package com.kitty.blog.infrastructure.config.monitor;
+package com.kitty.blog.infrastructure.config.system.monitor;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.IndexRequest;

@@ -1,4 +1,4 @@
-package com.kitty.blog.infrastructure.config.monitor;
+package com.kitty.blog.infrastructure.config.system.monitor;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

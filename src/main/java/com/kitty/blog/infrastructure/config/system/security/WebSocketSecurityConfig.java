@@ -1,4 +1,4 @@
-package com.kitty.blog.infrastructure.config.security;
+package com.kitty.blog.infrastructure.config.system.security;
 
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.common.constant.Role;

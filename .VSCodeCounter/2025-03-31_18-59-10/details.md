@@ -145,10 +145,10 @@ Total : 141 files,  9932 codes, 2344 comments, 1887 blanks, all 14163 lines
 | [src/main/resources/application.yml](/src/main/resources/application.yml) | YAML | 3 | 1 | 1 | 5 |
 | [src/main/resources/logback-spring.xml](/src/main/resources/logback-spring.xml) | XML | 29 | 4 | 4 | 37 |
 | [src/main/resources/logback.xml](/src/main/resources/logback.xml) | XML | 19 | 4 | 3 | 26 |
-| [src/main/resources/sql/init/admin_init.sql](/src/main/resources/sql/init/admin_init.sql) | MS SQL | 0 | 0 | 1 | 1 |
-| [src/main/resources/sql/init/permission_init.sql](/src/main/resources/sql/init/permission_init.sql) | MS SQL | 64 | 23 | 22 | 109 |
-| [src/main/resources/sql/init/role_init.sql](/src/main/resources/sql/init/role_init.sql) | MS SQL | 11 | 11 | 0 | 22 |
-| [src/main/resources/sql/init/role_permission_init.sql](/src/main/resources/sql/init/role_permission_init.sql) | MS SQL | 64 | 12 | 14 | 90 |
+| [src/main/resources/sql/init/admin_init.sql](/config/init/admin_init.sql) | MS SQL | 0 | 0 | 1 | 1 |
+| [src/main/resources/sql/init/permission_init.sql](/config/init/permission_init.sql) | MS SQL | 64 | 23 | 22 | 109 |
+| [src/main/resources/sql/init/role_init.sql](/config/init/role_init.sql) | MS SQL | 11 | 11 | 0 | 22 |
+| [src/main/resources/sql/init/role_permission_init.sql](/config/init/role_permission_init.sql) | MS SQL | 64 | 12 | 14 | 90 |
 | [src/test/java/com/kitty/blog/AliyunOSSTest.java](/src/test/java/com/kitty/blog/AliyunOSSTest.java) | Java | 0 | 21 | 1 | 22 |
 | [src/test/java/com/kitty/blog/BlogApplicationTests.java](/src/test/java/com/kitty/blog/BlogApplicationTests.java) | Java | 9 | 0 | 5 | 14 |
 | [src/test/resources/application-test.yml](/src/test/resources/application-test.yml) | YAML | 15 | 2 | 2 | 19 |

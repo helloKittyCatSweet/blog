@@ -1,4 +1,4 @@
-package com.kitty.blog.infrastructure.config.monitor;
+package com.kitty.blog.infrastructure.config.system.monitor;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;

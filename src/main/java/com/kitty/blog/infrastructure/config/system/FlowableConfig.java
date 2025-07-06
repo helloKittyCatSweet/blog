@@ -1,4 +1,4 @@
-package com.kitty.blog.infrastructure.config;
+package com.kitty.blog.infrastructure.config.system;
 
 import org.flowable.spring.SpringProcessEngineConfiguration;
 import org.flowable.spring.boot.EngineConfigurationConfigurer;

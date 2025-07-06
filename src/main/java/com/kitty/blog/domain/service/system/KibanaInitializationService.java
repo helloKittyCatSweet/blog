@@ -1,9 +1,7 @@
 package com.kitty.blog.domain.service.system;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kitty.blog.domain.service.system.kibana.KibanaApiClient;
-import com.kitty.blog.infrastructure.config.monitor.KibanaMonitoringConfig;
+import com.kitty.blog.infrastructure.config.system.monitor.KibanaMonitoringConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,16 +13,7 @@ import jakarta.annotation.PostConstruct;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Service

@@ -1,4 +1,4 @@
-package com.kitty.blog.infrastructure.config;
+package com.kitty.blog.infrastructure.config.system;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

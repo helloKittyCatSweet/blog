@@ -1,0 +1,19 @@
+templates:
+  mail:
+    contact:
+      admin-notification: |
+        收到新的联系消息：
+
+        发送者：%s
+        邮箱：%s
+        主题：%s
+
+        消息内容：
+        %s
+      auto-reply: |
+        亲爱的 %s：
+
+        感谢您的留言。我们已收到您的消息，会尽快回复您。
+
+        祝好，
+        FreeShare 团队

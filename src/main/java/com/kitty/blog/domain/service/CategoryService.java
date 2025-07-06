@@ -5,7 +5,7 @@ import com.kitty.blog.application.dto.category.TreeDto;
 import com.kitty.blog.domain.model.category.Category;
 import com.kitty.blog.domain.repository.CategoryRepository;
 import com.kitty.blog.domain.repository.post.PostRepository;
-import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+//import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.infrastructure.utils.PageUtil;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -32,8 +32,8 @@ public class CategoryService {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    @Autowired
-    private BaiduContentService baiduContentService;
+//    @Autowired
+//    private BaiduContentService baiduContentService;
 
     @Autowired
     private PostRepository postRepository;
@@ -44,7 +44,7 @@ public class CategoryService {
         if (categoryRepository.findByName(category.getName()).isPresent()) {
             return new ResponseEntity<>(false, HttpStatus.CONFLICT);
         }
-        String name = baiduContentService.checkText(category.getName());
+//        String name = baiduContentService.checkText(category.getName());
         try {
             // {"error_code":18,"error_msg":"Open api qps request limit reached"}
             // 百度api限制每秒只能发送一个请求，这里休眠1秒
@@ -52,11 +52,11 @@ public class CategoryService {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        String description = baiduContentService.checkText(category.getDescription());
-        log.info("create a category: check: name: {}, description: {}", name, description);
-        if (!name.equals("合规") || !description.equals("合规")) {
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-        }
+//        String description = baiduContentService.checkText(category.getDescription());
+//        log.info("create a category: check: name: {}, description: {}", name, description);
+//        if (!name.equals("合规") || !description.equals("合规")) {
+//            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//        }
         save(category);
         return new ResponseEntity<>(true, HttpStatus.CREATED);
     }
@@ -69,17 +69,17 @@ public class CategoryService {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
 
-        String name = baiduContentService.checkText(category.getName());
+//        String name = baiduContentService.checkText(category.getName());
         try {
             // api调用频率限制，一秒一次
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        String description = baiduContentService.checkText(category.getDescription());
-        if (!name.equals("合规") || !description.equals("合规")) {
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-        }
+//        String description = baiduContentService.checkText(category.getDescription());
+//        if (!name.equals("合规") || !description.equals("合规")) {
+//            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//        }
 
         Category targetCategory = findById(category.getCategoryId()).getBody();
 

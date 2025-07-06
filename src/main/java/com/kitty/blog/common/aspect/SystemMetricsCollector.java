@@ -3,7 +3,7 @@ package com.kitty.blog.common.aspect;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import com.kitty.blog.common.constant.ElasticsearchConstants;
 import com.kitty.blog.common.constant.LogConstants;
-import com.kitty.blog.infrastructure.config.monitor.KibanaMonitoringConfig;
+import com.kitty.blog.infrastructure.config.system.monitor.KibanaMonitoringConfig;
 import com.sun.management.OperatingSystemMXBean;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

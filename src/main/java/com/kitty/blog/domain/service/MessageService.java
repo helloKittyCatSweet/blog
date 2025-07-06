@@ -8,7 +8,7 @@ import com.kitty.blog.domain.model.User;
 import com.kitty.blog.common.constant.MessageStatus;
 import com.kitty.blog.domain.repository.MessageRepository;
 import com.kitty.blog.domain.repository.UserRepository;
-import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+//import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.domain.service.contentReview.SecondaryMessageReviewerService;
 import com.kitty.blog.infrastructure.utils.PageUtil;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
@@ -44,8 +44,8 @@ public class MessageService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private BaiduContentService baiduContentService;
+//    @Autowired
+//    private BaiduContentService baiduContentService;
 
     @Autowired
     private SimpMessagingTemplate simpMessagingTemplate;
@@ -60,10 +60,10 @@ public class MessageService {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
 
-        String s = baiduContentService.checkText(message.getContent());
-        if (!s.equals("合规")) {
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-        }
+//        String s = baiduContentService.checkText(message.getContent());
+//        if (!s.equals("合规")) {
+//            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//        }
 
         message.setIsRead(false);
         message.setStatus(MessageStatus.SENT.name());
@@ -117,10 +117,10 @@ public class MessageService {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
 
-        String s = baiduContentService.checkText(message.getContent());
-        if (!s.equals("合规")) {
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-        }
+//        String s = baiduContentService.checkText(message.getContent());
+//        if (!s.equals("合规")) {
+//            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//        }
 
         message.setIsRead(false);
         Message oldMessage = findById(message.getMessageId()).getBody();

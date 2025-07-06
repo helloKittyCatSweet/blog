@@ -2,7 +2,7 @@ package com.kitty.blog.domain.service;
 
 import com.kitty.blog.domain.model.Role;
 import com.kitty.blog.domain.repository.RoleRepository;
-import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+//import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
@@ -24,8 +24,8 @@ public class RoleService {
     @Autowired
     private RoleRepository repository;
 
-    @Autowired
-    private BaiduContentService contentService;
+//    @Autowired
+//    private BaiduContentService contentService;
 
     @Transactional
     public ResponseEntity<Boolean> create(Role role) {
@@ -33,10 +33,10 @@ public class RoleService {
             return new ResponseEntity<>(false, HttpStatus.CONFLICT);
         }
 
-        String s = contentService.checkText(role.getRoleName());
-        if (!s.equals("合规")){
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-        }
+//        String s = contentService.checkText(role.getRoleName());
+//        if (!s.equals("合规")){
+//            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//        }
         repository.save(role);
         return new ResponseEntity<>(true, HttpStatus.CREATED);
     }
@@ -47,10 +47,10 @@ public class RoleService {
         if (!repository.existsById(updatedRole.getRoleId())) {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
-        String s = contentService.checkText(updatedRole.getRoleName());
-        if (!s.equals("合规")){
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-        }
+//        String s = contentService.checkText(updatedRole.getRoleName());
+//        if (!s.equals("合规")){
+//            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//        }
 
         Role existingRole = (Role) repository.findById(updatedRole.getRoleId()).orElseThrow();
         // 按需更新

@@ -13,7 +13,7 @@ import com.kitty.blog.domain.repository.UserRepository;
 import com.kitty.blog.domain.repository.UserSettingRepository;
 import com.kitty.blog.domain.service.UserRoleService;
 import com.kitty.blog.domain.service.auth.UserTokenManager;
-import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+//import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.infrastructure.utils.*;
 import com.kitty.blog.infrastructure.security.JwtTokenUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -64,8 +64,8 @@ public class UserService {
     @Autowired
     private AliyunOSSUploader aliyunOSSUploader;
 
-    @Autowired
-    private BaiduContentService baiduContentService;
+//    @Autowired
+//    private BaiduContentService baiduContentService;
 
     @Autowired
     private UserRoleService userRoleService;
@@ -99,10 +99,10 @@ public class UserService {
             return new ResponseEntity<>(false, HttpStatus.CONFLICT);
         }
 
-        String s = baiduContentService.checkText(user.getUsername());
-        if (!s.equals("合规")) {
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-        }
+//        String s = baiduContentService.checkText(user.getUsername());
+//        if (!s.equals("合规")) {
+//            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//        }
 
         // 密码加密
         setPassword(user, user.getPassword());
@@ -138,10 +138,10 @@ public class UserService {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
 
-        String s = baiduContentService.checkText(user.getUsername());
-        if (!s.equals("合规")) {
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-        }
+//        String s = baiduContentService.checkText(user.getUsername());
+//        if (!s.equals("合规")) {
+//            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//        }
 
         // user.setPassword(passwordEncoder.encode(user.getPassword()));
 

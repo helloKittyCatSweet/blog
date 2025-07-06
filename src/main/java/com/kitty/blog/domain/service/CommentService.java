@@ -9,7 +9,7 @@ import com.kitty.blog.domain.model.User;
 import com.kitty.blog.domain.repository.CommentRepository;
 import com.kitty.blog.domain.repository.post.PostRepository;
 import com.kitty.blog.domain.repository.UserRepository;
-import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+//import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.infrastructure.utils.PageUtil;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -41,8 +41,8 @@ public class CommentService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private BaiduContentService baiduContentService;
+//    @Autowired
+//    private BaiduContentService baiduContentService;
 
     @Transactional
     public ResponseEntity<Comment> create(Comment comment) {
@@ -53,11 +53,11 @@ public class CommentService {
         }
 
         // 内容审核
-        String s = baiduContentService.checkText(comment.getContent());
-        System.out.println(s);
-        if (!s.equals("合规")) {
-            return new ResponseEntity<>(new Comment(), HttpStatus.BAD_REQUEST);
-        }
+//        String s = baiduContentService.checkText(comment.getContent());
+//        System.out.println(s);
+//        if (!s.equals("合规")) {
+//            return new ResponseEntity<>(new Comment(), HttpStatus.BAD_REQUEST);
+//        }
 
         // 设置父评论
         if (!commentRepository.existsById(comment.getParentCommentId())) {
@@ -88,11 +88,11 @@ public class CommentService {
                 !Objects.equals(updatedComment.getContent(), existingComment.getContent())) {
             log.info("评论内容更新，原内容：{}，新内容：{}", existingComment.getContent(), updatedComment.getContent());
             // 内容审核
-            String s = baiduContentService.checkText(updatedComment.getContent());
-            System.out.println(s);
-            if (!s.equals("合规")) {
-                return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-            }
+//            String s = baiduContentService.checkText(updatedComment.getContent());
+//            System.out.println(s);
+//            if (!s.equals("合规")) {
+//                return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//            }
         }
 
         // 获取帖子和用户是否匹配，父评论如果有也校验
@@ -220,11 +220,11 @@ public class CommentService {
      */
     @Transactional
     public ResponseEntity<Comment> save(Comment comment) {
-        String s = baiduContentService.checkText(comment.getContent());
-        System.out.println(s);
-        if (!s.equals("合规")) {
-            return new ResponseEntity<>(new Comment(), HttpStatus.BAD_REQUEST);
-        }
+//        String s = baiduContentService.checkText(comment.getContent());
+//        System.out.println(s);
+//        if (!s.equals("合规")) {
+//            return new ResponseEntity<>(new Comment(), HttpStatus.BAD_REQUEST);
+//        }
         return new ResponseEntity<>((Comment) commentRepository.save(comment), HttpStatus.OK);
     }
 

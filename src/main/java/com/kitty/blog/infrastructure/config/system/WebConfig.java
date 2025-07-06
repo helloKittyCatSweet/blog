@@ -1,4 +1,4 @@
-package com.kitty.blog.infrastructure.config;
+package com.kitty.blog.infrastructure.config.system;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.MediaType;

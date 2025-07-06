@@ -3,7 +3,6 @@ package com.kitty.blog.domain.service.auth;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.kitty.blog.application.dto.user.LoginResponseDto;
-import com.kitty.blog.common.constant.Role;
 import com.kitty.blog.domain.model.User;
 import com.kitty.blog.domain.model.UserSetting;
 import com.kitty.blog.domain.repository.UserRepository;
@@ -12,7 +11,6 @@ import com.kitty.blog.domain.service.user.UserService;
 import com.kitty.blog.infrastructure.security.JwtTokenUtil;
 
 import cn.hutool.core.lang.UUID;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -260,7 +258,7 @@ public class OAuth2Service {
                 retryCount++;
                 if (retryCount < maxRetries) {
                     try {
-                        Thread.sleep(1000 * retryCount); // 指数退避重试
+                        Thread.sleep(1000L * retryCount); // 指数退避重试
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
                         throw new RuntimeException("Retry interrupted", ie);
@@ -277,7 +275,7 @@ public class OAuth2Service {
                 lastException);
     }
 
-    private Map<String, Object> getGithubUserInfo(String accessToken) {
+    private Map getGithubUserInfo(String accessToken) {
         String userInfoUrl = "https://api.github.com/user";
 
         // 设置请求头

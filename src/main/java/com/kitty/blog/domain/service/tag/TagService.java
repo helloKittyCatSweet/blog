@@ -4,7 +4,7 @@ import com.kitty.blog.common.constant.Compare;
 import com.kitty.blog.domain.model.tag.Tag;
 import com.kitty.blog.domain.repository.tag.TagRepository;
 import com.kitty.blog.domain.repository.tag.TagSpecification;
-import com.kitty.blog.domain.service.contentReview.BaiduContentService;
+//import com.kitty.blog.domain.service.contentReview.BaiduContentService;
 import com.kitty.blog.infrastructure.utils.PageUtil;
 import com.kitty.blog.infrastructure.utils.UpdateUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -38,8 +38,8 @@ public class TagService {
     @Autowired
     private TagWeightService tagWeightService;
 
-    @Autowired
-    private BaiduContentService baiduContentService;
+//    @Autowired
+//    private BaiduContentService baiduContentService;
 
     @Transactional
     public ResponseEntity<Boolean> create(Tag tag) {
@@ -48,10 +48,10 @@ public class TagService {
             return new ResponseEntity<>(false, HttpStatus.CONFLICT);
         }
 
-        String s = baiduContentService.checkText(tag.getName());
-        if (!s.equals("合规")) {
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-        }
+//        String s = baiduContentService.checkText(tag.getName());
+//        if (!s.equals("合规")) {
+//            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//        }
 
         // 设置初始值
         tag.setUseCount(0);
@@ -78,10 +78,10 @@ public class TagService {
             return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
         }
 
-        String s = baiduContentService.checkText(tag.getName());
-        if (!s.equals("合规")) {
-            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
-        }
+//        String s = baiduContentService.checkText(tag.getName());
+//        if (!s.equals("合规")) {
+//            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+//        }
 
         Tag existingTag = (Tag) tagRepository.findById(tag.getTagId()).orElseThrow();
         try {

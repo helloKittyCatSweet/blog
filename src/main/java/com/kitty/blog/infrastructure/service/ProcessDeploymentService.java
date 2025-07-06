@@ -36,7 +36,7 @@ public class ProcessDeploymentService {
                 // 部署新的流程定义
                 repositoryService.createDeployment()
                         .name("举报审核流程")
-                        .addClasspathResource("workflow/reportReviewProcess.bpmn20.xml")
+                        .addClasspathResource("config/workflow/reportReviewProcess.bpmn20.xml")
                         .deploy();
                 log.info("流程定义部署成功: {}", processKey);
             } catch (Exception e) {

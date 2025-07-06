@@ -1,4 +1,4 @@
-package com.kitty.blog.infrastructure.config;
+package com.kitty.blog.infrastructure.config.system;
 
 import com.kitty.blog.application.dto.user.LoginResponseDto;
 import com.kitty.blog.common.exception.WebSocketAuthenticationException;

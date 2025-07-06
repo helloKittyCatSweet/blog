@@ -1,12 +1,183 @@
+application:
+  name: FreeShare - Your Dream Platform
+
 spring:
+  # datasource配置
+  datasource:
+    name:
+    type: com.zaxxer.hikari.HikariDataSource  # 使用 Hikari 数据源
+    url:
+    username:
+    password:
+    # 数据库连接池配置(Hikari)
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 10
+      minimum-idle: 1
+      idle-timeout: 600000
+      pool-name: HikariCP
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+
+  #jpa/hibernate相关配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        # 禁用OpenSessionInView
+        open-in-view: false
+
+        # 启用存储删除时的数据（关键配置）
+        store-data-at-delete: false
+        audit_table_prefix: fs_ # 审计表前缀
+        audit_table_suffix: _aud # 审计表后缀
+        revision_field_name: rev # 版本字段名
+        revision_type_field_name: rev_type # 版本类型字段名
+        store_data_at_delete: true # 删除时是否存储数据
+
+    jackson:
+      date-format: yyyy-MM-dd HH:mm:ss
+      time-zone: Asia/Shanghai
+      serialization:
+        write-dates-as-timestamps: false
+      deserialization:
+        fail-on-unknown-properties: false
+      default-property-inclusion: non_null
+      mapper:
+        accept-case-insensitive-enums: true
+      modules:
+        - com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+
+  data:
+    jpa:
+      repositories:
+        enabled: true
+    jdbc:
+      repositories:
+        enabled: false
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 10000
+      password:
+      lettuce:
+        pool:
+          max-active: 8   # 连接池最大连接数
+          max-wait: -1    # 连接池最大阻塞等待时间（使用负值表示没有限制）
+          max-idle: 8     # 连接池中的最大空闲连接
+          min-idle: 0     # 连接池中的最小空闲连接
+
+  flowable:
+    database-schema-update: true
+    db-history-used: true
+    history-level: full
+    async-executor-activate: false
+    # 修改流程定义文件路径
+    process-definition-location-prefix: classpath*:/
+    process-definition-location-suffixes: .bpmn20.xml
+    check-process-definitions: true
+    # 修正字体配置格式
+    font:
+      activity-font-name: 宋体
+      label-font-name: 宋体
+      annotation-font-name: 宋体
+    # 添加数据库配置
+    database-schema: flowable
+    database-table-prefix: flowable_
+
+    #    #druid相关配置
+    #    druid:
+    #      #监控统计拦截的filters
+    #      filters: stat
+    #      driver-class-name: com.mysql.jdbc.Driver
+    #      #基本属性
+    #
+    #      #配置初始化大小/最小/最大
+    #      initial-size: 1
+    #      min-idle: 1
+    #      max-active: 20
+    #      #获取连接等待超时时间
+    #      max-wait: 60000
+    #      #间隔多久进行一次检测，检测需要关闭的空闲连接
+    #      time-between-eviction-runs-millis: 60000
+    #      #一个连接在池中最小生存的时间
+    #      min-evictable-idle-time-millis: 300000
+    #      validation-query: SELECT 'x'
+    #      test-while-idle: true
+    #      test-on-borrow: false
+    #      test-on-return: false
+    #      #打开PSCache，并指定每个连接上PSCache的大小。oracle设为true，mysql设为false。分库分表较多推荐设置为false
+    #      pool-prepared-statements: false
+    #      max-pool-prepared-statement-per-connection-size: 20
+
+
+  aop:
+    auto: true
+    proxy-target-class: true
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
+
+  mail:
+    host:
+    port:
+    username:
+    password:
+    properties:
+      mail:
+        transport:
+          protocol: smtp
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          ssl:
+            trust:
+        debug: true
+  main:
+    allow-bean-definition-overriding: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: # 你的GitHub OAuth App Client ID
+            client-secret: # 你的GitHub OAuth App Client Secret
+            scope: user:email, read:user
+            redirect-uri: #你的处理回调函数的界面
+          provider:
+            # 由于服务器上访问GitHub经常超时，于是时间设置的比较长
+            github:
+              authorization-uri: https://github.com/login/oauth/authorize
+              token-uri: https://github.com/login/oauth/access_token
+              user-info-uri: https://api.github.com/user
+              user-name-attribute: login
+              connection-timeout: 60000
+              read-timeout: 60000
+
+  rest:
+    template:
+      connection-timeout: 30000
+      read-timeout: 30000
+
   profiles:
     active: dev
   config:
     import:
       - optional:classpath:/config/monitor/kibana-index-patterns.yml
+
   elasticsearch:
     host: localhost
-    port: 9200
+    port: 9201
+    uris: http://localhost:9201
     username: elastic
     password: 123456
   task:
@@ -14,9 +185,84 @@ spring:
       pool:
         size: 5
 
-logstash:
-  host: localhost
-  port: 5000
+  logstash:
+    host: localhost
+    port: 5000
+
+  cache:
+    type: redis # 主缓存使用Redis
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=1h # 本地二级缓存
+    redis:
+      time-to-live: 24h # Redis缓存过期时间
+      key-prefix: "cache::"
+      use-key-prefix: true
+
+# 修改日志配置，支持 ELK
+logging:
+  file:
+    name: logs/blog.log
+  level:
+    root: INFO
+    com.kitty.blog: DEBUG
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 7
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+swagger:
+  show: true
+#分页
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql
+  retrunPageInfo: check
+
+# 阿里云OSS对象存储服务配置
+aliyun:
+  oss:
+    # 作者在引用变量时使用了字符串，不知道不加双引号是否可用
+    endpoint: "xxx"
+    access-key-id: "xxx"
+    access-key-secret: "xxx"
+    bucket-name: "xxx"
+
+# 百度云内容审核配置
+baidu:
+  content:
+    appId: "xxx"
+    apiKey: "xxx"
+    secretKey: "xxx"
+
+jwt:
+  secret: "xxx"
+  expiration: 3600 #一小时过期
+
+frontend:
+  url:
+    http://localhost:5173
+
+encryption:
+  key:
+    xxx
+
+xunfei:
+  hostUrl: "wss://maas-api.cn-huabei-1.xf-yun.com/v1.1/chat"
+  appId: "xxx"
+  apiKey: "xxx"
+  apiSecret: "xxx"
+  patchId: "xxx"
+  domain: "xxx"
+
+tesseract:
+  data:
+    # tessdata文件夹所在路径
+
 management:
   endpoints:
     web:

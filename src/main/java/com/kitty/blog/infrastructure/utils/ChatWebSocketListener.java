@@ -3,13 +3,12 @@ package com.kitty.blog.infrastructure.utils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.kitty.blog.infrastructure.config.XunfeiConfig;
+import com.kitty.blog.infrastructure.config.system.XunfeiConfig;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.WebSocket;
 import okhttp3.WebSocketListener;
 
-import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
 @Slf4j
